@@ -1,0 +1,17 @@
+{
+    "name": "financial-management-program",
+    "private": true,
+    "version": "0.1.0",
+    "description": "Financial Management Program - Desktop Application",
+    "scripts": {
+        "dev": "cd frontend && npm run dev",
+        "build": "cd frontend && npm run build",
+        "tauri": "cd src-tauri && cd .. && tauri",
+        "tauri:dev": "tauri dev",
+        "tauri:build": "tauri build",
+        "install:all": "cd frontend && npm install"
+    },
+    "devDependencies": {
+        "@tauri-apps/cli": "^2"
+    }
+}

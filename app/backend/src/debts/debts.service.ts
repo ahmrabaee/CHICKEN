@@ -1,0 +1,224 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { createPaginatedResult, PaginationQueryDto } from '../common';
+
+@Injectable()
+export class DebtsService {
+  constructor(private prisma: PrismaService) {}
+
+  async findReceivables(pagination: PaginationQueryDto) {
+    const { page = 1, pageSize = 20 } = pagination;
+    const skip = (page - 1) * pageSize;
+
+    const where = { direction: 'receivable' };
+
+    const [debts, totalItems] = await Promise.all([
+      this.prisma.debt.findMany({
+        skip,
+        take: pageSize,
+        where,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.debt.count({ where }),
+    ]);
+
+    return createPaginatedResult(debts, page, pageSize, totalItems);
+  }
+
+  async findPayables(pagination: PaginationQueryDto) {
+    const { page = 1, pageSize = 20 } = pagination;
+    const skip = (page - 1) * pageSize;
+
+    const where = { direction: 'payable' };
+
+    const [debts, totalItems] = await Promise.all([
+      this.prisma.debt.findMany({
+        skip,
+        take: pageSize,
+        where,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.debt.count({ where }),
+    ]);
+
+    return createPaginatedResult(debts, page, pageSize, totalItems);
+  }
+
+  async findById(id: number) {
+    const debt = await this.prisma.debt.findUnique({
+      where: { id },
+      include: { branch: true },
+    });
+
+    if (!debt) {
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Debt not found',
+        messageAr: 'الدين غير موجود',
+      });
+    }
+
+    // Get related payments
+    const payments = await this.prisma.payment.findMany({
+      where: { referenceType: 'debt', referenceId: id },
+    });
+
+    return { ...debt, payments };
+  }
+
+  async getSummary() {
+    const receivables = await this.prisma.debt.aggregate({
+      where: { direction: 'receivable', status: { not: 'paid' } },
+      _sum: { totalAmount: true, amountPaid: true },
+    });
+
+    const payables = await this.prisma.debt.aggregate({
+      where: { direction: 'payable', status: { not: 'paid' } },
+      _sum: { totalAmount: true, amountPaid: true },
+    });
+
+    const totalReceivables = (receivables._sum?.totalAmount ?? 0) - (receivables._sum?.amountPaid ?? 0);
+    const totalPayables = (payables._sum?.totalAmount ?? 0) - (payables._sum?.amountPaid ?? 0);
+
+    return {
+      totalReceivables,
+      totalPayables,
+      netPosition: totalReceivables - totalPayables,
+    };
+  }
+
+  async getCustomerBalance(customerId: number) {
+    const debts = await this.prisma.debt.findMany({
+      where: { 
+        direction: 'receivable',
+        partyType: 'customer',
+        partyId: customerId,
+        status: { not: 'paid' },
+      },
+    });
+
+    const totalOwed = debts.reduce((sum, d) => sum + (d.totalAmount - d.amountPaid), 0);
+
+    return {
+      customerId,
+      totalOwed,
+      debts,
+    };
+  }
+
+  async getSupplierBalance(supplierId: number) {
+    const debts = await this.prisma.debt.findMany({
+      where: { 
+        direction: 'payable',
+        partyType: 'supplier',
+        partyId: supplierId,
+        status: { not: 'paid' },
+      },
+    });
+
+    const totalOwed = debts.reduce((sum, d) => sum + (d.totalAmount - d.amountPaid), 0);
+
+    return {
+      supplierId,
+      totalOwed,
+      debts,
+    };
+  }
+
+  async getAgingReport(direction: 'receivable' | 'payable') {
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sixtyDaysAgo = new Date(today.getTime() - 60 * 24 * 60 * 60 * 1000);
+    const ninetyDaysAgo = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
+
+    const debts = await this.prisma.debt.findMany({
+      where: { direction, status: { not: 'paid' } },
+    });
+
+    const aging = {
+      current: 0, // 0-30 days
+      thirtyDays: 0, // 31-60 days
+      sixtyDays: 0, // 61-90 days
+      ninetyPlus: 0, // 90+ days
+    };
+
+    for (const debt of debts) {
+      const outstanding = debt.totalAmount - debt.amountPaid;
+      const createdAt = new Date(debt.createdAt);
+
+      if (createdAt > thirtyDaysAgo) {
+        aging.current += outstanding;
+      } else if (createdAt > sixtyDaysAgo) {
+        aging.thirtyDays += outstanding;
+      } else if (createdAt > ninetyDaysAgo) {
+        aging.sixtyDays += outstanding;
+      } else {
+        aging.ninetyPlus += outstanding;
+      }
+    }
+
+    return aging;
+  }
+
+  async getOverdue() {
+    const today = new Date();
+
+    const overdueDebts = await this.prisma.debt.findMany({
+      where: {
+        status: { not: 'paid' },
+        dueDate: { lt: today },
+      },
+      orderBy: { dueDate: 'asc' },
+    });
+
+    const receivables = overdueDebts.filter((d) => d.direction === 'receivable');
+    const payables = overdueDebts.filter((d) => d.direction === 'payable');
+
+    return {
+      totalOverdue: overdueDebts.length,
+      receivables: {
+        count: receivables.length,
+        amount: receivables.reduce((sum, d) => sum + (d.totalAmount - d.amountPaid), 0),
+        items: receivables,
+      },
+      payables: {
+        count: payables.length,
+        amount: payables.reduce((sum, d) => sum + (d.totalAmount - d.amountPaid), 0),
+        items: payables,
+      },
+    };
+  }
+
+  async writeOff(id: number, reason: string, userId: number) {
+    const debt = await this.prisma.debt.findUnique({ where: { id } });
+
+    if (!debt) {
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Debt not found',
+        messageAr: 'الدين غير موجود',
+      });
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.debt.update({
+        where: { id },
+        data: { status: 'written_off', notes: reason },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          entityType: 'debt',
+          entityId: id,
+          action: 'write_off',
+          changes: JSON.stringify({ reason, previousStatus: debt.status }),
+          userId,
+          username: 'system',
+          ipAddress: '127.0.0.1',
+        },
+      });
+
+      return { success: true };
+    });
+  }
+}

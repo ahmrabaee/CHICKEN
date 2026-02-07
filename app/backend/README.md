@@ -148,11 +148,6 @@ backend/
 │   └── lib/
 │       ├── prisma.ts    # Prisma client singleton
 │       └── db.ts        # Database utilities
-├── db/                  # Legacy SQL files (reference)
-│   ├── schema.sql
-│   ├── migrations/
-│   ├── seeds/
-│   └── queries/
 ├── .env                 # Environment config
 ├── package.json
 └── tsconfig.json

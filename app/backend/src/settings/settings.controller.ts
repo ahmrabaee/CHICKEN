@@ -14,7 +14,7 @@ import { Roles } from '../common';
 
 @ApiTags('settings')
 @ApiBearerAuth()
-@Roles('Admin')
+@Roles('admin')
 @Controller('settings')
 export class SettingsController {
   constructor(private settingsService: SettingsService) {}

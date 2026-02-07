@@ -16,7 +16,7 @@ import { PaginationQueryDto, Roles } from '../common';
 
 @ApiTags('suppliers')
 @ApiBearerAuth()
-@Roles('Admin', 'Manager')
+@Roles('admin', 'manager')
 @Controller('suppliers')
 export class SuppliersController {
   constructor(private suppliersService: SuppliersService) {}

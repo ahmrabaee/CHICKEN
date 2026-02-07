@@ -15,7 +15,7 @@ import { PaginationQueryDto, Roles, CurrentUser } from '../common';
 
 @ApiTags('accounting')
 @ApiBearerAuth()
-@Roles('Admin', 'Manager')
+@Roles('admin', 'manager')
 @Controller('accounting')
 export class AccountingController {
   constructor(private accountingService: AccountingService) {}
@@ -34,14 +34,14 @@ export class AccountingController {
   }
 
   @Post('accounts')
-  @Roles('Admin')
+  @Roles('admin')
   @ApiOperation({ summary: 'Create new account' })
   createAccount(@Body() dto: CreateAccountDto) {
     return this.accountingService.createAccount(dto);
   }
 
   @Put('accounts/:code')
-  @Roles('Admin')
+  @Roles('admin')
   @ApiOperation({ summary: 'Update account' })
   updateAccount(@Param('code') code: string, @Body() dto: UpdateAccountDto) {
     return this.accountingService.updateAccount(code, dto);

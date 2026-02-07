@@ -32,14 +32,14 @@ export class PurchasesController {
   }
 
   @Post()
-  @Roles('Admin', 'Manager')
+  @Roles('admin', 'manager')
   @ApiOperation({ summary: 'Create new purchase order' })
   create(@Body() dto: CreatePurchaseDto, @CurrentUser() user: any) {
     return this.purchasesService.create(dto, user.id);
   }
 
   @Put(':id/receive')
-  @Roles('Admin', 'Manager')
+  @Roles('admin', 'manager')
   @ApiOperation({ summary: 'Receive purchase order goods' })
   receive(
     @Param('id', ParseIntPipe) id: number,

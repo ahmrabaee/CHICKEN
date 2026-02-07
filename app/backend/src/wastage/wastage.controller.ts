@@ -31,7 +31,7 @@ export class WastageController {
   }
 
   @Post()
-  @Roles('Admin', 'Manager')
+  @Roles('admin', 'manager')
   @ApiOperation({ summary: 'Record wastage' })
   create(@Body() dto: CreateWastageDto, @CurrentUser() user: any) {
     return this.wastageService.create(dto, user.id);

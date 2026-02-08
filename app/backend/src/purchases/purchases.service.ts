@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AccountingService } from '../accounting/accounting.service';
 import { createPaginatedResult, PaginationQueryDto } from '../common';
 
 @Injectable()
 export class PurchasesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private accountingService: AccountingService,
+  ) {}
 
   async findAll(pagination: PaginationQueryDto) {
     const { page = 1, pageSize = 20 } = pagination;
@@ -194,6 +198,28 @@ export class PurchasesService {
         where: { id },
         data: { receivedAt: new Date(), receivedById: userId },
       });
+
+      // Create journal entry for inventory receipt
+      // Calculate total received value
+      let totalReceivedValue = 0;
+      for (const lineDto of dto.lines) {
+        const line = purchase.purchaseLines.find((l: any) => l.id === lineDto.purchaseLineId);
+        if (line) {
+          totalReceivedValue += Math.round((lineDto.receivedWeightGrams / 1000) * line.pricePerKg);
+        }
+      }
+
+      await this.accountingService.createPurchaseJournalEntry(
+        tx,
+        purchase.id,
+        purchase.purchaseNumber,
+        purchase.branchId ?? null,
+        userId,
+        {
+          totalAmount: totalReceivedValue,
+          amountPaid: 0, // Payment is recorded separately
+        },
+      );
 
       return this.findById(id);
     });

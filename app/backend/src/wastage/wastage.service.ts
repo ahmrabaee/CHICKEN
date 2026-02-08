@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AccountingService } from '../accounting/accounting.service';
 import { createPaginatedResult, PaginationQueryDto } from '../common';
 
 @Injectable()
 export class WastageService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private accountingService: AccountingService,
+  ) {}
 
   async findAll(pagination: PaginationQueryDto) {
     const { page = 1, pageSize = 20 } = pagination;
@@ -118,6 +122,15 @@ export class WastageService {
           performedById: userId,
         },
       });
+
+      // Create accounting journal entry
+      await this.accountingService.createWastageJournalEntry(
+        tx,
+        record.id,
+        dto.branchId ?? null,
+        userId,
+        estimatedCostValue,
+      );
 
       return record;
     });

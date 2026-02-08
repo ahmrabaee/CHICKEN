@@ -3,6 +3,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { InventoryService } from '../inventory/inventory.service';
+import { AccountingService } from '../accounting/accounting.service';
 import {
   CreateSaleDto, VoidSaleDto, AddPaymentDto, SaleResponseDto, SaleQueryDto,
 } from './dto';
@@ -13,6 +14,7 @@ export class SalesService {
   constructor(
     private prisma: PrismaService,
     private inventoryService: InventoryService,
+    private accountingService: AccountingService,
   ) {}
 
   async findAll(query: SaleQueryDto, pagination: PaginationQueryDto, userId: number, isAdmin: boolean) {
@@ -364,6 +366,22 @@ export class SalesService {
         });
       }
 
+      // Create automatic journal entry for accounting
+      await this.accountingService.createSaleJournalEntry(
+        tx,
+        sale.id,
+        sale.saleNumber,
+        sale.branchId ?? null,
+        cashierId,
+        {
+          totalAmount,
+          totalCost,
+          amountPaid: totalPayments,
+          customerId: dto.customerId,
+          discountAmount: totalDiscount,
+        },
+      );
+
       return this.findById(sale.id);
     });
   }
@@ -474,6 +492,21 @@ export class SalesService {
           changes: JSON.stringify({ reason: dto.reason }),
         },
       });
+
+      // Create reversal journal entry
+      await this.accountingService.createSaleVoidJournalEntry(
+        tx,
+        sale.id,
+        sale.saleNumber,
+        sale.branchId ?? null,
+        userId,
+        {
+          totalAmount: sale.totalAmount,
+          totalCost: sale.totalCost,
+          amountPaid: sale.amountPaid,
+          discountAmount: sale.discountAmount,
+        },
+      );
 
       return this.findById(id);
     });

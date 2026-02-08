@@ -379,8 +379,79 @@ export class UsersService {
     });
   }
 
+  /**
+   * Admin reset user password (PRD requirement)
+   * Clears all active sessions to force re-login
+   */
+  async resetPassword(userId: number, newPassword: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'User not found',
+        messageAr: 'المستخدم غير موجود',
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+
+    // Update password and clear all sessions (force re-login)
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash,
+        refreshToken: null,
+        refreshTokenExpiresAt: null,
+        currentSessionToken: null,
+        currentSessionExpiry: null,
+      },
+    });
+  }
+
+  /**
+   * Get active sessions (users currently logged in)
+   * PRD requirement: Login status display on Users page
+   */
+  async getActiveSessions() {
+    const now = new Date();
+    const activeUsers = await this.prisma.user.findMany({
+      where: {
+        currentSessionExpiry: {
+          gt: now,
+        },
+        currentSessionToken: {
+          not: null,
+        },
+      },
+      select: {
+        id: true,
+        username: true,
+        fullName: true,
+        lastLoginAt: true,
+        currentSessionExpiry: true,
+      },
+    });
+
+    return activeUsers.map((user) => ({
+      userId: user.id,
+      username: user.username,
+      fullName: user.fullName,
+      lastLoginAt: user.lastLoginAt?.toISOString(),
+      sessionExpiresAt: user.currentSessionExpiry?.toISOString(),
+    }));
+  }
+
   // Helper to convert user entity to response DTO
   private toResponseDto(user: any): UserResponseDto {
+    const now = new Date();
+    const isLoggedIn =
+      user.currentSessionToken !== null &&
+      user.currentSessionExpiry !== null &&
+      new Date(user.currentSessionExpiry) > now;
+
     return {
       id: user.id,
       username: user.username,
@@ -394,6 +465,8 @@ export class UsersService {
       roles: user.userRoles.map((ur: any) => ur.role.name),
       createdAt: user.createdAt.toISOString(),
       lastLoginAt: user.lastLoginAt?.toISOString(),
+      workStartDate: user.workStartDate?.toISOString(),
+      isLoggedIn,
     };
   }
 }

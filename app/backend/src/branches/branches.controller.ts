@@ -1,10 +1,10 @@
 import {
   Controller, Get, Post, Put, Delete,
-  Body, Param, ParseIntPipe, HttpCode, HttpStatus, UseGuards,
+  Body, Param, ParseIntPipe, HttpCode, HttpStatus, UseGuards, Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { BranchesService } from './branches.service';
-import { CreateBranchDto, UpdateBranchDto, BranchResponseDto } from './dto';
+import { CreateBranchDto, UpdateBranchDto, BranchResponseDto, BranchListResponseDto } from './dto';
 import { Roles, RolesGuard } from '../common';
 
 @ApiTags('branches')
@@ -17,9 +17,10 @@ export class BranchesController {
 
   @Get()
   @ApiOperation({ summary: 'List all branches' })
-  @ApiResponse({ status: 200, type: [BranchResponseDto] })
-  async findAll(): Promise<BranchResponseDto[]> {
-    return this.branchesService.findAll();
+  @ApiQuery({ name: 'includeInactive', required: false, type: Boolean, description: 'Include inactive branches' })
+  @ApiResponse({ status: 200, type: BranchListResponseDto })
+  async findAll(@Query('includeInactive') includeInactive?: string): Promise<BranchListResponseDto> {
+    return this.branchesService.findAll(includeInactive === 'true');
   }
 
   @Get(':id')
@@ -48,9 +49,17 @@ export class BranchesController {
     return this.branchesService.update(id, dto);
   }
 
+  @Post(':id/activate')
+  @ApiOperation({ summary: 'Reactivate a deactivated branch' })
+  @ApiParam({ name: 'id', description: 'Branch ID' })
+  @ApiResponse({ status: 200, type: BranchResponseDto })
+  async activate(@Param('id', ParseIntPipe) id: number): Promise<BranchResponseDto> {
+    return this.branchesService.activate(id);
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Deactivate branch' })
+  @ApiOperation({ summary: 'Deactivate branch (soft delete)' })
   @ApiParam({ name: 'id', description: 'Branch ID' })
   async delete(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.branchesService.delete(id);

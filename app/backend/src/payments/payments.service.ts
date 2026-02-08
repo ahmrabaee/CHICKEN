@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AccountingService } from '../accounting/accounting.service';
 import { createPaginatedResult, PaginationQueryDto } from '../common';
 
 @Injectable()
 export class PaymentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private accountingService: AccountingService,
+  ) {}
 
   async findAll(pagination: PaginationQueryDto, referenceType?: string) {
     const { page = 1, pageSize = 20 } = pagination;
@@ -114,6 +118,16 @@ export class PaymentsService {
         },
       });
 
+      // Create journal entry for payment received
+      await this.accountingService.createPaymentReceivedJournalEntry(
+        tx,
+        payment.id,
+        payment.paymentNumber,
+        sale.branchId ?? null,
+        userId,
+        dto.amount,
+      );
+
       return payment;
     });
   }
@@ -185,6 +199,16 @@ export class PaymentsService {
           status: paymentStatus === 'paid' ? 'paid' : 'partial',
         },
       });
+
+      // Create journal entry for payment made
+      await this.accountingService.createPaymentMadeJournalEntry(
+        tx,
+        payment.id,
+        payment.paymentNumber,
+        purchase.branchId ?? null,
+        userId,
+        dto.amount,
+      );
 
       return payment;
     });

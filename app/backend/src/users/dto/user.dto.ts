@@ -144,6 +144,18 @@ export class UserResponseDto {
 
   @ApiPropertyOptional({ example: '2026-02-07T10:30:00Z' })
   lastLoginAt?: string;
+
+  @ApiPropertyOptional({
+    example: '2026-02-07T10:30:00Z',
+    description: 'Date when user was added to the system (PRD requirement)',
+  })
+  workStartDate?: string;
+
+  @ApiProperty({
+    example: true,
+    description: 'Whether user is currently logged in (PRD requirement)',
+  })
+  isLoggedIn: boolean;
 }
 
 export class UserListQueryDto {

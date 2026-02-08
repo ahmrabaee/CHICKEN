@@ -6,9 +6,16 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { randomUUID } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
-import { LoginResponse, RefreshResponse, AuthUserResponse } from './dto';
+import {
+  LoginResponse,
+  RefreshResponse,
+  AuthUserResponse,
+  CheckSetupResponse,
+  CompleteSetupDto,
+} from './dto';
 
 export interface JwtPayload {
   sub: number;
@@ -59,7 +66,11 @@ export class AuthService {
   /**
    * Login and generate tokens
    */
-  async login(username: string, password: string): Promise<LoginResponse> {
+  async login(
+    username: string,
+    password: string,
+    ipAddress?: string,
+  ): Promise<LoginResponse> {
     const user = await this.validateUser(username, password);
 
     if (!user) {
@@ -94,19 +105,27 @@ export class AuthService {
     const accessToken = this.generateAccessToken(payload);
     const refreshToken = this.generateRefreshToken(payload);
 
-    // Store refresh token hash in database
+    // Generate session token for tracking active sessions (PRD requirement)
+    const sessionToken = randomUUID();
+    const sessionExpiry = new Date();
+    sessionExpiry.setDate(sessionExpiry.getDate() + 7); // 7 days to match refresh token
+
+    // Store refresh token hash AND session token in database
     const refreshTokenHash = await bcrypt.hash(refreshToken, 10);
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
         refreshToken: refreshTokenHash,
+        refreshTokenExpiresAt: sessionExpiry,
+        currentSessionToken: sessionToken,
+        currentSessionExpiry: sessionExpiry,
         lastLoginAt: new Date(),
       },
     });
 
-    // Log the login
+    // Log the login with real IP address
     await this.createAuditLog(user.id, 'login', 'User', user.id, {
-      ip: 'localhost', // TODO: Get from request
+      ip: ipAddress || 'unknown',
     });
 
     const userResponse: AuthUserResponse = {
@@ -209,12 +228,17 @@ export class AuthService {
   }
 
   /**
-   * Logout - invalidate refresh token
+   * Logout - invalidate refresh token and session
    */
   async logout(userId: number): Promise<void> {
     await this.prisma.user.update({
       where: { id: userId },
-      data: { refreshToken: null },
+      data: {
+        refreshToken: null,
+        refreshTokenExpiresAt: null,
+        currentSessionToken: null,
+        currentSessionExpiry: null,
+      },
     });
 
     await this.createAuditLog(userId, 'logout', 'User', userId, {});
@@ -251,11 +275,15 @@ export class AuthService {
 
     const newPasswordHash = await bcrypt.hash(newPassword, 12);
 
+    // Clear all sessions to force re-login (security best practice)
     await this.prisma.user.update({
       where: { id: userId },
       data: {
         passwordHash: newPasswordHash,
-        refreshToken: null, // Invalidate all sessions
+        refreshToken: null,
+        refreshTokenExpiresAt: null,
+        currentSessionToken: null,
+        currentSessionExpiry: null,
       },
     });
 
@@ -343,5 +371,233 @@ export class AuthService {
     } catch (error) {
       this.logger.warn(`Failed to create audit log: ${error}`);
     }
+  }
+
+  // ============================================
+  // First-Time Setup Methods (PRD Requirements)
+  // ============================================
+
+  /**
+   * Check if initial system setup is complete
+   */
+  async checkSetup(): Promise<CheckSetupResponse> {
+    const setupCompletedSetting = await this.prisma.systemSetting.findUnique({
+      where: { key: 'setup_completed' },
+    });
+
+    if (!setupCompletedSetting || setupCompletedSetting.value !== 'true') {
+      return { setupCompleted: false };
+    }
+
+    // Get business names
+    const businessName = await this.prisma.systemSetting.findUnique({
+      where: { key: 'business_name' },
+    });
+    const businessNameEn = await this.prisma.systemSetting.findUnique({
+      where: { key: 'business_name_en' },
+    });
+
+    return {
+      setupCompleted: true,
+      businessName: businessName?.value || undefined,
+      businessNameEn: businessNameEn?.value || undefined,
+    };
+  }
+
+  /**
+   * Complete initial system setup (create business, admin user, main branch)
+   */
+  async completeSetup(dto: CompleteSetupDto, ipAddress?: string): Promise<LoginResponse> {
+    // Verify setup not already complete
+    const setupCheck = await this.checkSetup();
+    if (setupCheck.setupCompleted) {
+      throw new BadRequestException({
+        code: 'SETUP_ALREADY_COMPLETE',
+        message: 'Initial setup has already been completed',
+        messageAr: 'تم إكمال الإعداد الأولي بالفعل',
+      });
+    }
+
+    // Use transaction for atomicity
+    return await this.prisma.$transaction(async (tx) => {
+      // 1. Create main branch
+      const existingBranch = await tx.branch.findFirst({
+        where: { isMainBranch: true },
+      });
+
+      let mainBranch = existingBranch;
+      if (!mainBranch) {
+        mainBranch = await tx.branch.create({
+          data: {
+            code: 'MAIN',
+            name: 'الفرع الرئيسي',
+            nameEn: 'Main Branch',
+            isMainBranch: true,
+            isActive: true,
+          },
+        });
+      }
+
+      // 2. Get admin role (should exist from seed)
+      const adminRole = await tx.role.findUnique({
+        where: { name: 'admin' },
+      });
+
+      if (!adminRole) {
+        throw new BadRequestException({
+          code: 'ADMIN_ROLE_NOT_FOUND',
+          message: 'Admin role not found in database. Please run database seed first.',
+          messageAr: 'دور المسؤول غير موجود في قاعدة البيانات. يرجى تشغيل بذرة قاعدة البيانات أولاً.',
+        });
+      }
+
+      // 3. Check if admin username already exists
+      const existingUser = await tx.user.findUnique({
+        where: { username: dto.adminUsername },
+      });
+      if (existingUser) {
+        throw new BadRequestException({
+          code: 'USERNAME_EXISTS',
+          message: 'Username already exists',
+          messageAr: 'اسم المستخدم موجود بالفعل',
+        });
+      }
+
+      // 4. Hash admin password
+      const passwordHash = await bcrypt.hash(dto.adminPassword, 12);
+
+      // 5. Create admin user
+      const adminUser = await tx.user.create({
+        data: {
+          username: dto.adminUsername,
+          passwordHash,
+          fullName: dto.adminFullName,
+          fullNameEn: dto.adminFullNameEn,
+          preferredLanguage: dto.preferredLanguage,
+          defaultBranchId: mainBranch.id,
+          isActive: true,
+          workStartDate: new Date(),
+        },
+      });
+
+      // 6. Assign admin role
+      await tx.userRole.create({
+        data: {
+          userId: adminUser.id,
+          roleId: adminRole.id,
+        },
+      });
+
+      // 7. Update system settings
+      await tx.systemSetting.updateMany({
+        where: { key: 'setup_completed' },
+        data: { value: 'true', updatedAt: new Date() },
+      });
+      await tx.systemSetting.updateMany({
+        where: { key: 'business_name' },
+        data: { value: dto.businessName, updatedAt: new Date() },
+      });
+      await tx.systemSetting.updateMany({
+        where: { key: 'business_name_en' },
+        data: { value: dto.businessNameEn || '', updatedAt: new Date() },
+      });
+      await tx.systemSetting.updateMany({
+        where: { key: 'setup_completed_at' },
+        data: { value: new Date().toISOString(), updatedAt: new Date() },
+      });
+
+      // 8. Create audit log for setup completion
+      await tx.auditLog.create({
+        data: {
+          userId: adminUser.id,
+          username: adminUser.username,
+          action: 'system_setup_complete',
+          entityType: 'System',
+          entityId: 0,
+          changes: JSON.stringify({ businessName: dto.businessName }),
+          ipAddress: ipAddress || 'unknown',
+          userAgent: 'Setup Wizard',
+        },
+      });
+
+      // 9. Auto-login admin user (generate tokens)
+      const adminPermissions = this.getAdminPermissions();
+      const payload: JwtPayload = {
+        sub: adminUser.id,
+        username: adminUser.username,
+        roles: ['admin'],
+        permissions: adminPermissions,
+        branchId: mainBranch.id,
+      };
+
+      const accessToken = this.generateAccessToken(payload);
+      const refreshToken = this.generateRefreshToken(payload);
+
+      // Store tokens and session
+      const sessionToken = randomUUID();
+      const sessionExpiry = new Date();
+      sessionExpiry.setDate(sessionExpiry.getDate() + 7);
+
+      await tx.user.update({
+        where: { id: adminUser.id },
+        data: {
+          refreshToken: await bcrypt.hash(refreshToken, 10),
+          refreshTokenExpiresAt: sessionExpiry,
+          currentSessionToken: sessionToken,
+          currentSessionExpiry: sessionExpiry,
+          lastLoginAt: new Date(),
+        },
+      });
+
+      return {
+        accessToken,
+        expiresIn: 900,
+        refreshToken,
+        user: {
+          id: adminUser.id,
+          username: adminUser.username,
+          fullName: adminUser.fullName,
+          fullNameEn: adminUser.fullNameEn ?? undefined,
+          role: 'admin',
+          permissions: adminPermissions,
+          defaultBranchId: mainBranch.id,
+          preferredLanguage: adminUser.preferredLanguage,
+        },
+      };
+    });
+  }
+
+  /**
+   * Get default admin permissions
+   */
+  private getAdminPermissions(): string[] {
+    return [
+      'users:read',
+      'users:create',
+      'users:update',
+      'users:delete',
+      'sales:read',
+      'sales:create',
+      'sales:update',
+      'sales:delete',
+      'purchases:read',
+      'purchases:create',
+      'purchases:update',
+      'inventory:read',
+      'inventory:create',
+      'inventory:update',
+      'reports:read',
+      'settings:read',
+      'settings:update',
+      'branches:read',
+      'branches:create',
+      'branches:update',
+      'customers:read',
+      'customers:create',
+      'customers:update',
+      'debts:read',
+      'debts:create',
+      'debts:update',
+    ];
   }
 }

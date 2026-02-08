@@ -33,6 +33,7 @@ import {
   RolesGuard,
   PaginationQueryDto,
 } from '../common';
+import { AdminResetPasswordDto, MessageResponse } from '../auth/dto';
 
 @ApiTags('users')
 @ApiBearerAuth('JWT-auth')
@@ -81,6 +82,21 @@ export class UsersController {
   })
   async getRoles() {
     return this.usersService.getRoles();
+  }
+
+  @Get('active-sessions')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  @ApiOperation({
+    summary: 'Get all active user sessions',
+    description: 'Returns a list of users currently logged in (PRD requirement)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of active sessions',
+  })
+  async getActiveSessions() {
+    return this.usersService.getActiveSessions();
   }
 
   @Get(':id')
@@ -199,4 +215,39 @@ export class UsersController {
   ): Promise<void> {
     await this.usersService.delete(id, user.id);
   }
+
+  // ============================================
+  // Admin Password Reset & Session Management
+  // ============================================
+
+  @Post(':id/reset-password')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Reset user password (admin only)',
+    description:
+      'Admin can reset any user password. This will invalidate all active sessions for that user.',
+  })
+  @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset successfully',
+    type: MessageResponse,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
+  async resetPassword(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: AdminResetPasswordDto,
+  ): Promise<MessageResponse> {
+    await this.usersService.resetPassword(id, dto.newPassword);
+    return {
+      message: 'Password reset successfully',
+      messageAr: 'تم إعادة تعيين كلمة المرور بنجاح',
+    };
+  }
+
 }

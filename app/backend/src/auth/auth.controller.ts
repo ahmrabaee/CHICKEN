@@ -4,7 +4,9 @@ import {
   Body,
   HttpCode,
   HttpStatus,
+  Req,
 } from '@nestjs/common';
+import { Request } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -19,6 +21,8 @@ import {
   LoginResponse,
   RefreshResponse,
   MessageResponse,
+  CheckSetupResponse,
+  CompleteSetupDto,
 } from './dto';
 import { Public, CurrentUser, CurrentUserData } from '../common';
 
@@ -43,8 +47,12 @@ export class AuthController {
     status: 401,
     description: 'Invalid credentials or inactive account',
   })
-  async login(@Body() loginDto: LoginDto): Promise<LoginResponse> {
-    return this.authService.login(loginDto.username, loginDto.password);
+  async login(
+    @Body() loginDto: LoginDto,
+    @Req() req: Request,
+  ): Promise<LoginResponse> {
+    const ipAddress = req.ip || req.socket?.remoteAddress || 'unknown';
+    return this.authService.login(loginDto.username, loginDto.password, ipAddress);
   }
 
   @Post('refresh')
@@ -116,5 +124,49 @@ export class AuthController {
       message: 'Password changed successfully',
       messageAr: 'تم تغيير كلمة المرور بنجاح',
     };
+  }
+
+  // ============================================
+  // First-Time Setup Endpoints (PRD Requirements)
+  // ============================================
+
+  @Post('check-setup')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Check if initial setup is complete',
+    description: 'Returns whether the system has been initialized with business name and admin account',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Setup status retrieved',
+    type: CheckSetupResponse,
+  })
+  async checkSetup(): Promise<CheckSetupResponse> {
+    return this.authService.checkSetup();
+  }
+
+  @Post('setup')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Complete initial system setup',
+    description: 'One-time setup to initialize the system with business name and admin account',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Setup completed successfully, admin logged in',
+    type: LoginResponse,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Setup already complete or validation error',
+  })
+  async completeSetup(
+    @Body() setupDto: CompleteSetupDto,
+    @Req() req: Request,
+  ): Promise<LoginResponse> {
+    const ipAddress = req.ip || req.socket?.remoteAddress || 'unknown';
+    return this.authService.completeSetup(setupDto, ipAddress);
   }
 }

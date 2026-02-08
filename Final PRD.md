@@ -34,11 +34,11 @@ A comprehensive accounting and point-of-sale (POS) system designed specifically 
 
 ### Non-Goals
 
-* Support for shop chains or multi-branch simultaneous POS systems (single location only).
-
 * Integration with external accounting or POS systems.
 
 * HR or payroll management outside current scope (only cashier and owner handled).
+
+* Advanced multi-currency support (single currency only).
 
 ---
 
@@ -130,6 +130,22 @@ A comprehensive accounting and point-of-sale (POS) system designed specifically 
 
   * Admin account: full permissions; Cashier: limited. Cashier cannot view profit, supplier prices, expenses, or detailed financial reports.
 
+* **Branch Management (High)**
+
+  * **Branch CRUD Operations:** Admin can create, view, edit, and deactivate branches.
+
+  * **Branch Information:** Each branch includes code, name (Arabic/English), address, phone, and scale configuration.
+
+  * **Main Branch:** During first-time setup, a main branch is automatically created. At least one branch must always be active.
+
+  * **User-Branch Assignment:** Users are assigned to a default branch but can access data from other branches based on permissions.
+
+  * **Inventory per Branch:** Track inventory levels separately for each branch location.
+
+  * **Branch-Specific Reports:** Generate sales, inventory, and financial reports filtered by branch.
+
+  * **Branch Permissions:** Admin can control which users have access to which branches.
+
 * **Reports & Alerts (Medium)**
 
   * Periodic reports: sales, inventory, debts, profitability, bestsellers, spoilage.
@@ -146,8 +162,8 @@ A comprehensive accounting and point-of-sale (POS) system designed specifically 
     * Full name
     * Username
     * Password
-    * User role (cashier or manager)
-    * Default branch (automatically set to the main branch; branches cannot be added)
+    * User role (admin or cashier)
+    * Default branch (selectable from available branches)
     * Preferred language (Arabic or English)
 
   * **Users Page:** The system includes a dedicated Users page that lists all users with the following details:
@@ -185,7 +201,7 @@ A comprehensive accounting and point-of-sale (POS) system designed specifically 
 
   * Users (cashier or owner) access via a desktop app built on Tauri with a clear login screen.
 
-  * Login screen asks for username/password, with "change password" link so when it is clicked it will give an alert to login as an admin.
+  * Login screen asks for username/password, with "change password" link so when it is clicked it will give an alert to login as an admin (if the user was a cashier).
 
   * System supports multi-language login (Arabic/English based on user's preferred language setting).
 

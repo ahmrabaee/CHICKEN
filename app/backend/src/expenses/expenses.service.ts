@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AccountingService } from '../accounting/accounting.service';
 import { createPaginatedResult, PaginationQueryDto } from '../common';
 
 @Injectable()
 export class ExpensesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private accountingService: AccountingService,
+  ) {}
 
   async findAll(pagination: PaginationQueryDto, expenseType?: string) {
     const { page = 1, pageSize = 20 } = pagination;
@@ -46,23 +50,38 @@ export class ExpensesService {
   async create(dto: any, userId: number) {
     const expenseNumber = await this.generateExpenseNumber();
 
-    return this.prisma.expense.create({
-      data: {
-        expenseNumber,
-        expenseDate: dto.expenseDate ? new Date(dto.expenseDate) : new Date(),
-        expenseType: dto.expenseType ?? 'operational',
-        categoryId: dto.categoryId,
-        amount: dto.amount,
-        taxAmount: dto.taxAmount ?? 0,
-        description: dto.description,
-        supplierId: dto.supplierId,
-        paymentMethod: dto.paymentMethod,
-        referenceNumber: dto.referenceNumber,
-        branchId: dto.branchId,
-        attachmentUrl: dto.attachmentUrl,
-        notes: dto.notes,
-        createdById: userId,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const expense = await tx.expense.create({
+        data: {
+          expenseNumber,
+          expenseDate: dto.expenseDate ? new Date(dto.expenseDate) : new Date(),
+          expenseType: dto.expenseType ?? 'operational',
+          categoryId: dto.categoryId,
+          amount: dto.amount,
+          taxAmount: dto.taxAmount ?? 0,
+          description: dto.description,
+          supplierId: dto.supplierId,
+          paymentMethod: dto.paymentMethod,
+          referenceNumber: dto.referenceNumber,
+          branchId: dto.branchId,
+          attachmentUrl: dto.attachmentUrl,
+          notes: dto.notes,
+          createdById: userId,
+        },
+      });
+
+      // Create accounting journal entry
+      await this.accountingService.createExpenseJournalEntry(
+        tx,
+        expense.id,
+        expense.expenseNumber,
+        dto.branchId ?? null,
+        userId,
+        dto.amount,
+        dto.paymentMethod,
+      );
+
+      return expense;
     });
   }
 

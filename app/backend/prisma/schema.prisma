@@ -25,7 +25,7 @@ datasource db {
 model Branch {
   id           Int      @id @default(autoincrement())
   code         String   @unique
-  name         String   // Arabic name (primary)
+  name         String // Arabic name (primary)
   nameEn       String?  @map("name_en")
   address      String?
   phone        String?
@@ -37,18 +37,18 @@ model Branch {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   // Relations
-  users           User[]          @relation("DefaultBranch")
-  inventory       Inventory[]
-  inventoryLots   InventoryLot[]
-  stockMovements  StockMovement[]
-  wastageRecords  WastageRecord[]
-  sales           Sale[]
-  purchases       Purchase[]
-  payments        Payment[]
-  debts           Debt[]
-  expenses        Expense[]
-  journalEntries  JournalEntry[]
-  auditLogs       AuditLog[]
+  users          User[]          @relation("DefaultBranch")
+  inventory      Inventory[]
+  inventoryLots  InventoryLot[]
+  stockMovements StockMovement[]
+  wastageRecords WastageRecord[]
+  sales          Sale[]
+  purchases      Purchase[]
+  payments       Payment[]
+  debts          Debt[]
+  expenses       Expense[]
+  journalEntries JournalEntry[]
+  auditLogs      AuditLog[]
 
   @@map("branches")
 }
@@ -60,7 +60,7 @@ model Role {
   name         String   @unique // 'admin' or 'cashier'
   nameAr       String   @map("name_ar")
   description  String?
-  permissions  String?  // JSON array: ["sales.create", "sales.view", ...]
+  permissions  String? // JSON array: ["sales.create", "sales.view", ...]
   isSystemRole Boolean  @default(false) @map("is_system_role")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
@@ -87,12 +87,18 @@ model User {
   lastLoginAt           DateTime? @map("last_login_at")
   refreshToken          String?   @map("refresh_token")
   refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
-  isActive              Boolean   @default(true) @map("is_active")
-  metadata              String?   // JSON
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
-  createdById           Int?      @map("created_by")
-  updatedById           Int?      @map("updated_by")
+
+  // NEW FIELDS - PRD Requirements: User tracking and session management
+  workStartDate        DateTime  @default(now()) @map("work_start_date")
+  currentSessionToken  String?   @map("current_session_token")
+  currentSessionExpiry DateTime? @map("current_session_expiry")
+
+  isActive    Boolean  @default(true) @map("is_active")
+  metadata    String? // JSON
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdById Int?     @map("created_by")
+  updatedById Int?     @map("updated_by")
 
   // Self-referential relations
   createdBy User? @relation("UserCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
@@ -107,7 +113,7 @@ model User {
   itemsCreated          Item[]          @relation("ItemCreatedBy")
   itemsUpdated          Item[]          @relation("ItemUpdatedBy")
   inventoryLotsCreated  InventoryLot[]  @relation("LotCreatedBy")
-  stockMovements         StockMovement[]
+  stockMovements        StockMovement[]
   wastageRecorded       WastageRecord[] @relation("WastageRecordedBy")
   wastageApproved       WastageRecord[] @relation("WastageApprovedBy")
   customersCreated      Customer[]      @relation("CustomerCreatedBy")
@@ -132,11 +138,11 @@ model User {
 /// Links users to roles (many-to-many)
 /// PRD Section: 3.1
 model UserRole {
-  id         Int      @id @default(autoincrement())
-  userId     Int      @map("user_id")
-  roleId     Int      @map("role_id")
-  assignedAt DateTime @default(now()) @map("assigned_at")
-  assignedById Int?   @map("assigned_by")
+  id           Int      @id @default(autoincrement())
+  userId       Int      @map("user_id")
+  roleId       Int      @map("role_id")
+  assignedAt   DateTime @default(now()) @map("assigned_at")
+  assignedById Int?     @map("assigned_by")
 
   // Relations
   user       User  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -156,7 +162,7 @@ model UserRole {
 model Category {
   id                   Int      @id @default(autoincrement())
   code                 String   @unique
-  name                 String   // Arabic name (primary)
+  name                 String // Arabic name (primary)
   nameEn               String?  @map("name_en")
   displayOrder         Int      @default(0) @map("display_order")
   icon                 String?
@@ -178,7 +184,7 @@ model Item {
   id                   Int      @id @default(autoincrement())
   code                 String   @unique
   barcode              String?  @unique
-  name                 String   // Arabic name (primary)
+  name                 String // Arabic name (primary)
   nameEn               String?  @map("name_en")
   description          String?
   categoryId           Int      @map("category_id")
@@ -192,7 +198,7 @@ model Item {
   requiresScale        Boolean  @default(true) @map("requires_scale")
   allowNegativeStock   Boolean  @default(false) @map("allow_negative_stock")
   imageUrl             String?  @map("image_url")
-  metadata             String?  // JSON
+  metadata             String? // JSON
   isActive             Boolean  @default(true) @map("is_active")
   createdAt            DateTime @default(now()) @map("created_at")
   updatedAt            DateTime @updatedAt @map("updated_at")
@@ -254,17 +260,17 @@ model InventoryLot {
   unitPurchasePrice      Int       @map("unit_purchase_price") // Minor units per kg
   receivedAt             DateTime  @default(now()) @map("received_at")
   expiryDate             DateTime? @map("expiry_date")
-  metadata               String?   // JSON: gross_weight, net_weight, shrinkage
+  metadata               String? // JSON: gross_weight, net_weight, shrinkage
   createdAt              DateTime  @default(now()) @map("created_at")
   updatedAt              DateTime  @updatedAt @map("updated_at")
   createdById            Int?      @map("created_by")
 
   // Relations
-  item            Item                      @relation(fields: [itemId], references: [id], onDelete: Restrict)
-  purchase        Purchase?                 @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
-  purchaseLine    PurchaseLine?             @relation(fields: [purchaseLineId], references: [id], onDelete: SetNull)
-  branch          Branch?                   @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  createdBy       User?                     @relation("LotCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  item            Item                     @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  purchase        Purchase?                @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
+  purchaseLine    PurchaseLine?            @relation(fields: [purchaseLineId], references: [id], onDelete: SetNull)
+  branch          Branch?                  @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  createdBy       User?                    @relation("LotCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   stockMovements  StockMovement[]
   wastageRecords  WastageRecord[]
   costAllocations SaleLineCostAllocation[]
@@ -279,21 +285,21 @@ model InventoryLot {
 /// Audit trail for inventory changes
 /// PRD Section: 4.2.2
 model StockMovement {
-  id             Int       @id @default(autoincrement())
-  itemId         Int       @map("item_id")
-  lotId          Int?      @map("lot_id")
-  branchId       Int?      @map("branch_id")
-  movementType   String    @map("movement_type") // 'purchase', 'sale', 'adjustment', 'transfer', 'waste', 'opening'
-  quantityGrams  Int       @map("quantity_grams") // Positive = in, Negative = out
-  unitCost       Int?      @map("unit_cost")
-  referenceType  String?   @map("reference_type")
-  referenceId    Int?      @map("reference_id")
-  fromBranchId   Int?      @map("from_branch_id")
-  toBranchId     Int?      @map("to_branch_id")
-  reason         String?
-  movementDate   DateTime  @default(now()) @map("movement_date")
-  performedById  Int?      @map("performed_by")
-  createdAt      DateTime  @default(now()) @map("created_at")
+  id            Int      @id @default(autoincrement())
+  itemId        Int      @map("item_id")
+  lotId         Int?     @map("lot_id")
+  branchId      Int?     @map("branch_id")
+  movementType  String   @map("movement_type") // 'purchase', 'sale', 'adjustment', 'transfer', 'waste', 'opening'
+  quantityGrams Int      @map("quantity_grams") // Positive = in, Negative = out
+  unitCost      Int?     @map("unit_cost")
+  referenceType String?  @map("reference_type")
+  referenceId   Int?     @map("reference_id")
+  fromBranchId  Int?     @map("from_branch_id")
+  toBranchId    Int?     @map("to_branch_id")
+  reason        String?
+  movementDate  DateTime @default(now()) @map("movement_date")
+  performedById Int?     @map("performed_by")
+  createdAt     DateTime @default(now()) @map("created_at")
 
   // Relations
   item        Item          @relation(fields: [itemId], references: [id], onDelete: Restrict)
@@ -349,7 +355,7 @@ model WastageRecord {
 model Customer {
   id                 Int      @id @default(autoincrement())
   customerNumber     String   @unique @map("customer_number")
-  name               String   // Arabic name (primary)
+  name               String // Arabic name (primary)
   nameEn             String?  @map("name_en")
   phone              String?
   phone2             String?
@@ -360,7 +366,7 @@ model Customer {
   priceLevel         String   @default("standard") @map("price_level") // 'standard', 'wholesale', 'vip'
   defaultDiscountPct Int      @default(0) @map("default_discount_pct") // Basis points
   taxNumber          String?  @map("tax_number")
-  metadata           String?  // JSON
+  metadata           String? // JSON
   notes              String?
   isActive           Boolean  @default(true) @map("is_active")
   createdAt          DateTime @default(now()) @map("created_at")
@@ -383,7 +389,7 @@ model Customer {
 model Supplier {
   id                Int      @id @default(autoincrement())
   supplierNumber    String   @unique @map("supplier_number")
-  name              String   // Arabic name (primary)
+  name              String // Arabic name (primary)
   nameEn            String?  @map("name_en")
   phone             String?
   email             String?
@@ -395,7 +401,7 @@ model Supplier {
   creditLimit       Int?     @map("credit_limit")
   bankName          String?  @map("bank_name")
   bankAccountNumber String?  @map("bank_account_number")
-  rating            Int?     // 1-5
+  rating            Int? // 1-5
   metadata          String?
   notes             String?
   isActive          Boolean  @default(true) @map("is_active")
@@ -421,34 +427,34 @@ model Supplier {
 /// Sales invoices with FIFO cost tracking
 /// PRD Section: 4.2.3 - Sales header
 model Sale {
-  id                 Int       @id @default(autoincrement())
-  saleNumber         String    @unique @map("sale_number")
-  saleDate           DateTime  @default(now()) @map("sale_date")
-  saleType           String    @default("cash") @map("sale_type") // 'cash', 'credit', 'mixed'
-  customerId         Int?      @map("customer_id")
-  customerName       String?   @map("customer_name")
-  customerPhone      String?   @map("customer_phone")
-  cashierId          Int       @map("cashier_id")
-  branchId           Int?      @map("branch_id")
-  grossTotalAmount   Int       @default(0) @map("gross_total_amount") // Minor units
-  discountAmount     Int       @default(0) @map("discount_amount")
-  discountPct        Int?      @map("discount_pct") // Basis points
-  taxAmount          Int       @default(0) @map("tax_amount")
-  totalAmount        Int       @default(0) @map("total_amount")
-  totalCost          Int       @default(0) @map("total_cost")
-  totalProfit        Int       @default(0) @map("total_profit")
-  paymentStatus      String    @default("unpaid") @map("payment_status") // 'unpaid', 'partial', 'paid'
-  amountPaid         Int       @default(0) @map("amount_paid")
-  dueDate            DateTime? @map("due_date")
-  isVoided           Boolean   @default(false) @map("is_voided")
-  voidedAt           DateTime? @map("voided_at")
-  voidedById         Int?      @map("voided_by")
-  voidReason         String?   @map("void_reason")
-  notes              String?
-  metadata           String?   // JSON
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
-  createdById        Int?      @map("created_by")
+  id               Int       @id @default(autoincrement())
+  saleNumber       String    @unique @map("sale_number")
+  saleDate         DateTime  @default(now()) @map("sale_date")
+  saleType         String    @default("cash") @map("sale_type") // 'cash', 'credit', 'mixed'
+  customerId       Int?      @map("customer_id")
+  customerName     String?   @map("customer_name")
+  customerPhone    String?   @map("customer_phone")
+  cashierId        Int       @map("cashier_id")
+  branchId         Int?      @map("branch_id")
+  grossTotalAmount Int       @default(0) @map("gross_total_amount") // Minor units
+  discountAmount   Int       @default(0) @map("discount_amount")
+  discountPct      Int?      @map("discount_pct") // Basis points
+  taxAmount        Int       @default(0) @map("tax_amount")
+  totalAmount      Int       @default(0) @map("total_amount")
+  totalCost        Int       @default(0) @map("total_cost")
+  totalProfit      Int       @default(0) @map("total_profit")
+  paymentStatus    String    @default("unpaid") @map("payment_status") // 'unpaid', 'partial', 'paid'
+  amountPaid       Int       @default(0) @map("amount_paid")
+  dueDate          DateTime? @map("due_date")
+  isVoided         Boolean   @default(false) @map("is_voided")
+  voidedAt         DateTime? @map("voided_at")
+  voidedById       Int?      @map("voided_by")
+  voidReason       String?   @map("void_reason")
+  notes            String?
+  metadata         String? // JSON
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  createdById      Int?      @map("created_by")
 
   // Relations
   customer  Customer?  @relation(fields: [customerId], references: [id], onDelete: Restrict)
@@ -484,7 +490,7 @@ model SaleLine {
   lineTotalAmount Int      @map("line_total_amount")
   costPerKg       Int      @default(0) @map("cost_per_kg")
   lineTotalCost   Int      @default(0) @map("line_total_cost")
-  metadata        String?  // JSON
+  metadata        String? // JSON
   createdAt       DateTime @default(now()) @map("created_at")
 
   // Relations
@@ -500,13 +506,13 @@ model SaleLine {
 /// FIFO cost tracking - links sale lines to inventory lots
 /// PRD Section: 4.2.3
 model SaleLineCostAllocation {
-  id                      Int      @id @default(autoincrement())
-  saleLineId              Int      @map("sale_line_id")
-  lotId                   Int      @map("lot_id")
-  quantityAllocatedGrams  Int      @map("quantity_allocated_grams")
-  unitCost                Int      @map("unit_cost") // Minor units per kg
-  totalCost               Int      @map("total_cost")
-  createdAt               DateTime @default(now()) @map("created_at")
+  id                     Int      @id @default(autoincrement())
+  saleLineId             Int      @map("sale_line_id")
+  lotId                  Int      @map("lot_id")
+  quantityAllocatedGrams Int      @map("quantity_allocated_grams")
+  unitCost               Int      @map("unit_cost") // Minor units per kg
+  totalCost              Int      @map("total_cost")
+  createdAt              DateTime @default(now()) @map("created_at")
 
   // Relations
   saleLine SaleLine     @relation(fields: [saleLineId], references: [id], onDelete: Cascade)
@@ -538,7 +544,7 @@ model Purchase {
   approvedAt            DateTime? @map("approved_at")
   branchId              Int?      @map("branch_id")
   notes                 String?
-  metadata              String?   // JSON: live bird details
+  metadata              String? // JSON: live bird details
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")
   createdById           Int?      @map("created_by")
@@ -576,7 +582,7 @@ model PurchaseLine {
   lotNumber       String?   @map("lot_number")
   expiryDate      DateTime? @map("expiry_date")
   isLiveBird      Boolean   @default(false) @map("is_live_bird")
-  metadata        String?   // JSON: gross_weight, net_weight, shrinkage_pct
+  metadata        String? // JSON: gross_weight, net_weight, shrinkage_pct
   createdAt       DateTime  @default(now()) @map("created_at")
 
   // Relations
@@ -595,7 +601,7 @@ model Payment {
   id                Int      @id @default(autoincrement())
   paymentNumber     String   @unique @map("payment_number")
   paymentDate       DateTime @default(now()) @map("payment_date")
-  amount            Int      // Minor units (can be negative for refunds)
+  amount            Int // Minor units (can be negative for refunds)
   paymentMethod     String   @map("payment_method") // 'cash', 'card', 'bank_transfer', 'mobile', 'check'
   referenceType     String   @map("reference_type") // 'sale', 'purchase', 'expense', 'debt'
   referenceId       Int      @map("reference_id")
@@ -624,22 +630,22 @@ model Payment {
 /// Receivables and Payables tracking
 /// PRD Section: 4.2.5
 model Debt {
-  id         Int       @id @default(autoincrement())
-  debtNumber String    @unique @map("debt_number")
-  direction  String    // 'receivable' (owed to us), 'payable' (we owe)
-  partyType  String    @map("party_type") // 'customer', 'supplier', 'employee', 'other'
-  partyId    Int?      @map("party_id")
-  partyName  String    @map("party_name")
-  totalAmount Int      @map("total_amount") // Minor units
-  amountPaid  Int      @default(0) @map("amount_paid")
+  id          Int       @id @default(autoincrement())
+  debtNumber  String    @unique @map("debt_number")
+  direction   String // 'receivable' (owed to us), 'payable' (we owe)
+  partyType   String    @map("party_type") // 'customer', 'supplier', 'employee', 'other'
+  partyId     Int?      @map("party_id")
+  partyName   String    @map("party_name")
+  totalAmount Int       @map("total_amount") // Minor units
+  amountPaid  Int       @default(0) @map("amount_paid")
   dueDate     DateTime? @map("due_date")
-  sourceType  String   @map("source_type") // 'sale', 'purchase', 'expense'
-  sourceId    Int      @map("source_id")
-  status      String   @default("open") // 'open', 'partial', 'paid', 'overdue', 'written_off'
-  branchId    Int?     @map("branch_id")
+  sourceType  String    @map("source_type") // 'sale', 'purchase', 'expense'
+  sourceId    Int       @map("source_id")
+  status      String    @default("open") // 'open', 'partial', 'paid', 'overdue', 'written_off'
+  branchId    Int?      @map("branch_id")
   notes       String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   // Relations
   branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
@@ -660,7 +666,7 @@ model Debt {
 model ExpenseCategory {
   id               Int      @id @default(autoincrement())
   code             String   @unique
-  name             String   // Arabic
+  name             String // Arabic
   nameEn           String?  @map("name_en")
   accountCode      String?  @map("account_code")
   parentCategoryId Int?     @map("parent_category_id")
@@ -669,9 +675,9 @@ model ExpenseCategory {
   updatedAt        DateTime @updatedAt @map("updated_at")
 
   // Self-referential
-  parentCategory   ExpenseCategory?  @relation("CategoryHierarchy", fields: [parentCategoryId], references: [id], onDelete: SetNull)
-  childCategories  ExpenseCategory[] @relation("CategoryHierarchy")
-  expenses         Expense[]
+  parentCategory  ExpenseCategory?  @relation("CategoryHierarchy", fields: [parentCategoryId], references: [id], onDelete: SetNull)
+  childCategories ExpenseCategory[] @relation("CategoryHierarchy")
+  expenses        Expense[]
 
   @@map("expense_categories")
 }
@@ -684,7 +690,7 @@ model Expense {
   expenseDate     DateTime  @default(now()) @map("expense_date")
   expenseType     String    @map("expense_type") // 'operational', 'personal', 'payroll', 'utilities', 'rent', 'maintenance', 'other'
   categoryId      Int?      @map("category_id")
-  amount          Int       // Minor units
+  amount          Int // Minor units
   taxAmount       Int       @default(0) @map("tax_amount")
   description     String
   supplierId      Int?      @map("supplier_id")
@@ -722,7 +728,7 @@ model Expense {
 model Account {
   id                Int      @id @default(autoincrement())
   code              String   @unique
-  name              String   // Arabic
+  name              String // Arabic
   nameEn            String?  @map("name_en")
   accountType       String   @map("account_type") // 'asset', 'liability', 'equity', 'revenue', 'expense'
   parentAccountCode String?  @map("parent_account_code")
@@ -732,8 +738,8 @@ model Account {
   updatedAt         DateTime @updatedAt @map("updated_at")
 
   // Self-referential
-  parentAccount     Account?            @relation("AccountHierarchy", fields: [parentAccountCode], references: [code], onDelete: SetNull)
-  childAccounts     Account[]           @relation("AccountHierarchy")
+  parentAccount     Account?           @relation("AccountHierarchy", fields: [parentAccountCode], references: [code], onDelete: SetNull)
+  childAccounts     Account[]          @relation("AccountHierarchy")
   journalEntryLines JournalEntryLine[]
 
   @@index([accountType])
@@ -743,28 +749,28 @@ model Account {
 /// Journal entry headers
 /// PRD Section: 6.2
 model JournalEntry {
-  id                  Int       @id @default(autoincrement())
-  entryNumber         String    @unique @map("entry_number")
-  entryDate           DateTime  @default(now()) @map("entry_date")
-  description         String
-  sourceType          String?   @map("source_type") // 'sale', 'purchase', 'payment', 'adjustment', 'expense'
-  sourceId            Int?      @map("source_id")
-  isPosted            Boolean   @default(false) @map("is_posted")
-  isReversed          Boolean   @default(false) @map("is_reversed")
-  reversedByEntryId   Int?      @map("reversed_by_entry_id")
-  branchId            Int?      @map("branch_id")
-  createdAt           DateTime  @default(now()) @map("created_at")
-  updatedAt           DateTime  @updatedAt @map("updated_at")
-  createdById         Int?      @map("created_by")
+  id                Int      @id @default(autoincrement())
+  entryNumber       String   @unique @map("entry_number")
+  entryDate         DateTime @default(now()) @map("entry_date")
+  description       String
+  sourceType        String?  @map("source_type") // 'sale', 'purchase', 'payment', 'adjustment', 'expense'
+  sourceId          Int?     @map("source_id")
+  isPosted          Boolean  @default(false) @map("is_posted")
+  isReversed        Boolean  @default(false) @map("is_reversed")
+  reversedByEntryId Int?     @map("reversed_by_entry_id")
+  branchId          Int?     @map("branch_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  createdById       Int?     @map("created_by")
 
   // Self-referential
-  reversedByEntry     JournalEntry?      @relation("EntryReversal", fields: [reversedByEntryId], references: [id], onDelete: SetNull)
-  reversesEntries     JournalEntry[]     @relation("EntryReversal")
+  reversedByEntry JournalEntry?  @relation("EntryReversal", fields: [reversedByEntryId], references: [id], onDelete: SetNull)
+  reversesEntries JournalEntry[] @relation("EntryReversal")
 
   // Relations
-  branch              Branch?            @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  createdBy           User?              @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  lines               JournalEntryLine[]
+  branch    Branch?            @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  createdBy User?              @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  lines     JournalEntryLine[]
 
   @@index([entryDate])
   @@index([sourceType, sourceId])
@@ -802,7 +808,7 @@ model JournalEntryLine {
 model SystemSetting {
   id           Int      @id @default(autoincrement())
   key          String   @unique
-  value        String   // JSON serialized
+  value        String // JSON serialized
   description  String?
   dataType     String   @default("string") @map("data_type") // 'string', 'number', 'boolean', 'json'
   settingGroup String?  @map("setting_group")
@@ -820,10 +826,10 @@ model AuditLog {
   timestamp  DateTime @default(now())
   userId     Int?     @map("user_id")
   username   String
-  action     String   // 'create', 'update', 'delete', 'void', 'login', 'logout', etc.
+  action     String // 'create', 'update', 'delete', 'void', 'login', 'logout', etc.
   entityType String   @map("entity_type")
   entityId   Int?     @map("entity_id")
-  changes    String?  // JSON: before/after
+  changes    String? // JSON: before/after
   ipAddress  String?  @map("ip_address")
   userAgent  String?  @map("user_agent")
   branchId   Int?     @map("branch_id")

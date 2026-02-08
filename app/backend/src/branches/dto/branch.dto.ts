@@ -1,11 +1,14 @@
-import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsBoolean } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional, PartialType, OmitType } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, IsOptional, IsBoolean, Matches, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateBranchDto {
-  @ApiProperty({ description: 'Branch code', example: 'BR001' })
+  @ApiProperty({ description: 'Branch code (2-10 chars, uppercase)', example: 'BR01' })
   @IsString()
   @IsNotEmpty()
+  @Matches(/^[A-Z0-9]{2,10}$/, {
+    message: 'Code must be 2-10 uppercase alphanumeric characters',
+  })
   code: string;
 
   @ApiProperty({ description: 'Branch name in Arabic', example: 'الفرع الرئيسي' })
@@ -28,20 +31,32 @@ export class CreateBranchDto {
   @IsOptional()
   phone?: string;
 
-  @ApiPropertyOptional({ description: 'Is main branch', default: false })
+  @ApiPropertyOptional({ description: 'Branch has a weight scale', default: true })
   @Type(() => Boolean)
   @IsBoolean()
   @IsOptional()
-  isMainBranch?: boolean;
+  hasScale?: boolean;
+
+  @ApiPropertyOptional({ description: 'Scale COM port (required if hasScale is true)', example: 'COM3' })
+  @IsString()
+  @IsOptional()
+  @Matches(/^COM[1-9][0-9]?$/, {
+    message: 'Scale COM port must be in format COM1 to COM99',
+  })
+  @ValidateIf((o) => o.hasScale === true)
+  scaleComPort?: string;
 }
 
-export class UpdateBranchDto extends PartialType(CreateBranchDto) {}
+// Update DTO excludes code and isMainBranch - these cannot be changed
+export class UpdateBranchDto extends PartialType(
+  OmitType(CreateBranchDto, ['code'] as const),
+) {}
 
 export class BranchResponseDto {
   @ApiProperty({ example: 1 })
   id: number;
 
-  @ApiProperty({ example: 'BR001' })
+  @ApiProperty({ example: 'BR01' })
   code: string;
 
   @ApiProperty({ example: 'الفرع الرئيسي' })
@@ -57,8 +72,25 @@ export class BranchResponseDto {
   phone?: string;
 
   @ApiProperty({ example: true })
+  hasScale: boolean;
+
+  @ApiPropertyOptional({ example: 'COM3' })
+  scaleComPort?: string;
+
+  @ApiProperty({ example: true })
   isMainBranch: boolean;
 
   @ApiProperty({ example: true })
   isActive: boolean;
+
+  @ApiProperty({ example: 3, description: 'Number of users assigned to this branch' })
+  userCount: number;
+
+  @ApiProperty({ example: '2026-02-07T10:00:00.000Z' })
+  createdAt: string;
+}
+
+export class BranchListResponseDto {
+  @ApiProperty({ type: [BranchResponseDto] })
+  branches: BranchResponseDto[];
 }

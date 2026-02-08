@@ -1,5 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, MinLength } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  MinLength,
+  MaxLength,
+  IsOptional,
+  IsEnum,
+} from 'class-validator';
 
 export class LoginDto {
   @ApiProperty({
@@ -123,4 +130,67 @@ export class MessageResponse {
     example: 'تمت العملية بنجاح',
   })
   messageAr?: string;
+}
+
+// ============================================
+// First-Time Setup DTOs
+// ============================================
+
+export class CheckSetupResponse {
+  @ApiProperty({ description: 'Whether initial setup is complete' })
+  setupCompleted: boolean;
+
+  @ApiPropertyOptional({ description: 'Business name (if setup complete)' })
+  businessName?: string;
+
+  @ApiPropertyOptional({ description: 'Business name in English (if setup complete)' })
+  businessNameEn?: string;
+}
+
+export class CompleteSetupDto {
+  @ApiProperty({ description: 'Business name in Arabic' })
+  @IsString()
+  @IsNotEmpty()
+  businessName: string;
+
+  @ApiPropertyOptional({ description: 'Business name in English' })
+  @IsOptional()
+  @IsString()
+  businessNameEn?: string;
+
+  @ApiProperty({ description: 'Admin username', minLength: 3 })
+  @IsString()
+  @MinLength(3)
+  @MaxLength(50)
+  adminUsername: string;
+
+  @ApiProperty({ description: 'Admin password', minLength: 8 })
+  @IsString()
+  @MinLength(8)
+  adminPassword: string;
+
+  @ApiProperty({ description: 'Admin full name in Arabic' })
+  @IsString()
+  @IsNotEmpty()
+  adminFullName: string;
+
+  @ApiPropertyOptional({ description: 'Admin full name in English' })
+  @IsOptional()
+  @IsString()
+  adminFullNameEn?: string;
+
+  @ApiProperty({ description: 'Preferred language', enum: ['ar', 'en'] })
+  @IsEnum(['ar', 'en'])
+  preferredLanguage: 'ar' | 'en';
+}
+
+// ============================================
+// Admin Password Reset DTO
+// ============================================
+
+export class AdminResetPasswordDto {
+  @ApiProperty({ description: 'New password for the user', minLength: 8 })
+  @IsString()
+  @MinLength(8)
+  newPassword: string;
 }

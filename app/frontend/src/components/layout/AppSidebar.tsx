@@ -25,6 +25,7 @@ import {
   Boxes,
   UserCircle,
   Loader2,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -117,6 +118,12 @@ const navigation: NavItem[] = [
     titleAr: "المصاريف الشخصية",
     icon: Wallet,
     href: "/personal-expenses",
+  },
+  {
+    title: "Branches",
+    titleAr: "الفروع",
+    icon: Building2,
+    href: "/branches",
   },
   {
     title: "Settings",

@@ -19,6 +19,8 @@ import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
 import Login from "@/pages/Login";
 import Setup from "@/pages/Setup";
+import Branches from "@/pages/Branches";
+import BranchProfile from "@/pages/branches/BranchProfile";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -81,6 +83,11 @@ const App = () => (
 
                 {/* Settings */}
                 <Route path="/settings" element={<Settings />} />
+
+                {/* Branches */}
+                <Route path="/branches" element={<Branches />} />
+                <Route path="/branches/new" element={<BranchProfile />} />
+                <Route path="/branches/:id" element={<BranchProfile />} />
               </Route>
             </Route>
 

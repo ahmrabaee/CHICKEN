@@ -10,7 +10,7 @@ import { DebtsService } from './debts.service';
 import { PaginationQueryDto, Roles } from '../common';
 
 @ApiTags('debts')
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 @Controller('debts')
 export class DebtsController {
   constructor(private debtsService: DebtsService) {}

@@ -1,4 +1,4 @@
-# Module 09: Returns & Wastage
+![alt text](image.png)# Module 09: Returns & Wastage
 
 > **Status**: 📋 To Implement  
 > **Priority**: P1 - High  

@@ -4,7 +4,7 @@ import { ReportsService } from './reports.service';
 import { Roles } from '../common';
 
 @ApiTags('reports')
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 @Roles('admin', 'manager')
 @Controller('reports')
 export class ReportsController {

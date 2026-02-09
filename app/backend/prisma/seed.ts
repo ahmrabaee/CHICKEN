@@ -341,7 +341,9 @@ async function seedDefaultAdmin(): Promise<void> {
 
   const admin = await prisma.user.upsert({
     where: { username: 'admin' },
-    update: {},
+    update: {
+      passwordHash, // Update password on re-seed
+    },
     create: {
       username: 'admin',
       email: 'admin@chickenshop.local',

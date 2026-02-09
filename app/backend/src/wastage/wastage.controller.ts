@@ -13,7 +13,7 @@ import { CreateWastageDto } from './dto/wastage.dto';
 import { PaginationQueryDto, Roles, CurrentUser } from '../common';
 
 @ApiTags('wastage')
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 @Controller('wastage')
 export class WastageController {
   constructor(private wastageService: WastageService) {}

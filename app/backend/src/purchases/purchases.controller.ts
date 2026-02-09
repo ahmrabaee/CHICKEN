@@ -14,7 +14,7 @@ import { CreatePurchaseDto, ReceivePurchaseDto } from './dto/purchase.dto';
 import { PaginationQueryDto, Roles, CurrentUser } from '../common';
 
 @ApiTags('purchases')
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 @Controller('purchases')
 export class PurchasesController {
   constructor(private purchasesService: PurchasesService) {}

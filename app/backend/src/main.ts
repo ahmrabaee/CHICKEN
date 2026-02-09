@@ -59,6 +59,7 @@ async function bootstrap() {
         description: 'Enter JWT access token',
         in: 'header',
       },
+      'JWT-auth',
     )
     .addTag('auth', 'Authentication & session management')
     .addTag('users', 'User management')

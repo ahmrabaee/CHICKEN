@@ -46,11 +46,13 @@ export class ChangePasswordDto {
 }
 
 export class RefreshTokenDto {
-  @ApiPropertyOptional({
-    description: 'Refresh token (optional if sent via cookie)',
+  @ApiProperty({
+    description: 'Refresh token to exchange for a new access token',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
   })
   @IsString()
-  refreshToken?: string;
+  @IsNotEmpty()
+  refreshToken: string;
 }
 
 export class AuthUserResponse {

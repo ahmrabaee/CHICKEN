@@ -15,7 +15,7 @@ import { CreateExpenseDto, UpdateExpenseDto } from './dto/expense.dto';
 import { PaginationQueryDto, Roles, CurrentUser } from '../common';
 
 @ApiTags('expenses')
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 @Controller('expenses')
 export class ExpensesController {
   constructor(private expensesService: ExpensesService) {}

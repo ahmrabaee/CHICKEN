@@ -15,7 +15,7 @@ import { CreateSupplierDto, UpdateSupplierDto } from './dto/supplier.dto';
 import { PaginationQueryDto, Roles } from '../common';
 
 @ApiTags('suppliers')
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 @Roles('admin', 'manager')
 @Controller('suppliers')
 export class SuppliersController {

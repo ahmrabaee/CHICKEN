@@ -72,7 +72,7 @@ export class AuthController {
     description: 'Invalid or expired refresh token',
   })
   async refresh(@Body() refreshDto: RefreshTokenDto): Promise<RefreshResponse> {
-    return this.authService.refreshToken(refreshDto.refreshToken!);
+    return this.authService.refreshToken(refreshDto.refreshToken);
   }
 
   @Post('logout')

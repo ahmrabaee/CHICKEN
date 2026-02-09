@@ -151,73 +151,10 @@ export class AuthService {
    * Refresh access token using refresh token
    */
   async refreshToken(refreshToken: string): Promise<RefreshResponse> {
+    // Verify JWT first - this will throw if expired or invalid signature
+    let payload: JwtPayload;
     try {
-      const payload = this.jwtService.verify<JwtPayload>(refreshToken);
-
-      if (payload.type !== 'refresh') {
-        throw new UnauthorizedException({
-          code: 'INVALID_TOKEN',
-          message: 'Invalid refresh token',
-          messageAr: 'رمز التحديث غير صالح',
-        });
-      }
-
-      // Find user and verify refresh token
-      const user = await this.prisma.user.findUnique({
-        where: { id: payload.sub },
-        include: {
-          userRoles: {
-            include: {
-              role: true,
-            },
-          },
-        },
-      });
-
-      if (!user || !user.refreshToken) {
-        throw new UnauthorizedException({
-          code: 'INVALID_TOKEN',
-          message: 'User not found or token revoked',
-          messageAr: 'المستخدم غير موجود أو الرمز ملغى',
-        });
-      }
-
-      // Verify refresh token matches stored hash
-      const isValidToken = await bcrypt.compare(refreshToken, user.refreshToken);
-      if (!isValidToken) {
-        throw new UnauthorizedException({
-          code: 'INVALID_TOKEN',
-          message: 'Invalid refresh token',
-          messageAr: 'رمز التحديث غير صالح',
-        });
-      }
-
-      if (!user.isActive) {
-        throw new UnauthorizedException({
-          code: 'USER_INACTIVE',
-          message: 'User account is inactive',
-          messageAr: 'حساب المستخدم غير نشط',
-        });
-      }
-
-      // Generate new access token
-      const roles = user.userRoles.map((ur) => ur.role.name);
-      const permissions = this.collectPermissions(user.userRoles);
-
-      const newPayload: JwtPayload = {
-        sub: user.id,
-        username: user.username,
-        roles,
-        permissions,
-        branchId: user.defaultBranchId ?? undefined,
-      };
-
-      const accessToken = this.generateAccessToken(newPayload);
-
-      return {
-        accessToken,
-        expiresIn: 900,
-      };
+      payload = this.jwtService.verify<JwtPayload>(refreshToken);
     } catch {
       throw new UnauthorizedException({
         code: 'TOKEN_EXPIRED',
@@ -225,6 +162,71 @@ export class AuthService {
         messageAr: 'انتهت صلاحية رمز التحديث',
       });
     }
+
+    if (payload.type !== 'refresh') {
+      throw new UnauthorizedException({
+        code: 'INVALID_TOKEN',
+        message: 'Invalid refresh token',
+        messageAr: 'رمز التحديث غير صالح',
+      });
+    }
+
+    // Find user and verify refresh token
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      include: {
+        userRoles: {
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+
+    if (!user || !user.refreshToken) {
+      throw new UnauthorizedException({
+        code: 'INVALID_TOKEN',
+        message: 'User not found or token revoked',
+        messageAr: 'المستخدم غير موجود أو الرمز ملغى',
+      });
+    }
+
+    // Verify refresh token matches stored hash
+    const isValidToken = await bcrypt.compare(refreshToken, user.refreshToken);
+    if (!isValidToken) {
+      throw new UnauthorizedException({
+        code: 'TOKEN_MISMATCH',
+        message: 'Refresh token has been invalidated (new login detected)',
+        messageAr: 'تم إبطال رمز التحديث (تم اكتشاف تسجيل دخول جديد)',
+      });
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException({
+        code: 'USER_INACTIVE',
+        message: 'User account is inactive',
+        messageAr: 'حساب المستخدم غير نشط',
+      });
+    }
+
+    // Generate new access token
+    const roles = user.userRoles.map((ur) => ur.role.name);
+    const permissions = this.collectPermissions(user.userRoles);
+
+    const newPayload: JwtPayload = {
+      sub: user.id,
+      username: user.username,
+      roles,
+      permissions,
+      branchId: user.defaultBranchId ?? undefined,
+    };
+
+    const accessToken = this.generateAccessToken(newPayload);
+
+    return {
+      accessToken,
+      expiresIn: 900,
+    };
   }
 
   /**

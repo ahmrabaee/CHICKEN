@@ -4,8 +4,8 @@ import { AuditService } from './audit.service';
 import { PaginationQueryDto, Roles } from '../common';
 
 @ApiTags('audit')
-@ApiBearerAuth()
-@Roles('Admin')
+@ApiBearerAuth('JWT-auth')
+@Roles('admin')
 @Controller('audit')
 export class AuditController {
   constructor(private auditService: AuditService) {}

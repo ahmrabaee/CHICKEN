@@ -13,7 +13,7 @@ import { RecordSalePaymentDto, RecordPurchasePaymentDto } from './dto/payment.dt
 import { PaginationQueryDto, CurrentUser } from '../common';
 
 @ApiTags('payments')
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 @Controller('payments')
 export class PaymentsController {
   constructor(private paymentsService: PaymentsService) {}

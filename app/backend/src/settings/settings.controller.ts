@@ -13,7 +13,7 @@ import { SetSettingDto } from './dto/setting.dto';
 import { Roles } from '../common';
 
 @ApiTags('settings')
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 @Roles('admin')
 @Controller('settings')
 export class SettingsController {

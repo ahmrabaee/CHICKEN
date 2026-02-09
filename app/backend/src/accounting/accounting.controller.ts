@@ -14,7 +14,7 @@ import { CreateAccountDto, UpdateAccountDto, CreateJournalEntryDto } from './dto
 import { PaginationQueryDto, Roles, CurrentUser } from '../common';
 
 @ApiTags('accounting')
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 @Roles('admin', 'manager')
 @Controller('accounting')
 export class AccountingController {

@@ -242,7 +242,7 @@ async function seedSystemSettings(): Promise<void> {
     { key: 'backup.last_backup', value: '', description: 'Last backup timestamp', dataType: 'string', settingGroup: 'backup' },
 
     // First-Time Setup (NEW - PRD Requirements)
-    { key: 'setup_completed', value: 'false', description: 'Whether the initial system setup has been completed', dataType: 'boolean', settingGroup: 'system', isSystem: true },
+    { key: 'setup_completed', value: 'true', description: 'Whether the initial system setup has been completed', dataType: 'boolean', settingGroup: 'system', isSystem: true },
     { key: 'business_name', value: '', description: 'Business name in Arabic (primary language)', dataType: 'string', settingGroup: 'business', isSystem: true },
     { key: 'business_name_en', value: '', description: 'Business name in English (secondary language)', dataType: 'string', settingGroup: 'business', isSystem: true },
     { key: 'setup_completed_at', value: '', description: 'ISO 8601 timestamp when setup was completed', dataType: 'string', settingGroup: 'system', isSystem: true },

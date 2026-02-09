@@ -10,12 +10,12 @@ import { Roles, RolesGuard, CurrentUser, CurrentUserData, PaginationQueryDto } f
 @ApiBearerAuth('JWT-auth')
 @Controller('inventory')
 export class InventoryController {
-  constructor(private readonly inventoryService: InventoryService) {}
+  constructor(private readonly inventoryService: InventoryService) { }
 
   @Get()
   @ApiOperation({ summary: 'Get current stock summary for all items' })
-  async findAll(@Query() query: InventoryQueryDto, @Query() pagination: PaginationQueryDto) {
-    return this.inventoryService.findAll(query, pagination);
+  async findAll(@Query() query: InventoryQueryDto) {
+    return this.inventoryService.findAll(query);
   }
 
   @Get('low-stock')
@@ -56,9 +56,9 @@ export class InventoryController {
   @ApiParam({ name: 'itemId', description: 'Item ID' })
   async getMovements(
     @Param('itemId', ParseIntPipe) itemId: number,
-    @Query() pagination: PaginationQueryDto,
+    @Query() query: PaginationQueryDto,
   ) {
-    return this.inventoryService.getMovements(itemId, pagination);
+    return this.inventoryService.getMovements(itemId, query);
   }
 
   @Post('adjustments')

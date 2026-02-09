@@ -11,19 +11,26 @@ import { createPaginatedResult, PaginationQueryDto } from '../common';
 
 @Injectable()
 export class InventoryService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /**
    * Get current stock summary for all items
    */
-  async findAll(query: InventoryQueryDto, pagination: PaginationQueryDto) {
-    const { page = 1, pageSize = 20 } = pagination;
+  async findAll(query: InventoryQueryDto) {
+    const { page = 1, pageSize = 20, search, categoryId } = query;
     const skip = (page - 1) * pageSize;
 
     const where: any = { item: { isActive: true } };
-    
-    if (query.categoryId) {
-      where.item = { ...where.item, categoryId: query.categoryId };
+
+    if (categoryId) {
+      where.item = { ...where.item, categoryId };
+    }
+
+    if (search) {
+      where.OR = [
+        { item: { name: { contains: search, mode: 'insensitive' } } },
+        { item: { code: { contains: search, mode: 'insensitive' } } },
+      ];
     }
 
     const [inventories, totalItems] = await Promise.all([
@@ -32,8 +39,12 @@ export class InventoryService {
         skip,
         take: pageSize,
         include: {
+          branch: true,
           item: {
-            include: { inventoryLots: { where: { remainingQuantityGrams: { gt: 0 } } } },
+            include: {
+              category: true,
+              inventoryLots: { where: { remainingQuantityGrams: { gt: 0 } } }
+            },
           },
         },
         orderBy: { item: { name: 'asc' } },
@@ -52,8 +63,12 @@ export class InventoryService {
     const inventory = await this.prisma.inventory.findFirst({
       where: { itemId },
       include: {
+        branch: true,
         item: {
-          include: { inventoryLots: { where: { remainingQuantityGrams: { gt: 0 } } } },
+          include: {
+            category: true,
+            inventoryLots: { where: { remainingQuantityGrams: { gt: 0 } } }
+          },
         },
       },
     });
@@ -85,9 +100,9 @@ export class InventoryService {
     return lots.map((lot) => ({
       id: lot.id,
       lotNumber: lot.lotNumber,
-      totalQuantityGrams: lot.totalQuantityGrams,
-      remainingQuantityGrams: lot.remainingQuantityGrams,
-      unitPurchasePricePerKg: lot.unitPurchasePrice,
+      totalQuantity: lot.totalQuantityGrams,
+      remainingQuantity: lot.remainingQuantityGrams,
+      unitPurchasePrice: lot.unitPurchasePrice,
       receivedAt: lot.receivedAt.toISOString(),
       expiryDate: lot.expiryDate?.toISOString(),
       purchaseNumber: lot.purchase?.purchaseNumber,
@@ -130,30 +145,30 @@ export class InventoryService {
    * Get items below minimum stock level
    */
   async getLowStock() {
-    // Get all items with inventory and filter in code
     const items = await this.prisma.item.findMany({
       where: {
         isActive: true,
         minStockLevelGrams: { not: null },
       },
-      include: { inventory: true, category: true },
+      include: {
+        inventory: { include: { branch: true } },
+        category: true
+      },
     });
 
-    // Filter items where current quantity is below minimum
     const lowStockItems = items.filter((item) => {
       const currentQty = item.inventory?.currentQuantityGrams ?? 0;
       const minQty = item.minStockLevelGrams ?? 0;
       return currentQty < minQty;
     });
 
-    return lowStockItems.map((item) => ({
-      id: item.id,
-      code: item.code,
-      name: item.name,
-      categoryName: item.category?.name ?? 'Unknown',
-      currentQuantityGrams: item.inventory?.currentQuantityGrams ?? 0,
-      minStockLevelGrams: item.minStockLevelGrams ?? 0,
-      shortageGrams: Math.max(0, (item.minStockLevelGrams ?? 0) - (item.inventory?.currentQuantityGrams ?? 0)),
+    return lowStockItems.map((item) => this.toInventoryResponseDto({
+      ...item.inventory,
+      item: item,
+      branchId: item.inventory?.branchId || 0,
+      currentQuantityGrams: item.inventory?.currentQuantityGrams || 0,
+      reservedQuantityGrams: item.inventory?.reservedQuantityGrams || 0,
+      totalValue: item.inventory?.totalValue || 0,
     }));
   }
 
@@ -169,7 +184,10 @@ export class InventoryService {
         remainingQuantityGrams: { gt: 0 },
         expiryDate: { lte: expiryDate },
       },
-      include: { item: true },
+      include: {
+        item: { include: { category: true } },
+        branch: true
+      },
       orderBy: { expiryDate: 'asc' },
     });
 
@@ -178,7 +196,8 @@ export class InventoryService {
       lotNumber: lot.lotNumber,
       itemId: lot.itemId,
       itemName: lot.item.name,
-      remainingQuantityGrams: lot.remainingQuantityGrams,
+      totalQuantity: lot.totalQuantityGrams,
+      remainingQuantity: lot.remainingQuantityGrams,
       expiryDate: lot.expiryDate?.toISOString(),
       daysUntilExpiry: lot.expiryDate
         ? Math.ceil((lot.expiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
@@ -187,7 +206,9 @@ export class InventoryService {
   }
 
   /**
-   * Create manual stock adjustment
+   * Create manual stock adjustment.
+   * Updates quantity, totalValue and averageCost for correct accounting.
+   * For increase with unitCost, creates an adjustment lot so FIFO stays consistent.
    */
   async createAdjustment(dto: CreateAdjustmentDto, userId: number) {
     const item = await this.prisma.item.findUnique({
@@ -204,6 +225,7 @@ export class InventoryService {
     }
 
     const currentQty = item.inventory?.currentQuantityGrams ?? 0;
+    const currentTotalValue = item.inventory?.totalValue ?? 0;
     const newQty =
       dto.adjustmentType === 'increase'
         ? currentQty + dto.quantityGrams
@@ -217,42 +239,90 @@ export class InventoryService {
       });
     }
 
+    // When increasing from zero, unitCost is required for correct valuation
+    if (
+      dto.adjustmentType === 'increase' &&
+      currentQty === 0 &&
+      (dto.unitCost == null || dto.unitCost <= 0)
+    ) {
+      throw new BadRequestException({
+        code: 'UNIT_COST_REQUIRED',
+        message: 'Unit cost is required when adding stock to an item with zero quantity',
+        messageAr: 'سعر التكلفة مطلوب عند إضافة كمية لصنف رصيده صفر',
+      });
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { username: true },
     });
 
-    // Create adjustment in transaction
     return this.prisma.$transaction(async (tx) => {
-      // Update inventory
+      let newTotalValue: number;
+      let lotIdForMovement: number | null = dto.lotId ?? null;
+
+      if (dto.adjustmentType === 'decrease') {
+        // Proportional deduction: valueOut = (currentValue / currentQty) * quantityOut
+        const valueDeduct =
+          currentQty > 0
+            ? Math.round((currentTotalValue * dto.quantityGrams) / currentQty)
+            : 0;
+        newTotalValue = Math.max(0, currentTotalValue - valueDeduct);
+      } else {
+        // Increase
+        const costPerKg = dto.unitCost ?? (currentQty > 0 ? Math.round((currentTotalValue * 1000) / currentQty) : 0);
+        const addedValue = Math.round((dto.quantityGrams / 1000) * costPerKg);
+        newTotalValue = currentTotalValue + addedValue;
+
+        // Create adjustment lot when unitCost provided so FIFO has the new stock
+        if (dto.unitCost != null && dto.unitCost > 0) {
+          const lotNumber = `LOT-ADJ-${dto.itemId}-${Date.now()}`;
+          const lot = await tx.inventoryLot.create({
+            data: {
+              itemId: dto.itemId,
+              lotNumber,
+              totalQuantityGrams: dto.quantityGrams,
+              remainingQuantityGrams: dto.quantityGrams,
+              unitPurchasePrice: dto.unitCost,
+              receivedAt: new Date(),
+              createdById: userId,
+            },
+          });
+          lotIdForMovement = lot.id;
+        }
+      }
+
+      const newAverageCost = newQty > 0 ? Math.round((newTotalValue * 1000) / newQty) : 0;
+
       await tx.inventory.upsert({
         where: { itemId: dto.itemId },
         update: {
           currentQuantityGrams: newQty,
+          totalValue: newTotalValue,
+          averageCost: newAverageCost,
         },
         create: {
           itemId: dto.itemId,
           currentQuantityGrams: newQty,
           reservedQuantityGrams: 0,
-          totalValue: 0,
+          totalValue: newTotalValue,
+          averageCost: newAverageCost,
         },
       });
 
-      // Create stock movement
       const movement = await tx.stockMovement.create({
         data: {
           itemId: dto.itemId,
-          lotId: dto.lotId,
+          lotId: lotIdForMovement,
           movementType: dto.adjustmentType === 'increase' ? 'adjustment_in' : 'adjustment_out',
           quantityGrams: dto.adjustmentType === 'increase' ? dto.quantityGrams : -dto.quantityGrams,
-          unitCost: dto.unitCost,
+          unitCost: dto.unitCost ?? undefined,
           referenceType: 'adjustment',
           reason: dto.reason,
           performedById: userId,
         },
       });
 
-      // Create audit log
       await tx.auditLog.create({
         data: {
           userId,
@@ -260,7 +330,13 @@ export class InventoryService {
           action: 'adjustment',
           entityType: 'Inventory',
           entityId: dto.itemId,
-          changes: JSON.stringify({ before: currentQty, after: newQty, reason: dto.reason }),
+          changes: JSON.stringify({
+            before: currentQty,
+            after: newQty,
+            valueBefore: currentTotalValue,
+            valueAfter: newTotalValue,
+            reason: dto.reason,
+          }),
         },
       });
 
@@ -268,6 +344,8 @@ export class InventoryService {
         movementId: movement.id,
         previousQuantityGrams: currentQty,
         newQuantityGrams: newQty,
+        previousTotalValue: currentTotalValue,
+        newTotalValue,
         adjustmentGrams: dto.quantityGrams,
         type: dto.adjustmentType,
       };
@@ -289,7 +367,6 @@ export class InventoryService {
 
   /**
    * FIFO: Allocate stock from oldest lots first
-   * Returns array of allocations
    */
   async allocateFIFO(itemId: number, requiredGrams: number) {
     const lots = await this.getAvailableLots(itemId);
@@ -335,37 +412,43 @@ export class InventoryService {
   /**
    * FIFO: Deduct from lots after sale confirmation
    */
-  async deductFromLots(
-    allocations: Array<{ lotId: number; quantityGrams: number }>,
-  ) {
+  async deductFromLots(allocations: Array<{ lotId: number; quantityGrams: number }>) {
     for (const alloc of allocations) {
       await this.prisma.inventoryLot.update({
         where: { id: alloc.lotId },
-        data: {
-          remainingQuantityGrams: { decrement: alloc.quantityGrams },
-        },
+        data: { remainingQuantityGrams: { decrement: alloc.quantityGrams } },
       });
     }
   }
 
+  /**
+   * Effective cost (سعر التكلفة المعروض): from actual inventory when we have stock,
+   * otherwise fallback to item's expected purchase price. Logic lives in backend only.
+   */
   private toInventoryResponseDto(inv: any): InventoryResponseDto {
     const lotCount = inv.item?.inventoryLots?.length ?? 0;
-    const currentQty = inv.currentQuantityGrams;
-    const avgCost = currentQty > 0 ? Math.round(inv.totalValue / (currentQty / 1000)) : 0;
+    const currentQty = inv.currentQuantityGrams || 0;
+    const fromInventory = currentQty > 0 ? Math.round((inv.totalValue || 0) / (currentQty / 1000)) : 0;
+    const avgCost = fromInventory > 0 ? fromInventory : (inv.item?.defaultPurchasePrice ?? 0);
 
     return {
       itemId: inv.itemId,
       itemCode: inv.item?.code ?? '',
       itemName: inv.item?.name ?? '',
-      currentQuantityGrams: currentQty,
-      reservedQuantityGrams: inv.reservedQuantityGrams,
-      availableQuantityGrams: currentQty - inv.reservedQuantityGrams,
-      totalValue: inv.totalValue,
-      averageCostPerKg: avgCost,
-      minStockLevelGrams: inv.item?.minStockLevelGrams ?? 0,
-      lastRestockedAt: inv.lastRestockedAt?.toISOString(),
-      lastSoldAt: inv.lastSoldAt?.toISOString(),
+      categoryName: inv.item?.category?.name ?? 'غير مصنف',
+      branchId: inv.branchId ?? inv.branch?.id ?? 0,
+      branchName: inv.branch?.name ?? 'الفرع الرئيسي',
+      totalQuantity: currentQty,
+      availableQuantity: currentQty - (inv.reservedQuantityGrams || 0),
+      minStockLevel: inv.item?.minStockLevelGrams ?? 0,
+      avgCostPrice: avgCost,
+      sellingPrice: inv.item?.defaultSalePrice ?? 0,
+      unitOfMeasure: 'كجم',
       lotCount,
+      lastRestockedAt: inv.lastRestockedAt instanceof Date ? inv.lastRestockedAt.toISOString() : inv.lastRestockedAt,
+      lastSoldAt: inv.lastSoldAt instanceof Date ? inv.lastSoldAt.toISOString() : inv.lastSoldAt,
+      currentQuantityGrams: currentQty,
+      availableQuantityGrams: currentQty - (inv.reservedQuantityGrams || 0),
     };
   }
 }

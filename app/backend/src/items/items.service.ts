@@ -5,7 +5,7 @@ import { createPaginatedResult, PaginatedResult } from '../common';
 
 @Injectable()
 export class ItemsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async findAll(query: ItemListQueryDto): Promise<PaginatedResult<ItemResponseDto>> {
     const page = query.page ?? 1;
@@ -126,17 +126,35 @@ export class ItemsService {
     return this.toResponseDto(item);
   }
 
+  private async generateUniqueCode(): Promise<string> {
+    let code: string;
+    let exists = true;
+
+    while (exists) {
+      const random = Math.floor(10000 + Math.random() * 90000);
+      code = `ITE-${random}`;
+      const count = await this.prisma.item.count({ where: { code } });
+      if (count === 0) exists = false;
+    }
+
+    return code!;
+  }
+
   async create(dto: CreateItemDto, userId?: number): Promise<ItemResponseDto> {
-    // Check code uniqueness
-    const existingCode = await this.prisma.item.findUnique({
-      where: { code: dto.code },
-    });
-    if (existingCode) {
-      throw new ConflictException({
-        code: 'DUPLICATE_ENTRY',
-        message: 'Item code already exists',
-        messageAr: 'رمز المنتج موجود بالفعل',
+    const code: string = dto.code || (await this.generateUniqueCode());
+
+    // Check code uniqueness only if provided
+    if (dto.code) {
+      const existingCode = await this.prisma.item.findUnique({
+        where: { code: dto.code },
       });
+      if (existingCode) {
+        throw new ConflictException({
+          code: 'DUPLICATE_ENTRY',
+          message: 'Item code already exists',
+          messageAr: 'رمز المنتج موجود بالفعل',
+        });
+      }
     }
 
     // Check barcode uniqueness if provided
@@ -167,7 +185,7 @@ export class ItemsService {
 
     const item = await this.prisma.item.create({
       data: {
-        code: dto.code,
+        code,
         barcode: dto.barcode,
         name: dto.name,
         nameEn: dto.nameEn,
@@ -194,17 +212,49 @@ export class ItemsService {
     });
 
     // Create inventory record
-    await this.prisma.inventory.create({
+    const initialQty = dto.initialQuantityGrams || 0;
+    const initialCost = dto.initialCostPrice || 0;
+
+    const inventory = await this.prisma.inventory.create({
       data: {
         itemId: item.id,
-        currentQuantityGrams: 0,
+        currentQuantityGrams: initialQty,
         reservedQuantityGrams: 0,
-        totalValue: 0,
-        averageCost: 0,
+        totalValue: Math.round((initialQty / 1000) * initialCost),
+        averageCost: initialCost,
       },
     });
 
-    return this.toResponseDto(item);
+    if (initialQty > 0) {
+      // Create initial lot
+      const lot = await this.prisma.inventoryLot.create({
+        data: {
+          itemId: item.id,
+          lotNumber: `LOT-OP-${item.id}-${Date.now().toString().slice(-6)}`,
+          totalQuantityGrams: initialQty,
+          remainingQuantityGrams: initialQty,
+          unitPurchasePrice: initialCost,
+          receivedAt: new Date(),
+          createdById: userId,
+        },
+      });
+
+      // Create stock movement
+      await this.prisma.stockMovement.create({
+        data: {
+          itemId: item.id,
+          lotId: lot.id,
+          movementType: 'opening',
+          quantityGrams: initialQty,
+          unitCost: initialCost,
+          reason: 'الرصيد الافتتاحي عند التأسيس',
+          movementDate: new Date(),
+          performedById: userId,
+        },
+      });
+    }
+
+    return this.toResponseDto({ ...item, inventory });
   }
 
   async update(id: number, dto: UpdateItemDto, userId?: number): Promise<ItemResponseDto> {
@@ -304,6 +354,10 @@ export class ItemsService {
       categoryId: item.categoryId,
       defaultSalePrice: item.defaultSalePrice,
       defaultPurchasePrice: item.defaultPurchasePrice,
+      effectiveCostPrice:
+        item.inventory && item.inventory.currentQuantityGrams > 0
+          ? item.inventory.averageCost
+          : (item.defaultPurchasePrice ?? 0),
       taxRatePct: item.taxRatePct,
       minStockLevelGrams: item.minStockLevelGrams,
       maxStockLevelGrams: item.maxStockLevelGrams,
@@ -316,11 +370,11 @@ export class ItemsService {
       category: item.category,
       inventory: item.inventory
         ? {
-            currentQuantityGrams: item.inventory.currentQuantityGrams,
-            reservedQuantityGrams: item.inventory.reservedQuantityGrams,
-            totalValue: item.inventory.totalValue,
-            averageCost: item.inventory.averageCost,
-          }
+          currentQuantityGrams: item.inventory.currentQuantityGrams,
+          reservedQuantityGrams: item.inventory.reservedQuantityGrams,
+          totalValue: item.inventory.totalValue,
+          averageCost: item.inventory.averageCost,
+        }
         : undefined,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,

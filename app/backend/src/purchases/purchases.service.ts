@@ -178,6 +178,14 @@ export class PurchasesService {
             lastRestockedAt: new Date(),
           },
         });
+        // Keep averageCost in sync (minor units per kg)
+        const inv = await tx.inventory.findUnique({ where: { itemId: line.itemId } });
+        if (inv && inv.currentQuantityGrams > 0) {
+          await tx.inventory.update({
+            where: { itemId: line.itemId },
+            data: { averageCost: Math.round((inv.totalValue * 1000) / inv.currentQuantityGrams) },
+          });
+        }
 
         // Create stock movement
         await tx.stockMovement.create({

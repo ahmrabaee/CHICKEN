@@ -1,4 +1,5 @@
-import { Save, Upload, User, Bell, Printer, Globe } from "lucide-react";
+import { useState } from "react";
+import { Save, Upload, User, Bell, Printer, Globe, Key, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,10 +14,92 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { PasswordInput } from "@/components/ui/password-input";
+import { useChangePassword } from "@/hooks/use-auth";
+import { useNavigate } from "react-router-dom";
+import { clearTokens, getStoredUser } from "@/lib/auth";
+import { toast } from "sonner";
+import { authService } from "@/services/auth.service";
+
+const changePasswordSchema = z.object({
+  oldPassword: z.string().min(1, "كلمة المرور الحالية مطلوبة"),
+  newPassword: z.string().min(8, "كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل"),
+  confirmPassword: z.string().min(1, "تأكيد كلمة المرور مطلوب"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "كلمتا المرور غير متطابقتين",
+  path: ["confirmPassword"],
+});
+
+
+type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
 
 export default function Settings() {
+  const navigate = useNavigate();
+  const changePasswordMutation = useChangePassword();
+  const [oldPasswordValid, setOldPasswordValid] = useState<boolean | null>(null);
+  const [isCheckingPassword, setIsCheckingPassword] = useState(false);
+
+  const form = useForm<ChangePasswordFormValues>({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
+      oldPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  // Check old password validity - ONLY when user finishes typing (onBlur)
+  const checkOldPassword = async (password: string) => {
+    if (!password || password.length < 3) {
+      setOldPasswordValid(null);
+      return;
+    }
+
+    setIsCheckingPassword(true);
+    try {
+      const username = getStoredUser()?.username;
+      if (!username) {
+        setOldPasswordValid(null);
+        return;
+      }
+
+      // Try login just once when user leaves the field
+      await authService.login({ username, password });
+      setOldPasswordValid(true);
+    } catch (error) {
+      setOldPasswordValid(false);
+    } finally {
+      setIsCheckingPassword(false);
+    }
+  };
+
+  const onChangePassword = async (data: ChangePasswordFormValues) => {
+    try {
+      await changePasswordMutation.mutateAsync({
+        currentPassword: data.oldPassword,
+        newPassword: data.newPassword,
+      });
+
+      // Clear tokens and redirect to login (backend clears all sessions)
+      clearTokens();
+      toast.success("تم تغيير كلمة المرور بنجاح. يرجى تسجيل الدخول مرة أخرى");
+      navigate("/login");
+    } catch (error: any) {
+      console.error("Password change failed:", error);
+      // Try to get Arabic error message from backend
+      const errorMessage = error.response?.data?.messageAr ||
+        error.response?.data?.message ||
+        "فشل تغيير كلمة المرور. تحقق من كلمة المرور الحالية";
+      toast.error(errorMessage);
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">الإعدادات</h1>
@@ -25,10 +108,14 @@ export default function Settings() {
 
       {/* Tabs */}
       <Tabs defaultValue="shop" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
           <TabsTrigger value="shop" className="gap-2">
             <Globe className="w-4 h-4" />
             المحل
+          </TabsTrigger>
+          <TabsTrigger value="account" className="gap-2">
+            <Key className="w-4 h-4" />
+            الحساب
           </TabsTrigger>
           <TabsTrigger value="users" className="gap-2">
             <User className="w-4 h-4" />
@@ -132,6 +219,125 @@ export default function Settings() {
                   حفظ التغييرات
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Account Settings */}
+        <TabsContent value="account" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>تغيير كلمة المرور</CardTitle>
+              <CardDescription>تحديث كلمة المرور الخاصة بك</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onChangePassword)} className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="oldPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>كلمة المرور الحالية</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <PasswordInput
+                              placeholder="أدخل كلمة المرور الحالية"
+                              disabled={changePasswordMutation.isPending}
+                              {...field}
+                              onBlur={(e) => {
+                                field.onBlur();
+                                checkOldPassword(e.target.value);
+                              }}
+                            />
+                            {isCheckingPassword && (
+                              <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                                <div className="h-4 w-4 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
+                              </div>
+                            )}
+                            {!isCheckingPassword && oldPasswordValid === true && (
+                              <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                                <div className="flex items-center gap-1">
+                                  <div className="h-1 w-8 bg-green-500 rounded-full" />
+                                  <Check className="h-4 w-4 text-green-500" />
+                                </div>
+                              </div>
+                            )}
+                            {!isCheckingPassword && oldPasswordValid === false && (
+                              <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                                <X className="h-5 w-5 text-destructive" />
+                              </div>
+                            )}
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="newPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>كلمة المرور الجديدة</FormLabel>
+                        <FormControl>
+                          <PasswordInput
+                            placeholder="أدخل كلمة المرور الجديدة (8 أحرف على الأقل)"
+                            disabled={changePasswordMutation.isPending}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>تأكيد كلمة المرور الجديدة</FormLabel>
+                        <FormControl>
+                          <PasswordInput
+                            placeholder="أعد إدخال كلمة المرور الجديدة"
+                            disabled={changePasswordMutation.isPending}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                      <strong>ملاحظة:</strong> بعد تغيير كلمة المرور، سيتم تسجيل خروجك تلقائياً من جميع الأجهزة لأسباب أمنية.
+                    </p>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button
+                      type="submit"
+                      className="gap-2"
+                      disabled={changePasswordMutation.isPending}
+                    >
+                      {changePasswordMutation.isPending ? (
+                        <>
+                          <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          جاري الحفظ...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4" />
+                          حفظ كلمة المرور الجديدة
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
             </CardContent>
           </Card>
         </TabsContent>

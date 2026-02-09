@@ -24,6 +24,7 @@ import {
   Receipt,
   Boxes,
   UserCircle,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { useLogout } from "@/hooks/use-auth";
 
 interface NavItem {
   title: string;
@@ -128,6 +130,7 @@ export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [openGroups, setOpenGroups] = useState<string[]>(["Sales", "Inventory"]);
   const location = useLocation();
+  const logoutMutation = useLogout();
 
   const toggleGroup = (title: string) => {
     setOpenGroups((prev) =>
@@ -275,8 +278,14 @@ export function AppSidebar() {
             "w-full text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
             collapsed ? "justify-center px-0" : "justify-start"
           )}
+          onClick={() => logoutMutation.mutate()}
+          disabled={logoutMutation.isPending}
         >
-          <LogOut className="w-5 h-5" />
+          {logoutMutation.isPending ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <LogOut className="w-5 h-5" />
+          )}
           {!collapsed && <span className="mr-3">تسجيل الخروج</span>}
         </Button>
       </div>

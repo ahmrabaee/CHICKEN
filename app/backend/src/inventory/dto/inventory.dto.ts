@@ -6,23 +6,28 @@ export class InventoryResponseDto {
   @ApiProperty() itemId: number;
   @ApiProperty() itemCode: string;
   @ApiProperty() itemName: string;
-  @ApiProperty({ description: 'Current quantity in grams' }) currentQuantityGrams: number;
-  @ApiProperty() reservedQuantityGrams: number;
-  @ApiProperty() availableQuantityGrams: number;
-  @ApiProperty({ description: 'Total value in minor units' }) totalValue: number;
-  @ApiProperty({ description: 'Average cost per kg in minor units' }) averageCostPerKg: number;
-  @ApiProperty() minStockLevelGrams: number;
+  @ApiProperty() categoryName: string;
+  @ApiProperty() branchId: number;
+  @ApiProperty() branchName: string;
+  @ApiProperty() totalQuantity: number; // currentQuantityGrams
+  @ApiProperty() availableQuantity: number; // availableQuantityGrams
+  @ApiProperty() minStockLevel: number; // minStockLevelGrams
+  @ApiProperty() avgCostPrice: number; // averageCostPerKg
+  @ApiProperty() sellingPrice: number;
+  @ApiProperty() unitOfMeasure: string;
+  @ApiProperty() lotCount: number;
   @ApiPropertyOptional() lastRestockedAt?: string;
   @ApiPropertyOptional() lastSoldAt?: string;
-  @ApiProperty() lotCount: number;
+  @ApiProperty() currentQuantityGrams: number;
+  @ApiProperty() availableQuantityGrams: number;
 }
 
 export class InventoryLotResponseDto {
   @ApiProperty() id: number;
   @ApiProperty() lotNumber: string;
-  @ApiProperty() totalQuantityGrams: number;
-  @ApiProperty() remainingQuantityGrams: number;
-  @ApiProperty({ description: 'Purchase price per kg in minor units' }) unitPurchasePricePerKg: number;
+  @ApiProperty() totalQuantity: number;
+  @ApiProperty() remainingQuantity: number;
+  @ApiProperty() unitPurchasePrice: number;
   @ApiProperty() receivedAt: string;
   @ApiPropertyOptional() expiryDate?: string;
   @ApiPropertyOptional() purchaseNumber?: string;
@@ -77,7 +82,9 @@ export class CreateAdjustmentDto {
   unitCost?: number;
 }
 
-export class InventoryQueryDto {
+import { PaginationQueryDto } from '../../common/dto/pagination.dto';
+
+export class InventoryQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional()
   @Type(() => Number)
   @IsInt()
@@ -94,4 +101,9 @@ export class InventoryQueryDto {
   @Type(() => Boolean)
   @IsOptional()
   lowStock?: boolean;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  search?: string;
 }

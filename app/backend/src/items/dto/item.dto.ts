@@ -4,10 +4,10 @@ import { Type } from 'class-transformer';
 import { PaginationQueryDto } from '../../common';
 
 export class CreateItemDto {
-  @ApiProperty({ description: 'Item code', example: 'CHK001' })
+  @ApiPropertyOptional({ description: 'Item code', example: 'CHK001' })
   @IsString()
-  @IsNotEmpty()
-  code: string;
+  @IsOptional()
+  code?: string;
 
   @ApiPropertyOptional({ description: 'Barcode', example: '1234567890123' })
   @IsString()
@@ -103,9 +103,23 @@ export class CreateItemDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+
+  @ApiPropertyOptional({ description: 'Initial quantity in grams', example: 10000 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  initialQuantityGrams?: number;
+
+  @ApiPropertyOptional({ description: 'Initial cost price per kg (minor units)', example: 1200 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  initialCostPrice?: number;
 }
 
-export class UpdateItemDto extends PartialType(CreateItemDto) {}
+export class UpdateItemDto extends PartialType(CreateItemDto) { }
 
 export class ItemListQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({ description: 'Search by name, code, or barcode' })
@@ -173,6 +187,10 @@ export class ItemResponseDto {
 
   @ApiPropertyOptional({ example: 1200 })
   defaultPurchasePrice?: number;
+
+  /** سعر التكلفة المعروض: من المخزون إن وُجد، وإلا سعر الشراء المتوقع. محسوب في الباك فقط. */
+  @ApiPropertyOptional({ example: 1200 })
+  effectiveCostPrice?: number;
 
   @ApiPropertyOptional({ example: 1500 })
   taxRatePct?: number;

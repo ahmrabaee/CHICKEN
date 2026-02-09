@@ -1,14 +1,19 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   Search,
   Plus,
-  Filter,
   Download,
   MoreHorizontal,
   Eye,
   Edit,
-  Trash2,
+  History,
+  Layers,
+  AlertTriangle,
+  Clock,
+  Loader2,
+  TrendingDown,
+  Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -36,52 +42,123 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { StockStatusBadge } from "@/components/ui/status-badge";
 
-// Mock data
-const inventoryItems = [
-  { id: 1, name: "فروج كامل", nameEn: "Whole Chicken", category: "طازج", current: 25, min: 10, purchasePrice: 18, salePrice: 22, unit: "كغم", location: "ثلاجة A" },
-  { id: 2, name: "صدور دجاج", nameEn: "Chicken Breast", category: "طازج", current: 2, min: 5, purchasePrice: 28, salePrice: 35, unit: "كغم", location: "ثلاجة A" },
-  { id: 3, name: "أفخاذ دجاج", nameEn: "Chicken Thighs", category: "طازج", current: 8, min: 5, purchasePrice: 22, salePrice: 28, unit: "كغم", location: "ثلاجة A" },
-  { id: 4, name: "دجاج مشوي", nameEn: "Grilled Chicken", category: "مطبوخ", current: 0, min: 3, purchasePrice: 15, salePrice: 25, unit: "قطعة", location: "واجهة العرض" },
-  { id: 5, name: "أجنحة دجاج", nameEn: "Chicken Wings", category: "طازج", current: 15, min: 8, purchasePrice: 20, salePrice: 26, unit: "كغم", location: "ثلاجة B" },
-  { id: 6, name: "بهارات دجاج", nameEn: "Chicken Spice Mix", category: "إضافات", current: 50, min: 10, purchasePrice: 5, salePrice: 12, unit: "قطعة", location: "رف التوابل" },
-];
+import {
+  useInventory,
+  useCategories,
+  useLowStockItems,
+  useExpiringItems
+} from "@/hooks/use-inventory";
+import { InventoryQuery, InventoryItem } from "@/types/inventory";
+import AdjustStockDialog from "@/components/inventory/AdjustStockDialog";
+import InventoryLotsDialog from "@/components/inventory/InventoryLotsDialog";
+import InventoryMovementsDialog from "@/components/inventory/InventoryMovementsDialog";
 
 export default function Inventory() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-
-  const filteredItems = inventoryItems.filter((item) => {
-    const matchesSearch = item.name.includes(searchQuery) || item.nameEn.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === "all" || item.category === categoryFilter;
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "low" && item.current <= item.min && item.current > 0) ||
-      (statusFilter === "out" && item.current === 0) ||
-      (statusFilter === "ok" && item.current > item.min);
-    return matchesSearch && matchesCategory && matchesStatus;
+  const navigate = useNavigate();
+  const [queryParams, setQueryParams] = useState<InventoryQuery>({
+    page: 1,
+    pageSize: 10,
+    search: "",
   });
+
+  const [adjustingItem, setAdjustingItem] = useState<InventoryItem | null>(null);
+  const [viewingLotsItem, setViewingLotsItem] = useState<InventoryItem | null>(null);
+  const [viewingHistoryItem, setViewingHistoryItem] = useState<InventoryItem | null>(null);
+
+  const { data: response, isLoading } = useInventory(queryParams);
+  const { data: categories } = useCategories();
+  const { data: lowStockItems = [] } = useLowStockItems();
+  const { data: expiringItems = [] } = useExpiringItems(30); // Check 30 days ahead
+
+  const items = response?.data || [];
+  const pagination = response?.pagination;
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQueryParams(prev => ({ ...prev, search: e.target.value, page: 1 }));
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setQueryParams(prev => ({
+      ...prev,
+      categoryId: value === "all" ? undefined : parseInt(value),
+      page: 1
+    }));
+  };
+
+  const handleStatusChange = (value: string) => {
+    setQueryParams(prev => ({
+      ...prev,
+      lowStock: value === "low" ? true : undefined,
+      expiringSoon: value === "expiring" ? true : undefined,
+      page: 1
+    }));
+  };
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">المخزون</h1>
-          <p className="text-muted-foreground mt-1">إدارة عناصر المخزون والكميات</p>
+          <h1 className="text-2xl font-bold text-foreground">المخزون وإدارة الأصناف</h1>
+          <p className="text-muted-foreground mt-1">تتبع مستويات المخزون، الدفعات (FIFO)، وسجل الحركات</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" className="gap-2">
             <Download className="w-4 h-4" />
-            تصدير
+            تصدير البيانات
           </Button>
           <Link to="/inventory/new">
             <Button className="gap-2">
               <Plus className="w-4 h-4" />
-              عنصر جديد
+              إضافة صنف جديد
             </Button>
           </Link>
         </div>
+      </div>
+
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="border-l-4 border-l-blue-500">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">إجمالي الأصناف</p>
+                <h3 className="text-2xl font-bold mt-1 text-slate-800">{pagination?.totalItems || 0}</h3>
+              </div>
+              <div className="p-3 bg-blue-50 rounded-full">
+                <Layers className="w-6 h-6 text-blue-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className={`border-l-4 ${lowStockItems.length > 0 ? "border-l-orange-500" : "border-l-emerald-500"}`}>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">أصناف تحت حد الطلب</p>
+                <h3 className="text-2xl font-bold mt-1 text-slate-800">{lowStockItems.length}</h3>
+              </div>
+              <div className={`p-3 ${lowStockItems.length > 0 ? "bg-orange-50 text-orange-500" : "bg-emerald-50 text-emerald-500"} rounded-full`}>
+                <TrendingDown className="w-6 h-6" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className={`border-l-4 ${expiringItems.length > 0 ? "border-l-rose-500" : "border-l-emerald-500"}`}>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">أصناف تقترب من الانتهاء</p>
+                <h3 className="text-2xl font-bold mt-1 text-slate-800">{expiringItems.length}</h3>
+              </div>
+              <div className={`p-3 ${expiringItems.length > 0 ? "bg-rose-50 text-rose-500" : "bg-emerald-50 text-emerald-500"} rounded-full`}>
+                <Calendar className="w-6 h-6" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters */}
@@ -91,33 +168,39 @@ export default function Inventory() {
             <div className="flex-1 relative">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="بحث بالاسم..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-10"
+                placeholder="بحث بالاسم أو الكود..."
+                value={queryParams.search}
+                onChange={handleSearch}
+                className="pr-10 text-right"
               />
             </div>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-full md:w-40">
-                <SelectValue placeholder="الفئة" />
+            <Select
+              value={queryParams.categoryId?.toString() || "all"}
+              onValueChange={handleCategoryChange}
+            >
+              <SelectTrigger className="w-full md:w-48 text-right" dir="rtl">
+                <SelectValue placeholder="التصنيف" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">جميع الفئات</SelectItem>
-                <SelectItem value="طازج">طازج</SelectItem>
-                <SelectItem value="مطبوخ">مطبوخ</SelectItem>
-                <SelectItem value="مجمد">مجمد</SelectItem>
-                <SelectItem value="إضافات">إضافات</SelectItem>
+              <SelectContent dir="rtl">
+                <SelectItem value="all">جميع التصنيفات</SelectItem>
+                {categories?.map(cat => (
+                  <SelectItem key={cat.id} value={cat.id.toString()}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-40">
-                <SelectValue placeholder="الحالة" />
+            <Select
+              value={queryParams.lowStock ? "low" : (queryParams.expiringSoon ? "expiring" : "all")}
+              onValueChange={handleStatusChange}
+            >
+              <SelectTrigger className="w-full md:w-48 text-right" dir="rtl">
+                <SelectValue placeholder="تصفية بالحالة" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent dir="rtl">
                 <SelectItem value="all">جميع الحالات</SelectItem>
-                <SelectItem value="ok">متوفر</SelectItem>
-                <SelectItem value="low">منخفض</SelectItem>
-                <SelectItem value="out">نفذ</SelectItem>
+                <SelectItem value="low">مخزون منخفض</SelectItem>
+                <SelectItem value="expiring">ينتهي قريباً</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -129,84 +212,144 @@ export default function Inventory() {
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="data-table-header">
+              <TableRow className="bg-slate-50 border-b">
                 <TableHead className="text-right">الصنف</TableHead>
-                <TableHead className="text-right">الفئة</TableHead>
-                <TableHead className="text-center">الكمية</TableHead>
-                <TableHead className="text-center">الحد الأدنى</TableHead>
-                <TableHead className="text-center">سعر الشراء</TableHead>
+                <TableHead className="text-center">إجمالي الكمية</TableHead>
+                <TableHead className="text-center">سعر الشراء (Avg)</TableHead>
                 <TableHead className="text-center">سعر البيع</TableHead>
-                <TableHead className="text-right">الموقع</TableHead>
                 <TableHead className="text-center">الحالة</TableHead>
-                <TableHead className="text-center w-12">إجراءات</TableHead>
+                <TableHead className="text-center w-12">خيارات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredItems.map((item) => (
-                <TableRow key={item.id} className="data-table-row">
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{item.name}</p>
-                      <p className="text-xs text-muted-foreground">{item.nameEn}</p>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      جاري تحميل البيانات...
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{item.category}</TableCell>
-                  <TableCell className="text-center font-semibold">
-                    {item.current} {item.unit}
-                  </TableCell>
-                  <TableCell className="text-center text-muted-foreground">
-                    {item.min} {item.unit}
-                  </TableCell>
-                  <TableCell className="text-center">₪ {item.purchasePrice}</TableCell>
-                  <TableCell className="text-center font-semibold">₪ {item.salePrice}</TableCell>
-                  <TableCell className="text-muted-foreground">{item.location}</TableCell>
-                  <TableCell className="text-center">
-                    <StockStatusBadge current={item.current} min={item.min} />
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem className="gap-2">
-                          <Eye className="w-4 h-4" />
-                          عرض التفاصيل
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="gap-2">
-                          <Edit className="w-4 h-4" />
-                          تعديل
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="gap-2 text-danger">
-                          <Trash2 className="w-4 h-4" />
-                          حذف
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                </TableRow>
+              ) : items.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                    لا توجد بيانات تطابق الفلتر الحالي
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                items.map((item) => (
+                  <TableRow key={item.itemId} className="hover:bg-slate-50 transition-colors">
+                    <TableCell>
+                      <Link to={`/inventory/${item.itemId}`} className="flex flex-col hover:opacity-80 transition-opacity">
+                        <span className="font-bold text-slate-900">{item.itemName}</span>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <code className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">
+                            {item.itemCode}
+                          </code>
+                          <span className="text-[11px] text-slate-400 font-medium px-1.5 py-0.5 border border-slate-100 rounded uppercase">
+                            {item.categoryName}
+                          </span>
+                        </div>
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex flex-col items-center">
+                        <span className="font-bold text-lg">{(item.totalQuantity / 1000).toFixed(2)}</span>
+                        <span className="text-[10px] text-muted-foreground uppercase">{item.unitOfMeasure === 'جرام' ? 'كجم' : item.unitOfMeasure}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className="font-mono text-slate-500">₪{(item.avgCostPrice ? item.avgCostPrice / 1000 : 0).toFixed(2)}</span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className="font-bold text-primary font-mono text-lg">
+                        ₪{(item.sellingPrice / 1000).toFixed(2)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <StockStatusBadge current={item.availableQuantity} min={item.minStockLevel} />
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="text-right">
+                          <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate(`/inventory/${item.itemId}`)}>
+                            <Edit className="w-4 h-4 text-slate-500" />
+                            تعديل بيانات الصنف الأساسية
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => setViewingLotsItem(item)}>
+                            <Layers className="w-4 h-4 text-blue-500" />
+                            عرض الدفعات تفصيلاً (FIFO)
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => setViewingHistoryItem(item)}>
+                            <History className="w-4 h-4 text-emerald-500" />
+                            سجل حركات المخزون
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => setAdjustingItem(item)}>
+                            <Edit className="w-4 h-4 text-orange-500" />
+                            تعديل الكمية (تسوية يدوية)
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          عرض {filteredItems.length} من {inventoryItems.length} عنصر
-        </p>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled>
-            السابق
-          </Button>
-          <Button variant="outline" size="sm" disabled>
-            التالي
-          </Button>
+      {pagination && pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between pt-4">
+          <p className="text-sm text-muted-foreground font-arabic">
+            عرض {items.length} من {pagination.totalItems} عنصر
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!pagination.hasPrev}
+              onClick={() => setQueryParams(prev => ({ ...prev, page: (prev.page || 1) - 1 }))}
+            >
+              السابق
+            </Button>
+            <div className="text-sm px-4">
+              صفحة {pagination.page} من {pagination.totalPages}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!pagination.hasNext}
+              onClick={() => setQueryParams(prev => ({ ...prev, page: (prev.page || 1) + 1 }))}
+            >
+              التالي
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Deep-Dive Dialogs */}
+      <AdjustStockDialog
+        item={adjustingItem}
+        onClose={() => setAdjustingItem(null)}
+      />
+
+      <InventoryLotsDialog
+        item={viewingLotsItem}
+        onClose={() => setViewingLotsItem(null)}
+      />
+
+      <InventoryMovementsDialog
+        item={viewingHistoryItem}
+        onClose={() => setViewingHistoryItem(null)}
+      />
     </div>
   );
 }

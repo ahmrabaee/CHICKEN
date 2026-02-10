@@ -9,20 +9,19 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
-import { RecordSalePaymentDto, RecordPurchasePaymentDto } from './dto/payment.dto';
-import { PaginationQueryDto, CurrentUser } from '../common';
+import { RecordSalePaymentDto, RecordPurchasePaymentDto, PaymentQueryDto } from './dto/payment.dto';
+import { CurrentUser } from '../common';
 
 @ApiTags('payments')
 @ApiBearerAuth('JWT-auth')
 @Controller('payments')
 export class PaymentsController {
-  constructor(private paymentsService: PaymentsService) {}
+  constructor(private paymentsService: PaymentsService) { }
 
   @Get()
   @ApiOperation({ summary: 'List all payments' })
-  @ApiQuery({ name: 'type', required: false, enum: ['sale', 'purchase', 'debt'] })
-  findAll(@Query() pagination: PaginationQueryDto, @Query('type') type?: string) {
-    return this.paymentsService.findAll(pagination, type);
+  findAll(@Query() query: PaymentQueryDto) {
+    return this.paymentsService.findAll(query, query.type);
   }
 
   @Get(':id')

@@ -58,6 +58,28 @@ import {
 } from "@/hooks/use-suppliers";
 import { CreateSupplierDto } from "@/types/supplier";
 
+/**
+ * Build API payload: only send optional fields when they have values.
+ * Backend ValidationPipe + @IsEmail() fail on empty string for email;
+ * omit empty strings so optional validators are skipped.
+ */
+function toCreateSupplierDto(values: SupplierFormValues): CreateSupplierDto {
+    const dto: CreateSupplierDto = { name: values.name.trim() };
+    if (values.nameEn?.trim()) dto.nameEn = values.nameEn.trim();
+    if (values.contactPerson?.trim()) dto.contactPerson = values.contactPerson.trim();
+    if (values.phone?.trim()) dto.phone = values.phone.trim();
+    if (values.email?.trim()) dto.email = values.email.trim();
+    if (values.address?.trim()) dto.address = values.address.trim();
+    if (values.paymentTerms?.trim()) dto.paymentTerms = values.paymentTerms.trim();
+    if (values.taxNumber?.trim()) dto.taxNumber = values.taxNumber.trim();
+    if (values.bankName?.trim()) dto.bankName = values.bankName.trim();
+    if (values.bankAccountNumber?.trim()) dto.bankAccountNumber = values.bankAccountNumber.trim();
+    if (values.notes?.trim()) dto.notes = values.notes.trim();
+    if (values.creditLimit != null) dto.creditLimit = Number(values.creditLimit);
+    if (values.rating != null) dto.rating = Number(values.rating);
+    return dto;
+}
+
 // Zod schema for form validation
 // Included all 13 editable fields from Prisma model
 const supplierSchema = z.object({
@@ -147,13 +169,13 @@ export default function SupplierProfile() {
             if (isEditMode) {
                 await updateMutation.mutateAsync({
                     id: supplierId,
-                    data: values as any,
+                    data: toCreateSupplierDto(values),
                 });
                 toast.success("تم تحديث بيانات التاجر بنجاح");
             } else {
-                const newSupplier = await createMutation.mutateAsync(values as any);
+                const newSupplier = await createMutation.mutateAsync(toCreateSupplierDto(values));
                 toast.success("تم إضافة التاجر بنجاح");
-                navigate(`/traders/${newSupplier.id}`);
+                navigate("/traders");
             }
         } catch (error: any) {
             const errorMsg =

@@ -1,4 +1,17 @@
-import { BarChart3, TrendingUp, Package, PieChart, Receipt, Download, Calendar } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  BarChart3,
+  TrendingUp,
+  Package,
+  PieChart,
+  Receipt,
+  Download,
+  Calendar,
+  Loader2,
+  Trash2,
+  Wallet,
+  DollarSign,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -8,89 +21,177 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import {
+  useSalesReport,
+  usePurchasesReport,
+  useInventoryReport,
+  useExpenseReport,
+  useProfitLossReport,
+  useWastageReport,
+} from "@/hooks/use-reports";
+import type { DateRangeQuery } from "@/types/reports";
+
+function formatMinor(amount: number): string {
+  return (amount / 100).toFixed(2);
+}
+
+const wastageReasonLabels: Record<string, string> = {
+  expired: "منتهي الصلاحية",
+  damaged: "تالف",
+  spoiled: "فاسد",
+  processing_loss: "فقد تصنيع",
+  other: "أخرى",
+};
+
+function getDefaultDateRange(): DateRangeQuery {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  return {
+    startDate: start.toISOString().slice(0, 10),
+    endDate: end.toISOString().slice(0, 10),
+  };
+}
 
 const reportLinks = [
-  { href: "/reports/sales", label: "تقارير المبيعات", icon: TrendingUp },
-  { href: "/reports/inventory", label: "تقارير المخزون", icon: Package },
-  { href: "/reports/financial", label: "التقارير المالية", icon: PieChart },
-  { href: "/reports/tax", label: "تقارير الضرائب", icon: Receipt },
+  { href: "/reports/sales", label: "المبيعات", icon: TrendingUp },
+  { href: "/reports/purchases", label: "المشتريات", icon: Receipt },
+  { href: "/reports/inventory", label: "المخزون", icon: Package },
+  { href: "/reports/expenses", label: "المصروفات", icon: Wallet },
+  { href: "/reports/profit-loss", label: "الأرباح والخسائر", icon: PieChart },
+  { href: "/reports/wastage", label: "الهدر", icon: Trash2 },
 ];
 
 export default function Reports() {
   const location = useLocation();
   const currentPath = location.pathname;
+  const [dateRange, setDateRange] = useState<DateRangeQuery>(getDefaultDateRange());
+  const [rangePreset, setRangePreset] = useState("month");
 
-  // Determine which report is active
-  const getReportContent = () => {
+  const rangeForQuery = useMemo(() => {
+    const now = new Date();
+    let start: Date;
+    let end: Date;
+    switch (rangePreset) {
+      case "today":
+        start = new Date(now);
+        end = new Date(now);
+        break;
+      case "week":
+        start = new Date(now);
+        start.setDate(now.getDate() - 7);
+        end = new Date(now);
+        break;
+      case "month":
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        break;
+      case "quarter":
+        start = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+        end = new Date(start.getFullYear(), start.getMonth() + 3, 0);
+        break;
+      case "year":
+        start = new Date(now.getFullYear(), 0, 1);
+        end = new Date(now.getFullYear(), 11, 31);
+        break;
+      default:
+        return dateRange;
+    }
+    return {
+      startDate: start.toISOString().slice(0, 10),
+      endDate: end.toISOString().slice(0, 10),
+    };
+  }, [rangePreset, dateRange]);
+
+  const needsDateRange =
+    currentPath.includes("sales") ||
+    currentPath.includes("purchases") ||
+    currentPath.includes("expenses") ||
+    currentPath.includes("profit-loss") ||
+    currentPath.includes("wastage");
+
+  const salesParams = currentPath === "/reports/sales" ? rangeForQuery : { startDate: "", endDate: "" };
+  const purchasesParams = currentPath === "/reports/purchases" ? rangeForQuery : { startDate: "", endDate: "" };
+  const expenseParams = currentPath === "/reports/expenses" ? rangeForQuery : { startDate: "", endDate: "" };
+  const profitLossParams = currentPath === "/reports/profit-loss" ? rangeForQuery : { startDate: "", endDate: "" };
+  const wastageParams = currentPath === "/reports/wastage" ? rangeForQuery : { startDate: "", endDate: "" };
+
+  const { data: salesReport, isLoading: salesLoading } = useSalesReport(salesParams);
+  const { data: purchasesReport, isLoading: purchasesLoading } = usePurchasesReport(purchasesParams);
+  const { data: inventoryReport, isLoading: inventoryLoading } = useInventoryReport();
+  const { data: expenseReport, isLoading: expenseLoading } = useExpenseReport(expenseParams);
+  const { data: profitLossReport, isLoading: profitLossLoading } = useProfitLossReport(profitLossParams);
+  const { data: wastageReport, isLoading: wastageLoading } = useWastageReport(wastageParams);
+
+  const isLoading =
+    (currentPath === "/reports/sales" && salesLoading) ||
+    (currentPath === "/reports/purchases" && purchasesLoading) ||
+    (currentPath === "/reports/inventory" && inventoryLoading) ||
+    (currentPath === "/reports/expenses" && expenseLoading) ||
+    (currentPath === "/reports/profit-loss" && profitLossLoading) ||
+    (currentPath === "/reports/wastage" && wastageLoading);
+
+  const content = useMemo(() => {
     switch (currentPath) {
       case "/reports/sales":
-        return {
-          title: "تقارير المبيعات",
-          description: "تحليل أداء المبيعات والأرباح",
-          icon: TrendingUp,
-        };
+        return { title: "تقارير المبيعات", description: "تحليل أداء المبيعات والأرباح", icon: TrendingUp };
+      case "/reports/purchases":
+        return { title: "تقارير المشتريات", description: "سجل المشتريات حسب الفترة", icon: Receipt };
       case "/reports/inventory":
-        return {
-          title: "تقارير المخزون",
-          description: "تقييم المخزون وحركة البضاعة",
-          icon: Package,
-        };
-      case "/reports/financial":
-        return {
-          title: "التقارير المالية",
-          description: "قائمة الدخل والتدفق النقدي",
-          icon: PieChart,
-        };
-      case "/reports/tax":
-        return {
-          title: "تقارير الضرائب",
-          description: "ملخص ضريبة القيمة المضافة",
-          icon: Receipt,
-        };
+        return { title: "تقارير المخزون", description: "تقييم المخزون وحركة البضاعة", icon: Package };
+      case "/reports/expenses":
+        return { title: "تقارير المصروفات", description: "ملخص المصروفات حسب النوع", icon: Wallet };
+      case "/reports/profit-loss":
+        return { title: "الأرباح والخسائر", description: "قائمة الدخل للفترة", icon: PieChart };
+      case "/reports/wastage":
+        return { title: "تقارير الهدر", description: "سجل الهدر والتلف", icon: Trash2 };
       default:
-        return {
-          title: "التقارير",
-          description: "اختر نوع التقرير",
-          icon: BarChart3,
-        };
+        return { title: "التقارير", description: "اختر نوع التقرير", icon: BarChart3 };
     }
-  };
+  }, [currentPath]);
 
-  const content = getReportContent();
   const Icon = content.icon;
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-6" dir="rtl">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{content.title}</h1>
           <p className="text-muted-foreground mt-1">{content.description}</p>
         </div>
         <div className="flex items-center gap-3">
-          <Select defaultValue="month">
-            <SelectTrigger className="w-40 gap-2">
-              <Calendar className="w-4 h-4" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="today">اليوم</SelectItem>
-              <SelectItem value="week">هذا الأسبوع</SelectItem>
-              <SelectItem value="month">هذا الشهر</SelectItem>
-              <SelectItem value="quarter">هذا الربع</SelectItem>
-              <SelectItem value="year">هذه السنة</SelectItem>
-            </SelectContent>
-          </Select>
+          {needsDateRange && (
+            <Select value={rangePreset} onValueChange={setRangePreset}>
+              <SelectTrigger className="w-40 gap-2">
+                <Calendar className="w-4 h-4" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">اليوم</SelectItem>
+                <SelectItem value="week">هذا الأسبوع</SelectItem>
+                <SelectItem value="month">هذا الشهر</SelectItem>
+                <SelectItem value="quarter">هذا الربع</SelectItem>
+                <SelectItem value="year">هذه السنة</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           <Button variant="outline" className="gap-2">
             <Download className="w-4 h-4" />
-            تصدير PDF
+            تصدير
           </Button>
         </div>
       </div>
 
-      {/* Report Type Tabs */}
       <div className="flex gap-2 overflow-x-auto pb-2">
         {reportLinks.map((link) => (
           <Link key={link.href} to={link.href}>
@@ -105,76 +206,343 @@ export default function Reports() {
         ))}
       </div>
 
-      {/* Report Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Chart Area */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Icon className="w-5 h-5" />
-              {content.title}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 bg-muted/30 rounded-lg flex items-center justify-center border-2 border-dashed border-border">
-              <div className="text-center text-muted-foreground">
-                <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>الرسوم البيانية ستظهر هنا</p>
-                <p className="text-sm">بعد ربط قاعدة البيانات</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Summary Cards */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>إجمالي المبيعات</CardDescription>
-              <CardTitle className="text-2xl text-success">₪ 45,230</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">+12% من الشهر السابق</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>صافي الربح</CardDescription>
-              <CardTitle className="text-2xl text-primary">₪ 8,450</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">هامش الربح: 18.7%</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>عدد الفواتير</CardDescription>
-              <CardTitle className="text-2xl">342</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">متوسط الفاتورة: ₪ 132</p>
-            </CardContent>
-          </Card>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
-      </div>
-
-      {/* Data Table Placeholder */}
-      <Card>
-        <CardHeader>
-          <CardTitle>تفاصيل التقرير</CardTitle>
-          <CardDescription>البيانات التفصيلية للفترة المحددة</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-48 bg-muted/30 rounded-lg flex items-center justify-center border-2 border-dashed border-border">
-            <div className="text-center text-muted-foreground">
-              <p>جدول البيانات سيظهر هنا</p>
-              <p className="text-sm">بعد ربط قاعدة البيانات</p>
+      ) : (
+        <>
+          {/* Sales */}
+          {currentPath === "/reports/sales" && salesReport && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5" />
+                    ملخص المبيعات
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <p><span className="text-muted-foreground">عدد الفواتير:</span> <strong>{salesReport.summary.count}</strong></p>
+                  <p><span className="text-muted-foreground">صافي الإيرادات:</span> <strong>₪ {formatMinor(salesReport.summary.netRevenue)}</strong></p>
+                  <p><span className="text-muted-foreground">التكلفة:</span> <strong>₪ {formatMinor(salesReport.summary.cost)}</strong></p>
+                  <p><span className="text-muted-foreground">الربح:</span> <strong className="text-green-600">₪ {formatMinor(salesReport.summary.profit)}</strong></p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>إجماليات</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-success">₪ {formatMinor(salesReport.summary.netRevenue)}</p>
+                  <p className="text-sm text-muted-foreground">صافي الإيرادات للفترة</p>
+                </CardContent>
+              </Card>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          )}
+          {currentPath === "/reports/sales" && salesReport && salesReport.sales?.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>تفاصيل المبيعات</CardTitle>
+                <CardDescription>الفواتير ضمن الفترة المحددة</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="data-table-header">
+                      <TableHead className="text-right">رقم الفاتورة</TableHead>
+                      <TableHead className="text-right">التاريخ</TableHead>
+                      <TableHead className="text-right">الزبون</TableHead>
+                      <TableHead className="text-center">المبلغ</TableHead>
+                      <TableHead className="text-center">الربح</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {salesReport.sales.map((s) => (
+                      <TableRow key={s.id}>
+                        <TableCell className="font-mono">{s.saleNumber}</TableCell>
+                        <TableCell>{typeof s.date === "string" ? s.date.slice(0, 10) : ""}</TableCell>
+                        <TableCell>{s.customerName ?? "—"}</TableCell>
+                        <TableCell className="text-center">₪ {formatMinor(s.total)}</TableCell>
+                        <TableCell className="text-center text-green-600">₪ {formatMinor(s.profit)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Purchases */}
+          {currentPath === "/reports/purchases" && purchasesReport && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Receipt className="w-5 h-5" />
+                    ملخص المشتريات
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <p><span className="text-muted-foreground">عدد أوامر الشراء:</span> <strong>{purchasesReport.summary.count}</strong></p>
+                  <p><span className="text-muted-foreground">إجمالي المشتريات:</span> <strong>₪ {formatMinor(purchasesReport.summary.totalAmount)}</strong></p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>الإجمالي</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold">₪ {formatMinor(purchasesReport.summary.totalAmount)}</p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+          {currentPath === "/reports/purchases" && purchasesReport && purchasesReport.purchases?.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>تفاصيل المشتريات</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="data-table-header">
+                      <TableHead className="text-right">رقم الأمر</TableHead>
+                      <TableHead className="text-right">التاريخ</TableHead>
+                      <TableHead className="text-right">التاجر</TableHead>
+                      <TableHead className="text-center">المبلغ</TableHead>
+                      <TableHead className="text-center">الحالة</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {purchasesReport.purchases.map((p) => (
+                      <TableRow key={p.id}>
+                        <TableCell className="font-mono">{p.purchaseNumber}</TableCell>
+                        <TableCell>{typeof p.date === "string" ? p.date.slice(0, 10) : ""}</TableCell>
+                        <TableCell>{p.supplierName}</TableCell>
+                        <TableCell className="text-center">₪ {formatMinor(p.total)}</TableCell>
+                        <TableCell className="text-center">{p.status}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Inventory */}
+          {currentPath === "/reports/inventory" && inventoryReport && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="w-5 h-5" />
+                    ملخص المخزون
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <p><span className="text-muted-foreground">عدد الأصناف:</span> <strong>{inventoryReport.summary.totalItems}</strong></p>
+                  <p><span className="text-muted-foreground">الكمية الإجمالية (غ):</span> <strong>{inventoryReport.summary.totalWeight}</strong></p>
+                  <p><span className="text-muted-foreground">قيمة المخزون:</span> <strong>₪ {formatMinor(inventoryReport.summary.totalValue)}</strong></p>
+                  <p><span className="text-muted-foreground">الدفعات النشطة:</span> <strong>{inventoryReport.summary.activeLots}</strong></p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+          {currentPath === "/reports/inventory" && inventoryReport && inventoryReport.items?.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>تفاصيل الأصناف</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="data-table-header">
+                      <TableHead className="text-right">الصنف</TableHead>
+                      <TableHead className="text-right">الفئة</TableHead>
+                      <TableHead className="text-center">الكمية (غ)</TableHead>
+                      <TableHead className="text-center">القيمة</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {inventoryReport.items.map((inv) => (
+                      <TableRow key={inv.itemId}>
+                        <TableCell className="font-medium">{inv.itemName}</TableCell>
+                        <TableCell>{inv.categoryName ?? "—"}</TableCell>
+                        <TableCell className="text-center font-english" dir="ltr">{inv.currentWeight}</TableCell>
+                        <TableCell className="text-center">₪ {formatMinor(inv.value)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Expenses */}
+          {currentPath === "/reports/expenses" && expenseReport && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Wallet className="w-5 h-5" />
+                    ملخص المصروفات
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <p><span className="text-muted-foreground">عدد السجلات:</span> <strong>{expenseReport.summary.count}</strong></p>
+                  <p><span className="text-muted-foreground">إجمالي المصروفات:</span> <strong>₪ {formatMinor(expenseReport.summary.totalAmount)}</strong></p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+          {currentPath === "/reports/expenses" && expenseReport && expenseReport.expenses?.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>تفاصيل المصروفات</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="data-table-header">
+                      <TableHead className="text-right">التاريخ</TableHead>
+                      <TableHead className="text-right">النوع</TableHead>
+                      <TableHead className="text-right">التصنيف</TableHead>
+                      <TableHead className="text-center">المبلغ</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {expenseReport.expenses.map((e) => (
+                      <TableRow key={e.id}>
+                        <TableCell>{typeof e.date === "string" ? e.date.slice(0, 10) : ""}</TableCell>
+                        <TableCell>{e.type}</TableCell>
+                        <TableCell>{e.categoryName ?? "—"}</TableCell>
+                        <TableCell className="text-center">₪ {formatMinor(e.amount)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Profit & Loss */}
+          {currentPath === "/reports/profit-loss" && profitLossReport && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <PieChart className="w-5 h-5" />
+                  قائمة الدخل (الأرباح والخسائر)
+                </CardTitle>
+                <CardDescription>للفترة المحددة</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">الإيرادات</p>
+                    <p className="text-xl font-semibold text-success">₪ {formatMinor(profitLossReport.revenue)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">تكلفة البضاعة</p>
+                    <p className="text-xl font-semibold">₪ {formatMinor(profitLossReport.costOfGoodsSold)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">الربح الإجمالي</p>
+                    <p className="text-xl font-semibold text-green-600">₪ {formatMinor(profitLossReport.grossProfit)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">المصروفات</p>
+                    <p className="text-xl font-semibold">₪ {formatMinor(profitLossReport.expenses)}</p>
+                  </div>
+                </div>
+                <div className="border-t pt-4 flex items-center justify-between">
+                  <span className="text-muted-foreground">صافي الربح</span>
+                  <span className={cn("text-2xl font-bold", profitLossReport.netProfit >= 0 ? "text-green-600" : "text-red-600")}>
+                    ₪ {formatMinor(profitLossReport.netProfit)}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  هامش الربح الإجمالي: {profitLossReport.grossMargin.toFixed(1)}% — هامش الربح الصافي: {profitLossReport.netMargin.toFixed(1)}%
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Wastage */}
+          {currentPath === "/reports/wastage" && wastageReport && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Trash2 className="w-5 h-5" />
+                    ملخص الهدر
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <p><span className="text-muted-foreground">عدد السجلات:</span> <strong>{wastageReport.summary.count}</strong></p>
+                  <p><span className="text-muted-foreground">إجمالي الوزن (غ):</span> <strong>{wastageReport.summary.totalWeight}</strong></p>
+                  <p><span className="text-muted-foreground">التكلفة التقديرية:</span> <strong>₪ {formatMinor(wastageReport.summary.totalCost)}</strong></p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+          {currentPath === "/reports/wastage" && wastageReport && wastageReport.records?.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>تفاصيل الهدر</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="data-table-header">
+                      <TableHead className="text-right">التاريخ</TableHead>
+                      <TableHead className="text-right">الصنف</TableHead>
+                      <TableHead className="text-right">النوع</TableHead>
+                      <TableHead className="text-right">السبب</TableHead>
+                      <TableHead className="text-center">الوزن (غ)</TableHead>
+                      <TableHead className="text-center">التكلفة</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {wastageReport.records.map((r) => (
+                      <TableRow key={r.id}>
+                        <TableCell>{typeof r.date === "string" ? r.date.slice(0, 10) : new Date(r.date).toISOString().slice(0, 10)}</TableCell>
+                        <TableCell>{r.itemName}</TableCell>
+                        <TableCell>{r.type}</TableCell>
+                        <TableCell>{wastageReasonLabels[r.reason ?? ""] ?? r.reason ?? "—"}</TableCell>
+                        <TableCell className="text-center font-english" dir="ltr">{r.weight}</TableCell>
+                        <TableCell className="text-center">₪ {formatMinor(r.cost)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Default / no report selected */}
+          {!reportLinks.some((l) => l.href === currentPath) && (
+            <Card>
+              <CardContent className="py-16 text-center text-muted-foreground">
+                <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>اختر نوع التقرير من الأعلى</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Empty state when report type matches but no data */}
+          {currentPath === "/reports/sales" && !isLoading && (!salesReport?.sales?.length && salesReport?.summary?.count === 0) && (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">لا توجد مبيعات في الفترة المحددة</CardContent>
+            </Card>
+          )}
+          {currentPath === "/reports/purchases" && !isLoading && (!purchasesReport?.purchases?.length && purchasesReport?.summary?.count === 0) && (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">لا توجد مشتريات في الفترة المحددة</CardContent>
+            </Card>
+          )}
+        </>
+      )}
     </div>
   );
 }

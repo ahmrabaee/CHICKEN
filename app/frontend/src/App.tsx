@@ -12,12 +12,21 @@ import ItemProfile from "@/pages/inventory/ItemProfile";
 import Sales from "@/pages/Sales";
 import POS from "@/pages/POS";
 import Purchasing from "@/pages/Purchasing";
+import PurchaseProfile from "@/pages/purchasing/PurchaseProfile";
 import Customers from "@/pages/Customers";
 import CustomerProfile from "@/pages/customers/CustomerProfile";
 import Suppliers from "@/pages/Suppliers";
 import SupplierProfile from "@/pages/suppliers/SupplierProfile";
-import PersonalExpenses from "@/pages/PersonalExpenses";
+import Payments from "@/pages/Payments";
+import PaymentProfile from "@/pages/payments/PaymentProfile";
+import Expenses from "@/pages/Expenses";
+import ExpenseProfile from "@/pages/expenses/ExpenseProfile";
+import Debts from "@/pages/Debts";
+import Wastage from "@/pages/Wastage";
+import WastageProfile from "@/pages/wastage/WastageProfile";
 import Reports from "@/pages/Reports";
+import Audit from "@/pages/Audit";
+import Accounting from "@/pages/Accounting";
 import Settings from "@/pages/Settings";
 import Login from "@/pages/Login";
 import Setup from "@/pages/Setup";
@@ -59,7 +68,7 @@ const App = () => (
 
                 {/* Purchasing */}
                 <Route path="/purchasing" element={<Purchasing />} />
-                <Route path="/purchasing/new" element={<Purchasing />} />
+                <Route path="/purchasing/new" element={<PurchaseProfile />} />
                 <Route path="/purchasing/:id" element={<Purchasing />} />
 
                 {/* Customers */}
@@ -72,15 +81,38 @@ const App = () => (
                 <Route path="/traders/new" element={<SupplierProfile />} />
                 <Route path="/traders/:id" element={<SupplierProfile />} />
 
-                {/* Personal Expenses */}
-                <Route path="/personal-expenses" element={<PersonalExpenses />} />
-                <Route path="/personal-expenses/new" element={<PersonalExpenses />} />
+                {/* Payments */}
+                <Route path="/payments" element={<Payments />} />
+                <Route path="/payments/new" element={<PaymentProfile />} />
+                <Route path="/payments/:id" element={<PaymentProfile />} />
+
+                {/* Expenses */}
+                <Route path="/expenses" element={<Expenses />} />
+                <Route path="/expenses/new" element={<ExpenseProfile />} />
+                <Route path="/expenses/:id" element={<ExpenseProfile />} />
+
+                {/* Debts */}
+                <Route path="/debts" element={<Debts />} />
+
+                {/* Wastage */}
+                <Route path="/wastage" element={<Wastage />} />
+                <Route path="/wastage/new" element={<WastageProfile />} />
 
                 {/* Reports */}
                 <Route path="/reports/sales" element={<Reports />} />
+                <Route path="/reports/purchases" element={<Reports />} />
                 <Route path="/reports/inventory" element={<Reports />} />
+                <Route path="/reports/expenses" element={<Reports />} />
+                <Route path="/reports/profit-loss" element={<Reports />} />
+                <Route path="/reports/wastage" element={<Reports />} />
                 <Route path="/reports/financial" element={<Reports />} />
                 <Route path="/reports/tax" element={<Reports />} />
+
+                {/* Accounting */}
+                <Route path="/accounting" element={<Accounting />} />
+
+                {/* Audit */}
+                <Route path="/audit" element={<Audit />} />
 
                 {/* Settings */}
                 <Route path="/settings" element={<Settings />} />

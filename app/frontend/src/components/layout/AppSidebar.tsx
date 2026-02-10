@@ -26,6 +26,12 @@ import {
   UserCircle,
   Loader2,
   Building2,
+  Banknote,
+  Shield,
+  BookOpen,
+  Trash2,
+  Scale,
+  ArrowLeftRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -103,6 +109,30 @@ const navigation: NavItem[] = [
     ],
   },
   {
+    title: "Payments",
+    titleAr: "المدفوعات",
+    icon: Banknote,
+    href: "/payments",
+  },
+  {
+    title: "Expenses",
+    titleAr: "المصروفات",
+    icon: Wallet,
+    href: "/expenses",
+  },
+  {
+    title: "Debts",
+    titleAr: "الديون",
+    icon: ArrowLeftRight,
+    href: "/debts",
+  },
+  {
+    title: "Wastage",
+    titleAr: "الهدر",
+    icon: Trash2,
+    href: "/wastage",
+  },
+  {
     title: "Reports",
     titleAr: "التقارير",
     icon: BarChart3,
@@ -114,10 +144,16 @@ const navigation: NavItem[] = [
     ],
   },
   {
-    title: "Personal Expenses",
-    titleAr: "المصاريف الشخصية",
-    icon: Wallet,
-    href: "/personal-expenses",
+    title: "Accounting",
+    titleAr: "المحاسبة",
+    icon: BookOpen,
+    href: "/accounting",
+  },
+  {
+    title: "Audit",
+    titleAr: "سجل المراجعة",
+    icon: Shield,
+    href: "/audit",
   },
   {
     title: "Branches",

@@ -1,5 +1,6 @@
-import { IsNumber, IsString, IsOptional } from 'class-validator';
+import { IsNumber, IsString, IsOptional, IsIn } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { PaginationQueryDto } from '../../common';
 
 export class RecordSalePaymentDto {
   @ApiProperty()
@@ -47,4 +48,12 @@ export class RecordPurchasePaymentDto {
   @IsString()
   @IsOptional()
   notes?: string;
+}
+
+export class PaymentQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({ enum: ['sale', 'purchase', 'debt'] })
+  @IsString()
+  @IsOptional()
+  @IsIn(['sale', 'purchase', 'debt'])
+  type?: string;
 }

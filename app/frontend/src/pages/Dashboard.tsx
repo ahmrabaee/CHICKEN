@@ -7,6 +7,7 @@ import {
   Wallet,
   ShoppingCart,
   Calendar,
+  Loader2,
 } from "lucide-react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { StatusBadge, PaymentStatusBadge, StockStatusBadge } from "@/components/ui/status-badge";
@@ -21,6 +22,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Link } from "react-router-dom";
+import { useDashboard } from "@/hooks/use-reports";
+
+function formatMinor(amount: number): string {
+  return `₪ ${(amount / 100).toFixed(2)}`;
+}
 
 // Mock data
 const lowStockItems = [
@@ -47,8 +53,10 @@ const recentSales = [
 ];
 
 export default function Dashboard() {
+  const { data: dashboard, isLoading: dashboardLoading } = useDashboard();
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -69,54 +77,56 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="عدد الزبائن"
-          value={128}
-          icon={Users}
-          variant="info"
-          trend={{ value: 12, isPositive: true }}
-        />
-        <StatCard
-          title="عناصر المخزون"
-          value={45}
-          icon={Package}
-          variant="default"
-        />
-        <StatCard
-          title="أرباح المبيعات"
-          value="₪ 8,450"
-          subtitle="هذا الشهر"
-          icon={TrendingUp}
-          variant="success"
-          trend={{ value: 8, isPositive: true }}
-        />
-        <StatCard
-          title="قطع منخفضة المخزون"
-          value={3}
-          icon={AlertTriangle}
-          variant="warning"
-        />
-      </div>
+      {/* Stats Grid — from GET /reports/dashboard */}
+      {dashboardLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              title="مبيعات اليوم (عدد)"
+              value={dashboard?.sales?.today?.count ?? 0}
+              icon={ShoppingCart}
+              variant="default"
+            />
+            <StatCard
+              title="إيرادات اليوم"
+              value={dashboard?.sales?.today ? formatMinor(dashboard.sales.today.totalAmount) : "₪ 0.00"}
+              icon={TrendingUp}
+              variant="success"
+            />
+            <StatCard
+              title="أرباح اليوم"
+              value={dashboard?.sales?.today ? formatMinor(dashboard.sales.today.totalProfit) : "₪ 0.00"}
+              icon={TrendingUp}
+              variant="success"
+            />
+            <StatCard
+              title="قطع منخفضة المخزون"
+              value={dashboard?.inventory?.lowStockCount ?? 0}
+              icon={AlertTriangle}
+              variant="warning"
+            />
+          </div>
 
-      {/* Second Row Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <StatCard
-          title="ديون الزبائن"
-          value="₪ 1,050"
-          subtitle="3 زبائن"
-          icon={CreditCard}
-          variant="danger"
-        />
-        <StatCard
-          title="ديون للتجار"
-          value="₪ 4,300"
-          subtitle="2 تاجر"
-          icon={Wallet}
-          variant="warning"
-        />
-      </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <StatCard
+              title="ديون الزبائن (مستحقات)"
+              value={dashboard != null ? formatMinor(dashboard.receivables) : "₪ 0.00"}
+              icon={CreditCard}
+              variant="danger"
+            />
+            <StatCard
+              title="ديون للتجار (ذمم دائنة)"
+              value={dashboard != null ? formatMinor(dashboard.payables) : "₪ 0.00"}
+              icon={Wallet}
+              variant="warning"
+            />
+          </div>
+        </>
+      )}
 
       {/* Data Widgets */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

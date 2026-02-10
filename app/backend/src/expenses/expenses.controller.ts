@@ -11,23 +11,21 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ExpensesService } from './expenses.service';
-import { CreateExpenseDto, UpdateExpenseDto } from './dto/expense.dto';
-import { PaginationQueryDto, Roles, CurrentUser } from '../common';
+import { CreateExpenseDto, UpdateExpenseDto, ExpenseQueryDto } from './dto/expense.dto';
+import { Roles, CurrentUser } from '../common';
 
 @ApiTags('expenses')
 @ApiBearerAuth('JWT-auth')
 @Controller('expenses')
 export class ExpensesController {
-  constructor(private expensesService: ExpensesService) {}
+  constructor(private expensesService: ExpensesService) { }
 
   @Get()
   @ApiOperation({ summary: 'List all expenses' })
-  @ApiQuery({ name: 'expenseType', required: false })
   findAll(
-    @Query() pagination: PaginationQueryDto,
-    @Query('expenseType') expenseType?: string,
+    @Query() query: ExpenseQueryDto,
   ) {
-    return this.expensesService.findAll(pagination, expenseType);
+    return this.expensesService.findAll(query, query.expenseType);
   }
 
   @Get('categories')

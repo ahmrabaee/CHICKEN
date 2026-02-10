@@ -7,37 +7,30 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { DebtsService } from './debts.service';
-import { PaginationQueryDto, Roles } from '../common';
+import { DebtQueryDto } from './dto/debt.dto';
+import { Roles } from '../common';
 
 @ApiTags('debts')
 @ApiBearerAuth('JWT-auth')
 @Controller('debts')
 export class DebtsController {
-  constructor(private debtsService: DebtsService) {}
+  constructor(private debtsService: DebtsService) { }
 
   @Get('receivables')
   @ApiOperation({ summary: 'List customer receivables (money owed to us)' })
-  @ApiQuery({ name: 'customerId', required: false, type: Number })
-  @ApiQuery({ name: 'status', required: false, enum: ['pending', 'partial', 'paid', 'overdue'] })
   findReceivables(
-    @Query() pagination: PaginationQueryDto,
-    @Query('customerId') customerId?: string,
-    @Query('status') status?: string,
+    @Query() query: DebtQueryDto,
   ) {
-    return this.debtsService.findReceivables(pagination);
+    return this.debtsService.findReceivables(query);
   }
 
   @Get('payables')
   @Roles('Admin', 'Manager')
   @ApiOperation({ summary: 'List supplier payables (money we owe)' })
-  @ApiQuery({ name: 'supplierId', required: false, type: Number })
-  @ApiQuery({ name: 'status', required: false, enum: ['pending', 'partial', 'paid', 'overdue'] })
   findPayables(
-    @Query() pagination: PaginationQueryDto,
-    @Query('supplierId') supplierId?: string,
-    @Query('status') status?: string,
+    @Query() query: DebtQueryDto,
   ) {
-    return this.debtsService.findPayables(pagination);
+    return this.debtsService.findPayables(query);
   }
 
   @Get('summary')

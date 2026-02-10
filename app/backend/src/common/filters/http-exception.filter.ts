@@ -64,12 +64,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
       message = prismaError.message;
       messageAr = prismaError.messageAr;
     }
-    // Handle validation errors
+    // Handle validation errors (Prisma schema/args validation)
     else if (exception instanceof Prisma.PrismaClientValidationError) {
       status = HttpStatus.BAD_REQUEST;
       errorCode = 'VALIDATION_ERROR';
-      message = 'Invalid data provided';
+      message = exception.message || 'Invalid data provided';
       messageAr = 'البيانات المدخلة غير صالحة';
+      details = [exception.message];
     }
     // Handle unknown errors
     else if (exception instanceof Error) {

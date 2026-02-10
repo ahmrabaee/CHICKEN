@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccountingService } from '../accounting/accounting.service';
 import { createPaginatedResult, PaginationQueryDto } from '../common';
@@ -61,14 +61,14 @@ export class PurchasesService {
     });
 
     if (!supplier) {
-      throw new NotFoundException({
-        code: 'NOT_FOUND',
+      throw new BadRequestException({
+        code: 'SUPPLIER_NOT_FOUND',
         message: 'Supplier not found',
         messageAr: 'المورد غير موجود',
       });
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    const purchaseId = await this.prisma.$transaction(async (tx) => {
       let totalAmount = 0;
 
       for (const line of dto.lines) {
@@ -89,6 +89,7 @@ export class PurchasesService {
           taxAmount,
           totalAmount,
           paymentStatus: 'unpaid',
+          amountPaid: 0,
           notes: dto.notes,
           createdById: userId,
         },
@@ -97,7 +98,7 @@ export class PurchasesService {
       for (let i = 0; i < dto.lines.length; i++) {
         const line = dto.lines[i];
         const item = await tx.item.findUnique({ where: { id: line.itemId } });
-        
+
         if (!item) continue;
 
         const lineTotal = Math.round((line.weightGrams / 1000) * line.pricePerKg);
@@ -117,8 +118,10 @@ export class PurchasesService {
         });
       }
 
-      return this.findById(purchase.id);
+      return purchase.id;
     });
+
+    return this.findById(purchaseId);
   }
 
   async receive(id: number, dto: any, userId: number) {

@@ -4,6 +4,7 @@ import {
   IsInt, IsPositive, IsString, IsOptional, IsIn, IsArray, ValidateNested,
   IsNotEmpty, IsDateString, Min,
 } from 'class-validator';
+import { PaginationQueryDto } from '../../common';
 
 export class SaleLineDto {
   @ApiProperty({ description: 'Item ID' })
@@ -175,14 +176,14 @@ export class SaleResponseDto {
   @ApiPropertyOptional() payments?: any[];
 }
 
-export class SaleQueryDto {
+export class SaleQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional()
   @Type(() => Number)
   @IsInt()
   @IsOptional()
   customerId?: number;
 
-  @ApiPropertyOptional({ enum: ['pending', 'partial', 'paid', 'voided'] })
+  @ApiPropertyOptional({ enum: ['unpaid', 'partial', 'paid', 'voided'] })
   @IsString()
   @IsOptional()
   paymentStatus?: string;

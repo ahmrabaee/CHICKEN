@@ -45,90 +45,109 @@ export class WastageService {
   }
 
   async create(dto: any, userId: number) {
+    const lotId = dto.lotId != null ? Number(dto.lotId) : null;
+    if (!lotId) {
+      throw new BadRequestException({
+        code: 'VALIDATION_ERROR',
+        message: 'lotId is required',
+        messageAr: 'الدفعة مطلوبة',
+      });
+    }
+
+    const weightGrams = Math.round(Number(dto.quantityGrams ?? dto.weightGrams ?? 0));
+    if (!weightGrams || weightGrams <= 0) {
+      throw new BadRequestException({
+        code: 'VALIDATION_ERROR',
+        message: 'Quantity (grams) is required and must be positive',
+        messageAr: 'الكمية (غرام) مطلوبة ويجب أن تكون موجبة',
+      });
+    }
+
+    const recordedById = Number(userId);
+    if (!recordedById || Number.isNaN(recordedById)) {
+      throw new BadRequestException({
+        code: 'UNAUTHORIZED',
+        message: 'User context required',
+        messageAr: 'يجب تسجيل الدخول',
+      });
+    }
+
     return this.prisma.$transaction(async (tx) => {
-      let costPerKg = 0;
-      let itemId = dto.itemId;
+      const lot = await tx.inventoryLot.findUnique({
+        where: { id: lotId },
+      });
 
-      if (dto.lotId) {
-        const lot = await tx.inventoryLot.findUnique({
-          where: { id: dto.lotId },
-        });
-
-        if (!lot) {
-          throw new NotFoundException({
-            code: 'NOT_FOUND',
-            message: 'Lot not found',
-            messageAr: 'الدفعة غير موجودة',
-          });
-        }
-
-        if (lot.remainingQuantityGrams < dto.weightGrams) {
-          throw new BadRequestException({
-            code: 'INSUFFICIENT_STOCK',
-            message: 'Insufficient stock in lot',
-            messageAr: 'المخزون غير كافٍ في الدفعة',
-          });
-        }
-
-        costPerKg = lot.unitPurchasePrice;
-        itemId = lot.itemId;
-
-        // Update lot
-        await tx.inventoryLot.update({
-          where: { id: dto.lotId },
-          data: {
-            remainingQuantityGrams: { decrement: dto.weightGrams },
-          },
+      if (!lot) {
+        throw new NotFoundException({
+          code: 'NOT_FOUND',
+          message: 'Lot not found',
+          messageAr: 'الدفعة غير موجودة',
         });
       }
 
-      const estimatedCostValue = Math.round((dto.weightGrams / 1000) * costPerKg);
+      if (lot.remainingQuantityGrams < weightGrams) {
+        throw new BadRequestException({
+          code: 'INSUFFICIENT_STOCK',
+          message: 'Insufficient stock in lot',
+          messageAr: 'المخزون غير كافٍ في الدفعة',
+        });
+      }
 
-      // Update inventory
+      const itemId = lot.itemId;
+      const costPerKg = lot.unitPurchasePrice ?? 0;
+
+      await tx.inventoryLot.update({
+        where: { id: lotId },
+        data: {
+          remainingQuantityGrams: { decrement: weightGrams },
+        },
+      });
+
+      const estimatedCostValue = Math.round((weightGrams / 1000) * costPerKg);
+
       await tx.inventory.update({
         where: { itemId },
         data: {
-          currentQuantityGrams: { decrement: dto.weightGrams },
+          currentQuantityGrams: { decrement: weightGrams },
           totalValue: { decrement: estimatedCostValue },
         },
       });
 
-      // Create wastage record
+      const wastageType = (dto.wastageType ?? dto.reason ?? 'other').toString();
+      const reason = (dto.reason ?? 'other').toString();
       const record = await tx.wastageRecord.create({
         data: {
           itemId,
-          lotId: dto.lotId,
-          weightGrams: dto.weightGrams,
-          wastageType: dto.wastageType ?? 'other',
-          reason: dto.reason,
+          lotId,
+          weightGrams,
+          wastageType,
+          reason,
           estimatedCostValue,
-          photoUrl: dto.photoUrl,
+          photoUrl: dto.photoUrl ?? null,
           wastageDate: dto.wastageDate ? new Date(dto.wastageDate) : new Date(),
-          notes: dto.notes,
-          recordedById: userId,
+          notes: dto.notes != null && dto.notes !== '' ? String(dto.notes) : null,
+          recordedById,
         },
       });
 
-      // Create stock movement
       await tx.stockMovement.create({
         data: {
           itemId,
-          lotId: dto.lotId,
+          lotId,
           movementType: 'wastage',
-          quantityGrams: -dto.weightGrams,
+          quantityGrams: -weightGrams,
           unitCost: costPerKg,
           referenceType: 'wastage',
           referenceId: record.id,
-          performedById: userId,
+          performedById: recordedById,
         },
       });
 
-      // Create accounting journal entry
       await this.accountingService.createWastageJournalEntry(
         tx,
         record.id,
-        dto.branchId ?? null,
-        userId,
+        dto.branchId != null ? Number(dto.branchId) : null,
+        recordedById,
         estimatedCostValue,
       );
 

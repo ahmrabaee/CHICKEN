@@ -10,18 +10,17 @@ import { Roles, RolesGuard, CurrentUser, CurrentUserData, PaginationQueryDto } f
 @ApiBearerAuth('JWT-auth')
 @Controller('sales')
 export class SalesController {
-  constructor(private readonly salesService: SalesService) {}
+  constructor(private readonly salesService: SalesService) { }
 
   @Get()
   @ApiOperation({ summary: 'List sales (paginated)' })
   @ApiResponse({ status: 200, description: 'List of sales' })
   async findAll(
     @Query() query: SaleQueryDto,
-    @Query() pagination: PaginationQueryDto,
     @CurrentUser() user: CurrentUserData,
   ) {
     const isAdmin = user.roles.includes('admin');
-    return this.salesService.findAll(query, pagination, user.id, isAdmin);
+    return this.salesService.findAll(query, query, user.id, isAdmin);
   }
 
   @Get(':id')

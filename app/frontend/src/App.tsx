@@ -13,7 +13,9 @@ import Sales from "@/pages/Sales";
 import POS from "@/pages/POS";
 import Purchasing from "@/pages/Purchasing";
 import Customers from "@/pages/Customers";
+import CustomerProfile from "@/pages/customers/CustomerProfile";
 import Suppliers from "@/pages/Suppliers";
+import SupplierProfile from "@/pages/suppliers/SupplierProfile";
 import PersonalExpenses from "@/pages/PersonalExpenses";
 import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
@@ -62,14 +64,13 @@ const App = () => (
 
                 {/* Customers */}
                 <Route path="/customers" element={<Customers />} />
-                <Route path="/customers/credits" element={<Customers />} />
-                <Route path="/customers/:id" element={<Customers />} />
+                <Route path="/customers/new" element={<CustomerProfile />} />
+                <Route path="/customers/:id" element={<CustomerProfile />} />
 
                 {/* Suppliers/Traders */}
                 <Route path="/traders" element={<Suppliers />} />
-                <Route path="/traders/new" element={<Suppliers />} />
-                <Route path="/traders/payables" element={<Suppliers />} />
-                <Route path="/traders/:id" element={<Suppliers />} />
+                <Route path="/traders/new" element={<SupplierProfile />} />
+                <Route path="/traders/:id" element={<SupplierProfile />} />
 
                 {/* Personal Expenses */}
                 <Route path="/personal-expenses" element={<PersonalExpenses />} />

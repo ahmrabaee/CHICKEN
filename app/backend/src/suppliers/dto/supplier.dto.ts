@@ -9,6 +9,11 @@ export class CreateSupplierDto {
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
+  nameEn?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
   contactPerson?: string;
 
   @ApiPropertyOptional()
@@ -30,6 +35,34 @@ export class CreateSupplierDto {
   @IsString()
   @IsOptional()
   paymentTerms?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  taxNumber?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  creditLimit?: number;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  bankName?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  bankAccountNumber?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  rating?: number;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  notes?: string;
 }
 
 export class UpdateSupplierDto extends PartialType(CreateSupplierDto) {

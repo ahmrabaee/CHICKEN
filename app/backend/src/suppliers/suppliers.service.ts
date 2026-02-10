@@ -4,7 +4,7 @@ import { createPaginatedResult, PaginationQueryDto } from '../common';
 
 @Injectable()
 export class SuppliersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async findAll(pagination: PaginationQueryDto) {
     const { page = 1, pageSize = 20 } = pagination;
@@ -55,13 +55,8 @@ export class SuppliersService {
 
     return this.prisma.supplier.create({
       data: {
+        ...dto,
         supplierNumber,
-        name: dto.name,
-        contactPerson: dto.contactPerson,
-        phone: dto.phone,
-        email: dto.email,
-        address: dto.address,
-        paymentTerms: dto.paymentTerms,
         isActive: true,
         createdById: userId,
       },

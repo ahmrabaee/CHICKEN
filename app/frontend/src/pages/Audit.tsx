@@ -113,7 +113,7 @@ export default function Audit() {
                         </div>
                         <Select value={actionFilter} onValueChange={(v) => { setActionFilter(v); setPage(1); }}>
                             <SelectTrigger className="w-full md:w-48"><SelectValue placeholder="الإجراء" /></SelectTrigger>
-                            <SelectContent>
+                            <SelectContent dir="rtl">
                                 <SelectItem value="all">الكل</SelectItem>
                                 {Object.entries(actionLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
                             </SelectContent>
@@ -148,9 +148,9 @@ export default function Audit() {
                                         <TableCell className="font-medium">{l.userName || `#${l.userId}`}</TableCell>
                                         <TableCell className="text-center">
                                             <span className={`text-xs px-2 py-0.5 rounded-full ${l.action === "create" ? "bg-green-100 dark:bg-green-950 text-green-600" :
-                                                    l.action === "update" ? "bg-blue-100 dark:bg-blue-950 text-blue-600" :
-                                                        l.action === "delete" ? "bg-red-100 dark:bg-red-950 text-red-600" :
-                                                            "bg-muted text-muted-foreground"
+                                                l.action === "update" ? "bg-blue-100 dark:bg-blue-950 text-blue-600" :
+                                                    l.action === "delete" ? "bg-red-100 dark:bg-red-950 text-red-600" :
+                                                        "bg-muted text-muted-foreground"
                                                 }`}>
                                                 {actionLabels[l.action] || l.action}
                                             </span>

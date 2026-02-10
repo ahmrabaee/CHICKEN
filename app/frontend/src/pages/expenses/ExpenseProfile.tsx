@@ -290,6 +290,8 @@ function ExpenseCreateMode({ isSubmitting, onSubmit }: { isSubmitting: boolean; 
             expenseDate: new Date().toISOString().split("T")[0],
             expenseType: "operational",
             description: "",
+            referenceNumber: "",
+            notes: "",
         },
     });
 
@@ -300,28 +302,35 @@ function ExpenseCreateMode({ isSubmitting, onSubmit }: { isSubmitting: boolean; 
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    <div className="lg:col-span-3 space-y-6">
-                        <Card className="border-t-4 border-t-primary shadow-md">
-                            <CardHeader>
-                                <CardTitle className="text-xl">بيانات المصروف الجديد</CardTitle>
-                                <CardDescription>أدخل تفاصيل المصروف والمبلغ والتصنيف بدقة لضمان دقة التقارير المالية.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6 pt-2">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Main Content Areas */}
+                    <div className="lg:col-span-2 space-y-6">
+                        {/* 1. Basic Information */}
+                        <Card className="overflow-hidden border-t-4 border-t-primary shadow-sm border-none">
+                            <div className="p-4 border-b bg-primary/5 flex items-center gap-3">
+                                <div className="p-2 bg-primary/10 text-primary rounded-lg">
+                                    <FileText className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h2 className="font-bold text-slate-700">البيانات الأساسية</h2>
+                                    <p className="text-xs text-slate-500">تصنيف المصروف وتاريخه ورقم المرجع</p>
+                                </div>
+                            </div>
+                            <CardContent className="p-6 space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <FormField
                                         control={form.control}
                                         name="categoryId"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="text-slate-600 font-bold">تصنيف المصروف <span className="text-red-500">*</span></FormLabel>
+                                                <FormLabel>تصنيف المصروف <span className="text-red-500">*</span></FormLabel>
                                                 <Select onValueChange={field.onChange} value={field.value?.toString()}>
                                                     <FormControl>
-                                                        <SelectTrigger className="bg-slate-50 border-slate-200 h-10">
+                                                        <SelectTrigger className="bg-slate-50 border-slate-200">
                                                             <SelectValue placeholder="اختر الفئة..." />
                                                         </SelectTrigger>
                                                     </FormControl>
-                                                    <SelectContent>
+                                                    <SelectContent dir="rtl">
                                                         {categories?.map((c: any) => (
                                                             <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
                                                         ))}
@@ -337,25 +346,67 @@ function ExpenseCreateMode({ isSubmitting, onSubmit }: { isSubmitting: boolean; 
                                         name="expenseDate"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="text-slate-600 font-bold">تاريخ المصروف <span className="text-red-500">*</span></FormLabel>
+                                                <FormLabel>تاريخ المصروف <span className="text-red-500">*</span></FormLabel>
                                                 <FormControl>
-                                                    <Input type="date" {...field} className="bg-slate-50 border-slate-200 h-10" />
+                                                    <div className="relative">
+                                                        <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                        <Input type="date" {...field} className="pr-10 bg-slate-50 border-slate-200" />
+                                                    </div>
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
+                                </div>
 
+                                <FormField
+                                    control={form.control}
+                                    name="referenceNumber"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>رقم المرجع / الإيصال</FormLabel>
+                                            <FormControl>
+                                                <div className="relative">
+                                                    <Hash className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                    <Input placeholder="مثال: EXP-2024-001" {...field} className="pr-10 bg-slate-50 border-slate-200 font-mono" />
+                                                </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </CardContent>
+                        </Card>
+
+                        {/* 2. Financial Details */}
+                        <Card className="overflow-hidden border-t-4 border-t-emerald-600 shadow-sm border-none">
+                            <div className="p-4 border-b bg-emerald-50/30 flex items-center gap-3">
+                                <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
+                                    <DollarSign className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h2 className="font-bold text-slate-700">البيانات المالية</h2>
+                                    <p className="text-xs text-slate-500">المبلغ، الضريبة، وطريقة الدفع</p>
+                                </div>
+                            </div>
+                            <CardContent className="p-6 space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <FormField
                                         control={form.control}
                                         name="amount"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="text-slate-600 font-bold">المبلغ الأساسي (قبل الضريبة) <span className="text-red-500">*</span></FormLabel>
+                                                <FormLabel>المبلغ الأساسي (قبل الضريبة) <span className="text-red-500">*</span></FormLabel>
                                                 <FormControl>
-                                                    <div className="relative">
-                                                        <DollarSign className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                                        <Input type="number" step="0.01" {...field} className="pr-10 bg-white border-primary/20 h-12 text-lg font-bold text-primary" dir="ltr" />
+                                                    <div className="relative group">
+                                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-600 font-bold text-sm">₪</span>
+                                                        <Input
+                                                            type="number"
+                                                            step="0.01"
+                                                            {...field}
+                                                            className="pr-8 bg-white border-emerald-200 h-12 text-lg font-bold text-emerald-700 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono"
+                                                            dir="ltr"
+                                                        />
                                                     </div>
                                                 </FormControl>
                                                 <FormMessage />
@@ -368,46 +419,18 @@ function ExpenseCreateMode({ isSubmitting, onSubmit }: { isSubmitting: boolean; 
                                         name="taxAmount"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="text-slate-600 font-bold">مبلغ الضريبة (اختياري)</FormLabel>
+                                                <FormLabel>مبلغ الضريبة (اختياري)</FormLabel>
                                                 <FormControl>
-                                                    <Input type="number" step="0.01" {...field} className="bg-slate-50 border-slate-200 h-10" dir="ltr" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="paymentMethod"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-slate-600 font-bold">طريقة الدفع</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
-                                                    <FormControl>
-                                                        <SelectTrigger className="bg-slate-50 border-slate-200 h-10">
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {Object.entries(methodLabels).map(([k, v]) => (
-                                                            <SelectItem key={k} value={k}>{v}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="referenceNumber"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-slate-600 font-bold">رقم المرجع / الإيصال</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="مثال: REF-123" {...field} className="bg-slate-50 border-slate-200 h-10 font-mono" />
+                                                    <div className="relative group">
+                                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₪</span>
+                                                        <Input
+                                                            type="number"
+                                                            step="0.01"
+                                                            {...field}
+                                                            className="pr-8 bg-slate-50 border-slate-200 h-12 font-mono"
+                                                            dir="ltr"
+                                                        />
+                                                    </div>
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -415,14 +438,53 @@ function ExpenseCreateMode({ isSubmitting, onSubmit }: { isSubmitting: boolean; 
                                     />
                                 </div>
 
+                                <Separator className="bg-slate-100" />
+
+                                <FormField
+                                    control={form.control}
+                                    name="paymentMethod"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>طريقة الدفع</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger className="bg-slate-50 border-slate-200">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent dir="rtl">
+                                                    {Object.entries(methodLabels).map(([k, v]) => (
+                                                        <SelectItem key={k} value={k}>{v}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </CardContent>
+                        </Card>
+
+                        {/* 3. Description & Notes */}
+                        <Card className="overflow-hidden border-t-4 border-t-amber-500 shadow-sm border-none">
+                            <div className="p-4 border-b bg-amber-50/30 flex items-center gap-3">
+                                <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
+                                    <FileText className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h2 className="font-bold text-slate-700">التفاصيل والملاحظات</h2>
+                                    <p className="text-xs text-slate-500">وصف المصروف وأي ملاحظات إضافية</p>
+                                </div>
+                            </div>
+                            <CardContent className="p-6 space-y-4">
                                 <FormField
                                     control={form.control}
                                     name="description"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-slate-600 font-bold">الوصف / البيان <span className="text-red-500">*</span></FormLabel>
+                                            <FormLabel>الوصف / البيان <span className="text-red-500">*</span></FormLabel>
                                             <FormControl>
-                                                <Input placeholder="وصف مقتصر للمصروف..." {...field} className="bg-slate-50 border-slate-200 h-10" />
+                                                <Input placeholder="وصف مختصر للمصروف..." {...field} className="bg-white border-amber-200" />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -434,9 +496,14 @@ function ExpenseCreateMode({ isSubmitting, onSubmit }: { isSubmitting: boolean; 
                                     name="notes"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-slate-600 font-bold">ملاحظات إضافية</FormLabel>
+                                            <FormLabel>ملاحظات إضافية</FormLabel>
                                             <FormControl>
-                                                <Textarea rows={3} placeholder="أي فريق أو تفاصيل إضافية..." {...field} className="bg-slate-50 border-slate-200 resize-none" />
+                                                <Textarea
+                                                    rows={3}
+                                                    placeholder="تفاصيل إضافية..."
+                                                    {...field}
+                                                    className="bg-slate-50 border-slate-200 resize-none min-h-[100px]"
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -444,103 +511,103 @@ function ExpenseCreateMode({ isSubmitting, onSubmit }: { isSubmitting: boolean; 
                                 />
                             </CardContent>
                         </Card>
-
-                        {/* Optional Relations */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
-                            <Card className="shadow-sm border-none bg-slate-100/50">
-                                <CardHeader className="py-4">
-                                    <CardTitle className="text-sm font-bold flex items-center gap-2">
-                                        <User className="w-4 h-4 text-blue-500" /> ربط بمورد (اختياري)
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="pt-0 pb-6">
-                                    <FormField
-                                        control={form.control}
-                                        name="supplierId"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <Select onValueChange={field.onChange} value={field.value?.toString()}>
-                                                    <FormControl>
-                                                        <SelectTrigger className="bg-white">
-                                                            <SelectValue placeholder="اختر مورد..." />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {suppliersData?.data?.map((s: any) => (
-                                                            <SelectItem key={s.id} value={s.id.toString()}>{s.name} ({s.supplierNumber})</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </FormItem>
-                                        )}
-                                    />
-                                </CardContent>
-                            </Card>
-
-                            <Card className="shadow-sm border-none bg-slate-100/50">
-                                <CardHeader className="py-4">
-                                    <CardTitle className="text-sm font-bold flex items-center gap-2">
-                                        <Building2 className="w-4 h-4 text-amber-500" /> ربط بفرع (اختياري)
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="pt-0 pb-6">
-                                    <FormField
-                                        control={form.control}
-                                        name="branchId"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <Select onValueChange={field.onChange} value={field.value?.toString()}>
-                                                    <FormControl>
-                                                        <SelectTrigger className="bg-white">
-                                                            <SelectValue placeholder="اختر فرع..." />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {branchesData?.map((b: any) => (
-                                                            <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </FormItem>
-                                        )}
-                                    />
-                                </CardContent>
-                            </Card>
-                        </div>
                     </div>
 
-                    {/* Sidebar Summary */}
+                    {/* Sidebar Information */}
                     <div className="space-y-6">
-                        <Card className="shadow-lg border-none sticky top-24 overflow-hidden">
-                            <div className="h-1 bg-primary" />
-                            <CardHeader className="bg-slate-50/50 pb-4">
-                                <CardTitle className="text-sm font-bold text-slate-500 flex items-center gap-2 uppercase">
+                        {/* Summary Card (Sticky) */}
+                        <Card className="shadow-lg border-none sticky top-24 overflow-hidden bg-slate-900 text-white">
+                            <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900 opacity-90" />
+                            <div className="absolute -right-10 -top-10 w-32 h-32 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
+
+                            <CardHeader className="relative z-10 pb-0">
+                                <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2 uppercase tracking-widest">
                                     <Info className="w-4 h-4" /> ملخص العملية
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="pt-6 space-y-4 text-sm font-tajawal">
-                                <div className="flex justify-between items-center py-2 border-b border-dashed">
-                                    <span className="text-slate-500">مجموع المبلغ:</span>
-                                    <span className="font-bold text-slate-800">{formatCurrency(watchAmount * 100 || 0)}</span>
+                            <CardContent className="relative z-10 pt-6 space-y-6 font-tajawal">
+                                <div className="space-y-1">
+                                    <div className="flex justify-between items-center text-sm text-slate-400">
+                                        <span>مجموع المبلغ</span>
+                                        <span className="font-mono">{formatCurrency(watchAmount * 100 || 0)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm text-slate-400">
+                                        <span>إجمالي الضريبة</span>
+                                        <span className="font-mono">{formatCurrency(watchTax * 100 || 0)}</span>
+                                    </div>
                                 </div>
-                                <div className="flex justify-between items-center py-2 border-b border-dashed">
-                                    <span className="text-slate-500">إجمالي الضريبة:</span>
-                                    <span className="font-bold text-slate-800">{formatCurrency(watchTax * 100 || 0)}</span>
-                                </div>
-                                <div className="flex justify-between items-center pt-2 pb-0">
-                                    <span className="text-lg font-bold text-slate-600">الإجمالي:</span>
-                                    <span className="text-xl font-black text-primary">{formatCurrency(total * 100 || 0)}</span>
+                                <Separator className="bg-slate-700/50" />
+                                <div className="flex justify-between items-end">
+                                    <span className="text-lg font-bold text-slate-200">الإجمالي النهائي</span>
+                                    <span className="text-3xl font-black text-primary font-mono tracking-tight">
+                                        {formatCurrency(total * 100 || 0)}
+                                    </span>
                                 </div>
 
-                                <Separator className="my-6" />
-
-                                <Button type="submit" className="w-full h-12 text-lg font-bold gap-2 shadow-inner" disabled={isSubmitting}>
+                                <Button type="submit" className="w-full h-12 text-lg font-bold gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg mt-4 transition-all hover:scale-[1.02]" disabled={isSubmitting}>
                                     {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                                     حفظ المصروف
                                 </Button>
-                                <Button type="button" variant="ghost" className="w-full text-slate-400 hover:text-slate-600" onClick={() => window.history.back()}>
-                                    إلغاء التغييرات
+                                <Button type="button" variant="ghost" className="w-full text-slate-400 hover:text-white hover:bg-slate-800" onClick={() => window.history.back()}>
+                                    إلغاء
                                 </Button>
+                            </CardContent>
+                        </Card>
+
+                        {/* Relations Card */}
+                        <Card className="shadow-sm border-none bg-slate-50/50">
+                            <CardHeader className="pb-3 border-b border-dashed">
+                                <CardTitle className="text-sm font-bold text-slate-600 flex items-center gap-2">
+                                    <ArrowLeftRight className="w-4 h-4 text-slate-400" />
+                                    ربط بجهات (اختياري)
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-4 space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="supplierId"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-xs text-slate-500">مورد مرتبط</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value?.toString()}>
+                                                <FormControl>
+                                                    <SelectTrigger className="bg-white h-9 text-sm">
+                                                        <SelectValue placeholder="اختر مورد..." />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent dir="rtl">
+                                                    <SelectItem value="0">بدون مورد</SelectItem>
+                                                    {suppliersData?.data?.map((s: any) => (
+                                                        <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="branchId"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-xs text-slate-500">فرع مرتبط</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value?.toString()}>
+                                                <FormControl>
+                                                    <SelectTrigger className="bg-white h-9 text-sm">
+                                                        <SelectValue placeholder="اختر فرع..." />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent dir="rtl">
+                                                    <SelectItem value="0">الفرع الرئيسي / عام</SelectItem>
+                                                    {branchesData?.map((b: any) => (
+                                                        <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </FormItem>
+                                    )}
+                                />
                             </CardContent>
                         </Card>
                     </div>
@@ -608,7 +675,7 @@ export default function ExpenseProfile() {
     }
 
     return (
-        <div className="space-y-6 container max-w-7xl mx-auto py-8 px-4 font-tajawal">
+        <div className="space-y-6 container max-w-7xl mx-auto py-8 px-4 font-tajawal" dir="rtl">
             {/* Breadcrumbs / Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">

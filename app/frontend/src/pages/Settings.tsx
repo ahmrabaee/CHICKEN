@@ -107,7 +107,7 @@ export default function Settings() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="shop" className="space-y-6">
+      <Tabs defaultValue="shop" className="space-y-6" dir="rtl">
         <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
           <TabsTrigger value="shop" className="gap-2">
             <Globe className="w-4 h-4" />

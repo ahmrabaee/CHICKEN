@@ -1,0 +1,11 @@
+{
+    "name": "financial-management-program-root",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "tauri:dev": "cd app && npm run tauri:dev",
+        "dev": "cd app && npm run tauri:dev",
+        "build": "cd app && npm run tauri:build",
+        "install:all": "cd app && npm install"
+    }
+}

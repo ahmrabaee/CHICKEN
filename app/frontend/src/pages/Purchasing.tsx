@@ -224,7 +224,7 @@ export default function Purchasing() {
               <SelectTrigger className="w-full md:w-48">
                 <SelectValue placeholder="حالة الطلب" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent dir="rtl">
                 <SelectItem value="all">جميع الحالات</SelectItem>
                 <SelectItem value="draft">مسودة</SelectItem>
                 <SelectItem value="ordered">تم الطلب</SelectItem>

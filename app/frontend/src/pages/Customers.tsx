@@ -404,7 +404,7 @@ export default function Customers() {
               <SelectTrigger className="w-[160px]">
                 <SelectValue placeholder="مستوى السعر" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent dir="rtl">
                 <SelectItem value="all">الكل</SelectItem>
                 <SelectItem value="standard">عادي</SelectItem>
                 <SelectItem value="wholesale">جملة</SelectItem>

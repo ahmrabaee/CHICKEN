@@ -79,7 +79,7 @@ export default function Expenses() {
                         </div>
                         <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1); }}>
                             <SelectTrigger className="w-full md:w-48"><SelectValue placeholder="النوع" /></SelectTrigger>
-                            <SelectContent>
+                            <SelectContent dir="rtl">
                                 <SelectItem value="all">الكل</SelectItem>
                                 <SelectItem value="business">عمل</SelectItem>
                                 <SelectItem value="personal">شخصي</SelectItem>

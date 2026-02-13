@@ -54,6 +54,15 @@ export class WastageService {
       });
     }
 
+    const branchId = dto.branchId != null ? Number(dto.branchId) : null;
+    if (!branchId) {
+        throw new BadRequestException({
+            code: 'VALIDATION_ERROR',
+            message: 'branchId is required',
+            messageAr: 'الفرع مطلوب',
+        });
+    }
+
     const weightGrams = Math.round(Number(dto.quantityGrams ?? dto.weightGrams ?? 0));
     if (!weightGrams || weightGrams <= 0) {
       throw new BadRequestException({
@@ -117,6 +126,7 @@ export class WastageService {
       const reason = (dto.reason ?? 'other').toString();
       const record = await tx.wastageRecord.create({
         data: {
+          branchId,
           itemId,
           lotId,
           weightGrams,
@@ -132,6 +142,7 @@ export class WastageService {
 
       await tx.stockMovement.create({
         data: {
+          branchId,
           itemId,
           lotId,
           movementType: 'wastage',

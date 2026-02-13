@@ -8,6 +8,11 @@ export class CreateWastageDto {
   @IsNumber()
   lotId: number;
 
+  @ApiProperty()
+  @Type(() => Number)
+  @IsNumber()
+  branchId: number;
+
   @ApiProperty({ description: 'Quantity in grams' })
   @Type(() => Number)
   @IsNumber()

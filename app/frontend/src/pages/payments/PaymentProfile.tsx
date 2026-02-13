@@ -34,6 +34,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import {
     Select,
@@ -631,10 +632,11 @@ export default function PaymentProfile() {
                                                 <FormItem>
                                                     <FormLabel>تاريخ الدفعة *</FormLabel>
                                                     <FormControl>
-                                                        <div className="relative">
-                                                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                                            <Input type="date" className="pl-10" {...field} />
-                                                        </div>
+                                                        <DatePicker
+                                                            value={field.value}
+                                                            onChange={field.onChange}
+                                                            placeholder="اختر تاريخ الدفعة"
+                                                        />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>

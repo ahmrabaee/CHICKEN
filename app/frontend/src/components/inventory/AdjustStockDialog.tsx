@@ -11,6 +11,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -155,7 +156,12 @@ export default function AdjustStockDialog({ item, onClose }: AdjustStockDialogPr
                                         <FormItem>
                                             <FormLabel className="text-xs">تاريخ الانتهاء</FormLabel>
                                             <FormControl>
-                                                <Input type="date" {...field} className="text-right h-8 text-sm" />
+                                                <DatePicker
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    placeholder="تاريخ الانتهاء"
+                                                    className="h-8 text-sm"
+                                                />
                                             </FormControl>
                                         </FormItem>
                                     )}

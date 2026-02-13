@@ -35,6 +35,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import {
     Select,
@@ -348,10 +349,11 @@ function ExpenseCreateMode({ isSubmitting, onSubmit }: { isSubmitting: boolean; 
                                             <FormItem>
                                                 <FormLabel>تاريخ المصروف <span className="text-red-500">*</span></FormLabel>
                                                 <FormControl>
-                                                    <div className="relative">
-                                                        <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                                        <Input type="date" {...field} className="pr-10 bg-slate-50 border-slate-200" />
-                                                    </div>
+                                                    <DatePicker
+                                                        value={field.value}
+                                                        onChange={field.onChange}
+                                                        placeholder="اختر تاريخ المصروف"
+                                                    />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>

@@ -8,6 +8,7 @@ import { Plus, Save, Trash2, X, Loader2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -235,7 +236,11 @@ export default function PurchaseProfile() {
                     <FormItem>
                       <FormLabel>تاريخ الشراء</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <DatePicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="اختر تاريخ الشراء"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -249,7 +254,11 @@ export default function PurchaseProfile() {
                     <FormItem>
                       <FormLabel>تاريخ الاستحقاق (اختياري)</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <DatePicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="اختر تاريخ الاستحقاق"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

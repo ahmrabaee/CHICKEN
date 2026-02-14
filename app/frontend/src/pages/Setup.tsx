@@ -56,13 +56,28 @@ const Setup = () => {
     const onSubmit = async (data: SetupFormValues) => {
         setLoading(true);
         try {
-            await authService.completeSetup(data as CompleteSetupDto);
+            const payload: CompleteSetupDto = {
+                businessName: data.businessName,
+                businessNameEn: data.businessNameEn?.trim() || undefined,
+                preferredLanguage: data.preferredLanguage,
+                adminFullName: data.adminFullName,
+                adminFullNameEn: data.adminFullNameEn?.trim() || undefined,
+                adminUsername: data.adminUsername,
+                adminPassword: data.adminPassword,
+            };
+            await authService.completeSetup(payload);
             toast.success('تم إعداد النظام بنجاح');
             await refreshSetupStatus();
             navigate('/', { replace: true });
         } catch (error: any) {
-            console.error('Setup failed:', error);
-            toast.error(error.response?.data?.messageAr || 'فشل إعداد النظام');
+            const res = error.response?.data;
+            const err = res?.error;
+            const msgAr = err?.messageAr ?? err?.message ?? res?.messageAr ?? res?.message;
+            const msg = Array.isArray(msgAr) ? msgAr.join(' · ') : String(msgAr || '');
+            const details = err?.details;
+            const fullMsg = details?.length ? [...(Array.isArray(details) ? details : [details])].join(' · ') : msg;
+            console.error('Setup failed:', { res, err, msg: fullMsg || msg });
+            toast.error(fullMsg || msg || 'فشل إعداد النظام');
         } finally {
             setLoading(false);
         }
@@ -80,7 +95,7 @@ const Setup = () => {
     const prevStep = () => setStep(step - 1);
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-4 font-tajawal rtl">
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-4 font-tajawal" dir="rtl">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -98,8 +113,8 @@ const Setup = () => {
                     </CardHeader>
 
                     <div className="px-8 pt-4">
-                        <div className="flex items-center justify-between mb-8 relative">
-                            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-slate-200 dark:bg-slate-800 -z-10" />
+                        <div className="flex flex-row-reverse items-center justify-between mb-8 relative">
+                            <div className="absolute top-1/2 right-0 left-0 w-full h-0.5 bg-slate-200 dark:bg-slate-800 -z-10" />
                             {[1, 2, 3].map((s) => (
                                 <div
                                     key={s}
@@ -119,9 +134,9 @@ const Setup = () => {
                                     {step === 1 && (
                                         <motion.div
                                             key="step1"
-                                            initial={{ opacity: 0, x: 20 }}
+                                            initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
-                                            exit={{ opacity: 0, x: -20 }}
+                                            exit={{ opacity: 0, x: 20 }}
                                             className="space-y-4"
                                         >
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -143,9 +158,9 @@ const Setup = () => {
                                                     name="businessNameEn"
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel>اسم المنشأة (English)</FormLabel>
+                                                            <FormLabel>اسم المنشأة بالإنجليزي (اختياري)</FormLabel>
                                                             <FormControl>
-                                                                <Input placeholder="Example: Golden Chicken POS" {...field} className="text-left" />
+                                                                <Input placeholder="مثال: Golden Chicken POS" {...field} className="text-left" dir="ltr" />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
@@ -158,15 +173,15 @@ const Setup = () => {
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>اللغة الافتراضية للنظام</FormLabel>
-                                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                             <FormControl>
-                                                                <SelectTrigger>
+                                                                <SelectTrigger dir="rtl" className="text-right">
                                                                     <SelectValue placeholder="اختر اللغة" />
                                                                 </SelectTrigger>
                                                             </FormControl>
-                                                            <SelectContent>
+                                                            <SelectContent dir="rtl">
                                                                 <SelectItem value="ar">العربية (رئيسي)</SelectItem>
-                                                                <SelectItem value="en">English (Coming Soon)</SelectItem>
+                                                                <SelectItem value="en">الإنجليزية (قريباً)</SelectItem>
                                                             </SelectContent>
                                                         </Select>
                                                         <FormMessage />
@@ -179,9 +194,9 @@ const Setup = () => {
                                     {step === 2 && (
                                         <motion.div
                                             key="step2"
-                                            initial={{ opacity: 0, x: 20 }}
+                                            initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
-                                            exit={{ opacity: 0, x: -20 }}
+                                            exit={{ opacity: 0, x: 20 }}
                                             className="space-y-4"
                                         >
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -205,7 +220,7 @@ const Setup = () => {
                                                         <FormItem>
                                                             <FormLabel>اسم المستخدم (للدخول)</FormLabel>
                                                             <FormControl>
-                                                                <Input {...field} />
+                                                                <Input placeholder="مثال: admin أو مدير" {...field} dir="ltr" className="text-left" />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
@@ -231,9 +246,9 @@ const Setup = () => {
                                     {step === 3 && (
                                         <motion.div
                                             key="step3"
-                                            initial={{ opacity: 0, x: 20 }}
+                                            initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
-                                            exit={{ opacity: 0, x: -20 }}
+                                            exit={{ opacity: 0, x: 20 }}
                                             className="text-center py-6 space-y-4"
                                         >
                                             <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white dark:border-slate-800 shadow-lg">
@@ -245,7 +260,7 @@ const Setup = () => {
                                             </p>
                                             <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl text-right text-sm space-y-1 inline-block min-w-48">
                                                 <p><span className="text-slate-500">المنشأة:</span> {form.getValues('businessName')}</p>
-                                                <p><span className="text-slate-500">المدير:</span> {form.getValues('adminUsername')}</p>
+                                                <p><span className="text-slate-500">المدير:</span> {form.getValues('adminFullName')}</p>
                                             </div>
                                         </motion.div>
                                     )}
@@ -254,10 +269,10 @@ const Setup = () => {
                         </Form>
                     </CardContent>
 
-                    <CardFooter className="flex justify-between bg-slate-50/50 dark:bg-slate-800/30 border-t p-6 mt-6">
+                    <CardFooter className="flex flex-row-reverse justify-between gap-4 bg-slate-50/50 dark:bg-slate-800/30 border-t p-6 mt-6">
                         {step > 1 ? (
                             <Button variant="outline" onClick={prevStep} disabled={loading} className="gap-2">
-                                <ArrowRight size={16} /> السابق
+                                <ArrowLeft size={16} /> السابق
                             </Button>
                         ) : (
                             <div />
@@ -265,7 +280,7 @@ const Setup = () => {
 
                         {step < 3 ? (
                             <Button onClick={nextStep} className="gap-2">
-                                التالي <ArrowLeft size={16} />
+                                <ArrowRight size={16} /> التالي
                             </Button>
                         ) : (
                             <Button

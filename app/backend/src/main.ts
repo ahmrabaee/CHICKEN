@@ -1,8 +1,9 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, BadRequestException } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import type { ValidationError } from 'class-validator';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,6 +23,16 @@ async function bootstrap() {
       whitelist: true,
       transform: true,
       forbidNonWhitelisted: true,
+      exceptionFactory: (errors: ValidationError[]) => {
+        const messages = errors.map((e) =>
+          e.constraints ? Object.values(e.constraints).join(', ') : e.property + ' has invalid value',
+        );
+        return new BadRequestException({
+          code: 'VALIDATION_ERROR',
+          message: messages,
+          messageAr: messages.join('؛ '),
+        });
+      },
     }),
   );
 

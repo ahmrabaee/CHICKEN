@@ -112,7 +112,11 @@ const navigation: NavItem[] = [
     title: "Payments",
     titleAr: "المدفوعات",
     icon: Banknote,
-    href: "/payments",
+    children: [
+      { title: "Payments List", titleAr: "قائمة المدفوعات", href: "/payments", icon: Banknote },
+      { title: "Reconciliation", titleAr: "مطابقة الدفعات", href: "/reconciliation", icon: ArrowLeftRight },
+      { title: "Credit Notes", titleAr: "الإشعارات الدائنة", href: "/credit-notes", icon: Receipt },
+    ],
   },
   {
     title: "Expenses",
@@ -139,6 +143,7 @@ const navigation: NavItem[] = [
     children: [
       { title: "Sales Reports", titleAr: "تقارير المبيعات", href: "/reports/sales", icon: TrendingUp },
       { title: "Inventory Reports", titleAr: "تقارير المخزون", href: "/reports/inventory", icon: Package },
+      { title: "Stock vs GL", titleAr: "المخزون مقابل الدفاتر", href: "/reports/stock-vs-gl", icon: Scale },
       { title: "Financial Reports", titleAr: "التقارير المالية", href: "/reports/financial", icon: PieChart },
       { title: "Tax Reports", titleAr: "تقارير الضرائب", href: "/reports/tax", icon: Receipt },
     ],

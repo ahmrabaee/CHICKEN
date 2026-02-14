@@ -1,13 +1,21 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccountingService } from '../accounting/accounting.service';
-import { createPaginatedResult, PaginationQueryDto } from '../common';
+import { PaymentLedgerService } from '../accounting/payment-ledger/payment-ledger.service';
+import {
+  createPaginatedResult,
+  PaginationQueryDto,
+  DocumentStatusGuard,
+  PeriodLockGuard,
+} from '../common';
+import { ACCOUNT_CODES } from '../accounting/accounting.service';
 
 @Injectable()
 export class PaymentsService {
   constructor(
     private prisma: PrismaService,
     private accountingService: AccountingService,
+    private paymentLedgerService: PaymentLedgerService,
   ) {}
 
   async findAll(pagination: PaginationQueryDto, referenceType?: string) {
@@ -93,6 +101,7 @@ export class PaymentsService {
           receivedById: userId,
           branchId: sale.branchId,
           notes: dto.notes,
+          docstatus: 1,
         },
       });
 
@@ -127,6 +136,18 @@ export class PaymentsService {
         userId,
         dto.amount,
       );
+
+      // Blueprint 04: PLE for payment against sale
+      if (sale.customerId) {
+        await this.paymentLedgerService.createPLEForPaymentAgainstSale(
+          tx,
+          payment.id,
+          dto.saleId,
+          sale.customerId,
+          dto.amount,
+          payment.paymentDate,
+        );
+      }
 
       return payment;
     });
@@ -178,12 +199,13 @@ export class PaymentsService {
           receivedById: userId,
           branchId: purchase.branchId,
           notes: dto.notes,
+          docstatus: 1,
         },
       });
 
       // Update purchase payment status
       const newPaidAmount = paidAmount + dto.amount;
-      const paymentStatus = newPaidAmount >= purchase.totalAmount ? 'paid' 
+      const paymentStatus = newPaidAmount >= purchase.totalAmount ? 'paid'
         : newPaidAmount > 0 ? 'partial' : 'unpaid';
 
       await tx.purchase.update({
@@ -210,11 +232,25 @@ export class PaymentsService {
         dto.amount,
       );
 
+      // Blueprint 04: PLE for payment against purchase
+      await this.paymentLedgerService.createPLEForPaymentAgainstPurchase(
+        tx,
+        payment.id,
+        dto.purchaseId,
+        purchase.supplierId,
+        dto.amount,
+        payment.paymentDate,
+      );
+
       return payment;
     });
   }
 
-  async voidPayment(id: number, reason: string, userId: number) {
+  /**
+   * Cancel payment with GL reversal (Blueprint 03).
+   * Replaces voidPayment: creates reverse GL entry before updating payment/sale/debt.
+   */
+  async cancelPayment(id: number, reason: string, userId: number) {
     const payment = await this.prisma.payment.findUnique({ where: { id } });
 
     if (!payment) {
@@ -225,47 +261,233 @@ export class PaymentsService {
       });
     }
 
+    // docstatus: 1=Submitted, 2=Cancelled. Fallback for legacy data.
+    const docstatus =
+      (payment as { docstatus?: number }).docstatus ?? (payment.isVoided ? 2 : 1);
+    DocumentStatusGuard.requireNotCancelled({ docstatus });
+    DocumentStatusGuard.requireSubmitted({ docstatus });
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true },
+    });
+
     return this.prisma.$transaction(async (tx) => {
+      await PeriodLockGuard.check(
+        new Date(payment.paymentDate),
+        null,
+        tx,
+      );
+
+      // 1. Create GL reversal FIRST (critical fix from Blueprint 03)
+      await this.accountingService.reverseByVoucher('payment', id, userId, tx);
+
+      // Blueprint 04: Delink PLE for cancelled payment
+      await this.paymentLedgerService.delinkPLEForVoucher('payment', id, tx);
+
+      const now = new Date();
+
+      // 2. Update payment
       await tx.payment.update({
         where: { id },
-        data: { isVoided: true, notes: reason },
+        data: {
+          docstatus: 2,
+          isVoided: true,
+          cancelledAt: now,
+          cancelledById: userId,
+          cancelReason: reason,
+          notes: reason,
+        },
       });
 
-      // Reverse the payment effects based on reference type
-      if (payment.referenceType === 'sale') {
-        await tx.sale.update({
+      // 3. Reverse effects on sale/purchase and debt (skip for advance payments)
+      if (payment.referenceType === 'sale' && payment.referenceId != null) {
+        const sale = await tx.sale.findUnique({
           where: { id: payment.referenceId },
-          data: { amountPaid: { decrement: payment.amount } },
         });
+        if (sale) {
+          const saleNewPaid = sale.amountPaid - payment.amount;
+          const paymentStatus =
+            saleNewPaid <= 0 ? 'unpaid' : saleNewPaid >= sale.totalAmount ? 'paid' : 'partial';
+          await tx.sale.update({
+            where: { id: payment.referenceId },
+            data: {
+              amountPaid: { decrement: payment.amount },
+              paymentStatus,
+            },
+          });
 
-        // Update debt
-        await tx.debt.updateMany({
-          where: { sourceType: 'sale', sourceId: payment.referenceId },
-          data: { amountPaid: { decrement: payment.amount } },
+          const debtStatus =
+            saleNewPaid <= 0 ? 'unpaid' : saleNewPaid >= sale.totalAmount ? 'paid' : 'partial';
+
+          await tx.debt.updateMany({
+            where: { sourceType: 'sale', sourceId: payment.referenceId },
+            data: {
+              amountPaid: { decrement: payment.amount },
+              status: debtStatus,
+            },
+          });
+
+          if (sale.customerId) {
+            await tx.customer.update({
+              where: { id: sale.customerId },
+              data: { currentBalance: { increment: payment.amount } },
+            });
+          }
+        }
+      } else if (payment.referenceType === 'purchase' && payment.referenceId != null) {
+        const purchase = await tx.purchase.findUnique({
+          where: { id: payment.referenceId },
         });
-      } else if (payment.referenceType === 'purchase') {
-        // Update debt
-        await tx.debt.updateMany({
-          where: { sourceType: 'purchase', sourceId: payment.referenceId },
-          data: { amountPaid: { decrement: payment.amount } },
-        });
+        if (purchase) {
+          const purchNewPaid = purchase.amountPaid - payment.amount;
+          const paymentStatus =
+            purchNewPaid <= 0 ? 'unpaid' : purchNewPaid >= purchase.totalAmount ? 'paid' : 'partial';
+          await tx.purchase.update({
+            where: { id: payment.referenceId },
+            data: {
+              amountPaid: { decrement: payment.amount },
+              paymentStatus,
+            },
+          });
+
+          const debtStatus =
+            purchNewPaid <= 0 ? 'unpaid' : purchNewPaid >= purchase.totalAmount ? 'paid' : 'partial';
+
+          await tx.debt.updateMany({
+            where: { sourceType: 'purchase', sourceId: payment.referenceId },
+            data: {
+              amountPaid: { decrement: payment.amount },
+              status: debtStatus,
+            },
+          });
+        }
       }
 
-      // Log audit
+      // 4. Audit log
       await tx.auditLog.create({
         data: {
-          entityType: 'payment',
+          entityType: 'Payment',
           entityId: id,
-          action: 'void',
+          action: 'cancel',
           changes: JSON.stringify({ reason }),
           userId,
-          username: 'system',
-          ipAddress: '127.0.0.1',
+          username: user?.username ?? 'unknown',
+          ipAddress: null,
+          userAgent: null,
         },
       });
 
       return { success: true };
     });
+  }
+
+  /**
+   * @deprecated Use cancelPayment instead. voidPayment did not create GL reversal.
+   */
+  async voidPayment(id: number, reason: string, userId: number) {
+    return this.cancelPayment(id, reason, userId);
+  }
+
+  /**
+   * Blueprint 04: Create advance payment (no invoice - for reconciliation later)
+   */
+  async createAdvancePayment(dto: any, userId: number) {
+    const party =
+      dto.partyType === 'customer'
+        ? await this.prisma.customer.findUnique({ where: { id: dto.partyId } })
+        : await this.prisma.supplier.findUnique({ where: { id: dto.partyId } });
+
+    if (!party) {
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: `${dto.partyType} not found`,
+      });
+    }
+
+    const partyName = (party as { name?: string }).name ?? '';
+
+    return this.prisma.$transaction(async (tx) => {
+      const paymentNumber = await this.generatePaymentNumber();
+
+      const payment = await tx.payment.create({
+        data: {
+          paymentNumber,
+          paymentDate: dto.paymentDate ? new Date(dto.paymentDate) : new Date(),
+          amount: dto.amount,
+          paymentMethod: dto.paymentMethod ?? 'cash',
+          referenceType: null,
+          referenceId: null,
+          partyType: dto.partyType,
+          partyId: dto.partyId,
+          partyName,
+          receiptNumber: dto.receiptNumber,
+          receivedById: userId,
+          notes: dto.notes,
+          docstatus: 1,
+        },
+      });
+
+      if (dto.partyType === 'customer') {
+        await this.accountingService.createPaymentReceivedJournalEntry(
+          tx,
+          payment.id,
+          payment.paymentNumber,
+          null,
+          userId,
+          dto.amount,
+        );
+        await this.paymentLedgerService.createPLE(
+          {
+            partyType: 'customer',
+            partyId: dto.partyId,
+            accountType: 'receivable',
+            accountId: await this.getAccountIdByCodeFromTx(tx, ACCOUNT_CODES.ACCOUNTS_RECEIVABLE),
+            voucherType: 'payment',
+            voucherId: payment.id,
+            againstVoucherType: null,
+            againstVoucherId: null,
+            amount: -dto.amount,
+            postingDate: payment.paymentDate,
+            remarks: 'Advance receipt from customer',
+          },
+          tx,
+        );
+      } else {
+        await this.accountingService.createPaymentMadeJournalEntry(
+          tx,
+          payment.id,
+          payment.paymentNumber,
+          null,
+          userId,
+          dto.amount,
+        );
+        await this.paymentLedgerService.createPLE(
+          {
+            partyType: 'supplier',
+            partyId: dto.partyId,
+            accountType: 'payable',
+            accountId: await this.getAccountIdByCodeFromTx(tx, ACCOUNT_CODES.ACCOUNTS_PAYABLE),
+            voucherType: 'payment',
+            voucherId: payment.id,
+            againstVoucherType: null,
+            againstVoucherId: null,
+            amount: dto.amount,
+            postingDate: payment.paymentDate,
+            remarks: `Advance payment to supplier`,
+          },
+          tx,
+        );
+      }
+
+      return payment;
+    });
+  }
+
+  private async getAccountIdByCodeFromTx(tx: any, code: string): Promise<number> {
+    const acc = await tx.account.findUnique({ where: { code } });
+    if (!acc) throw new Error(`Account ${code} not found`);
+    return acc.id;
   }
 
   private async generatePaymentNumber(): Promise<string> {

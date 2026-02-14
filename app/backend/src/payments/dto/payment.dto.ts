@@ -57,3 +57,44 @@ export class PaymentQueryDto extends PaginationQueryDto {
   @IsIn(['sale', 'purchase', 'debt'])
   type?: string;
 }
+
+/** Blueprint 03: Cancel payment (creates GL reversal) */
+export class CancelPaymentDto {
+  @ApiProperty({ description: 'Reason for cancellation' })
+  @IsString()
+  reason: string;
+}
+
+/** Blueprint 04: Advance payment (no invoice - to be reconciled later) */
+export class CreateAdvancePaymentDto {
+  @ApiProperty({ enum: ['customer', 'supplier'] })
+  @IsString()
+  @IsIn(['customer', 'supplier'])
+  partyType: 'customer' | 'supplier';
+
+  @ApiProperty()
+  @IsNumber()
+  partyId: number;
+
+  @ApiProperty({ description: 'Amount in minor units (cents)' })
+  @IsNumber()
+  amount: number;
+
+  @ApiProperty({ enum: ['cash', 'card', 'bank_transfer', 'mobile', 'check'] })
+  @IsString()
+  paymentMethod: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  receiptNumber?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  notes?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  paymentDate?: string;
+}

@@ -67,6 +67,8 @@ export interface Sale {
     amountDue?: number;
     dueDate?: string;
     isVoided: boolean;
+    /** Blueprint 03: 0=Draft, 1=Submitted, 2=Cancelled */
+    docstatus?: number;
     voidedAt?: string;
     voidedById?: number;
     voidReason?: string;
@@ -75,6 +77,11 @@ export interface Sale {
     createdAt: string;
     updatedAt: string;
     createdById?: number;
+    // Blueprint 05: Tax Engine
+    taxTemplateId?: number;
+    netTotal?: number;
+    totalTaxAmount?: number;
+    grandTotal?: number;
     // Relations (populated in detail view)
     saleLines?: SaleLine[];
     payments?: SalePayment[];
@@ -114,6 +121,7 @@ export interface CreateSaleDto {
     discountPct?: number;
     dueDate?: string;
     notes?: string;
+    taxTemplateId?: number;
     lines: CreateSaleLineDto[];
     payments?: CreateSalePaymentDto[];
 }

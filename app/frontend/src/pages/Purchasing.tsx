@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Plus, Download, Eye, PackageCheck, Loader2, Package, CreditCard } from "lucide-react";
+import { Search, Plus, Download, Eye, PackageCheck, Loader2, Package, CreditCard, Receipt, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,8 +14,13 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { DocumentStatusBadge } from "@/components/posting";
 import { usePurchases, usePurchase } from "@/hooks/use-purchases";
 import { Purchase } from "@/types/purchases";
+import { useQuery } from "@tanstack/react-query";
+import { reconciliationService } from "@/services/reconciliation.service";
+import { creditNoteService } from "@/services/credit-note.service";
+import { CreditNoteCreateDialog } from "@/components/credit-note/CreditNoteCreateDialog";
 
 
 function formatCurrency(minorUnits: number): string {
@@ -54,13 +59,46 @@ function getPaymentBadge(status: string) {
 
 function PurchaseDetailCard({ purchaseId, open, onClose }: { purchaseId: number; open: boolean; onClose: () => void }) {
   const { data: purchase, isLoading } = usePurchase(purchaseId);
+  const [showCreditNoteDialog, setShowCreditNoteDialog] = useState(false);
+
+  const { data: outstandingData } = useQuery({
+    queryKey: ["reconciliation", "outstanding", "purchase", purchaseId],
+    queryFn: async () => {
+      const r = await reconciliationService.getPurchaseOutstanding(purchaseId);
+      const val = r.data?.data ?? r.data;
+      return typeof val === "number" ? val : 0;
+    },
+    enabled: open && !!purchaseId,
+  });
+
+  const { data: creditNotesData } = useQuery({
+    queryKey: ["credit-notes", "invoice", "purchase", purchaseId],
+    queryFn: async () => {
+      const r = await creditNoteService.getAll({
+        originalInvoiceType: "purchase",
+        originalInvoiceId: purchaseId,
+        pageSize: 50,
+      });
+      return r.data?.data ?? r.data;
+    },
+    enabled: open && !!purchaseId,
+  });
+
+  const outstanding = outstandingData ?? (purchase?.amountDue ?? 0);
+  const linkedCreditNotes = creditNotesData?.items ?? [];
+  const canCreateCreditNote = purchase && purchase.status !== "cancelled" && outstanding > 0;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">
+          <DialogTitle className="text-xl font-bold flex items-center gap-3 flex-row-reverse">
             تفاصيل أمر الشراء {purchase?.purchaseNumber || ""}
+            <DocumentStatusBadge
+              docstatus={purchase?.docstatus}
+              isVoided={purchase?.status === "cancelled"}
+              isApproved={purchase?.status === "received" || purchase?.status === "partial" || purchase?.status === "ordered"}
+            />
           </DialogTitle>
         </DialogHeader>
 
@@ -74,6 +112,13 @@ function PurchaseDetailCard({ purchaseId, open, onClose }: { purchaseId: number;
               <InfoItem label="رقم الطلب" value={purchase.purchaseNumber} />
               <InfoItem label="التاريخ" value={formatDate(purchase.purchaseDate)} />
               <InfoItem label="التاجر" value={purchase.supplierName} />
+              <InfoItem label="حالة المستند" value={
+                <DocumentStatusBadge
+                  docstatus={purchase.docstatus}
+                  isVoided={purchase.status === "cancelled"}
+                  isApproved={purchase.status === "received" || purchase.status === "partial" || purchase.status === "ordered"}
+                />
+              } />
               <InfoItem label="حالة الطلب" value={getStatusBadge(purchase.status)} />
               <InfoItem label="حالة الدفع" value={getPaymentBadge(purchase.paymentStatus)} />
               {purchase.dueDate && <InfoItem label="تاريخ الاستحقاق" value={formatDate(purchase.dueDate)} />}
@@ -87,8 +132,54 @@ function PurchaseDetailCard({ purchaseId, open, onClose }: { purchaseId: number;
                 <InfoItem label="الإجمالي الكلي" value={formatCurrency(purchase.grandTotal)} highlight />
                 <InfoItem label="المدفوع" value={formatCurrency(purchase.amountPaid)} success />
                 <InfoItem label="المتبقي" value={formatCurrency(purchase.amountDue)} danger={purchase.amountDue > 0} />
+                <InfoItem label="المستحق (من PLE)" value={formatCurrency(outstanding)} highlight />
               </div>
+              {canCreateCreditNote && (
+                <div className="mt-3">
+                  <Button size="sm" variant="outline" onClick={() => setShowCreditNoteDialog(true)}>
+                    <Receipt className="w-4 h-4 ml-2" />
+                    إنشاء رصيد دائن
+                  </Button>
+                </div>
+              )}
             </div>
+
+            {linkedCreditNotes.length > 0 && (
+              <div>
+                <h3 className="font-semibold mb-3 text-sm text-muted-foreground flex items-center gap-2">
+                  <FileText className="w-4 h-4" /> الإشعارات الدائنة ({linkedCreditNotes.length})
+                </h3>
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>الرقم</TableHead>
+                        <TableHead>التاريخ</TableHead>
+                        <TableHead>المبلغ</TableHead>
+                        <TableHead>الحالة</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {linkedCreditNotes.map((cn: { id: number; creditNoteNumber: string; creditNoteDate: string; amount: number; docstatus: number }) => (
+                        <TableRow key={cn.id}>
+                          <TableCell>{cn.creditNoteNumber}</TableCell>
+                          <TableCell>{formatDate(cn.creditNoteDate)}</TableCell>
+                          <TableCell>{formatCurrency(cn.amount)}</TableCell>
+                          <TableCell>{cn.docstatus === 1 ? "مُرحّل" : "مسودة"}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            )}
+
+            <CreditNoteCreateDialog
+              open={showCreditNoteDialog}
+              onClose={() => setShowCreditNoteDialog(false)}
+              originalInvoiceType="purchase"
+              originalInvoiceId={purchaseId}
+            />
 
             {purchase.purchaseLines && purchase.purchaseLines.length > 0 && (
               <div>

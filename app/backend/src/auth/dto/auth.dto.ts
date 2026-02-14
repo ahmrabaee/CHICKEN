@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsString,
   IsNotEmpty,
@@ -156,6 +157,7 @@ export class CompleteSetupDto {
   businessName: string;
 
   @ApiPropertyOptional({ description: 'Business name in English' })
+  @Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? undefined : value))
   @IsOptional()
   @IsString()
   businessNameEn?: string;
@@ -177,6 +179,7 @@ export class CompleteSetupDto {
   adminFullName: string;
 
   @ApiPropertyOptional({ description: 'Admin full name in English' })
+  @Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? undefined : value))
   @IsOptional()
   @IsString()
   adminFullNameEn?: string;

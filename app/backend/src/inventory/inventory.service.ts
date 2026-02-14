@@ -1,5 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AccountingService } from '../accounting/accounting.service';
+import { StockLedgerService } from './stock-ledger/stock-ledger.service';
+import { StockAccountMapperService } from './stock-ledger/stock-account-mapper.service';
 import {
   InventoryResponseDto,
   InventoryLotResponseDto,
@@ -11,7 +14,12 @@ import { createPaginatedResult, PaginationQueryDto } from '../common';
 
 @Injectable()
 export class InventoryService {
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    private prisma: PrismaService,
+    private accountingService: AccountingService,
+    private stockLedgerService: StockLedgerService,
+    private stockAccountMapperService: StockAccountMapperService,
+  ) {}
 
   /**
    * Get current stock summary for all items
@@ -339,6 +347,55 @@ export class InventoryService {
           }),
         },
       });
+
+      // Blueprint 06: Stock Ledger Entry + GL for adjustment
+      const branchId = item.inventory?.branchId ?? null;
+      const stockAccountCode = await this.stockAccountMapperService.getStockAccountCode(branchId);
+      const now = new Date();
+      if (dto.adjustmentType === 'decrease') {
+        const valueDeduct = currentQty > 0 ? Math.round((currentTotalValue * dto.quantityGrams) / currentQty) : 0;
+        if (valueDeduct > 0) {
+          await this.stockLedgerService.createSLE(tx, {
+            itemId: dto.itemId,
+            branchId,
+            voucherType: 'adjustment',
+            voucherId: movement.id,
+            voucherDetailNo: 'decrease',
+            qtyChange: -dto.quantityGrams,
+            valuationRate: currentQty > 0 ? Math.round((currentTotalValue * 1000) / currentQty) : 0,
+            stockValueDifference: -valueDeduct,
+            postingDate: now,
+            remarks: dto.reason,
+          });
+          await this.accountingService.createInventoryAdjustmentJournalEntry(tx, movement.id, branchId, userId, {
+            adjustmentType: 'decrease',
+            amount: valueDeduct,
+            stockAccountCode,
+          });
+        }
+      } else {
+        const costPerKg = dto.unitCost ?? (currentQty > 0 ? Math.round((currentTotalValue * 1000) / currentQty) : 0);
+        const addedValue = Math.round((dto.quantityGrams / 1000) * costPerKg);
+        if (addedValue > 0) {
+          await this.stockLedgerService.createSLE(tx, {
+            itemId: dto.itemId,
+            branchId,
+            voucherType: 'adjustment',
+            voucherId: movement.id,
+            voucherDetailNo: 'increase',
+            qtyChange: dto.quantityGrams,
+            valuationRate: costPerKg,
+            stockValueDifference: addedValue,
+            postingDate: now,
+            remarks: dto.reason,
+          });
+          await this.accountingService.createInventoryAdjustmentJournalEntry(tx, movement.id, branchId, userId, {
+            adjustmentType: 'increase',
+            amount: addedValue,
+            stockAccountCode,
+          });
+        }
+      }
 
       return {
         movementId: movement.id,

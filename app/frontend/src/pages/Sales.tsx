@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, Plus, Download, Eye, Ban, CreditCard, Printer, Loader2, Package } from "lucide-react";
+import { Search, Plus, Download, Eye, Ban, CreditCard, Printer, Loader2, Package, Receipt, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,8 +26,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { DocumentStatusBadge } from "@/components/posting";
 import { useNavigate } from "react-router-dom";
 import { useSales, useSale, useVoidSale } from "@/hooks/use-sales";
+import { useQuery } from "@tanstack/react-query";
+import { reconciliationService } from "@/services/reconciliation.service";
+import { creditNoteService } from "@/services/credit-note.service";
+import { CreditNoteCreateDialog } from "@/components/credit-note/CreditNoteCreateDialog";
 import { Sale } from "@/types/sales";
 import { toast } from "@/hooks/use-toast";
 
@@ -75,6 +80,33 @@ function getPaymentMethodLabel(method: string) {
 
 function SaleDetailCard({ saleId, open, onClose }: { saleId: number; open: boolean; onClose: () => void }) {
   const { data: sale, isLoading } = useSale(saleId);
+  const [showCreditNoteDialog, setShowCreditNoteDialog] = useState(false);
+
+  const { data: outstandingData } = useQuery({
+    queryKey: ["reconciliation", "outstanding", "sale", saleId],
+    queryFn: async () => {
+      const r = await reconciliationService.getSaleOutstanding(saleId);
+      const val = r.data?.data ?? r.data;
+      return typeof val === "number" ? val : 0;
+    },
+    enabled: open && !!saleId,
+  });
+
+  const { data: creditNotesData } = useQuery({
+    queryKey: ["credit-notes", "invoice", "sale", saleId],
+    queryFn: async () => {
+      const r = await creditNoteService.getAll({
+        originalInvoiceType: "sale",
+        originalInvoiceId: saleId,
+        pageSize: 50,
+      });
+      return r.data?.data ?? r.data;
+    },
+    enabled: open && !!saleId,
+  });
+
+  const outstanding = outstandingData ?? (sale ? sale.totalAmount - sale.amountPaid : 0);
+  const linkedCreditNotes = creditNotesData?.items ?? [];
 
   if (!open) return null;
 
@@ -82,8 +114,14 @@ function SaleDetailCard({ saleId, open, onClose }: { saleId: number; open: boole
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">
+          <DialogTitle className="text-xl font-bold flex items-center gap-3 flex-row-reverse">
             تفاصيل الفاتورة {sale?.saleNumber || ""}
+            {(sale?.docstatus !== undefined || sale?.isVoided !== undefined) && (
+              <DocumentStatusBadge
+                docstatus={(sale as any).docstatus ?? (sale.isVoided ? 2 : 1)}
+                isVoided={sale.isVoided}
+              />
+            )}
           </DialogTitle>
         </DialogHeader>
 
@@ -100,7 +138,10 @@ function SaleDetailCard({ saleId, open, onClose }: { saleId: number; open: boole
               <InfoItem label="نوع البيع" value={getSaleTypeLabel(sale.saleType)} />
               <InfoItem label="الزبون" value={sale.customerName || "زبون عادي"} />
               {sale.customerPhone && <InfoItem label="هاتف الزبون" value={sale.customerPhone} ltr />}
-              <InfoItem label="الحالة" value={
+              <InfoItem label="حالة المستند" value={
+                <DocumentStatusBadge docstatus={(sale as any).docstatus ?? (sale.isVoided ? 2 : 1)} isVoided={sale.isVoided} />
+              } />
+              <InfoItem label="حالة الدفع" value={
                 <span>{getPaymentStatusBadge(sale.paymentStatus, sale.isVoided)}</span>
               } />
             </div>
@@ -115,8 +156,56 @@ function SaleDetailCard({ saleId, open, onClose }: { saleId: number; open: boole
                 <InfoItem label="الإجمالي الصافي" value={formatCurrency(sale.totalAmount)} highlight />
                 <InfoItem label="المدفوع" value={formatCurrency(sale.amountPaid)} success />
                 <InfoItem label="المتبقي" value={formatCurrency((sale.amountDue ?? sale.totalAmount - sale.amountPaid))} danger={sale.totalAmount - sale.amountPaid > 0} />
+                <InfoItem label="المستحق (من PLE)" value={formatCurrency(outstanding)} highlight />
               </div>
+              {!sale.isVoided && outstanding > 0 && (
+                <div className="mt-3">
+                  <Button size="sm" variant="outline" onClick={() => setShowCreditNoteDialog(true)}>
+                    <Receipt className="w-4 h-4 ml-2" />
+                    إنشاء رصيد دائن
+                  </Button>
+                </div>
+              )}
             </div>
+
+            {/* Linked Credit Notes */}
+            {linkedCreditNotes.length > 0 && (
+              <div>
+                <h3 className="font-semibold mb-3 text-sm text-muted-foreground flex items-center gap-2">
+                  <FileText className="w-4 h-4" /> الإشعارات الدائنة ({linkedCreditNotes.length})
+                </h3>
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>الرقم</TableHead>
+                        <TableHead>التاريخ</TableHead>
+                        <TableHead>المبلغ</TableHead>
+                        <TableHead>الحالة</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {linkedCreditNotes.map((cn: { id: number; creditNoteNumber: string; creditNoteDate: string; amount: number; docstatus: number }) => (
+                        <TableRow key={cn.id}>
+                          <TableCell>{cn.creditNoteNumber}</TableCell>
+                          <TableCell>{formatDate(cn.creditNoteDate)}</TableCell>
+                          <TableCell>{formatCurrency(cn.amount)}</TableCell>
+                          <TableCell>{cn.docstatus === 1 ? "مُرحّل" : "مسودة"}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            )}
+
+            <CreditNoteCreateDialog
+              open={showCreditNoteDialog}
+              onClose={() => setShowCreditNoteDialog(false)}
+              onSuccess={() => { /* queries invalidated in dialog */ }}
+              originalInvoiceType="sale"
+              originalInvoiceId={saleId}
+            />
 
             {/* Cost & Profit (Admin) */}
             <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4">
@@ -290,6 +379,9 @@ function VoidSaleDialog({
           <p className="text-sm text-muted-foreground">
             هل أنت متأكد من إلغاء هذه الفاتورة؟ هذا الإجراء لا يمكن التراجع عنه.
           </p>
+          <p className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-200">
+            سيتم إنشاء قيد عكسي محاسبي وتراجع المخزون.
+          </p>
           <div>
             <label className="text-sm font-medium">سبب الإلغاء</label>
             <Input
@@ -446,7 +538,10 @@ export default function Sales() {
                     <TableCell className="text-center font-semibold">{formatCurrency(sale.totalAmount)}</TableCell>
                     <TableCell className="text-center text-green-600 dark:text-green-400">{formatCurrency(sale.amountPaid)}</TableCell>
                     <TableCell className="text-center">
-                      {getPaymentStatusBadge(sale.paymentStatus, sale.isVoided)}
+                      <div className="flex flex-col items-center gap-1">
+                        <DocumentStatusBadge docstatus={(sale as any).docstatus ?? (sale.isVoided ? 2 : 1)} isVoided={sale.isVoided} />
+                        {getPaymentStatusBadge(sale.paymentStatus, sale.isVoided)}
+                      </div>
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">

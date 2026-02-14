@@ -17,6 +17,7 @@ import {
     Info,
     Users,
     Star,
+    Package,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -35,6 +36,13 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 import {
     useBranch,
@@ -43,6 +51,7 @@ import {
     useDeleteBranch,
     useActivateBranch,
 } from "@/hooks/use-branches";
+import { useAccounts } from "@/hooks/use-accounting";
 import { CreateBranchDto, UpdateBranchDto } from "@/types/branch";
 import { toast } from "sonner";
 
@@ -52,11 +61,14 @@ const branchSchema = z.object({
     nameEn: z.string().optional(),
     address: z.string().optional(),
     phone: z.string().optional(),
-    hasScale: z.boolean().default(true),
+    hasScale: z.boolean().default(false),
     scaleComPort: z.string().optional(),
+    stockAccountId: z.string().optional(),
 });
 
 type BranchFormValues = z.infer<typeof branchSchema>;
+
+const STOCK_ACCOUNT_CODES = ["1130", "1131", "1132", "1133", "1134", "1135"]; // مخزون فروع
 
 export default function BranchProfile() {
     const { id } = useParams();
@@ -64,6 +76,11 @@ export default function BranchProfile() {
     const isEditing = !!id;
 
     const { data: existingBranch, isLoading: isLoadingBranch } = useBranch(parseInt(id || "0"));
+    const { data: accountsData } = useAccounts();
+    const allAccounts = accountsData?.data || [];
+    const stockAccounts = allAccounts.filter(
+        (a) => (STOCK_ACCOUNT_CODES.includes(a.code) || a.code.startsWith("113")) && !a.isGroup
+    );
     const createMutation = useCreateBranch();
     const updateMutation = useUpdateBranch();
     const deleteMutation = useDeleteBranch();
@@ -77,8 +94,9 @@ export default function BranchProfile() {
             nameEn: "",
             address: "",
             phone: "",
-            hasScale: true,
+            hasScale: false,
             scaleComPort: "",
+            stockAccountId: "__none",
         },
     });
 
@@ -92,6 +110,7 @@ export default function BranchProfile() {
                 phone: existingBranch.phone || "",
                 hasScale: existingBranch.hasScale,
                 scaleComPort: existingBranch.scaleComPort || "",
+                stockAccountId: existingBranch.stockAccountId != null ? String(existingBranch.stockAccountId) : "__none",
             });
         }
     }, [existingBranch, form]);
@@ -114,6 +133,7 @@ export default function BranchProfile() {
                     phone: values.phone || undefined,
                     hasScale: values.hasScale,
                     scaleComPort: values.scaleComPort || undefined,
+                    stockAccountId: values.stockAccountId && values.stockAccountId !== "__none" ? parseInt(values.stockAccountId, 10) : null,
                 };
                 await updateMutation.mutateAsync({ id: parseInt(id!), data: updateData });
                 toast.success("تم تحديث الفرع بنجاح");
@@ -121,19 +141,24 @@ export default function BranchProfile() {
                 const createData: CreateBranchDto = {
                     code: values.code.toUpperCase(),
                     name: values.name,
-                    nameEn: values.nameEn || undefined,
-                    address: values.address || undefined,
-                    phone: values.phone || undefined,
+                    nameEn: values.nameEn?.trim() || undefined,
+                    address: values.address?.trim() || undefined,
+                    phone: values.phone?.trim() || undefined,
                     hasScale: values.hasScale,
-                    scaleComPort: values.scaleComPort || undefined,
+                    ...(values.hasScale && values.scaleComPort && { scaleComPort: values.scaleComPort.trim() }),
+                    ...(values.stockAccountId && values.stockAccountId !== "__none" && {
+                        stockAccountId: parseInt(values.stockAccountId, 10),
+                    }),
                 };
                 await createMutation.mutateAsync(createData);
                 toast.success("تم إنشاء الفرع بنجاح");
             }
             navigate("/branches");
         } catch (error: any) {
-            console.error("Failed to save branch:", error);
-            const errorMsg = error.response?.data?.messageAr || error.response?.data?.message || "فشل حفظ البيانات";
+            console.error("Failed to save branch:", error?.response?.data);
+            const err = error.response?.data?.error;
+            const details = Array.isArray(err?.details) ? err.details.join("; ") : null;
+            const errorMsg = details || err?.message || err?.messageAr || "فشل حفظ البيانات";
             toast.error(errorMsg);
         }
     };
@@ -343,6 +368,36 @@ export default function BranchProfile() {
                                         </FormItem>
                                     )}
                                 />
+
+                                <FormField
+                                    control={form.control}
+                                    name="stockAccountId"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>حساب المخزون (Blueprint 06)</FormLabel>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                value={field.value || "__none"}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger dir="rtl" className="font-arabic">
+                                                        <SelectValue placeholder="اختر حساب المخزون (اختياري)" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent dir="rtl">
+                                                    <SelectItem value="__none">— لا يوجد —</SelectItem>
+                                                    {stockAccounts.map((acc) => (
+                                                        <SelectItem key={acc.id} value={String(acc.id)}>
+                                                            {acc.code} — {acc.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormDescription>حساب المخزون في الدفاتر لهذا الفرع (مثل 1130، 1131)</FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             </CardContent>
                         </Card>
 
@@ -431,6 +486,16 @@ export default function BranchProfile() {
                                             </div>
                                         </div>
                                     </div>
+                                    {existingBranch.stockAccount && (
+                                        <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                            <p className="text-[10px] text-slate-500 font-bold mb-1 uppercase tracking-wider flex items-center gap-1">
+                                                <Package className="w-3 h-3" /> حساب المخزون
+                                            </p>
+                                            <span className="font-mono text-sm text-slate-800">
+                                                {existingBranch.stockAccount.code} — {existingBranch.stockAccount.name}
+                                            </span>
+                                        </div>
+                                    )}
 
                                     <div className="flex flex-col gap-2 pt-2">
                                         <div className="flex justify-between text-[11px]">

@@ -47,6 +47,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { DocumentStatusBadge } from "@/components/posting";
 import { Separator } from "@/components/ui/separator";
 
 import { useExpense, useCreateExpense, useExpenseCategories } from "@/hooks/use-expenses";
@@ -140,9 +141,7 @@ function ExpenseViewMode({ expense }: { expense: any }) {
                                     البيانات الأساسية وتصنيف المصروف
                                 </CardDescription>
                             </div>
-                            <StatusBadge status={expense.isApproved ? "success" : "warning"}>
-                                {expense.isApproved ? "معتمد" : "قيد الاعتماد"}
-                            </StatusBadge>
+                            <DocumentStatusBadge docstatus={expense.docstatus} isApproved={expense.isApproved} />
                         </div>
                     </CardHeader>
                     <CardContent className="pt-6">

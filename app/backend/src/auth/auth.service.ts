@@ -383,27 +383,32 @@ export class AuthService {
    * Check if initial system setup is complete
    */
   async checkSetup(): Promise<CheckSetupResponse> {
-    const setupCompletedSetting = await this.prisma.systemSetting.findUnique({
-      where: { key: 'setup_completed' },
-    });
+    try {
+      const setupCompletedSetting = await this.prisma.systemSetting.findUnique({
+        where: { key: 'setup_completed' },
+      });
 
-    if (!setupCompletedSetting || setupCompletedSetting.value !== 'true') {
+      if (!setupCompletedSetting || setupCompletedSetting.value !== 'true') {
+        return { setupCompleted: false };
+      }
+
+      // Get business names
+      const businessName = await this.prisma.systemSetting.findUnique({
+        where: { key: 'business_name' },
+      });
+      const businessNameEn = await this.prisma.systemSetting.findUnique({
+        where: { key: 'business_name_en' },
+      });
+
+      return {
+        setupCompleted: true,
+        businessName: businessName?.value || undefined,
+        businessNameEn: businessNameEn?.value || undefined,
+      };
+    } catch (err) {
+      this.logger.warn('checkSetup failed, assuming not configured', err);
       return { setupCompleted: false };
     }
-
-    // Get business names
-    const businessName = await this.prisma.systemSetting.findUnique({
-      where: { key: 'business_name' },
-    });
-    const businessNameEn = await this.prisma.systemSetting.findUnique({
-      where: { key: 'business_name_en' },
-    });
-
-    return {
-      setupCompleted: true,
-      businessName: businessName?.value || undefined,
-      businessNameEn: businessNameEn?.value || undefined,
-    };
   }
 
   /**

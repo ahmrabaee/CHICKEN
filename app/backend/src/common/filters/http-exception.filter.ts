@@ -47,9 +47,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
       if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
         const exRes = exceptionResponse as Record<string, unknown>;
         errorCode = (exRes.code as string) || this.getErrorCodeFromStatus(status);
-        message = (exRes.message as string) || exception.message;
+        const rawMessage = exRes.message;
+        message = Array.isArray(rawMessage)
+          ? (rawMessage as string[]).join('; ')
+          : ((rawMessage as string) || exception.message);
         messageAr = (exRes.messageAr as string) || this.getArabicMessage(errorCode);
-        details = exRes.details as unknown[] | undefined;
+        details = (exRes.details as unknown[] | undefined) ?? (Array.isArray(rawMessage) ? rawMessage : undefined);
       } else {
         message = exceptionResponse as string;
         errorCode = this.getErrorCodeFromStatus(status);
@@ -118,13 +121,16 @@ export class HttpExceptionFilter implements ExceptionFilter {
           message: 'The requested record was not found',
           messageAr: 'السجل المطلوب غير موجود',
         };
-      case 'P2003': // Foreign key constraint
+      case 'P2003': { // Foreign key constraint
+        const meta = error.meta as { field_name?: string; modelName?: string } | undefined;
+        const detail = meta?.field_name ?? meta?.modelName ?? 'unknown';
         return {
           status: HttpStatus.BAD_REQUEST,
           code: 'FOREIGN_KEY_ERROR',
-          message: 'Related record does not exist',
-          messageAr: 'السجل المرتبط غير موجود',
+          message: `Related record does not exist: ${detail}`,
+          messageAr: `السجل المرتبط غير موجود: ${detail}`,
         };
+      }
       default:
         return {
           status: HttpStatus.INTERNAL_SERVER_ERROR,

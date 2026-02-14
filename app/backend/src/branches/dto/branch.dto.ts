@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, PartialType, OmitType } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, Matches, ValidateIf } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsInt, Matches, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateBranchDto {
@@ -45,6 +45,12 @@ export class CreateBranchDto {
   })
   @ValidateIf((o) => o.hasScale === true)
   scaleComPort?: string;
+
+  @ApiPropertyOptional({ description: 'Stock account ID (Blueprint 06)', example: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  stockAccountId?: number;
 }
 
 // Update DTO excludes code and isMainBranch - these cannot be changed
@@ -82,6 +88,12 @@ export class BranchResponseDto {
 
   @ApiProperty({ example: true })
   isActive: boolean;
+
+  @ApiPropertyOptional({ example: 1, description: 'Stock account ID (Blueprint 06)' })
+  stockAccountId?: number | null;
+
+  @ApiPropertyOptional({ description: 'Stock account details' })
+  stockAccount?: { id: number; code: string; name: string };
 
   @ApiProperty({ example: 3, description: 'Number of users assigned to this branch' })
   userCount: number;

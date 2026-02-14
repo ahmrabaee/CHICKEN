@@ -26,6 +26,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { DebtsModule } from './debts/debts.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { AccountingModule } from './accounting/accounting.module';
+import { CreditNoteModule } from './accounting/credit-note/credit-note.module';
 import { ReportsModule } from './reports/reports.module';
 import { SettingsModule } from './settings/settings.module';
 import { AuditModule } from './audit/audit.module';
@@ -57,6 +58,7 @@ import { AuditModule } from './audit/audit.module';
     DebtsModule,
     ExpensesModule,
     AccountingModule,
+    CreditNoteModule,
     ReportsModule,
     SettingsModule,
     AuditModule,

@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { StockReconciliationService } from '../inventory/stock-ledger/stock-reconciliation.service';
 
 @Injectable()
 export class ReportsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private stockReconciliationService: StockReconciliationService,
+  ) {}
 
   async getDashboard() {
     const today = new Date();
@@ -300,5 +304,9 @@ export class ReportsService {
       grossMargin: revenue > 0 ? (grossProfit / revenue) * 100 : 0,
       netMargin: revenue > 0 ? (netProfit / revenue) * 100 : 0,
     };
+  }
+
+  async getStockVsGLReport(asOfDate: Date, branchId?: number) {
+    return this.stockReconciliationService.generateStockVsGLReport(asOfDate, branchId);
   }
 }

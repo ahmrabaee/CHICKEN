@@ -33,6 +33,8 @@ export interface Expense {
     paymentMethod?: string | null;
     referenceNumber?: string | null;
     isApproved: boolean;
+    /** Blueprint 03: 0=Draft, 1=Submitted, 2=Cancelled */
+    docstatus?: number;
     approvedById?: number | null;
     approvedAt?: string | null;
     branchId?: number | null;

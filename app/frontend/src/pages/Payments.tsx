@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Eye, Loader2, Plus } from "lucide-react";
+import { Search, Eye, Loader2, Plus, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,7 +13,8 @@ import {
     Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { usePayments, usePayment } from "@/hooks/use-payments";
+import { DocumentStatusBadge, CancelConfirmDialog } from "@/components/posting";
+import { usePayments, usePayment, useCancelPayment } from "@/hooks/use-payments";
 import { Payment } from "@/types/payments";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -28,18 +29,28 @@ const methodLabels: Record<string, string> = {
 
 function PaymentDetailCard({ paymentId, open, onClose }: { paymentId: number; open: boolean; onClose: () => void }) {
     const { data: payment, isLoading } = usePayment(paymentId);
+    const cancelPayment = useCancelPayment();
+    const [showCancelDialog, setShowCancelDialog] = useState(false);
+    const docstatus = payment?.docstatus ?? (payment?.isVoided ? 2 : 1);
+    const canCancel = docstatus === 1 && !payment?.isVoided;
 
     const partyTypeLabels: Record<string, string> = { customer: "زبون", supplier: "مورد" };
 
+    const handleCancelConfirm = (reason: string) => {
+        cancelPayment.mutate(
+            { id: paymentId, data: { reason } },
+            { onSuccess: () => { setShowCancelDialog(false); onClose(); } }
+        );
+    };
+
     return (
+        <>
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto" dir="rtl">
+            <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto" dir="rtl" style={{ textAlign: "right" }}>
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-bold flex items-center gap-3">
+                    <DialogTitle className="text-xl font-bold flex items-center gap-3 flex-row-reverse">
                         تفاصيل الدفعة {payment?.paymentNumber || ""}
-                        {payment?.isVoided && (
-                            <StatusBadge status="danger">ملغية</StatusBadge>
-                        )}
+                        <DocumentStatusBadge docstatus={docstatus} isVoided={payment?.isVoided} />
                     </DialogTitle>
                 </DialogHeader>
                 {isLoading ? (
@@ -53,15 +64,15 @@ function PaymentDetailCard({ paymentId, open, onClose }: { paymentId: number; op
                             <Info label="التاريخ" value={formatDate(payment.paymentDate)} />
                             <Info label="المبلغ" value={formatCurrency(payment.amount)} highlight />
                             <Info label="طريقة الدفع" value={methodLabels[payment.paymentMethod] || payment.paymentMethod} />
-                            <Info label="الحالة" value={payment.isVoided ? "ملغية" : "مؤكدة"} />
+                            <Info label="الحالة" value={<DocumentStatusBadge docstatus={docstatus} isVoided={payment.isVoided} />} />
                         </div>
 
                         {/* Reference & Party */}
                         <div className="border-t pt-4">
                             <p className="text-xs font-bold text-slate-500 mb-3">المرجع والطرف</p>
                             <div className="grid grid-cols-2 gap-4">
-                                <Info label="النوع" value={payment.referenceType === "sale" ? "دفعة مبيعات" : "دفعة مشتريات"} />
-                                <Info label="رقم المرجع (ID)" value={`#${payment.referenceId}`} />
+                                <Info label="النوع" value={!payment.referenceType ? "دفعة مسبقة" : payment.referenceType === "sale" ? "دفعة مبيعات" : "دفعة مشتريات"} />
+                                <Info label="رقم المرجع (ID)" value={payment.referenceId != null ? `#${payment.referenceId}` : "—"} />
                                 {payment.saleNumber && <Info label="رقم الفاتورة" value={payment.saleNumber} />}
                                 {payment.purchaseNumber && <Info label="رقم أمر الشراء" value={payment.purchaseNumber} />}
                                 <Info label="نوع الطرف" value={payment.partyType ? (partyTypeLabels[payment.partyType] || payment.partyType) : "—"} />
@@ -98,10 +109,33 @@ function PaymentDetailCard({ paymentId, open, onClose }: { paymentId: number; op
                                 )}
                             </div>
                         </div>
+
+                        {canCancel && (
+                            <div className="border-t pt-4 flex justify-end" style={{ flexDirection: "row-reverse" }}>
+                                <Button
+                                    variant="destructive"
+                                    onClick={() => setShowCancelDialog(true)}
+                                    className="gap-2"
+                                >
+                                    <Ban className="w-4 h-4" />
+                                    إلغاء الدفعة
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 ) : <p className="text-center text-muted-foreground py-8">لم يتم العثور على الدفعة</p>}
             </DialogContent>
         </Dialog>
+        <CancelConfirmDialog
+            open={showCancelDialog}
+            onClose={() => setShowCancelDialog(false)}
+            onConfirm={handleCancelConfirm}
+            title="إلغاء الدفعة"
+            entityLabel="الدفعة"
+            glReversalNote={true}
+            isPending={cancelPayment.isPending}
+        />
+    </>
     );
 }
 

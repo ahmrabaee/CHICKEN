@@ -31,7 +31,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setSetupCompleted(result.setupCompleted);
         } catch (error) {
             console.error('Failed to check setup status:', error);
-            setSetupCompleted(true);
+            setSetupCompleted(false);
         }
     }, []);
 

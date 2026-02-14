@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Delete,
   Param,
   Body,
   Query,
@@ -10,7 +11,10 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AccountingService } from './accounting.service';
-import { CreateAccountDto, UpdateAccountDto, CreateJournalEntryDto } from './dto/accounting.dto';
+import { ChartOfAccountsService } from './chart-of-accounts/chart-of-accounts.service';
+import { CreateJournalEntryDto } from './dto/accounting.dto';
+import { CreateAccountDto } from './chart-of-accounts/dto/create-account.dto';
+import { UpdateAccountDto } from './chart-of-accounts/dto/update-account.dto';
 import { PaginationQueryDto, Roles, CurrentUser } from '../common';
 
 @ApiTags('accounting')
@@ -18,33 +22,65 @@ import { PaginationQueryDto, Roles, CurrentUser } from '../common';
 @Roles('admin', 'manager')
 @Controller('accounting')
 export class AccountingController {
-  constructor(private accountingService: AccountingService) {}
+  constructor(
+    private accountingService: AccountingService,
+    private chartOfAccountsService: ChartOfAccountsService,
+  ) {}
 
   // Chart of Accounts
   @Get('accounts')
-  @ApiOperation({ summary: 'Get chart of accounts' })
-  getAccounts() {
-    return this.accountingService.getAccounts();
+  @ApiOperation({ summary: 'Get chart of accounts (tree)' })
+  @ApiQuery({ name: 'postableOnly', required: false, type: Boolean })
+  getAccounts(@Query('postableOnly') postableOnly?: string) {
+    const postable = postableOnly === 'true';
+    return this.chartOfAccountsService.getAccounts(1, postable);
   }
 
-  @Get('accounts/:code')
+  @Get('accounts/code/:code')
   @ApiOperation({ summary: 'Get account by code' })
   getAccountByCode(@Param('code') code: string) {
-    return this.accountingService.getAccountByCode(code);
+    return this.chartOfAccountsService.getAccountByCode(code);
+  }
+
+  @Get('accounts/:id/can-delete')
+  @ApiOperation({ summary: 'Check if account can be deleted' })
+  @Roles('admin')
+  canDeleteAccount(@Param('id', ParseIntPipe) id: number) {
+    return this.chartOfAccountsService.canDelete(id);
+  }
+
+  @Get('accounts/:id')
+  @ApiOperation({ summary: 'Get account by ID or code' })
+  getAccountByIdOrCode(@Param('id') param: string) {
+    return this.chartOfAccountsService.getAccountByCodeOrId(param);
   }
 
   @Post('accounts')
   @Roles('admin')
   @ApiOperation({ summary: 'Create new account' })
   createAccount(@Body() dto: CreateAccountDto) {
-    return this.accountingService.createAccount(dto);
+    return this.chartOfAccountsService.createAccount(dto);
   }
 
-  @Put('accounts/:code')
+  @Post('accounts/rebuild-tree')
+  @Roles('admin')
+  @ApiOperation({ summary: 'Rebuild nested set tree' })
+  rebuildAccountTree() {
+    return this.chartOfAccountsService.rebuildTree();
+  }
+
+  @Put('accounts/:id')
   @Roles('admin')
   @ApiOperation({ summary: 'Update account' })
-  updateAccount(@Param('code') code: string, @Body() dto: UpdateAccountDto) {
-    return this.accountingService.updateAccount(code, dto);
+  updateAccount(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateAccountDto) {
+    return this.chartOfAccountsService.updateAccount(id, dto);
+  }
+
+  @Delete('accounts/:id')
+  @Roles('admin')
+  @ApiOperation({ summary: 'Delete account' })
+  deleteAccount(@Param('id', ParseIntPipe) id: number) {
+    return this.chartOfAccountsService.deleteAccount(id);
   }
 
   // Journal Entries

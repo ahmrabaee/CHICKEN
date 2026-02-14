@@ -11,6 +11,7 @@ import {
   Trash2,
   Wallet,
   DollarSign,
+  Scale,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,7 +39,9 @@ import {
   useExpenseReport,
   useProfitLossReport,
   useWastageReport,
+  useStockVsGLReport,
 } from "@/hooks/use-reports";
+import { useVATReport } from "@/hooks/use-tax";
 import type { DateRangeQuery } from "@/types/reports";
 
 function formatMinor(amount: number): string {
@@ -70,6 +73,8 @@ const reportLinks = [
   { href: "/reports/expenses", label: "المصروفات", icon: Wallet },
   { href: "/reports/profit-loss", label: "الأرباح والخسائر", icon: PieChart },
   { href: "/reports/wastage", label: "الهدر", icon: Trash2 },
+  { href: "/reports/stock-vs-gl", label: "المخزون vs الدفاتر", icon: Scale },
+  { href: "/reports/vat", label: "ضريبة القيمة المضافة", icon: Receipt },
 ];
 
 export default function Reports() {
@@ -118,13 +123,17 @@ export default function Reports() {
     currentPath.includes("purchases") ||
     currentPath.includes("expenses") ||
     currentPath.includes("profit-loss") ||
-    currentPath.includes("wastage");
+    currentPath.includes("wastage") ||
+    currentPath.includes("vat");
 
   const salesParams = currentPath === "/reports/sales" ? rangeForQuery : { startDate: "", endDate: "" };
   const purchasesParams = currentPath === "/reports/purchases" ? rangeForQuery : { startDate: "", endDate: "" };
   const expenseParams = currentPath === "/reports/expenses" ? rangeForQuery : { startDate: "", endDate: "" };
   const profitLossParams = currentPath === "/reports/profit-loss" ? rangeForQuery : { startDate: "", endDate: "" };
   const wastageParams = currentPath === "/reports/wastage" ? rangeForQuery : { startDate: "", endDate: "" };
+  const [stockVsGLDate, setStockVsGLDate] = useState(new Date().toISOString().slice(0, 10));
+  const stockVsGLParams = currentPath === "/reports/stock-vs-gl" ? { asOfDate: stockVsGLDate } : undefined;
+  const vatParams = currentPath === "/reports/vat" ? rangeForQuery : { startDate: "", endDate: "" };
 
   const { data: salesReport, isLoading: salesLoading } = useSalesReport(salesParams);
   const { data: purchasesReport, isLoading: purchasesLoading } = usePurchasesReport(purchasesParams);
@@ -132,6 +141,11 @@ export default function Reports() {
   const { data: expenseReport, isLoading: expenseLoading } = useExpenseReport(expenseParams);
   const { data: profitLossReport, isLoading: profitLossLoading } = useProfitLossReport(profitLossParams);
   const { data: wastageReport, isLoading: wastageLoading } = useWastageReport(wastageParams);
+  const { data: stockVsGLReport, isLoading: stockVsGLLoading } = useStockVsGLReport(stockVsGLParams);
+  const { data: vatReport, isLoading: vatLoading } = useVATReport(
+    vatParams.startDate,
+    vatParams.endDate
+  );
 
   const isLoading =
     (currentPath === "/reports/sales" && salesLoading) ||
@@ -139,7 +153,9 @@ export default function Reports() {
     (currentPath === "/reports/inventory" && inventoryLoading) ||
     (currentPath === "/reports/expenses" && expenseLoading) ||
     (currentPath === "/reports/profit-loss" && profitLossLoading) ||
-    (currentPath === "/reports/wastage" && wastageLoading);
+    (currentPath === "/reports/wastage" && wastageLoading) ||
+    (currentPath === "/reports/stock-vs-gl" && stockVsGLLoading) ||
+    (currentPath === "/reports/vat" && vatLoading);
 
   const content = useMemo(() => {
     switch (currentPath) {
@@ -155,6 +171,10 @@ export default function Reports() {
         return { title: "الأرباح والخسائر", description: "قائمة الدخل للفترة", icon: PieChart };
       case "/reports/wastage":
         return { title: "تقارير الهدر", description: "سجل الهدر والتلف", icon: Trash2 };
+      case "/reports/stock-vs-gl":
+        return { title: "المخزون مقابل الدفاتر", description: "مقارنة قيمة المخزون مع قيود اليومية", icon: Scale };
+      case "/reports/vat":
+        return { title: "تقرير ضريبة القيمة المضافة", description: "Output VAT، Input VAT، صافي المستحق", icon: Receipt };
       default:
         return { title: "التقارير", description: "اختر نوع التقرير", icon: BarChart3 };
     }
@@ -170,6 +190,14 @@ export default function Reports() {
           <p className="text-muted-foreground mt-1">{content.description}</p>
         </div>
         <div className="flex items-center gap-3">
+          {currentPath === "/reports/stock-vs-gl" && (
+            <input
+              type="date"
+              value={stockVsGLDate}
+              onChange={(e) => setStockVsGLDate(e.target.value)}
+              className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+            />
+          )}
           {needsDateRange && (
             <Select value={rangePreset} onValueChange={setRangePreset}>
               <SelectTrigger className="w-40 gap-2">
@@ -518,6 +546,146 @@ export default function Reports() {
                 </Table>
               </CardContent>
             </Card>
+          )}
+
+          {/* Stock vs GL (Blueprint 06) */}
+          {currentPath === "/reports/stock-vs-gl" && stockVsGLReport && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">قيمة المخزون (SLE)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xl font-bold">₪ {formatMinor(stockVsGLReport.summary.totalStockValue)}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">قيمة الدفاتر (GL)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xl font-bold">₪ {formatMinor(stockVsGLReport.summary.totalAccountValue)}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">الفرق</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className={`text-xl font-bold ${stockVsGLReport.summary.totalDifference !== 0 ? "text-amber-600" : "text-green-600"}`}>
+                      ₪ {formatMinor(stockVsGLReport.summary.totalDifference)}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>تفاصيل الفروقات</CardTitle>
+                  <CardDescription>مقارنة حركات المخزون مع قيود اليومية حسب الـ voucher</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="data-table-header">
+                        <TableHead className="text-right">النوع</TableHead>
+                        <TableHead className="text-right">رقم الـ Voucher</TableHead>
+                        <TableHead className="text-right">التاريخ</TableHead>
+                        <TableHead className="text-center">قيمة المخزون</TableHead>
+                        <TableHead className="text-center">قيمة الدفاتر</TableHead>
+                        <TableHead className="text-center">الفرق</TableHead>
+                        <TableHead className="text-right">المصدر</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {stockVsGLReport.rows.map((r, i) => (
+                        <TableRow key={`${r.voucherType}-${r.voucherId}-${i}`}>
+                          <TableCell>{r.voucherType}</TableCell>
+                          <TableCell className="font-mono">{r.voucherId}</TableCell>
+                          <TableCell>{typeof r.postingDate === "string" ? r.postingDate.slice(0, 10) : ""}</TableCell>
+                          <TableCell className="text-center">₪ {formatMinor(r.stockValue)}</TableCell>
+                          <TableCell className="text-center">₪ {formatMinor(r.accountValue)}</TableCell>
+                          <TableCell className={`text-center ${r.difference !== 0 ? "text-amber-600 font-medium" : ""}`}>₪ {formatMinor(r.difference)}</TableCell>
+                          <TableCell>{r.ledgerType}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  {stockVsGLReport.rows.length === 0 && (
+                    <p className="text-center py-8 text-muted-foreground">لا توجد حركات مخزون مرحلة حتى هذا التاريخ</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* VAT Report - Blueprint 05 */}
+          {currentPath === "/reports/vat" && vatReport && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Output VAT (ضريبة المخرجات)</CardTitle>
+                    <CardDescription>من المبيعات</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xl font-bold text-amber-600">₪ {formatMinor(vatReport.outputVat)}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Input VAT (ضريبة المدخلات)</CardTitle>
+                    <CardDescription>من المشتريات</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xl font-bold text-blue-600">₪ {formatMinor(vatReport.inputVat)}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">صافي المستحق</CardTitle>
+                    <CardDescription>Output - Input</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className={`text-xl font-bold ${vatReport.netVatPayable >= 0 ? "text-green-600" : "text-red-600"}`}>
+                      ₪ {formatMinor(vatReport.netVatPayable)}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+              {vatReport.byAccount && vatReport.byAccount.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>تفصيل حسب الحساب</CardTitle>
+                    <CardDescription>Output و Input VAT لكل حساب ضريبة</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="data-table-header">
+                          <TableHead className="text-right">الحساب</TableHead>
+                          <TableHead className="text-right">الكود</TableHead>
+                          <TableHead className="text-center">Output</TableHead>
+                          <TableHead className="text-center">Input</TableHead>
+                          <TableHead className="text-center">الصافي</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {vatReport.byAccount.map((a) => (
+                          <TableRow key={a.accountId}>
+                            <TableCell>{a.accountName}</TableCell>
+                            <TableCell className="font-mono">{a.accountCode}</TableCell>
+                            <TableCell className="text-center">₪ {formatMinor(a.output)}</TableCell>
+                            <TableCell className="text-center">₪ {formatMinor(a.input)}</TableCell>
+                            <TableCell className="text-center">₪ {formatMinor(a.output - a.input)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           )}
 
           {/* Default / no report selected */}

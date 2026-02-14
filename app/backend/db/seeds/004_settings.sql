@@ -173,3 +173,12 @@ INSERT OR IGNORE INTO system_settings (key, value, description, data_type, setti
 
 INSERT OR IGNORE INTO system_settings (key, value, description, data_type, setting_group, is_system) VALUES
 ('BackupRetentionDays', '30', 'Number of days to retain backups', 'number', 'backup', 1);
+
+-- =============================================================================
+-- Blueprint 03: Period Locking / Accounting Freeze
+-- =============================================================================
+INSERT OR IGNORE INTO system_settings (key, value, description, data_type, setting_group, is_system) VALUES
+('accounting_freeze_date', '', 'ISO date: no posting before this date', 'string', 'accounting', 1);
+
+INSERT OR IGNORE INTO system_settings (key, value, description, data_type, setting_group, is_system) VALUES
+('period_lock_enabled', 'false', 'Enable period locking (prevent posting in closed periods)', 'boolean', 'accounting', 1);

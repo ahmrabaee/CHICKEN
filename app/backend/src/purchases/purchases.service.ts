@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { StockLedgerService } from '../inventory/stock-ledger/stock-ledger.service';
+import { StockAccountMapperService } from '../inventory/stock-ledger/stock-account-mapper.service';
 import { AccountingService } from '../accounting/accounting.service';
+import { PaymentLedgerService } from '../accounting/payment-ledger/payment-ledger.service';
 import { createPaginatedResult, PaginationQueryDto } from '../common';
 
 @Injectable()
@@ -8,6 +11,9 @@ export class PurchasesService {
   constructor(
     private prisma: PrismaService,
     private accountingService: AccountingService,
+    private paymentLedgerService: PaymentLedgerService,
+    private stockLedgerService: StockLedgerService,
+    private stockAccountMapperService: StockAccountMapperService,
   ) {}
 
   async findAll(pagination: PaginationQueryDto) {
@@ -203,6 +209,20 @@ export class PurchasesService {
             performedById: userId,
           },
         });
+
+        // Blueprint 06: Stock Ledger Entry for purchase receipt
+        await this.stockLedgerService.createSLE(tx, {
+          itemId: line.itemId,
+          branchId: purchase.branchId,
+          voucherType: 'purchase',
+          voucherId: id,
+          voucherDetailNo: `lot-${lot.lotNumber}`,
+          qtyChange: lineDto.receivedWeightGrams,
+          valuationRate: line.pricePerKg,
+          stockValueDifference: lotValue, // same as inventory increment
+          postingDate: new Date(),
+          remarks: `Purchase ${purchase.purchaseNumber} received`,
+        });
       }
 
       await tx.purchase.update({
@@ -220,6 +240,7 @@ export class PurchasesService {
         }
       }
 
+      const stockAccountCode = await this.stockAccountMapperService.getStockAccountCode(purchase.branchId);
       await this.accountingService.createPurchaseJournalEntry(
         tx,
         purchase.id,
@@ -229,7 +250,18 @@ export class PurchasesService {
         {
           totalAmount: totalReceivedValue,
           amountPaid: 0, // Payment is recorded separately
+          stockAccountCode,
         },
+      );
+
+      // Blueprint 04: PLE for payables
+      await this.paymentLedgerService.createPLEForPurchase(
+        tx,
+        purchase.id,
+        purchase.supplierId,
+        purchase.totalAmount,
+        new Date(),
+        purchase.dueDate,
       );
 
       return this.findById(id);

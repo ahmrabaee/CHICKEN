@@ -19,6 +19,8 @@ import Suppliers from "@/pages/Suppliers";
 import SupplierProfile from "@/pages/suppliers/SupplierProfile";
 import Payments from "@/pages/Payments";
 import PaymentProfile from "@/pages/payments/PaymentProfile";
+import Reconciliation from "@/pages/Reconciliation";
+import CreditNotes from "@/pages/CreditNotes";
 import Expenses from "@/pages/Expenses";
 import ExpenseProfile from "@/pages/expenses/ExpenseProfile";
 import Debts from "@/pages/Debts";
@@ -85,6 +87,8 @@ const App = () => (
                 <Route path="/payments" element={<Payments />} />
                 <Route path="/payments/new" element={<PaymentProfile />} />
                 <Route path="/payments/:id" element={<PaymentProfile />} />
+                <Route path="/reconciliation" element={<Reconciliation />} />
+                <Route path="/credit-notes" element={<CreditNotes />} />
 
                 {/* Expenses */}
                 <Route path="/expenses" element={<Expenses />} />
@@ -105,8 +109,10 @@ const App = () => (
                 <Route path="/reports/expenses" element={<Reports />} />
                 <Route path="/reports/profit-loss" element={<Reports />} />
                 <Route path="/reports/wastage" element={<Reports />} />
+                <Route path="/reports/stock-vs-gl" element={<Reports />} />
                 <Route path="/reports/financial" element={<Reports />} />
                 <Route path="/reports/tax" element={<Reports />} />
+                <Route path="/reports/vat" element={<Reports />} />
 
                 {/* Accounting */}
                 <Route path="/accounting" element={<Accounting />} />

@@ -110,6 +110,92 @@ async function seedCategories(): Promise<void> {
   console.log('✓ Categories seeded');
 }
 
+async function seedItems(): Promise<void> {
+  console.log('Seeding items...');
+
+  const freshWhole = await prisma.category.findUnique({ where: { code: 'FRESH_WHOLE' } });
+  const freshParts = await prisma.category.findUnique({ where: { code: 'FRESH_PARTS' } });
+  const catId = freshParts?.id ?? freshWhole?.id ?? 1;
+
+  const items = [
+    { code: 'CHK-WHOLE-01', name: 'فروج كامل', nameEn: 'Whole Chicken', defaultSalePrice: 2200, defaultPurchasePrice: 1800, categoryId: freshWhole?.id ?? catId },
+    { code: 'CHK-BREAST-01', name: 'صدور دجاج', nameEn: 'Chicken Breast', defaultSalePrice: 3500, defaultPurchasePrice: 2800, categoryId: catId },
+    { code: 'CHK-THIGH-01', name: 'أفخاذ دجاج', nameEn: 'Chicken Thighs', defaultSalePrice: 2800, defaultPurchasePrice: 2200, categoryId: catId },
+    { code: 'CHK-WING-01', name: 'أجنحة دجاج', nameEn: 'Chicken Wings', defaultSalePrice: 2600, defaultPurchasePrice: 2000, categoryId: catId },
+    { code: 'CHK-SKEWER-01', name: 'شيش طاووق', nameEn: 'Chicken Shish', defaultSalePrice: 3000, defaultPurchasePrice: 2400, categoryId: catId },
+  ];
+
+  for (const it of items) {
+    await prisma.item.upsert({
+      where: { code: it.code },
+      update: {},
+      create: {
+        code: it.code,
+        name: it.name,
+        nameEn: it.nameEn,
+        defaultSalePrice: it.defaultSalePrice,
+        defaultPurchasePrice: it.defaultPurchasePrice,
+        categoryId: it.categoryId,
+        requiresScale: true,
+        allowNegativeStock: false,
+      },
+    });
+  }
+
+  console.log('✓ Items seeded');
+}
+
+async function seedInitialStock(): Promise<void> {
+  console.log('Seeding initial stock...');
+
+  const branch = await prisma.branch.findFirst({ where: { isMainBranch: true } });
+  if (!branch) return;
+
+  const items = await prisma.item.findMany({ where: { isActive: true }, include: { inventory: true } });
+  for (const item of items) {
+    const existingInv = item.inventory;
+    const stockKg = 50;
+    const stockGrams = stockKg * 1000;
+    const unitPrice = item.defaultPurchasePrice ?? item.defaultSalePrice;
+    const totalValue = Math.round((stockGrams / 1000) * unitPrice);
+
+    if (existingInv && existingInv.currentQuantityGrams > 0) continue;
+
+    const invData = {
+      branchId: branch.id,
+      currentQuantityGrams: stockGrams,
+      reservedQuantityGrams: 0,
+      totalValue,
+      averageCost: unitPrice,
+    };
+
+    await prisma.inventory.upsert({
+      where: { itemId: item.id },
+      update: invData,
+      create: {
+        itemId: item.id,
+        ...invData,
+      },
+    });
+
+    const lotNumber = `LOT-SEED-${item.code}`;
+    await prisma.inventoryLot.upsert({
+      where: { lotNumber },
+      update: {},
+      create: {
+        itemId: item.id,
+        branchId: branch.id,
+        lotNumber,
+        totalQuantityGrams: stockGrams,
+        remainingQuantityGrams: stockGrams,
+        unitPurchasePrice: unitPrice,
+      },
+    });
+  }
+
+  console.log('✓ Initial stock seeded');
+}
+
 async function seedAccounts(): Promise<void> {
   console.log('Seeding chart of accounts...');
 
@@ -120,13 +206,14 @@ async function seedAccounts(): Promise<void> {
     { code: '1110', name: 'النقدية', nameEn: 'Cash', accountType: 'asset', parentAccountCode: '1100', isSystemAccount: true },
     { code: '1111', name: 'النقد في الصندوق', nameEn: 'Cash in Drawer', accountType: 'asset', parentAccountCode: '1110' },
     { code: '1112', name: 'النقد في البنك', nameEn: 'Cash in Bank', accountType: 'asset', parentAccountCode: '1110' },
-    { code: '1200', name: 'حسابات القبض', nameEn: 'Accounts Receivable', accountType: 'asset', parentAccountCode: '1100', isSystemAccount: true },
-    { code: '1300', name: 'المخزون', nameEn: 'Inventory', accountType: 'asset', parentAccountCode: '1100', isSystemAccount: true },
-    { code: '1301', name: 'مخزون الدجاج الطازج', nameEn: 'Fresh Chicken Inventory', accountType: 'asset', parentAccountCode: '1300' },
-    { code: '1302', name: 'مخزون الدجاج المجمد', nameEn: 'Frozen Chicken Inventory', accountType: 'asset', parentAccountCode: '1300' },
-    { code: '1400', name: 'الأصول الثابتة', nameEn: 'Fixed Assets', accountType: 'asset', parentAccountCode: '1000' },
-    { code: '1410', name: 'المعدات', nameEn: 'Equipment', accountType: 'asset', parentAccountCode: '1400' },
-    { code: '1420', name: 'الأثاث والتجهيزات', nameEn: 'Furniture & Fixtures', accountType: 'asset', parentAccountCode: '1400' },
+    { code: '1120', name: 'حسابات القبض', nameEn: 'Accounts Receivable', accountType: 'asset', parentAccountCode: '1100', isSystemAccount: true },
+    { code: '1125', name: 'ضريبة القيمة المضافة القابلة للاسترداد', nameEn: 'VAT Receivable', accountType: 'asset', parentAccountCode: '1100', isSystemAccount: true },
+    { code: '1130', name: 'المخزون', nameEn: 'Inventory', accountType: 'asset', parentAccountCode: '1100', isSystemAccount: true },
+    { code: '1131', name: 'مخزون الدجاج الطازج', nameEn: 'Fresh Chicken Inventory', accountType: 'asset', parentAccountCode: '1130' },
+    { code: '1132', name: 'مخزون الدجاج المجمد', nameEn: 'Frozen Chicken Inventory', accountType: 'asset', parentAccountCode: '1130' },
+    { code: '1200', name: 'الأصول الثابتة', nameEn: 'Fixed Assets', accountType: 'asset', parentAccountCode: '1000' },
+    { code: '1210', name: 'المعدات', nameEn: 'Equipment', accountType: 'asset', parentAccountCode: '1200' },
+    { code: '1220', name: 'الأثاث والتجهيزات', nameEn: 'Furniture & Fixtures', accountType: 'asset', parentAccountCode: '1200' },
 
     // Liabilities (2xxx)
     { code: '2000', name: 'الخصوم', nameEn: 'Liabilities', accountType: 'liability', isSystemAccount: true },
@@ -162,25 +249,106 @@ async function seedAccounts(): Promise<void> {
     { code: '5240', name: 'الصيانة', nameEn: 'Maintenance', accountType: 'expense', parentAccountCode: '5200' },
     { code: '5250', name: 'مصروفات التوصيل', nameEn: 'Delivery Expenses', accountType: 'expense', parentAccountCode: '5200' },
     { code: '5300', name: 'الفاقد والتالف', nameEn: 'Wastage & Spoilage', accountType: 'expense', parentAccountCode: '5000', isSystemAccount: true },
+    { code: '5320', name: 'تعديل المخزون', nameEn: 'Inventory Adjustment', accountType: 'expense', parentAccountCode: '5000', isSystemAccount: true },
     { code: '5400', name: 'مصروفات أخرى', nameEn: 'Other Expenses', accountType: 'expense', parentAccountCode: '5000' },
   ];
 
-  for (const acc of accounts) {
-    await prisma.account.upsert({
-      where: { code: acc.code },
+  const stats = await seedAccountsBlueprint01(accounts);
+  console.log(`✓ Chart of accounts seeded (${stats.count} accounts, companyId=${stats.companyId})`);
+}
+
+// Blueprint 01: Chart of Accounts Rebuild - Nested Set, new schema
+async function seedAccountsBlueprint01(
+  legacyAccounts: Array<{ code: string; name: string; nameEn?: string; accountType: string; parentAccountCode?: string; isSystemAccount?: boolean }>,
+): Promise<{ count: number; companyId: number }> {
+  const rootTypeMap: Record<string, 'Asset' | 'Liability' | 'Equity' | 'Income' | 'Expense'> = {
+    asset: 'Asset',
+    liability: 'Liability',
+    equity: 'Equity',
+    revenue: 'Income',
+    expense: 'Expense',
+  };
+  const reportType = (rt: string) => (['Asset', 'Liability', 'Equity'].includes(rt) ? 'Balance Sheet' : 'Profit and Loss');
+  const opType = (code: string, t: string): string => {
+    if (code === '1110' || code === '1111') return 'Cash';
+    if (code === '1112') return 'Bank';
+    if (code === '1120') return 'Receivable';
+    if (code.startsWith('113')) return 'Stock';
+    if (code.startsWith('12')) return 'Fixed Asset';
+    if (code === '2110') return 'Payable';
+    if (code === '2120') return 'Tax';
+    if (code === '1125') return 'Tax Receivable';
+    if (code.startsWith('31') || code.startsWith('32') || code.startsWith('33')) return 'Equity';
+    if (code.startsWith('4')) return 'Income Account';
+    if (code === '5100') return 'Cost of Goods Sold';
+    if (code === '5320') return 'Stock Adjustment';
+    if (code.startsWith('5')) return 'Expense Account';
+    return t === 'asset' ? 'Current Asset' : t === 'liability' ? 'Current Liability' : 'Other';
+  };
+
+  const company = await prisma.company.upsert({
+    where: { code: 'DEFAULT' },
+    update: {},
+    create: { code: 'DEFAULT', name: 'الشركة الافتراضية', nameEn: 'Default Company', defaultCurrency: 'SAR', fiscalYearStartMonth: 1 },
+  });
+  const companyId = company.id;
+
+  const codeToId = new Map<string, number>();
+  const parentCodes = new Set(legacyAccounts.map((a) => a.parentAccountCode).filter(Boolean));
+  const isGroup = (code: string) => parentCodes.has(code) || legacyAccounts.some((a) => a.parentAccountCode === code);
+
+  for (const acc of legacyAccounts) {
+    const rootType = rootTypeMap[acc.accountType] ?? 'Asset';
+    const created = await prisma.account.upsert({
+      where: { code_companyId: { code: acc.code, companyId } },
       update: {},
       create: {
         code: acc.code,
         name: acc.name,
-        nameEn: acc.nameEn,
-        accountType: acc.accountType,
-        parentAccountCode: acc.parentAccountCode ?? null,
+        nameEn: acc.nameEn ?? null,
+        rootType,
+        reportType: reportType(rootType),
+        accountType: opType(acc.code, acc.accountType),
+        parentId: acc.parentAccountCode ? codeToId.get(acc.parentAccountCode) ?? null : null,
+        companyId,
+        isGroup: isGroup(acc.code),
         isSystemAccount: acc.isSystemAccount ?? false,
       },
     });
+    codeToId.set(acc.code, created.id);
   }
 
-  console.log('✓ Chart of accounts seeded');
+  const all = await prisma.account.findMany({ where: { companyId }, orderBy: [{ parentId: 'asc' }, { code: 'asc' }] });
+  let counter = 0;
+  const updates: Array<{ id: number; lft: number; rgt: number }> = [];
+
+  function assign(nodes: typeof all, parentId: number | null) {
+    const children = nodes.filter((n) => n.parentId === parentId);
+    for (const c of children) {
+      const lft = ++counter;
+      assign(nodes, c.id);
+      const rgt = ++counter;
+      updates.push({ id: c.id, lft, rgt });
+    }
+  }
+  const roots = all.filter((a) => !a.parentId);
+  for (const r of roots) {
+    const lft = ++counter;
+    assign(all, r.id);
+    const rgt = ++counter;
+    updates.push({ id: r.id, lft, rgt });
+  }
+  for (const u of updates) {
+    await prisma.account.update({ where: { id: u.id }, data: { lft: u.lft, rgt: u.rgt } });
+  }
+
+  // Blueprint 02: Set round-off account (5400 مصروفات أخرى) for GL Engine
+  const roundOffAccountId = codeToId.get('5400');
+  if (roundOffAccountId) {
+    await prisma.company.update({ where: { id: companyId }, data: { roundOffAccountId } });
+  }
+
+  return { count: legacyAccounts.length, companyId };
 }
 
 async function seedSystemSettings(): Promise<void> {
@@ -241,6 +409,13 @@ async function seedSystemSettings(): Promise<void> {
     { key: 'backup.retention_days', value: '30', description: 'Keep backups for N days', dataType: 'number', settingGroup: 'backup' },
     { key: 'backup.last_backup', value: '', description: 'Last backup timestamp', dataType: 'string', settingGroup: 'backup' },
 
+    // Blueprint 02: GL Engine
+    { key: 'gl_engine_enabled', value: 'false', description: 'Use new GL Engine (Phase 02)', dataType: 'boolean', settingGroup: 'accounting', isSystem: true },
+    { key: 'gl_debit_credit_tolerance', value: '5', description: 'Tolerance in minor units (e.g. 5 = 0.05 when precision=2)', dataType: 'number', settingGroup: 'accounting', isSystem: true },
+
+    // Blueprint 05: Tax Engine
+    { key: 'tax_engine_enabled', value: 'false', description: 'Use Tax Engine - separate VAT GL posting', dataType: 'boolean', settingGroup: 'accounting', isSystem: true },
+
     // First-Time Setup (NEW - PRD Requirements)
     { key: 'setup_completed', value: 'true', description: 'Whether the initial system setup has been completed', dataType: 'boolean', settingGroup: 'system', isSystem: true },
     { key: 'business_name', value: '', description: 'Business name in Arabic (primary language)', dataType: 'string', settingGroup: 'business', isSystem: true },
@@ -257,6 +432,58 @@ async function seedSystemSettings(): Promise<void> {
   }
 
   console.log('✓ System settings seeded');
+}
+
+async function seedTaxTemplates(): Promise<void> {
+  console.log('Seeding tax templates...');
+
+  const vatPayable = await prisma.account.findFirst({
+    where: { code: '2120', isActive: true },
+  });
+  const vatReceivable = await prisma.account.findFirst({
+    where: { code: '1125', isActive: true },
+  });
+
+  if (vatPayable) {
+    await prisma.taxTemplate.upsert({
+      where: { name: 'VAT 15% Sales' },
+      update: {},
+      create: {
+        name: 'VAT 15% Sales',
+        type: 'sales',
+        items: {
+          create: {
+            accountId: vatPayable.id,
+            rate: 1500,
+            chargeType: 'on_net_total',
+            displayOrder: 0,
+          },
+        },
+      },
+    });
+  }
+
+  if (vatReceivable) {
+    await prisma.taxTemplate.upsert({
+      where: { name: 'VAT 15% Purchases' },
+      update: {},
+      create: {
+        name: 'VAT 15% Purchases',
+        type: 'purchases',
+        items: {
+          create: {
+            accountId: vatReceivable.id,
+            rate: 1500,
+            chargeType: 'on_net_total',
+            isDeductible: true,
+            displayOrder: 0,
+          },
+        },
+      },
+    });
+  }
+
+  console.log('✓ Tax templates seeded');
 }
 
 async function seedExpenseCategories(): Promise<void> {
@@ -323,6 +550,18 @@ async function seedDefaultBranch(): Promise<void> {
       isActive: true,
     },
   });
+
+  // Blueprint 06: Set default stock account (1130) for branches
+  const company = await prisma.company.findFirst({ where: { code: 'DEFAULT' } });
+  const stockAccount = company
+    ? await prisma.account.findFirst({ where: { code: '1130', companyId: company.id } })
+    : null;
+  if (stockAccount) {
+    await prisma.branch.updateMany({
+      where: { stockAccountId: null },
+      data: { stockAccountId: stockAccount.id },
+    });
+  }
 
   console.log('✓ Default branch seeded');
 }
@@ -392,8 +631,11 @@ async function main(): Promise<void> {
     await seedCategories();
     await seedAccounts();
     await seedSystemSettings();
+    await seedTaxTemplates();
     await seedExpenseCategories();
     await seedDefaultBranch();
+    await seedItems();
+    await seedInitialStock();
     await seedDefaultAdmin();
 
     console.log('='.repeat(60));

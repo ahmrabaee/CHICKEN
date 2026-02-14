@@ -10,6 +10,7 @@ export class BranchesService {
     const branches = await this.prisma.branch.findMany({
       where: includeInactive ? {} : { isActive: true },
       include: {
+        stockAccount: { select: { id: true, code: true, name: true } },
         _count: {
           select: { users: true },
         },
@@ -29,6 +30,7 @@ export class BranchesService {
     const branch = await this.prisma.branch.findUnique({
       where: { id },
       include: {
+        stockAccount: { select: { id: true, code: true, name: true } },
         _count: {
           select: { users: true },
         },
@@ -84,6 +86,7 @@ export class BranchesService {
         phone: dto.phone,
         hasScale: dto.hasScale ?? true,
         scaleComPort: dto.scaleComPort,
+        stockAccountId: dto.stockAccountId,
         isMainBranch: false,
         isActive: true,
       },
@@ -130,6 +133,7 @@ export class BranchesService {
         phone: dto.phone,
         hasScale: dto.hasScale,
         scaleComPort: dto.scaleComPort,
+        stockAccountId: dto.stockAccountId,
       },
     });
 
@@ -221,6 +225,8 @@ export class BranchesService {
       scaleComPort: branch.scaleComPort,
       isMainBranch: branch.isMainBranch,
       isActive: branch.isActive,
+      stockAccountId: branch.stockAccountId,
+      stockAccount: branch.stockAccount ? { id: branch.stockAccount.id, code: branch.stockAccount.code, name: branch.stockAccount.name } : undefined,
       userCount,
       createdAt: branch.createdAt.toISOString(),
     };

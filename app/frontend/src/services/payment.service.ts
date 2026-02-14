@@ -1,7 +1,13 @@
-
 import axiosInstance from '@/lib/axios';
 import { ApiResponse } from '@/types/api';
-import { Payment, PaymentQuery, RecordSalePaymentDto, RecordPurchasePaymentDto } from '@/types/payments';
+import {
+    Payment,
+    PaymentQuery,
+    RecordSalePaymentDto,
+    RecordPurchasePaymentDto,
+    CancelPaymentDto,
+    CreateAdvancePaymentDto,
+} from '@/types/payments';
 
 export const paymentService = {
     async getPayments(params?: PaymentQuery): Promise<ApiResponse<Payment[]>> {
@@ -21,6 +27,20 @@ export const paymentService = {
 
     async recordPurchasePayment(data: RecordPurchasePaymentDto): Promise<Payment> {
         const response = await axiosInstance.post<ApiResponse<Payment>>('/payments/purchase', data);
+        return response.data.data;
+    },
+
+    async cancelPayment(id: number, data: CancelPaymentDto): Promise<{ success: boolean }> {
+        const response = await axiosInstance.post<ApiResponse<{ success: boolean }>>(
+            `/payments/${id}/cancel`,
+            data
+        );
+        return response.data.data;
+    },
+
+    /** Blueprint 04: Create advance payment (no invoice) */
+    async createAdvancePayment(data: CreateAdvancePaymentDto): Promise<Payment> {
+        const response = await axiosInstance.post<ApiResponse<Payment>>('/payments/advance', data);
         return response.data.data;
     },
 };

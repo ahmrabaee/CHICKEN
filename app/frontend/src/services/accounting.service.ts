@@ -1,28 +1,39 @@
-
 import axiosInstance from '@/lib/axios';
 import { ApiResponse } from '@/types/api';
 import {
-    Account, CreateAccountDto, UpdateAccountDto,
+    Account, CreateAccountDto, UpdateAccountDto, CanDeleteAccountResponse,
     JournalEntry, CreateJournalEntryDto,
     TrialBalanceEntry, LedgerEntry,
 } from '@/types/accounting';
 
 export const accountingService = {
     // Chart of Accounts
-    async getAccounts(): Promise<ApiResponse<Account[]>> {
-        const response = await axiosInstance.get<ApiResponse<Account[]>>('/accounting/accounts');
+    async getAccounts(postableOnly?: boolean): Promise<ApiResponse<Account[]>> {
+        const params = postableOnly ? { postableOnly: 'true' } : undefined;
+        const response = await axiosInstance.get<ApiResponse<Account[]>>('/accounting/accounts', { params });
         return response.data;
     },
+    async getAccountById(id: number): Promise<Account> {
+        const response = await axiosInstance.get<ApiResponse<Account>>(`/accounting/accounts/${id}`);
+        return response.data.data;
+    },
     async getAccountByCode(code: string): Promise<Account> {
-        const response = await axiosInstance.get<ApiResponse<Account>>(`/accounting/accounts/${code}`);
+        const response = await axiosInstance.get<ApiResponse<Account>>(`/accounting/accounts/code/${code}`);
         return response.data.data;
     },
     async createAccount(data: CreateAccountDto): Promise<Account> {
         const response = await axiosInstance.post<ApiResponse<Account>>('/accounting/accounts', data);
         return response.data.data;
     },
-    async updateAccount(code: string, data: UpdateAccountDto): Promise<Account> {
-        const response = await axiosInstance.put<ApiResponse<Account>>(`/accounting/accounts/${code}`, data);
+    async updateAccount(id: number, data: UpdateAccountDto): Promise<Account> {
+        const response = await axiosInstance.put<ApiResponse<Account>>(`/accounting/accounts/${id}`, data);
+        return response.data.data;
+    },
+    async deleteAccount(id: number): Promise<void> {
+        await axiosInstance.delete(`/accounting/accounts/${id}`);
+    },
+    async canDeleteAccount(id: number): Promise<CanDeleteAccountResponse> {
+        const response = await axiosInstance.get<ApiResponse<CanDeleteAccountResponse>>(`/accounting/accounts/${id}/can-delete`);
         return response.data.data;
     },
     // Journal Entries

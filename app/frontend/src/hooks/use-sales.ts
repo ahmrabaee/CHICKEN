@@ -1,8 +1,8 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { salesService } from '@/services/sales.service';
 import { SaleQuery, CreateSaleDto, VoidSaleDto, AddPaymentDto } from '@/types/sales';
 import { toast } from '@/hooks/use-toast';
+import { getPostingErrorToast } from '@/lib/api-errors';
 
 /**
  * Sales Query Hooks
@@ -43,10 +43,18 @@ export const useCreateSale = () => {
             toast({ title: 'تم إنشاء الفاتورة بنجاح' });
         },
         onError: (error: any) => {
+            const postingToast = getPostingErrorToast(error);
+            if (postingToast) {
+                toast(postingToast);
+                return;
+            }
+            const errData = error.response?.data;
+            const errMsg = errData?.error?.message ?? errData?.message;
+            const desc = typeof errMsg === 'string' ? errMsg : Array.isArray(errMsg) ? errMsg.join('\n') : (errData?.error?.messageAr ?? 'حدث خطأ غير متوقع');
             toast({
                 variant: 'destructive',
-                title: 'خطأ في إنشاء الفاتورة',
-                description: error.response?.data?.message || 'حدث خطأ غير متوقع',
+                title: errData?.error?.messageAr ?? 'خطأ في إنشاء الفاتورة',
+                description: desc,
             });
         },
     });
@@ -63,10 +71,15 @@ export const useVoidSale = () => {
             toast({ title: 'تم إلغاء الفاتورة بنجاح' });
         },
         onError: (error: any) => {
+            const postingToast = getPostingErrorToast(error);
+            if (postingToast) {
+                toast(postingToast);
+                return;
+            }
             toast({
                 variant: 'destructive',
                 title: 'خطأ في إلغاء الفاتورة',
-                description: error.response?.data?.message || 'حدث خطأ غير متوقع',
+                description: error.response?.data?.messageAr || error.response?.data?.message || 'حدث خطأ غير متوقع',
             });
         },
     });

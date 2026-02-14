@@ -10,8 +10,8 @@ export interface Payment {
     paymentDate: string;
     amount: number;
     paymentMethod: string;
-    referenceType: 'sale' | 'purchase' | 'expense' | 'debt';
-    referenceId: number;
+    referenceType?: 'sale' | 'purchase' | 'expense' | 'debt' | null;
+    referenceId?: number | null;
     partyType?: 'customer' | 'supplier';
     partyId?: number;
     partyName?: string;
@@ -22,6 +22,12 @@ export interface Payment {
     isVoided: boolean;
     notes?: string;
     createdAt: string;
+
+    // Blueprint 03: docstatus and workflow fields
+    docstatus?: 0 | 1 | 2;
+    cancelledAt?: string;
+    cancelledById?: number;
+    cancelReason?: string;
     updatedAt: string;
 
     // Relations (included in some responses — full Prisma objects)
@@ -59,10 +65,25 @@ export interface RecordSalePaymentDto {
     notes?: string;
 }
 
+export interface CancelPaymentDto {
+    reason: string;
+}
+
 export interface RecordPurchasePaymentDto {
     purchaseId: number;
     amount: number;
     paymentMethod: 'cash' | 'card' | 'bank_transfer' | 'check';
     referenceNumber?: string;
     notes?: string;
+}
+
+/** Blueprint 04: Advance payment (no invoice — for reconciliation later) */
+export interface CreateAdvancePaymentDto {
+    partyType: 'customer' | 'supplier';
+    partyId: number;
+    amount: number;
+    paymentMethod: 'cash' | 'card' | 'bank_transfer' | 'mobile' | 'check';
+    receiptNumber?: string;
+    notes?: string;
+    paymentDate?: string;
 }

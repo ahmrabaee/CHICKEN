@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import {
   IsInt, IsPositive, IsString, IsOptional, IsIn, IsArray, ValidateNested,
   IsNotEmpty, IsDateString, Min,
@@ -14,12 +14,14 @@ export class SaleLineDto {
   itemId: number;
 
   @ApiProperty({ description: 'Weight in grams' })
+  @Transform(({ value }) => (typeof value === 'number' ? Math.round(value) : value))
   @Type(() => Number)
   @IsInt()
   @IsPositive()
   weightGrams: number;
 
   @ApiProperty({ description: 'Price per kg in minor units' })
+  @Transform(({ value }) => (typeof value === 'number' ? Math.round(value) : value))
   @Type(() => Number)
   @IsInt()
   @IsPositive()
@@ -55,11 +57,13 @@ export class CreateSaleDto {
   customerId?: number;
 
   @ApiPropertyOptional({ description: 'Customer name for walk-in' })
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsString()
   @IsOptional()
   customerName?: string;
 
   @ApiPropertyOptional({ description: 'Customer phone' })
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsString()
   @IsOptional()
   customerPhone?: string;
@@ -92,6 +96,13 @@ export class CreateSaleDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @ApiPropertyOptional({ description: 'Tax template ID (Blueprint 05)' })
+  @Type(() => Number)
+  @IsInt()
+  @IsPositive()
+  @IsOptional()
+  taxTemplateId?: number;
 
   @ApiProperty({ description: 'Sale line items', type: [SaleLineDto] })
   @IsArray()

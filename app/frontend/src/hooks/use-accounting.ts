@@ -4,18 +4,29 @@ import { accountingService } from '@/services/accounting.service';
 import { CreateAccountDto, UpdateAccountDto, CreateJournalEntryDto } from '@/types/accounting';
 import { toast } from '@/hooks/use-toast';
 
-export const useAccounts = () => {
+export const useAccounts = (postableOnly?: boolean) => {
     return useQuery({
-        queryKey: ['accounting', 'accounts'],
-        queryFn: () => accountingService.getAccounts(),
+        queryKey: ['accounting', 'accounts', postableOnly],
+        queryFn: () => accountingService.getAccounts(postableOnly),
     });
 };
 
-export const useAccount = (code: string) => {
+export const useAccount = (idOrCode: string | number) => {
     return useQuery({
-        queryKey: ['accounting', 'accounts', code],
-        queryFn: () => accountingService.getAccountByCode(code),
-        enabled: !!code,
+        queryKey: ['accounting', 'accounts', idOrCode],
+        queryFn: () =>
+            typeof idOrCode === 'number'
+                ? accountingService.getAccountById(idOrCode)
+                : accountingService.getAccountByCode(idOrCode),
+        enabled: idOrCode !== '' && idOrCode != null,
+    });
+};
+
+export const useCanDeleteAccount = (id: number) => {
+    return useQuery({
+        queryKey: ['accounting', 'accounts', id, 'can-delete'],
+        queryFn: () => accountingService.canDeleteAccount(id),
+        enabled: !!id,
     });
 };
 
@@ -36,13 +47,33 @@ export const useCreateAccount = () => {
 export const useUpdateAccount = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ code, data }: { code: string; data: UpdateAccountDto }) => accountingService.updateAccount(code, data),
+        mutationFn: ({ id, data }: { id: number; data: UpdateAccountDto }) => accountingService.updateAccount(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['accounting', 'accounts'] });
             toast({ title: 'تم تحديث الحساب بنجاح' });
         },
         onError: (error: any) => {
             toast({ variant: 'destructive', title: 'خطأ', description: error.response?.data?.message || 'حدث خطأ' });
+        },
+    });
+};
+
+export const useDeleteAccount = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: number) => accountingService.deleteAccount(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['accounting', 'accounts'] });
+            toast({ title: 'تم حذف الحساب بنجاح' });
+        },
+        onError: (error: any) => {
+            const code = error.response?.data?.code;
+            const messageAr = error.response?.data?.messageAr;
+            toast({
+                variant: 'destructive',
+                title: 'خطأ',
+                description: messageAr || error.response?.data?.message || 'حدث خطأ',
+            });
         },
     });
 };
@@ -71,7 +102,23 @@ export const useCreateJournalEntry = () => {
             toast({ title: 'تم إنشاء القيد بنجاح' });
         },
         onError: (error: any) => {
-            toast({ variant: 'destructive', title: 'خطأ', description: error.response?.data?.message || 'حدث خطأ' });
+            const code = error.response?.data?.code;
+            const data = error.response?.data;
+            const messageAr = data?.messageAr || error.response?.data?.message;
+            let title = 'خطأ';
+            if (code === 'UNBALANCED_ENTRY') {
+                title = data?.diff != null
+                    ? `القيد غير متوازن (الفرق: ${(data.diff / 100).toFixed(2)} ₪)`
+                    : 'القيد غير متوازن';
+            } else if (code === 'POSTING_TO_GROUP_ACCOUNT') title = 'لا يمكن القيد على حسابات المجموعة';
+            else if (code === 'POSTING_TO_DISABLED_ACCOUNT') title = 'لا يمكن القيد على حسابات معطلة';
+            else if (code === 'POSTING_TO_FROZEN_ACCOUNT') title = 'لا يمكن القيد على حسابات مجمدة';
+            else if (code === 'ALREADY_REVERSED') title = 'القيد معكوس بالفعل';
+            toast({
+                variant: 'destructive',
+                title,
+                description: messageAr,
+            });
         },
     });
 };

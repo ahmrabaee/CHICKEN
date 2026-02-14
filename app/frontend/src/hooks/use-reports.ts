@@ -56,3 +56,10 @@ export const useProfitLossReport = (params: DateRangeQuery) => {
         enabled: !!params.startDate && !!params.endDate,
     });
 };
+
+export const useStockVsGLReport = (params?: { asOfDate?: string; branchId?: number }) => {
+    return useQuery({
+        queryKey: ['reports', 'stock-vs-gl', params],
+        queryFn: () => reportService.getStockVsGLReport(params),
+    });
+};

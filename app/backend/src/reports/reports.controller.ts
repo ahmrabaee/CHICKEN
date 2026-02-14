@@ -76,4 +76,18 @@ export class ReportsController {
   ) {
     return this.reportsService.getProfitLossReport(startDate, endDate);
   }
+
+  @Get('stock-vs-gl')
+  @ApiOperation({ summary: 'Stock vs GL reconciliation (Blueprint 06)' })
+  @ApiQuery({ name: 'asOfDate', required: false, description: 'Date for comparison (ISO)' })
+  @ApiQuery({ name: 'branchId', required: false })
+  getStockVsGLReport(
+    @Query('asOfDate') asOfDate?: string,
+    @Query('branchId') branchId?: string,
+  ) {
+    return this.reportsService.getStockVsGLReport(
+      asOfDate ? new Date(asOfDate) : new Date(),
+      branchId ? parseInt(branchId, 10) : undefined,
+    );
+  }
 }

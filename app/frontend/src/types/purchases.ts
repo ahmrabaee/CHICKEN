@@ -26,6 +26,8 @@ export interface Purchase {
     supplierId: number;
     supplierName: string;
     status: 'draft' | 'ordered' | 'partial' | 'received' | 'cancelled';
+    /** Blueprint 03: 0=Draft, 1=Submitted, 2=Cancelled */
+    docstatus?: number;
     totalAmount: number;
     taxAmount: number;
     grandTotal: number;

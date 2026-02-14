@@ -4,10 +4,18 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { AccountingService } from '../accounting/accounting.service';
+import { PaymentLedgerService } from '../accounting/payment-ledger/payment-ledger.service';
+import { TaxCalculationService } from '../accounting/tax/tax-calculation.service';
+import { StockLedgerService } from '../inventory/stock-ledger/stock-ledger.service';
+import { StockAccountMapperService } from '../inventory/stock-ledger/stock-account-mapper.service';
 import {
   CreateSaleDto, VoidSaleDto, AddPaymentDto, SaleResponseDto, SaleQueryDto,
 } from './dto';
-import { createPaginatedResult, PaginationQueryDto } from '../common';
+import {
+  createPaginatedResult,
+  PaginationQueryDto,
+  PeriodLockGuard,
+} from '../common';
 
 @Injectable()
 export class SalesService {
@@ -15,6 +23,10 @@ export class SalesService {
     private prisma: PrismaService,
     private inventoryService: InventoryService,
     private accountingService: AccountingService,
+    private paymentLedgerService: PaymentLedgerService,
+    private stockLedgerService: StockLedgerService,
+    private stockAccountMapperService: StockAccountMapperService,
+    private taxCalculationService: TaxCalculationService,
   ) {}
 
   async findAll(query: SaleQueryDto, pagination: PaginationQueryDto, userId: number, isAdmin: boolean) {
@@ -47,8 +59,9 @@ export class SalesService {
     return createPaginatedResult(items, page, pageSize, totalItems);
   }
 
-  async findById(id: number): Promise<SaleResponseDto> {
-    const sale = await this.prisma.sale.findUnique({
+  async findById(id: number, tx?: any): Promise<SaleResponseDto> {
+    const prisma = tx ?? this.prisma;
+    const sale = await prisma.sale.findUnique({
       where: { id },
       include: {
         customer: true,
@@ -70,7 +83,7 @@ export class SalesService {
     }
 
     // Get payments separately
-    const payments = await this.prisma.payment.findMany({
+    const payments = await prisma.payment.findMany({
       where: { referenceType: 'sale', referenceId: id },
     });
 
@@ -227,34 +240,49 @@ export class SalesService {
       const totalDiscount = saleDiscount + discountFromPct;
       const subtotal = grossTotal - totalDiscount;
       
-      const taxAmount = 0; // No tax for now
-      const totalAmount = subtotal + taxAmount;
+      let netTotal = subtotal;
+      let totalTaxAmount = 0;
+      let grandTotal = subtotal;
+      if (dto.taxTemplateId) {
+        const taxResults = await this.taxCalculationService.calculateTaxes(dto.taxTemplateId, subtotal, 2);
+        totalTaxAmount = taxResults.reduce((s, r) => s + r.amount, 0);
+        grandTotal = subtotal + totalTaxAmount;
+      }
+      const totalAmount = grandTotal;
 
       // Calculate payments
       const totalPayments = dto.payments?.reduce((sum, p) => sum + p.amount, 0) ?? 0;
       const paymentStatus = totalPayments >= totalAmount ? 'paid' : totalPayments > 0 ? 'partial' : 'unpaid';
 
       // Create sale
+      const now = new Date();
       const sale = await tx.sale.create({
         data: {
           saleNumber,
-          saleDate: new Date(),
+          saleDate: now,
           saleType: dto.saleType,
-          customerId: dto.customerId,
-          customerName: customer?.name,
-          customerPhone: customer?.phone,
+          customerId: dto.customerId ?? undefined,
+          customerName: customer?.name ?? dto.customerName ?? null,
+          customerPhone: customer?.phone ?? dto.customerPhone ?? null,
           cashierId,
           grossTotalAmount: grossTotal,
           discountAmount: totalDiscount,
           discountPct: dto.discountPct,
-          taxAmount,
+          taxAmount: totalTaxAmount,
           totalAmount,
           totalCost,
           totalProfit: totalAmount - totalCost,
+          taxTemplateId: dto.taxTemplateId ?? undefined,
+          netTotal: dto.taxTemplateId ? netTotal : null,
+          totalTaxAmount,
+          grandTotal: dto.taxTemplateId ? grandTotal : null,
           paymentStatus,
           amountPaid: totalPayments,
           dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
           notes: dto.notes,
+          docstatus: 1,
+          submittedAt: now,
+          submittedById: cashierId,
         },
       });
 
@@ -326,12 +354,27 @@ export class SalesService {
             performedById: cashierId,
           },
         });
+
+        // Blueprint 06: Stock Ledger Entry (SLE) for each sale line
+        const valuationRate = line.weightGrams > 0 ? Math.round((line.lineTotalCost * 1000) / line.weightGrams) : 0;
+        await this.stockLedgerService.createSLE(tx, {
+          itemId: line.itemId,
+          branchId: sale.branchId,
+          voucherType: 'sale',
+          voucherId: sale.id,
+          voucherDetailNo: `line-${line.lineNumber}`,
+          qtyChange: -line.weightGrams,
+          valuationRate,
+          stockValueDifference: -line.lineTotalCost,
+          postingDate: now,
+          remarks: `Sale ${sale.saleNumber} line ${line.lineNumber}`,
+        });
       }
 
-      // Create payments
+      // Create payments and PLE for each
       if (dto.payments) {
         for (const payment of dto.payments) {
-          await tx.payment.create({
+          const payRec = await tx.payment.create({
             data: {
               paymentNumber: await this.generatePaymentNumber(tx),
               paymentDate: new Date(),
@@ -345,6 +388,16 @@ export class SalesService {
               receivedById: cashierId,
             },
           });
+          if (dto.customerId) {
+            await this.paymentLedgerService.createPLEForPaymentAgainstSale(
+              tx,
+              payRec.id,
+              sale.id,
+              dto.customerId,
+              payment.amount,
+              now,
+            );
+          }
         }
       }
 
@@ -374,7 +427,8 @@ export class SalesService {
         });
       }
 
-      // Create automatic journal entry for accounting
+      // Create automatic journal entry for accounting (Blueprint 06: branch stock account)
+      const stockAccountCode = await this.stockAccountMapperService.getStockAccountCode(sale.branchId);
       await this.accountingService.createSaleJournalEntry(
         tx,
         sale.id,
@@ -387,10 +441,28 @@ export class SalesService {
           amountPaid: totalPayments,
           customerId: dto.customerId,
           discountAmount: totalDiscount,
+          stockAccountCode,
+          saleDate: sale.saleDate,
+          taxTemplateId: sale.taxTemplateId ?? undefined,
+          netTotal: sale.netTotal ?? undefined,
+          totalTaxAmount: sale.totalTaxAmount ?? undefined,
+          grandTotal: sale.grandTotal ?? undefined,
         },
       );
 
-      return this.findById(sale.id);
+      // Blueprint 04: Payment Ledger (PLE) for receivables
+      if (dto.customerId && totalAmount > 0) {
+        await this.paymentLedgerService.createPLEForSale(
+          tx,
+          sale.id,
+          dto.customerId,
+          totalAmount,
+          now,
+          dto.dueDate ? new Date(dto.dueDate) : null,
+        );
+      }
+
+      return this.findById(sale.id, tx);
     });
   }
 
@@ -424,6 +496,33 @@ export class SalesService {
     });
 
     return this.prisma.$transaction(async (tx) => {
+      // Blueprint 03: Check period lock before cancel
+      await PeriodLockGuard.check(sale.saleDate, null, tx);
+
+      // Blueprint 03: Reverse GL for each payment that has its own JE (from recordSalePayment)
+      const salePayments = await tx.payment.findMany({
+        where: { referenceType: 'sale', referenceId: id, isVoided: false },
+      });
+      for (const payment of salePayments) {
+        const hasJE = await tx.journalEntry.findFirst({
+          where: { sourceType: 'payment', sourceId: payment.id },
+        });
+        if (hasJE) {
+          await this.accountingService.reverseByVoucher('payment', payment.id, userId, tx);
+        }
+        await this.paymentLedgerService.delinkPLEForVoucher('payment', payment.id, tx);
+        await tx.payment.update({
+          where: { id: payment.id },
+          data: {
+            docstatus: 2,
+            isVoided: true,
+            cancelledAt: new Date(),
+            cancelledById: userId,
+            cancelReason: dto.reason,
+          },
+        });
+      }
+
       // Restore inventory from each line
       for (const line of sale.saleLines) {
         // Restore to lots from cost allocations
@@ -456,23 +555,40 @@ export class SalesService {
             performedById: userId,
           },
         });
+
+        // Blueprint 06: Reverse SLE for void
+        const valuationRate = line.weightGrams > 0 ? Math.round((line.lineTotalCost * 1000) / line.weightGrams) : 0;
+        await this.stockLedgerService.createSLE(tx, {
+          itemId: line.itemId,
+          branchId: sale.branchId,
+          voucherType: 'sale_void',
+          voucherId: id,
+          voucherDetailNo: `line-${line.lineNumber}`,
+          qtyChange: line.weightGrams,
+          valuationRate,
+          stockValueDifference: line.lineTotalCost,
+          postingDate: new Date(),
+          remarks: `Void sale ${sale.saleNumber}: ${dto.reason}`,
+        });
       }
 
-      // Mark sale as voided
+      // Blueprint 04: Delink PLE for voided sale
+      await this.paymentLedgerService.delinkPLEForVoucher('sale', id, tx);
+
+      // Mark sale as voided (Blueprint 03: docstatus=2)
+      const now = new Date();
       await tx.sale.update({
         where: { id },
         data: {
           isVoided: true,
-          voidedAt: new Date(),
+          voidedAt: now,
           voidedById: userId,
           voidReason: dto.reason,
+          docstatus: 2,
+          cancelledAt: now,
+          cancelledById: userId,
+          cancelReason: dto.reason,
         },
-      });
-
-      // Void any payments
-      await tx.payment.updateMany({
-        where: { referenceType: 'sale', referenceId: id },
-        data: { isVoided: true },
       });
 
       // Update debt if exists
@@ -501,7 +617,8 @@ export class SalesService {
         },
       });
 
-      // Create reversal journal entry
+      // Create reversal journal entry (Blueprint 06: branch stock account)
+      const stockAccountCode = await this.stockAccountMapperService.getStockAccountCode(sale.branchId);
       await this.accountingService.createSaleVoidJournalEntry(
         tx,
         sale.id,
@@ -513,6 +630,12 @@ export class SalesService {
           totalCost: sale.totalCost,
           amountPaid: sale.amountPaid,
           discountAmount: sale.discountAmount,
+          stockAccountCode,
+          customerId: sale.customerId ?? undefined,
+          taxTemplateId: sale.taxTemplateId ?? undefined,
+          netTotal: sale.netTotal ?? undefined,
+          totalTaxAmount: sale.totalTaxAmount ?? undefined,
+          grandTotal: sale.grandTotal ?? undefined,
         },
       );
 
@@ -555,11 +678,11 @@ export class SalesService {
       : null;
 
     return this.prisma.$transaction(async (tx) => {
-      // Create payment
-      await tx.payment.create({
+      const now = new Date();
+      const payRec = await tx.payment.create({
         data: {
           paymentNumber: await this.generatePaymentNumber(tx),
-          paymentDate: new Date(),
+          paymentDate: now,
           amount: dto.amount,
           paymentMethod: dto.paymentMethod,
           referenceType: 'sale',
@@ -572,6 +695,17 @@ export class SalesService {
           notes: dto.notes,
         },
       });
+
+      if (sale.customerId) {
+        await this.paymentLedgerService.createPLEForPaymentAgainstSale(
+          tx,
+          payRec.id,
+          id,
+          sale.customerId,
+          dto.amount,
+          now,
+        );
+      }
 
       const newAmountPaid = sale.amountPaid + dto.amount;
       const newAmountDue = sale.totalAmount - newAmountPaid;

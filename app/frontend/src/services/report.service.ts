@@ -35,4 +35,28 @@ export const reportService = {
         const response = await axiosInstance.get<ApiResponse<ProfitLossReport>>('/reports/profit-loss', { params });
         return response.data.data;
     },
+    async getStockVsGLReport(params?: { asOfDate?: string; branchId?: number }): Promise<StockVsGLReport> {
+        const response = await axiosInstance.get<ApiResponse<StockVsGLReport>>('/reports/stock-vs-gl', { params });
+        return response.data.data;
+    },
 };
+
+// Blueprint 06: Stock vs GL Reconciliation
+export interface StockVsGLReport {
+    asOfDate: string;
+    branchId?: number | null;
+    rows: Array<{
+        voucherType: string;
+        voucherId: number;
+        postingDate: string;
+        stockValue: number;
+        accountValue: number;
+        difference: number;
+        ledgerType: string;
+    }>;
+    summary: {
+        totalStockValue: number;
+        totalAccountValue: number;
+        totalDifference: number;
+    };
+}

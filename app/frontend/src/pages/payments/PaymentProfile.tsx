@@ -22,6 +22,7 @@ import {
     Ban,
     Clock,
 } from "lucide-react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
@@ -47,11 +48,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
-import { useRecordSalePayment, useRecordPurchasePayment, usePayment } from "@/hooks/use-payments";
+import { useRecordSalePayment, useRecordPurchasePayment, useCreateAdvancePayment, usePayment, useCancelPayment } from "@/hooks/use-payments";
 import { useSales } from "@/hooks/use-sales";
 import { usePurchases } from "@/hooks/use-purchases";
+import { useCustomers } from "@/hooks/use-customers";
+import { useSuppliers } from "@/hooks/use-suppliers";
 import { toast } from "@/hooks/use-toast";
 import { Payment } from "@/types/payments";
+import { DocumentStatusBadge, CancelConfirmDialog } from "@/components/posting";
 
 // ---------- helpers ----------
 function formatCurrency(v: number) {
@@ -82,12 +86,15 @@ const partyTypeLabels: Record<string, string> = {
 const refTypeLabels: Record<string, string> = {
     sale: "فاتورة مبيعات",
     purchase: "أمر شراء",
+    advance: "دفعة مسبقة",
 };
 
 // ---------- zod schema (create only) ----------
 const paymentSchema = z.object({
-    paymentType: z.enum(["sale", "purchase"]),
-    referenceId: z.coerce.number().min(1, "يجب اختيار المرجع (فاتورة أو أمر شراء)"),
+    paymentType: z.enum(["sale", "purchase", "advance"]),
+    referenceId: z.coerce.number().optional(),
+    partyType: z.enum(["customer", "supplier"]).optional(),
+    partyId: z.coerce.number().optional(),
     amount: z.coerce.number().min(0.01, "المبلغ يجب أن يكون أكبر من صفر"),
     paymentMethod: z.string().min(1, "يجب اختيار طريقة الدفع"),
     paymentDate: z.string().min(1, "التاريخ مطلوب"),
@@ -123,6 +130,17 @@ function InfoRow({ icon: Icon, label, value, highlight, mono }: {
 // ========================================================================
 function PaymentViewMode({ payment }: { payment: Payment }) {
     const navigate = useNavigate();
+    const [showCancelDialog, setShowCancelDialog] = useState(false);
+    const cancelPayment = useCancelPayment();
+    const docstatus = payment.docstatus ?? (payment.isVoided ? 2 : 1);
+    const canCancel = docstatus === 1 && !payment.isVoided;
+
+    const handleCancelConfirm = (reason: string) => {
+        cancelPayment.mutate(
+            { id: payment.id, data: { reason } },
+            { onSuccess: () => setShowCancelDialog(false) }
+        );
+    };
 
     return (
         <motion.div
@@ -146,15 +164,21 @@ function PaymentViewMode({ payment }: { payment: Payment }) {
                     <span className="text-muted-foreground">/</span>
                     <h1 className="text-xl font-bold">عرض دفعة</h1>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-row-reverse">
+                    <DocumentStatusBadge docstatus={docstatus} isVoided={payment.isVoided} />
                     <Badge variant="outline" className="font-mono text-xs">
                         {payment.paymentNumber}
                     </Badge>
-                    {payment.isVoided && (
-                        <Badge variant="destructive" className="gap-1">
+                    {canCancel && (
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => setShowCancelDialog(true)}
+                            className="gap-1"
+                        >
                             <Ban className="w-3 h-3" />
-                            ملغية
-                        </Badge>
+                            إلغاء الدفعة
+                        </Button>
                     )}
                 </div>
             </div>
@@ -184,11 +208,7 @@ function PaymentViewMode({ payment }: { payment: Payment }) {
                             <InfoRow
                                 icon={payment.isVoided ? Ban : ShieldCheck}
                                 label="الحالة"
-                                value={
-                                    <Badge variant={payment.isVoided ? "destructive" : "default"}>
-                                        {payment.isVoided ? "ملغية" : "مؤكدة"}
-                                    </Badge>
-                                }
+                                value={<DocumentStatusBadge docstatus={docstatus} isVoided={payment.isVoided} />}
                             />
                         </CardContent>
                     </Card>
@@ -202,9 +222,9 @@ function PaymentViewMode({ payment }: { payment: Payment }) {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-1">
-                            <InfoRow icon={FileText} label="نوع العملية" value={refTypeLabels[payment.referenceType] || payment.referenceType} />
+                            <InfoRow icon={FileText} label="نوع العملية" value={!payment.referenceType ? "دفعة مسبقة" : (refTypeLabels[payment.referenceType] || payment.referenceType)} />
                             <Separator />
-                            <InfoRow icon={Hash} label="رقم المرجع (ID)" value={`#${payment.referenceId}`} mono />
+                            <InfoRow icon={Hash} label="رقم المرجع (ID)" value={payment.referenceId != null ? `#${payment.referenceId}` : "—"} mono />
                             {payment.saleNumber && (
                                 <>
                                     <Separator />
@@ -354,6 +374,16 @@ function PaymentViewMode({ payment }: { payment: Payment }) {
                     </div>
                 </div>
             </div>
+
+            <CancelConfirmDialog
+                open={showCancelDialog}
+                onClose={() => setShowCancelDialog(false)}
+                onConfirm={handleCancelConfirm}
+                title="إلغاء الدفعة"
+                entityLabel="الدفعة"
+                glReversalNote={true}
+                isPending={cancelPayment.isPending}
+            />
         </motion.div>
     );
 }
@@ -372,16 +402,21 @@ export default function PaymentProfile() {
 
     const recordSalePayment = useRecordSalePayment();
     const recordPurchasePayment = useRecordPurchasePayment();
+    const createAdvancePayment = useCreateAdvancePayment();
     const { data: existingPayment, isLoading: isLoadingPayment } = usePayment(parseInt(id || "0"));
 
-    const { data: salesData } = useSales({ pageSize: 100, paymentStatus: "unpaid" as any });
+    const { data: salesData } = useSales({ pageSize: 500 });
     const { data: purchasesData } = usePurchases({ pageSize: 100 });
+    const { data: customersData } = useCustomers({ pageSize: 500 });
+    const { data: suppliersData } = useSuppliers({ pageSize: 500 });
 
     const form = useForm<PaymentFormValues>({
         resolver: zodResolver(paymentSchema),
         defaultValues: {
-            paymentType: queryPurchaseId ? "purchase" : "sale",
+            paymentType: queryPurchaseId ? "purchase" : querySaleId ? "sale" : "sale",
             referenceId: queryPurchaseId ? parseInt(queryPurchaseId) : querySaleId ? parseInt(querySaleId) : 0,
+            partyType: "customer",
+            partyId: 0,
             amount: 0,
             paymentMethod: "cash",
             paymentDate: new Date().toISOString().split("T")[0],
@@ -391,20 +426,82 @@ export default function PaymentProfile() {
     });
 
     const paymentType = form.watch("paymentType");
+    const eligibleSales = (salesData?.data || []).filter(
+        (s: any) => !s.isVoided && (s.totalAmount - s.amountPaid) > 0
+    );
+    const eligiblePurchases = (purchasesData?.data || []).filter(
+        (p: any) => p.status !== "cancelled" && (p.grandTotal - p.amountPaid) > 0
+    );
 
     useEffect(() => {
-        if (existingPayment && !isEditing) {
-            // only for create pre-fill (via query params), not for view
+        if (paymentType === "advance") return;
+        const refId = form.getValues("referenceId");
+        if (paymentType === "sale" && eligibleSales.length > 0) {
+            const valid = eligibleSales.some((s: any) => s.id === refId);
+            if (!valid) form.setValue("referenceId", eligibleSales[0].id);
+        } else if (paymentType === "purchase" && eligiblePurchases.length > 0) {
+            const valid = eligiblePurchases.some((p: any) => p.id === refId);
+            if (!valid) form.setValue("referenceId", eligiblePurchases[0].id);
         }
-    }, [existingPayment, isEditing]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [paymentType, eligibleSales.length, eligiblePurchases.length]);
 
     const onSubmit = async (values: PaymentFormValues) => {
-        try {
-            const amountMinor = Math.round(values.amount * 100);
+        const amountMinor = Math.round(values.amount * 100);
 
+        if (values.paymentType === "advance") {
+            const partyId = Number(values.partyId);
+            const partyType = values.partyType as "customer" | "supplier";
+            if (!partyId || !partyType) {
+                toast({ variant: "destructive", title: "خطأ", description: "يجب اختيار الزبون أو المورد" });
+                return;
+            }
+            try {
+                await createAdvancePayment.mutateAsync({
+                    partyType,
+                    partyId,
+                    amount: amountMinor,
+                    paymentMethod: values.paymentMethod as any,
+                    receiptNumber: values.receiptNumber,
+                    notes: values.notes,
+                    paymentDate: values.paymentDate,
+                });
+                navigate("/payments");
+            } catch (error) {
+                console.error("Failed to save advance payment:", error);
+            }
+            return;
+        }
+
+        const refId = Number(values.referenceId);
+        if (!refId || refId < 1) {
+            toast({
+                variant: "destructive",
+                title: "خطأ في البيانات",
+                description: values.paymentType === "sale" ? "يجب اختيار فاتورة مبيعات صالحة" : "يجب اختيار أمر شراء صالح",
+            });
+            return;
+        }
+        if (values.paymentType === "sale" && !eligibleSales.some((s: any) => s.id === refId)) {
+            toast({
+                variant: "destructive",
+                title: "الفاتورة غير موجودة",
+                description: "الفاتورة المحددة غير موجودة أو لا تملك مبلغاً متبقياً. حدّث الصفحة واختر فاتورة صالحة.",
+            });
+            return;
+        }
+        if (values.paymentType === "purchase" && !eligiblePurchases.some((p: any) => p.id === refId)) {
+            toast({
+                variant: "destructive",
+                title: "أمر الشراء غير موجود",
+                description: "أمر الشراء المحدد غير موجود أو لا يملك مبلغاً متبقياً. حدّث الصفحة واختر أمراً صالحاً.",
+            });
+            return;
+        }
+        try {
             if (values.paymentType === "sale") {
                 await recordSalePayment.mutateAsync({
-                    saleId: values.referenceId,
+                    saleId: refId,
                     amount: amountMinor,
                     paymentMethod: values.paymentMethod as any,
                     referenceNumber: values.receiptNumber,
@@ -412,7 +509,7 @@ export default function PaymentProfile() {
                 });
             } else {
                 await recordPurchasePayment.mutateAsync({
-                    purchaseId: values.referenceId,
+                    purchaseId: refId,
                     amount: amountMinor,
                     paymentMethod: values.paymentMethod as any,
                     referenceNumber: values.receiptNumber,
@@ -469,10 +566,10 @@ export default function PaymentProfile() {
                     </Button>
                     <Button
                         onClick={form.handleSubmit(onSubmit)}
-                        disabled={recordSalePayment.isPending || recordPurchasePayment.isPending}
+                        disabled={recordSalePayment.isPending || recordPurchasePayment.isPending || createAdvancePayment.isPending}
                         className="gap-2 shadow-lg shadow-primary/20"
                     >
-                        {(recordSalePayment.isPending || recordPurchasePayment.isPending) ? (
+                        {(recordSalePayment.isPending || recordPurchasePayment.isPending || createAdvancePayment.isPending) ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
                             <Save className="w-4 h-4" />
@@ -519,6 +616,7 @@ export default function PaymentProfile() {
                                                         <SelectContent dir="rtl">
                                                             <SelectItem value="sale">قبض من زبون (مبيعات)</SelectItem>
                                                             <SelectItem value="purchase">دفع لمورد (مشتريات)</SelectItem>
+                                                            <SelectItem value="advance">دفعة مسبقة</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                     <FormMessage />
@@ -526,6 +624,58 @@ export default function PaymentProfile() {
                                             )}
                                         />
 
+                                        {paymentType === "advance" ? (
+                                            <>
+                                                <FormField
+                                                    control={form.control}
+                                                    name="partyType"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>نوع الطرف *</FormLabel>
+                                                            <Select onValueChange={(v) => { field.onChange(v); form.setValue("partyId", 0); }} value={field.value}>
+                                                                <FormControl>
+                                                                    <SelectTrigger>
+                                                                        <SelectValue />
+                                                                    </SelectTrigger>
+                                                                </FormControl>
+                                                                <SelectContent dir="rtl">
+                                                                    <SelectItem value="customer">زبون</SelectItem>
+                                                                    <SelectItem value="supplier">مورد</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="partyId"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>{form.watch("partyType") === "supplier" ? "المورد *" : "الزبون *"}</FormLabel>
+                                                            <Select
+                                                                onValueChange={(v) => field.onChange(v ? Number(v) : 0)}
+                                                                value={field.value ? String(field.value) : undefined}
+                                                            >
+                                                                <FormControl>
+                                                                    <SelectTrigger>
+                                                                        <SelectValue placeholder={form.watch("partyType") === "supplier" ? "اختر المورد..." : "اختر الزبون..."} />
+                                                                    </SelectTrigger>
+                                                                </FormControl>
+                                                                <SelectContent dir="rtl">
+                                                                    {form.watch("partyType") === "customer"
+                                                                        ? (customersData?.data || []).map((c: { id: number; name: string }) => (
+                                                                            <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                                                                          ))
+                                                                        : (suppliersData?.data || []).map((s: { id: number; name: string }) => (
+                                                                            <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
+                                                                          ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </>
+                                        ) : (
                                         <FormField
                                             control={form.control}
                                             name="referenceId"
@@ -533,8 +683,8 @@ export default function PaymentProfile() {
                                                 <FormItem>
                                                     <FormLabel>{paymentType === "sale" ? "فاتورة البيع *" : "أمر الشراء *"}</FormLabel>
                                                     <Select
-                                                        onValueChange={field.onChange}
-                                                        value={field.value?.toString()}
+                                                        onValueChange={(v) => field.onChange(v ? Number(v) : 0)}
+                                                        value={field.value ? String(field.value) : undefined}
                                                     >
                                                         <FormControl>
                                                             <SelectTrigger>
@@ -543,24 +693,59 @@ export default function PaymentProfile() {
                                                         </FormControl>
                                                         <SelectContent dir="rtl">
                                                             {paymentType === "sale" ? (
-                                                                salesData?.data?.map(s => (
-                                                                    <SelectItem key={s.id} value={s.id.toString()}>
-                                                                        {s.saleNumber} - {s.customerName || "زبون"} (المتبقي: ₪{((s.totalAmount - s.amountPaid) / 100).toFixed(2)})
-                                                                    </SelectItem>
-                                                                ))
+                                                                (() => {
+                                                                    const eligibleSales = (salesData?.data || []).filter(
+                                                                        (s: any) => !s.isVoided && (s.totalAmount - s.amountPaid) > 0
+                                                                    );
+                                                                    if (eligibleSales.length === 0) {
+                                                                        return (
+                                                                            <div className="px-2 py-4 text-center text-sm text-muted-foreground" dir="rtl">
+                                                                                لا توجد فواتير بمبلغ متبقٍ. أنشئ فاتورة من نقطة البيع أو المبيعات أولاً.
+                                                                            </div>
+                                                                        );
+                                                                    }
+                                                                    return eligibleSales.map((s: any) => (
+                                                                        <SelectItem key={s.id} value={s.id.toString()}>
+                                                                            {s.saleNumber} - {s.customerName || "زبون"} (المتبقي: ₪{((s.totalAmount - s.amountPaid) / 100).toFixed(2)})
+                                                                        </SelectItem>
+                                                                    ));
+                                                                })()
                                                             ) : (
-                                                                purchasesData?.data?.map(p => (
-                                                                    <SelectItem key={p.id} value={p.id.toString()}>
-                                                                        {p.purchaseNumber} - {p.supplierName} (المتبقي: ₪{((p.grandTotal - p.amountPaid) / 100).toFixed(2)})
-                                                                    </SelectItem>
-                                                                ))
+                                                                (() => {
+                                                                    const eligiblePurchases = (purchasesData?.data || []).filter(
+                                                                        (p: any) => p.status !== "cancelled" && (p.grandTotal - p.amountPaid) > 0
+                                                                    );
+                                                                    if (eligiblePurchases.length === 0) {
+                                                                        return (
+                                                                            <div className="px-2 py-4 text-center text-sm text-muted-foreground" dir="rtl">
+                                                                                لا توجد أوامر شراء بمبلغ متبقٍ. أنشئ أمر شراء أولاً.
+                                                                            </div>
+                                                                        );
+                                                                    }
+                                                                    return eligiblePurchases.map((p: any) => (
+                                                                        <SelectItem key={p.id} value={p.id.toString()}>
+                                                                            {p.purchaseNumber} - {p.supplierName} (المتبقي: ₪{((p.grandTotal - p.amountPaid) / 100).toFixed(2)})
+                                                                        </SelectItem>
+                                                                    ));
+                                                                })()
                                                             )}
                                                         </SelectContent>
                                                     </Select>
+                                                    {paymentType === "sale" && (!salesData?.data?.length || (salesData.data as any[]).filter((s: any) => !s.isVoided && (s.totalAmount - s.amountPaid) > 0).length === 0) && (
+                                                        <p className="text-xs text-amber-600 mt-1">
+                                                            لا توجد فواتير بمبلغ متبقٍ. <Button type="button" variant="link" className="p-0 h-auto text-xs" onClick={() => navigate("/sales/new")}>أنشئ فاتورة من نقطة البيع</Button> أو <Button type="button" variant="link" className="p-0 h-auto text-xs" onClick={() => navigate("/sales")}>المبيعات</Button> أولاً.
+                                                        </p>
+                                                    )}
+                                                    {paymentType === "purchase" && (!purchasesData?.data?.length || (purchasesData.data as any[]).filter((p: any) => p.status !== "cancelled" && (p.grandTotal - p.amountPaid) > 0).length === 0) && (
+                                                        <p className="text-xs text-amber-600 mt-1">
+                                                            لا توجد أوامر شراء بمبلغ متبقٍ. <Button type="button" variant="link" className="p-0 h-auto text-xs" onClick={() => navigate("/purchasing")}>أنشئ أمر شراء</Button> أولاً.
+                                                        </p>
+                                                    )}
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
+                                    )}
                                     </div>
                                 </CardContent>
                             </Card>

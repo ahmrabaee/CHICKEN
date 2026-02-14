@@ -22,33 +22,38 @@ datasource db {
 
 /// Shop locations/branches for multi-branch support
 /// PRD Section: 2.1 - Branch/Outlet Configuration
+/// Blueprint 06: stockAccountId for Warehouse→Account mapping
 model Branch {
-  id           Int      @id @default(autoincrement())
-  code         String   @unique
-  name         String // Arabic name (primary)
-  nameEn       String?  @map("name_en")
-  address      String?
-  phone        String?
-  hasScale     Boolean  @default(true) @map("has_scale")
-  scaleComPort String?  @map("scale_com_port")
-  isMainBranch Boolean  @default(false) @map("is_main_branch")
-  isActive     Boolean  @default(true) @map("is_active")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id              Int      @id @default(autoincrement())
+  code            String   @unique
+  name            String // Arabic name (primary)
+  nameEn          String?  @map("name_en")
+  address         String?
+  phone           String?
+  hasScale        Boolean  @default(true) @map("has_scale")
+  scaleComPort    String?  @map("scale_com_port")
+  isMainBranch    Boolean  @default(false) @map("is_main_branch")
+  isActive        Boolean  @default(true) @map("is_active")
+  stockAccountId  Int?     @map("stock_account_id") // Blueprint 06: per-branch stock account
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   // Relations
-  users          User[]          @relation("DefaultBranch")
-  inventory      Inventory[]
-  inventoryLots  InventoryLot[]
-  stockMovements StockMovement[]
-  wastageRecords WastageRecord[]
-  sales          Sale[]
-  purchases      Purchase[]
-  payments       Payment[]
-  debts          Debt[]
-  expenses       Expense[]
-  journalEntries JournalEntry[]
-  auditLogs      AuditLog[]
+  users             User[]              @relation("DefaultBranch")
+  inventory         Inventory[]
+  inventoryLots      InventoryLot[]
+  stockMovements    StockMovement[]
+  stockLedgerEntries StockLedgerEntry[] @relation("BranchStockLedger")
+  wastageRecords    WastageRecord[]
+  sales             Sale[]
+  purchases         Purchase[]
+  payments          Payment[]
+  debts             Debt[]
+  expenses          Expense[]
+  journalEntries    JournalEntry[]
+  auditLogs         AuditLog[]
+  stockAccount      Account?            @relation(fields: [stockAccountId], references: [id], onDelete: SetNull)
+  creditNotes       CreditNote[]
 
   @@map("branches")
 }
@@ -122,15 +127,20 @@ model User {
   suppliersUpdated      Supplier[]      @relation("SupplierUpdatedBy")
   salesAsCashier        Sale[]          @relation("SaleCashier")
   salesVoided           Sale[]          @relation("SaleVoidedBy")
+  salesCancelled        Sale[]          @relation("SaleCancelledBy")
+  salesSubmitted        Sale[]          @relation("SaleSubmittedBy")
   salesCreated          Sale[]          @relation("SaleCreatedBy")
   purchasesReceived     Purchase[]      @relation("PurchaseReceivedBy")
   purchasesApproved     Purchase[]      @relation("PurchaseApprovedBy")
   purchasesCreated      Purchase[]      @relation("PurchaseCreatedBy")
   paymentsReceived      Payment[]
+  paymentsCancelled     Payment[]       @relation("PaymentCancelledBy")
   expensesApproved      Expense[]       @relation("ExpenseApprovedBy")
   expensesCreated       Expense[]       @relation("ExpenseCreatedBy")
   journalEntriesCreated JournalEntry[]
   auditLogs             AuditLog[]
+  accountingPeriodsClosed AccountingPeriod[]
+  creditNotesCreated    CreditNote[]
 
   @@map("users")
 }
@@ -209,12 +219,13 @@ model Item {
   category       Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   createdBy      User?           @relation("ItemCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   updatedBy      User?           @relation("ItemUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
-  inventory      Inventory?
-  inventoryLots  InventoryLot[]
-  stockMovements StockMovement[]
-  wastageRecords WastageRecord[]
-  saleLines      SaleLine[]
-  purchaseLines  PurchaseLine[]
+  inventory          Inventory?
+  inventoryLots      InventoryLot[]
+  stockMovements     StockMovement[]
+  stockLedgerEntries StockLedgerEntry[]
+  wastageRecords     WastageRecord[]
+  saleLines          SaleLine[]
+  purchaseLines      PurchaseLine[]
 
   @@index([categoryId])
   @@index([name])
@@ -313,6 +324,36 @@ model StockMovement {
   @@map("stock_movements")
 }
 
+/// Blueprint 06: Stock Ledger Entry - immutable accounting ledger for inventory
+/// Source of truth for stock valuation; links to GL via voucher_type/voucher_id
+model StockLedgerEntry {
+  id                    Int      @id @default(autoincrement())
+  itemId                Int      @map("item_id")
+  branchId              Int?     @map("branch_id")
+
+  voucherType           String   @map("voucher_type") // 'sale', 'purchase', 'adjustment', 'wastage', 'transfer'
+  voucherId             Int      @map("voucher_id")
+  voucherDetailNo       String?  @map("voucher_detail_no")
+
+  qtyChange             Int      @map("qty_change") // positive=in, negative=out (grams)
+  valuationRate         Int      @map("valuation_rate") // minor units per kg
+  stockValueDifference  Int      @map("stock_value_difference") // minor units
+
+  postingDate           DateTime @map("posting_date")
+  postingTime          String?  @map("posting_time")
+  remarks               String?
+  createdAt             DateTime @default(now()) @map("created_at")
+
+  item   Item     @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  branch Branch?  @relation("BranchStockLedger", fields: [branchId], references: [id], onDelete: SetNull)
+
+  @@index([itemId, branchId])
+  @@index([voucherType, voucherId])
+  @@index([postingDate])
+  @@index([branchId])
+  @@map("stock_ledger_entries")
+}
+
 /// Spoilage, trimming, expiry tracking
 /// PRD Section: 4.2.2 - Critical for chicken shop daily tracking
 model WastageRecord {
@@ -333,6 +374,11 @@ model WastageRecord {
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 
+  // Blueprint 03: Posting workflow (wastage submitted on record)
+  docstatus   Int       @default(1) @map("docstatus") // 1=Submitted
+  submittedAt DateTime? @map("submitted_at")
+  submittedById Int?    @map("submitted_by")
+
   // Relations
   item       Item          @relation(fields: [itemId], references: [id], onDelete: Restrict)
   lot        InventoryLot? @relation(fields: [lotId], references: [id], onDelete: SetNull)
@@ -343,6 +389,7 @@ model WastageRecord {
   @@index([itemId])
   @@index([wastageDate])
   @@index([wastageType])
+  @@index([docstatus])
   @@map("wastage_records")
 }
 
@@ -426,6 +473,7 @@ model Supplier {
 
 /// Sales invoices with FIFO cost tracking
 /// PRD Section: 4.2.3 - Sales header
+/// Blueprint 03: docstatus (0=Draft, 1=Submitted, 2=Cancelled)
 model Sale {
   id               Int       @id @default(autoincrement())
   saleNumber       String    @unique @map("sale_number")
@@ -441,6 +489,12 @@ model Sale {
   discountPct      Int?      @map("discount_pct") // Basis points
   taxAmount        Int       @default(0) @map("tax_amount")
   totalAmount      Int       @default(0) @map("total_amount")
+
+  // Blueprint 05: Tax Engine
+  taxTemplateId   Int?      @map("tax_template_id")
+  netTotal        Int?      @map("net_total")       // Before tax (minor units)
+  totalTaxAmount  Int       @default(0) @map("total_tax_amount")
+  grandTotal      Int?      @map("grand_total")     // netTotal + totalTaxAmount
   totalCost        Int       @default(0) @map("total_cost")
   totalProfit      Int       @default(0) @map("total_profit")
   paymentStatus    String    @default("unpaid") @map("payment_status") // 'unpaid', 'partial', 'paid'
@@ -456,19 +510,32 @@ model Sale {
   updatedAt        DateTime  @updatedAt @map("updated_at")
   createdById      Int?      @map("created_by")
 
+  // Blueprint 03: Posting workflow (ERP-level docstatus)
+  docstatus       Int       @default(1) @map("docstatus") // 0=Draft, 1=Submitted, 2=Cancelled
+  submittedAt     DateTime? @map("submitted_at")
+  submittedById   Int?      @map("submitted_by")
+  cancelledAt     DateTime? @map("cancelled_at")
+  cancelledById   Int?      @map("cancelled_by")
+  cancelReason    String?   @map("cancel_reason")
+
   // Relations
-  customer  Customer?  @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  cashier   User       @relation("SaleCashier", fields: [cashierId], references: [id], onDelete: Restrict)
-  branch    Branch?    @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  voidedBy  User?      @relation("SaleVoidedBy", fields: [voidedById], references: [id], onDelete: SetNull)
-  createdBy User?      @relation("SaleCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  saleLines SaleLine[]
+  customer    Customer?  @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  cashier     User       @relation("SaleCashier", fields: [cashierId], references: [id], onDelete: Restrict)
+  branch      Branch?    @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  voidedBy    User?      @relation("SaleVoidedBy", fields: [voidedById], references: [id], onDelete: SetNull)
+  cancelledBy User?      @relation("SaleCancelledBy", fields: [cancelledById], references: [id], onDelete: SetNull)
+  submittedBy User?      @relation("SaleSubmittedBy", fields: [submittedById], references: [id], onDelete: SetNull)
+  createdBy   User?      @relation("SaleCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  saleLines   SaleLine[]
+  taxTemplate TaxTemplate?    @relation(fields: [taxTemplateId], references: [id], onDelete: SetNull)
+  taxBreakdowns SaleTaxBreakdown[]
 
   @@index([saleDate])
   @@index([customerId])
   @@index([cashierId])
   @@index([branchId])
   @@index([paymentStatus])
+  @@index([docstatus])
   @@map("sales")
 }
 
@@ -535,6 +602,12 @@ model Purchase {
   totalAmount           Int       @default(0) @map("total_amount") // Minor units
   taxAmount             Int       @default(0) @map("tax_amount")
   paymentStatus         String    @default("unpaid") @map("payment_status")
+
+  // Blueprint 05: Tax Engine
+  taxTemplateId   Int?      @map("tax_template_id")
+  netTotal        Int?      @map("net_total")
+  totalTaxAmount  Int       @default(0) @map("total_tax_amount")
+  grandTotal      Int?      @map("grand_total")
   amountPaid            Int       @default(0) @map("amount_paid")
   dueDate               DateTime? @map("due_date")
   receivedById          Int?      @map("received_by")
@@ -549,6 +622,14 @@ model Purchase {
   updatedAt             DateTime  @updatedAt @map("updated_at")
   createdById           Int?      @map("created_by")
 
+  // Blueprint 03: Posting workflow (ERP-level docstatus)
+  docstatus     Int       @default(0) @map("docstatus") // 0=Draft, 1=Submitted, 2=Cancelled
+  submittedAt   DateTime? @map("submitted_at")
+  submittedById Int?      @map("submitted_by")
+  cancelledAt   DateTime? @map("cancelled_at")
+  cancelledById Int?      @map("cancelled_by")
+  cancelReason  String?   @map("cancel_reason")
+
   // Relations
   supplier      Supplier       @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   receivedBy    User?          @relation("PurchaseReceivedBy", fields: [receivedById], references: [id], onDelete: SetNull)
@@ -557,11 +638,14 @@ model Purchase {
   createdBy     User?          @relation("PurchaseCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   purchaseLines PurchaseLine[]
   inventoryLots InventoryLot[]
+  taxTemplate   TaxTemplate?      @relation("PurchaseTaxTemplate", fields: [taxTemplateId], references: [id], onDelete: SetNull)
+  taxBreakdowns PurchaseTaxBreakdown[]
 
   @@index([purchaseDate])
   @@index([supplierId])
   @@index([branchId])
   @@index([paymentStatus])
+  @@index([docstatus])
   @@map("purchases")
 }
 
@@ -597,14 +681,15 @@ model PurchaseLine {
 
 /// Payment receipts and disbursements
 /// PRD Section: 4.2.5
+/// Blueprint 03: docstatus (1=Submitted on create, 2=Cancelled with GL reversal)
 model Payment {
   id                Int      @id @default(autoincrement())
   paymentNumber     String   @unique @map("payment_number")
   paymentDate       DateTime @default(now()) @map("payment_date")
   amount            Int // Minor units (can be negative for refunds)
   paymentMethod     String   @map("payment_method") // 'cash', 'card', 'bank_transfer', 'mobile', 'check'
-  referenceType     String   @map("reference_type") // 'sale', 'purchase', 'expense', 'debt'
-  referenceId       Int      @map("reference_id")
+  referenceType     String?  @map("reference_type") // 'sale', 'purchase', 'expense', 'debt', null=advance
+  referenceId       Int?     @map("reference_id")
   partyType         String?  @map("party_type") // 'customer', 'supplier'
   partyId           Int?     @map("party_id")
   partyName         String?  @map("party_name")
@@ -617,14 +702,98 @@ model Payment {
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
+  // Blueprint 03: Posting workflow (Payment submitted on create; cancel creates GL reversal)
+  docstatus     Int       @default(1) @map("docstatus") // 1=Submitted, 2=Cancelled
+  cancelledAt   DateTime? @map("cancelled_at")
+  cancelledById Int?      @map("cancelled_by")
+  cancelReason  String?   @map("cancel_reason")
+
   // Relations
-  receivedBy User?   @relation(fields: [receivedById], references: [id], onDelete: SetNull)
-  branch     Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  receivedBy   User?   @relation(fields: [receivedById], references: [id], onDelete: SetNull)
+  cancelledBy  User?   @relation("PaymentCancelledBy", fields: [cancelledById], references: [id], onDelete: SetNull)
+  branch       Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  allocations  PaymentAllocation[] @relation // Blueprint 04: multi-invoice allocation
 
   @@index([paymentDate])
   @@index([referenceType, referenceId])
   @@index([partyType, partyId])
+  @@index([docstatus])
   @@map("payments")
+}
+
+/// Blueprint 04: Payment Ledger Entry (Subledger for Receivables/Payables)
+/// Tracks voucher-level impact on party balances (source of truth for Outstanding)
+model PaymentLedgerEntry {
+  id                   Int      @id @default(autoincrement())
+  partyType            String   @map("party_type")   // 'customer', 'supplier'
+  partyId              Int      @map("party_id")
+  accountType          String   @map("account_type") // 'receivable', 'payable'
+  accountId            Int      @map("account_id")
+
+  voucherType          String   @map("voucher_type") // 'sale', 'purchase', 'payment', 'credit_note'
+  voucherId            Int      @map("voucher_id")
+
+  againstVoucherType   String?   @map("against_voucher_type")
+  againstVoucherId    Int?      @map("against_voucher_id")
+
+  amount               Int      @map("amount")       // + for invoice (increase AR), - for payment (decrease AR)
+  postingDate          DateTime @map("posting_date")
+  dueDate              DateTime? @map("due_date")
+  remarks              String?
+  delinked             Boolean  @default(false) @map("delinked")
+
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  @@index([partyType, partyId])
+  @@index([voucherType, voucherId])
+  @@index([againstVoucherType, againstVoucherId])
+  @@index([postingDate])
+  @@map("payment_ledger_entries")
+}
+
+/// Blueprint 04: Payment allocation to invoices (partial + multi-invoice)
+model PaymentAllocation {
+  id              Int      @id @default(autoincrement())
+  paymentId       Int      @map("payment_id")
+  invoiceType     String   @map("invoice_type")   // 'sale', 'purchase'
+  invoiceId       Int      @map("invoice_id")
+  allocatedAmount Int      @map("allocated_amount")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@unique([paymentId, invoiceType, invoiceId])
+  @@index([invoiceType, invoiceId])
+  @@map("payment_allocations")
+}
+
+/// Blueprint 04: Credit Note (independent document for partial returns/discounts)
+model CreditNote {
+  id                  Int       @id @default(autoincrement())
+  creditNoteNumber    String    @unique @map("credit_note_number")
+  creditNoteDate      DateTime  @default(now()) @map("credit_note_date")
+  docstatus           Int       @default(0) @map("docstatus")
+
+  originalInvoiceType String    @map("original_invoice_type")
+  originalInvoiceId   Int       @map("original_invoice_id")
+  amount              Int       @map("amount")
+  reason              String?
+  branchId            Int?      @map("branch_id")
+  createdById         Int?      @map("created_by")
+  submittedAt         DateTime? @map("submitted_at")
+  submittedById       Int?      @map("submitted_by")
+  cancelledAt         DateTime? @map("cancelled_at")
+  cancelledById       Int?      @map("cancelled_by")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  branch     Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  createdBy  User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([originalInvoiceType, originalInvoiceId])
+  @@map("credit_notes")
 }
 
 /// Receivables and Payables tracking
@@ -706,6 +875,14 @@ model Expense {
   updatedAt       DateTime  @updatedAt @map("updated_at")
   createdById     Int       @map("created_by")
 
+  // Blueprint 03: Posting workflow
+  docstatus     Int       @default(0) @map("docstatus") // 0=Draft, 1=Submitted, 2=Cancelled
+  submittedAt   DateTime? @map("submitted_at")
+  submittedById Int?      @map("submitted_by")
+  cancelledAt   DateTime? @map("cancelled_at")
+  cancelledById Int?      @map("cancelled_by")
+  cancelReason  String?   @map("cancel_reason")
+
   // Relations
   category   ExpenseCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   supplier   Supplier?        @relation(fields: [supplierId], references: [id], onDelete: SetNull)
@@ -716,33 +893,90 @@ model Expense {
   @@index([expenseDate])
   @@index([expenseType])
   @@index([categoryId])
+  @@index([docstatus])
   @@map("expenses")
 }
 
 // =============================================================================
 // SECTION 6: ACCOUNTING (DOUBLE-ENTRY LEDGER)
+// Blueprint 01: Chart of Accounts Rebuild - Nested Set, ERP-level controls
 // =============================================================================
 
-/// Chart of Accounts
-/// PRD Section: 6.1
+/// Company (multi-company support, nullable = single entity)
+/// Blueprint 01: Chart of Accounts Rebuild
+/// Blueprint 02: round-off account, currency precision
+model Company {
+  id                    Int      @id @default(autoincrement())
+  code                  String   @unique
+  name                  String
+  nameEn                String?  @map("name_en")
+  defaultCurrency       String   @default("SAR") @map("default_currency")
+  fiscalYearStartMonth  Int      @default(1) @map("fiscal_year_start_month")
+  isActive              Boolean  @default(true) @map("is_active")
+  roundOffAccountId    Int?     @map("round_off_account_id")
+  roundOffCostCenterId  Int?     @map("round_off_cost_center_id")
+  currencyPrecision    Int      @default(2) @map("currency_precision")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  accounts             Account[]
+  accountingPeriods     AccountingPeriod[]
+  costCenters          CostCenter[]
+  taxTemplates         TaxTemplate[]
+  roundOffAccount      Account?  @relation("CompanyRoundOffAccount", fields: [roundOffAccountId], references: [id], onDelete: SetNull)
+  roundOffCostCenter   CostCenter? @relation("CompanyRoundOffCostCenter", fields: [roundOffCostCenterId], references: [id], onDelete: SetNull) // One cost center can be round-off for multiple companies
+  journalEntryLines    JournalEntryLine[]
+
+  @@map("companies")
+}
+
+/// Chart of Accounts - Nested Set Model
+/// Blueprint 01: root_type, report_type, is_group, lft/rgt for tree queries
 model Account {
-  id                Int      @id @default(autoincrement())
-  code              String   @unique
-  name              String // Arabic
-  nameEn            String?  @map("name_en")
-  accountType       String   @map("account_type") // 'asset', 'liability', 'equity', 'revenue', 'expense'
-  parentAccountCode String?  @map("parent_account_code")
-  isActive          Boolean  @default(true) @map("is_active")
-  isSystemAccount   Boolean  @default(false) @map("is_system_account")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  id               Int      @id @default(autoincrement())
+  code             String
+  name             String
+  nameEn           String?  @map("name_en")
 
-  // Self-referential
-  parentAccount     Account?           @relation("AccountHierarchy", fields: [parentAccountCode], references: [code], onDelete: SetNull)
-  childAccounts     Account[]          @relation("AccountHierarchy")
+  rootType         String   @map("root_type")
+  reportType       String   @map("report_type")
+  accountType      String   @map("account_type")
+
+  parentId         Int?     @map("parent_id")
+  lft              Int      @default(0)
+  rgt              Int      @default(0)
+
+  isGroup          Boolean  @default(false) @map("is_group")
+  balanceMustBe    String?  @map("balance_must_be")
+  accountCurrency  String?  @map("account_currency")
+  companyId        Int?     @map("company_id")
+
+  isActive         Boolean  @default(true) @map("is_active")
+  isSystemAccount  Boolean  @default(false) @map("is_system_account")
+  freezeAccount    Boolean  @default(false) @map("freeze_account")
+
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  company           Company?  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  parent            Account?  @relation("AccountHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  childAccounts     Account[] @relation("AccountHierarchy")
   journalEntryLines JournalEntryLine[]
+  stockAccountBranches Branch[] @relation
+  paymentLedgerEntries PaymentLedgerEntry[]
+  companiesAsRoundOff Company[] @relation("CompanyRoundOffAccount")
+  taxTemplateItems    TaxTemplateItem[]
+  saleTaxBreakdowns   SaleTaxBreakdown[]
+  purchaseTaxBreakdowns PurchaseTaxBreakdown[]
 
+  @@unique([code, companyId])
+  @@index([companyId])
+  @@index([parentId])
+  @@index([lft, rgt])
+  @@index([rootType])
+  @@index([reportType])
   @@index([accountType])
+  @@index([isGroup])
   @@map("accounts")
 }
 
@@ -779,23 +1013,39 @@ model JournalEntry {
 }
 
 /// Journal debit/credit lines
-/// PRD Section: 6.2
+/// Blueprint 01: account_id (was account_code) for stable references
+/// Blueprint 02: cost center, party, against voucher, multi-currency
 model JournalEntryLine {
-  id             Int      @id @default(autoincrement())
-  journalEntryId Int      @map("journal_entry_id")
-  lineNumber     Int      @map("line_number")
-  accountCode    String   @map("account_code")
-  debitAmount    Int      @default(0) @map("debit_amount") // Minor units
-  creditAmount   Int      @default(0) @map("credit_amount")
-  description    String?
-  createdAt      DateTime @default(now()) @map("created_at")
+  id                       Int      @id @default(autoincrement())
+  journalEntryId            Int      @map("journal_entry_id")
+  lineNumber                Int      @map("line_number")
+  accountId                 Int      @map("account_id")
+  debitAmount               Int      @default(0) @map("debit_amount")
+  creditAmount              Int      @default(0) @map("credit_amount")
+  debitInAccountCurrency    Int?     @map("debit_in_account_currency")
+  creditInAccountCurrency   Int?     @map("credit_in_account_currency")
+  exchangeRate              Float?   @map("exchange_rate")
+  costCenterId              Int?     @map("cost_center_id")
+  companyId                 Int?     @map("company_id")
+  partyType                 String?  @map("party_type")
+  partyId                   Int?     @map("party_id")
+  againstVoucherType        String?  @map("against_voucher_type")
+  againstVoucherId          Int?     @map("against_voucher_id")
+  voucherDetailNo           String?  @map("voucher_detail_no")
+  description               String?
+  isOpening                 Boolean  @default(false) @map("is_opening")
+  createdAt                 DateTime @default(now()) @map("created_at")
 
-  // Relations
   journalEntry JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
-  account      Account      @relation(fields: [accountCode], references: [code], onDelete: Restrict)
+  account      Account     @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  costCenter   CostCenter? @relation(fields: [costCenterId], references: [id], onDelete: SetNull)
+  company      Company?    @relation(fields: [companyId], references: [id], onDelete: Restrict)
 
   @@unique([journalEntryId, lineNumber])
-  @@index([accountCode])
+  @@index([accountId])
+  @@index([companyId])
+  @@index([costCenterId])
+  @@index([partyType, partyId])
   @@map("journal_entry_lines")
 }
 
@@ -844,6 +1094,26 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+/// Accounting periods for period locking (Blueprint 03)
+model AccountingPeriod {
+  id         Int       @id @default(autoincrement())
+  startDate  DateTime  @map("start_date")
+  endDate    DateTime  @map("end_date")
+  isClosed   Boolean   @default(false) @map("is_closed")
+  closedAt   DateTime? @map("closed_at")
+  closedById Int?      @map("closed_by")
+  companyId  Int?      @map("company_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  closedBy  User?    @relation(fields: [closedById], references: [id], onDelete: SetNull)
+
+  @@unique([companyId, startDate])
+  @@index([companyId, isClosed])
+  @@map("accounting_periods")
+}
+
 /// Schema version tracking
 model SchemaVersion {
   id          Int      @id @default(autoincrement())
@@ -852,4 +1122,95 @@ model SchemaVersion {
   appliedAt   DateTime @default(now()) @map("applied_at")
 
   @@map("schema_versions")
+}
+
+/// Blueprint 05: Tax Template for VAT/Multi-Tax
+model TaxTemplate {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  type      String   // 'sales', 'purchases'
+  companyId Int?     @map("company_id")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company   Company?  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  items     TaxTemplateItem[]
+  sales     Sale[]
+  purchases Purchase[] @relation("PurchaseTaxTemplate")
+
+  @@index([type])
+  @@index([companyId])
+  @@map("tax_templates")
+}
+
+/// Blueprint 05: Tax Template Item (rate, charge type, account)
+model TaxTemplateItem {
+  id           Int      @id @default(autoincrement())
+  templateId   Int      @map("template_id")
+  accountId    Int      @map("account_id")
+  rate         Int      // Basis points (1500 = 15%)
+  chargeType   String   @default("on_net_total") @map("charge_type") // on_net_total, on_previous_row_amount, on_previous_row_total, actual
+  rowId        Int?     @map("row_id")
+  fixedAmount  Int?     @map("fixed_amount")
+  isDeductible Boolean  @default(true) @map("is_deductible")
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  template TaxTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  account  Account    @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  @@index([templateId])
+  @@map("tax_template_items")
+}
+
+/// Blueprint 05: Sale Tax Breakdown (audit per sale)
+model SaleTaxBreakdown {
+  id        Int      @id @default(autoincrement())
+  saleId    Int      @map("sale_id")
+  accountId Int      @map("account_id")
+  rate      Int
+  taxAmount Int      @map("tax_amount")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  @@index([saleId])
+  @@map("sale_tax_breakdowns")
+}
+
+/// Blueprint 05: Purchase Tax Breakdown
+model PurchaseTaxBreakdown {
+  id         Int      @id @default(autoincrement())
+  purchaseId Int      @map("purchase_id")
+  accountId  Int      @map("account_id")
+  rate       Int
+  taxAmount  Int      @map("tax_amount")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  purchase Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  account  Account  @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  @@index([purchaseId])
+  @@map("purchase_tax_breakdowns")
+}
+
+/// Blueprint 02: Cost Center for GL dimensioning
+model CostCenter {
+  id         Int      @id @default(autoincrement())
+  code       String
+  name       String
+  companyId  Int?     @map("company_id")
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  company             Company? @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  journalLines        JournalEntryLine[]
+  roundOffForCompanies Company[] @relation("CompanyRoundOffCostCenter")
+
+  @@unique([code, companyId])
+  @@index([companyId])
+  @@map("cost_centers")
 }

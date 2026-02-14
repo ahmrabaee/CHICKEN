@@ -7,16 +7,22 @@ import {
   Query,
   ParseIntPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
-import { RecordSalePaymentDto, RecordPurchasePaymentDto, PaymentQueryDto } from './dto/payment.dto';
+import {
+  RecordSalePaymentDto,
+  RecordPurchasePaymentDto,
+  PaymentQueryDto,
+  CancelPaymentDto,
+  CreateAdvancePaymentDto,
+} from './dto/payment.dto';
 import { CurrentUser } from '../common';
 
 @ApiTags('payments')
 @ApiBearerAuth('JWT-auth')
 @Controller('payments')
 export class PaymentsController {
-  constructor(private paymentsService: PaymentsService) { }
+  constructor(private paymentsService: PaymentsService) {}
 
   @Get()
   @ApiOperation({ summary: 'List all payments' })
@@ -40,5 +46,24 @@ export class PaymentsController {
   @ApiOperation({ summary: 'Record a purchase payment' })
   recordPurchasePayment(@Body() dto: RecordPurchasePaymentDto, @CurrentUser() user: any) {
     return this.paymentsService.recordPurchasePayment(dto, user.id);
+  }
+
+  @Post('advance')
+  @ApiOperation({ summary: 'Create advance payment (Blueprint 04 - for reconciliation)' })
+  createAdvancePayment(@Body() dto: CreateAdvancePaymentDto, @CurrentUser() user: any) {
+    return this.paymentsService.createAdvancePayment(dto, user.id);
+  }
+
+  @Post(':id/cancel')
+  @ApiOperation({
+    summary: 'Cancel payment (creates GL reversal)',
+    description: 'Blueprint 03: Cancels payment with full GL reversal. Use instead of void.',
+  })
+  cancelPayment(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CancelPaymentDto,
+    @CurrentUser() user: any,
+  ) {
+    return this.paymentsService.cancelPayment(id, dto.reason, user.id);
   }
 }

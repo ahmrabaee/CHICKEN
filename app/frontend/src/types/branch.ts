@@ -13,6 +13,8 @@ export interface Branch {
     scaleComPort?: string;
     isMainBranch: boolean;
     isActive: boolean;
+    stockAccountId?: number | null;
+    stockAccount?: { id: number; code: string; name: string };
     userCount?: number;
     createdAt: string;
     updatedAt?: string;
@@ -36,6 +38,7 @@ export interface CreateBranchDto {
     phone?: string;
     hasScale?: boolean;
     scaleComPort?: string;
+    stockAccountId?: number;
 }
 
 /**
@@ -48,6 +51,7 @@ export interface UpdateBranchDto {
     phone?: string;
     hasScale?: boolean;
     scaleComPort?: string;
+    stockAccountId?: number | null;
 }
 
 /**

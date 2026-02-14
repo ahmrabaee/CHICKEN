@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Save, Upload, User, Bell, Printer, Globe, Key, Check, X } from "lucide-react";
+import { Save, Upload, User, Bell, Printer, Globe, Key, Check, X, Calculator, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +24,8 @@ import { useNavigate } from "react-router-dom";
 import { clearTokens, getStoredUser } from "@/lib/auth";
 import { toast } from "sonner";
 import { authService } from "@/services/auth.service";
+import { AccountingSettingsTab } from "@/components/settings/AccountingSettingsTab";
+import { TaxTemplatesTab } from "@/components/settings/TaxTemplatesTab";
 
 const changePasswordSchema = z.object({
   oldPassword: z.string().min(1, "كلمة المرور الحالية مطلوبة"),
@@ -108,7 +110,7 @@ export default function Settings() {
 
       {/* Tabs */}
       <Tabs defaultValue="shop" className="space-y-6" dir="rtl">
-        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid">
           <TabsTrigger value="shop" className="gap-2">
             <Globe className="w-4 h-4" />
             المحل
@@ -116,6 +118,14 @@ export default function Settings() {
           <TabsTrigger value="account" className="gap-2">
             <Key className="w-4 h-4" />
             الحساب
+          </TabsTrigger>
+          <TabsTrigger value="accounting" className="gap-2">
+            <Calculator className="w-4 h-4" />
+            المحاسبة
+          </TabsTrigger>
+          <TabsTrigger value="tax-templates" className="gap-2">
+            <Receipt className="w-4 h-4" />
+            قوالب الضرائب
           </TabsTrigger>
           <TabsTrigger value="users" className="gap-2">
             <User className="w-4 h-4" />
@@ -340,6 +350,16 @@ export default function Settings() {
               </Form>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Accounting Settings - Blueprint 02 GL Engine */}
+        <TabsContent value="accounting" className="space-y-6">
+          <AccountingSettingsTab />
+        </TabsContent>
+
+        {/* Tax Templates - Blueprint 05 */}
+        <TabsContent value="tax-templates" className="space-y-6">
+          <TaxTemplatesTab />
         </TabsContent>
 
         {/* Users Settings */}

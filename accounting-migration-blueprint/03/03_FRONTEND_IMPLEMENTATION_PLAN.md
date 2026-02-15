@@ -2,7 +2,7 @@
 ## Posting Workflow Control (ERP-Level)
 
 **Version:** 1.0  
-**Last Updated:** February 2026  
+**Last Updated:** February 2026   
 **Status:** Ready for Implementation
 
 ---

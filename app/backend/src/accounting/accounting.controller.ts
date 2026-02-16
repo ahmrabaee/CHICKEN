@@ -8,6 +8,7 @@ import {
   Body,
   Query,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AccountingService } from './accounting.service';
@@ -15,17 +16,18 @@ import { ChartOfAccountsService } from './chart-of-accounts/chart-of-accounts.se
 import { CreateJournalEntryDto } from './dto/accounting.dto';
 import { CreateAccountDto } from './chart-of-accounts/dto/create-account.dto';
 import { UpdateAccountDto } from './chart-of-accounts/dto/update-account.dto';
-import { PaginationQueryDto, Roles, CurrentUser } from '../common';
+import { PaginationQueryDto, Roles, CurrentUser, RolesGuard } from '../common';
 
 @ApiTags('accounting')
 @ApiBearerAuth('JWT-auth')
-@Roles('admin', 'manager')
 @Controller('accounting')
+@UseGuards(RolesGuard)
+@Roles('admin', 'manager')
 export class AccountingController {
   constructor(
     private accountingService: AccountingService,
     private chartOfAccountsService: ChartOfAccountsService,
-  ) {}
+  ) { }
 
   // Chart of Accounts
   @Get('accounts')
@@ -58,8 +60,8 @@ export class AccountingController {
   @Post('accounts')
   @Roles('admin')
   @ApiOperation({ summary: 'Create new account' })
-  createAccount(@Body() dto: CreateAccountDto) {
-    return this.chartOfAccountsService.createAccount(dto);
+  createAccount(@Body() dto: CreateAccountDto, @CurrentUser() user: { id: number; username: string }) {
+    return this.chartOfAccountsService.createAccount(dto, 1, user);
   }
 
   @Post('accounts/rebuild-tree')
@@ -72,15 +74,19 @@ export class AccountingController {
   @Put('accounts/:id')
   @Roles('admin')
   @ApiOperation({ summary: 'Update account' })
-  updateAccount(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateAccountDto) {
-    return this.chartOfAccountsService.updateAccount(id, dto);
+  updateAccount(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateAccountDto,
+    @CurrentUser() user: { id: number; username: string },
+  ) {
+    return this.chartOfAccountsService.updateAccount(id, dto, 1, user);
   }
 
   @Delete('accounts/:id')
   @Roles('admin')
   @ApiOperation({ summary: 'Delete account' })
-  deleteAccount(@Param('id', ParseIntPipe) id: number) {
-    return this.chartOfAccountsService.deleteAccount(id);
+  deleteAccount(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: { id: number; username: string }) {
+    return this.chartOfAccountsService.deleteAccount(id, 1, user);
   }
 
   // Journal Entries
@@ -98,7 +104,7 @@ export class AccountingController {
 
   @Post('journal-entries')
   @ApiOperation({ summary: 'Create manual journal entry' })
-  createJournalEntry(@Body() dto: CreateJournalEntryDto, @CurrentUser() user: any) {
+  createJournalEntry(@Body() dto: CreateJournalEntryDto, @CurrentUser() user: { id: number }) {
     return this.accountingService.createJournalEntry(dto, user.id);
   }
 

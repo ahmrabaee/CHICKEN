@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from "lucide-react";
+import { BookOpen, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -14,6 +14,7 @@ interface AccountProfileDialogProps {
     account: Account | null;
     onEdit?: (account: Account) => void;
     onDelete?: (account: Account) => void;
+    onViewLedger?: (account: Account) => void;
 }
 
 function Info({ label, value }: { label: string; value: React.ReactNode }) {
@@ -31,6 +32,7 @@ export function AccountProfileDialog({
     account,
     onEdit,
     onDelete,
+    onViewLedger,
 }: AccountProfileDialogProps) {
     if (!account) return null;
 
@@ -77,7 +79,21 @@ export function AccountProfileDialog({
                         )}
                     </div>
 
-                    <div className="flex gap-2 pt-2 border-t">
+                    <div className="flex gap-2 pt-2 border-t flex-wrap">
+                        {onViewLedger && !account.isGroup && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-1"
+                                onClick={() => {
+                                    onOpenChange(false);
+                                    onViewLedger(account);
+                                }}
+                            >
+                                <BookOpen className="w-4 h-4" />
+                                كشف حساب
+                            </Button>
+                        )}
                         {onEdit && (
                             <Button
                                 variant="outline"

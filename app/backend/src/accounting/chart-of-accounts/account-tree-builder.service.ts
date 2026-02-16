@@ -8,10 +8,11 @@ interface TreeAccount extends Account {
 
 @Injectable()
 export class AccountTreeBuilderService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
-  async rebuildNestedSet(companyId: number | null): Promise<void> {
-    const accounts = await this.prisma.account.findMany({
+  async rebuildNestedSet(companyId: number | null, tx?: any): Promise<void> {
+    const client = tx ?? this.prisma;
+    const accounts = await client.account.findMany({
       where: { companyId },
       orderBy: [{ parentId: 'asc' }, { code: 'asc' }],
     });
@@ -32,14 +33,26 @@ export class AccountTreeBuilderService {
     }
 
     const flat = this.flattenTree(tree);
-    await this.prisma.$transaction(
-      flat.map((a) =>
-        this.prisma.account.update({
+
+    // When inside an outer transaction, execute updates sequentially
+    // Otherwise, batch them in a $transaction
+    if (tx) {
+      for (const a of flat) {
+        await tx.account.update({
           where: { id: a.id },
           data: { lft: a.lft, rgt: a.rgt },
-        }),
-      ),
-    );
+        });
+      }
+    } else {
+      await this.prisma.$transaction(
+        flat.map((a) =>
+          this.prisma.account.update({
+            where: { id: a.id },
+            data: { lft: a.lft, rgt: a.rgt },
+          }),
+        ),
+      );
+    }
   }
 
   deriveRootAndReportType(

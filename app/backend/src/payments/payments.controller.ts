@@ -22,7 +22,7 @@ import { CurrentUser } from '../common';
 @ApiBearerAuth('JWT-auth')
 @Controller('payments')
 export class PaymentsController {
-  constructor(private paymentsService: PaymentsService) {}
+  constructor(private paymentsService: PaymentsService) { }
 
   @Get()
   @ApiOperation({ summary: 'List all payments' })
@@ -45,6 +45,7 @@ export class PaymentsController {
   @Post('purchase')
   @ApiOperation({ summary: 'Record a purchase payment' })
   recordPurchasePayment(@Body() dto: RecordPurchasePaymentDto, @CurrentUser() user: any) {
+    console.log('[DEBUG] recordPurchasePayment DTO:', dto);
     return this.paymentsService.recordPurchasePayment(dto, user.id);
   }
 

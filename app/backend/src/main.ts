@@ -24,6 +24,7 @@ async function bootstrap() {
       transform: true,
       forbidNonWhitelisted: true,
       exceptionFactory: (errors: ValidationError[]) => {
+        console.warn('[VALIDATION ERROR]:', JSON.stringify(errors, null, 2));
         const messages = errors.map((e) =>
           e.constraints ? Object.values(e.constraints).join(', ') : e.property + ' has invalid value',
         );
@@ -105,7 +106,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  
+
   console.log(`
 ╔══════════════════════════════════════════════════════════╗
 ║           Chicken Shop POS API Server                    ║

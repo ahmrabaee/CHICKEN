@@ -14,7 +14,7 @@ export class PurchasesService {
     private paymentLedgerService: PaymentLedgerService,
     private stockLedgerService: StockLedgerService,
     private stockAccountMapperService: StockAccountMapperService,
-  ) {}
+  ) { }
 
   async findAll(pagination: PaginationQueryDto) {
     const { page = 1, pageSize = 20 } = pagination;
@@ -61,7 +61,7 @@ export class PurchasesService {
 
   async create(dto: any, userId: number) {
     const purchaseNumber = await this.generatePurchaseNumber();
-    
+
     const supplier = await this.prisma.supplier.findUnique({
       where: { id: dto.supplierId },
     });
@@ -83,7 +83,13 @@ export class PurchasesService {
       }
 
       const taxAmount = dto.taxAmount ?? 0;
-      totalAmount += taxAmount;
+      const netTotal = totalAmount; // Sum of lines
+      const grandTotal = netTotal + taxAmount;
+      const amountPaid = dto.amountPaid ?? 0;
+
+      let paymentStatus = 'unpaid';
+      if (amountPaid >= grandTotal && grandTotal > 0) paymentStatus = 'paid';
+      else if (amountPaid > 0) paymentStatus = 'partial';
 
       const purchase = await tx.purchase.create({
         data: {
@@ -93,9 +99,11 @@ export class PurchasesService {
           purchaseDate: dto.purchaseDate ? new Date(dto.purchaseDate) : new Date(),
           dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
           taxAmount,
-          totalAmount,
-          paymentStatus: 'unpaid',
-          amountPaid: 0,
+          totalAmount: grandTotal, // Backward compatibility or specific use
+          netTotal,
+          grandTotal,
+          paymentStatus,
+          amountPaid,
           notes: dto.notes,
           createdById: userId,
         },
@@ -249,7 +257,7 @@ export class PurchasesService {
         userId,
         {
           totalAmount: totalReceivedValue,
-          amountPaid: 0, // Payment is recorded separately
+          amountPaid: Math.min(purchase.amountPaid, totalReceivedValue),
           stockAccountCode,
         },
       );

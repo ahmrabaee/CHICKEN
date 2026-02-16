@@ -364,10 +364,23 @@ export default function Purchasing() {
                     <TableCell className="font-mono text-sm">{purchase.purchaseNumber}</TableCell>
                     <TableCell className="font-medium">{purchase.supplierName}</TableCell>
                     <TableCell className="text-center text-muted-foreground">{formatDate(purchase.purchaseDate)}</TableCell>
-                    <TableCell className="text-center font-semibold">{formatCurrency(purchase.grandTotal)}</TableCell>
-                    <TableCell className="text-center text-green-600 dark:text-green-400">{formatCurrency(purchase.amountPaid)}</TableCell>
-                    <TableCell className="text-center">{getStatusBadge(purchase.status)}</TableCell>
-                    <TableCell className="text-center">{getPaymentBadge(purchase.paymentStatus)}</TableCell>
+                    <TableCell className="text-center font-semibold">{formatCurrency(purchase.grandTotal || purchase.totalAmount)}</TableCell>
+                    <TableCell className="text-center text-green-600 dark:text-green-400">{formatCurrency(purchase.amountPaid || 0)}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        {getStatusBadge(purchase.status)}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        {getPaymentBadge(purchase.paymentStatus)}
+                        {(purchase.grandTotal || purchase.totalAmount) - (purchase.amountPaid || 0) > 0 && (
+                          <span className="text-[10px] text-red-500 font-english" dir="ltr">
+                            -{formatCurrency((purchase.grandTotal || purchase.totalAmount) - (purchase.amountPaid || 0))}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">
                         <Button variant="ghost" size="icon" className="h-8 w-8" title="عرض التفاصيل"

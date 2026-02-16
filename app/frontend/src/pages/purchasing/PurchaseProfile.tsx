@@ -41,6 +41,7 @@ const purchaseSchema = z.object({
   purchaseDate: z.string().optional(),
   dueDate: z.string().optional(),
   taxAmount: z.coerce.number().min(0, "قيمة الضريبة غير صحيحة").optional(),
+  amountPaid: z.coerce.number().min(0, "المبلغ المدفوع غير صحيح").optional(),
   notes: z.string().optional(),
   lines: z
     .array(
@@ -100,6 +101,7 @@ export default function PurchaseProfile() {
       purchaseDate: new Date().toISOString().slice(0, 10),
       dueDate: "",
       taxAmount: 0,
+      amountPaid: 0,
       notes: "",
       lines: [{ itemId: 0, weightKg: 1, pricePerKg: 0, isLiveBird: false }],
     },
@@ -124,7 +126,10 @@ export default function PurchaseProfile() {
   }, [watchedLines]);
 
   const taxNum = Number(watchedTax) || 0;
+  const watchedPaid = useWatch({ control: form.control, name: "amountPaid", defaultValue: 0 });
+  const amountPaidNum = Number(watchedPaid) || 0;
   const grandTotalMajor = subtotalMajor + taxNum;
+  const remainingMajor = Math.max(0, grandTotalMajor - amountPaidNum);
 
   const onSubmit = async (values: PurchaseFormValues) => {
     const supplierId = Number(values.supplierId);
@@ -149,6 +154,7 @@ export default function PurchaseProfile() {
       purchaseDate: values.purchaseDate?.trim() ? values.purchaseDate : undefined,
       dueDate: values.dueDate?.trim() ? values.dueDate : undefined,
       taxAmount: values.taxAmount != null && values.taxAmount > 0 ? toMinorUnits(values.taxAmount) : undefined,
+      amountPaid: values.amountPaid != null && values.amountPaid > 0 ? toMinorUnits(values.amountPaid) : undefined,
       notes: values.notes?.trim() ? values.notes.trim() : undefined,
       lines,
     };
@@ -266,43 +272,20 @@ export default function PurchaseProfile() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+              <div className="md:col-span-1">
                 <FormField
                   control={form.control}
-                  name="taxAmount"
+                  name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>الضريبة (₪)</FormLabel>
+                      <FormLabel>ملاحظات (اختياري)</FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
-                          inputMode="decimal"
-                          step="0.01"
-                          min="0"
-                          {...field}
-                        />
+                        <Textarea placeholder="أي تفاصيل إضافية..." rows={3} {...field} />
                       </FormControl>
                       <FormMessage />
-                      <p className="text-xs text-muted-foreground mt-1">يُرسل للباك بوحدة السنت (minor units)</p>
                     </FormItem>
                   )}
                 />
-
-                <div className="md:col-span-2">
-                  <FormField
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>ملاحظات (اختياري)</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="أي تفاصيل إضافية..." rows={3} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
               </div>
             </CardContent>
           </Card>
@@ -460,13 +443,62 @@ export default function PurchaseProfile() {
                 <p className="text-sm text-muted-foreground">
                   تذكير: الباك هو المرجع النهائي للحسابات، وهذا عرض تقريبي فقط.
                 </p>
-                <div className="bg-muted/40 rounded-lg px-4 py-3 grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
+                <div className="bg-muted/40 rounded-lg px-6 py-4 grid grid-cols-2 gap-x-8 gap-y-4 text-sm items-center min-w-[350px]">
                   <span className="text-muted-foreground">المجموع</span>
                   <span className="text-left font-english" dir="ltr">₪ {subtotalMajor.toFixed(2)}</span>
-                  <span className="text-muted-foreground">الضريبة</span>
-                  <span className="text-left font-english" dir="ltr">₪ {taxNum.toFixed(2)}</span>
-                  <span className="text-muted-foreground font-semibold">الإجمالي</span>
-                  <span className="text-left font-semibold font-english" dir="ltr">₪ {grandTotalMajor.toFixed(2)}</span>
+
+                  <span className="text-muted-foreground">الضريبة (₪)</span>
+                  <FormField
+                    control={form.control}
+                    name="taxAmount"
+                    render={({ field }) => (
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          className="h-8 text-left font-english w-28 mr-auto py-0"
+                          {...field}
+                        />
+                      </FormControl>
+                    )}
+                  />
+
+                  <div className="col-span-2 border-t border-muted-foreground/10 my-1" />
+
+                  <span className="text-muted-foreground font-bold">الإجمالي النهائي</span>
+                  <span className="text-left font-bold font-english text-lg" dir="ltr">₪ {grandTotalMajor.toFixed(2)}</span>
+
+                  <span className="text-green-700 font-bold flex flex-col gap-1">
+                    <span>المبلغ المدفوع (₪)</span>
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      className="h-auto p-0 text-[10px] text-primary w-fit underline"
+                      onClick={() => form.setValue("amountPaid", grandTotalMajor)}
+                    >
+                      دفع الكل
+                    </Button>
+                  </span>
+                  <FormField
+                    control={form.control}
+                    name="amountPaid"
+                    render={({ field }) => (
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          className="h-9 text-left font-english font-bold text-green-700 w-32 mr-auto py-0"
+                          {...field}
+                        />
+                      </FormControl>
+                    )}
+                  />
+
+                  <div className="col-span-2 border-t border-muted-foreground/10 my-2" />
+
+                  <span className="text-muted-foreground font-semibold">المتبقي (دين)</span>
+                  <span className="text-left text-red-600 font-english font-bold text-xl" dir="ltr">₪ {remainingMajor.toFixed(2)}</span>
                 </div>
               </div>
             </CardContent>

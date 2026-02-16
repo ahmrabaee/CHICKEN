@@ -38,6 +38,7 @@ export interface CreateAccountDto {
     parentId?: number | null;
     isGroup?: boolean;
     balanceMustBe?: 'Debit' | 'Credit' | null;
+    accountCurrency?: string | null;
 }
 
 export interface UpdateAccountDto extends Partial<CreateAccountDto> {

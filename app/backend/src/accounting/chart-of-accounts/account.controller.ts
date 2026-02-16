@@ -13,13 +13,14 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger'
 import { ChartOfAccountsService } from './chart-of-accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
-import { Roles } from '../../common';
+import { Roles, CurrentUser } from '../../common';
+import { CurrentUserData } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('accounting')
 @ApiBearerAuth('JWT-auth')
 @Controller('accounting')
 export class AccountController {
-  constructor(private chartOfAccountsService: ChartOfAccountsService) {}
+  constructor(private chartOfAccountsService: ChartOfAccountsService) { }
 
   @Get('accounts')
   @ApiOperation({ summary: 'Get chart of accounts (tree)' })
@@ -54,22 +55,26 @@ export class AccountController {
   @Post('accounts')
   @Roles('admin')
   @ApiOperation({ summary: 'Create new account' })
-  createAccount(@Body() dto: CreateAccountDto) {
-    return this.chartOfAccountsService.createAccount(dto);
+  createAccount(@Body() dto: CreateAccountDto, @CurrentUser() user: CurrentUserData) {
+    return this.chartOfAccountsService.createAccount(dto, 1, user);
   }
 
   @Put('accounts/:id')
   @Roles('admin')
   @ApiOperation({ summary: 'Update account' })
-  updateAccount(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateAccountDto) {
-    return this.chartOfAccountsService.updateAccount(id, dto);
+  updateAccount(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateAccountDto,
+    @CurrentUser() user: CurrentUserData,
+  ) {
+    return this.chartOfAccountsService.updateAccount(id, dto, 1, user);
   }
 
   @Delete('accounts/:id')
   @Roles('admin')
   @ApiOperation({ summary: 'Delete account' })
-  deleteAccount(@Param('id', ParseIntPipe) id: number) {
-    return this.chartOfAccountsService.deleteAccount(id);
+  deleteAccount(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: CurrentUserData) {
+    return this.chartOfAccountsService.deleteAccount(id, 1, user);
   }
 
   @Post('accounts/rebuild-tree')

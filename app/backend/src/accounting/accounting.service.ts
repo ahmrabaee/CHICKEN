@@ -10,27 +10,27 @@ import { GLMapEntry } from './gl-engine/types/gl-map.types';
 // Standard account codes - must match prisma/seed.ts chart of accounts
 export const ACCOUNT_CODES = {
   // Assets (1xxx)
-  CASH: '1110',
+  CASH: '1111',               // Cash in Drawer (Postable)
   BANK: '1112',
   ACCOUNTS_RECEIVABLE: '1120',
-  INVENTORY: '1130',
-  
+  INVENTORY: '1131',          // Fresh Chicken Inventory (Postable)
+
   // Liabilities (2xxx)
   ACCOUNTS_PAYABLE: '2110',
   VAT_PAYABLE: '2120',
   VAT_RECEIVABLE: '1125',
-  
+
   // Equity (3xxx)
   CAPITAL: '3100',
   RETAINED_EARNINGS: '3200',
-  
+
   // Revenue (4xxx)
-  SALES_REVENUE: '4100',
+  SALES_REVENUE: '4110',      // Fresh Chicken Sales (Postable)
   OTHER_INCOME: '4200',
-  
+
   // Expenses (5xxx)
   COST_OF_GOODS_SOLD: '5100',
-  OPERATING_EXPENSES: '5200',
+  OPERATING_EXPENSES: '5400', // Other Expenses (Postable)
   WASTAGE_EXPENSE: '5300',
   DISCOUNTS_GIVEN: '5400',
   INVENTORY_ADJUSTMENT: '5320', // Blueprint 06: stock adjustment expense/income
@@ -52,7 +52,7 @@ export class AccountingService {
     private preventGroupPostingGuard: PreventGroupPostingGuard,
     private glEngineService: GlEngineService,
     private taxEngineService: TaxEngineService,
-  ) {}
+  ) { }
 
   // ============ GL ENGINE INTEGRATION (Blueprint 02) ============
 
@@ -823,15 +823,15 @@ export class AccountingService {
       },
       paymentMethod === 'credit'
         ? {
-            accountCode: ACCOUNT_CODES.ACCOUNTS_PAYABLE,
-            creditAmount: amount,
-            description: 'Expense on credit',
-          }
+          accountCode: ACCOUNT_CODES.ACCOUNTS_PAYABLE,
+          creditAmount: amount,
+          description: 'Expense on credit',
+        }
         : {
-            accountCode: ACCOUNT_CODES.CASH,
-            creditAmount: amount,
-            description: 'Cash payment',
-          },
+          accountCode: ACCOUNT_CODES.CASH,
+          creditAmount: amount,
+          description: 'Cash payment',
+        },
     ];
 
     if (await this.isGlEngineEnabled()) {
@@ -877,6 +877,7 @@ export class AccountingService {
     const linesWithIds = await this.resolveLinesToAccountIds(params.lines);
     const accountIds = linesWithIds.map((l) => l.accountId).filter(Boolean);
     await this.preventGroupPostingGuard.validateAccountsForPosting(accountIds);
+    await this.preventGroupPostingGuard.validateAccountPostingSides(linesWithIds);
 
     const totalDebit = linesWithIds.reduce((sum, l) => sum + (l.debitAmount ?? 0), 0);
     const totalCredit = linesWithIds.reduce((sum, l) => sum + (l.creditAmount ?? 0), 0);
@@ -1116,7 +1117,13 @@ export class AccountingService {
         });
       }
 
-      return this.getJournalEntryById(entry.id);
+      // Read within the same transaction to avoid isolation issues
+      const result = await tx.journalEntry.findUnique({
+        where: { id: entry.id },
+        include: { lines: { include: { account: true, costCenter: true } }, createdBy: true },
+      });
+      if (!result) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Journal entry not found', messageAr: 'القيد غير موجود' });
+      return result;
     });
   }
 
@@ -1212,9 +1219,15 @@ export class AccountingService {
     if (typeof accountIdOrCode === 'number') {
       accountId = accountIdOrCode;
     } else {
-      const id = await this.chartOfAccountsService.getAccountIdByCode(accountIdOrCode);
-      if (!id) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Account not found', messageAr: 'الحساب غير موجود' });
-      accountId = id;
+      // Try parsing as ID first if it's numeric
+      const numericId = parseInt(accountIdOrCode, 10);
+      if (!Number.isNaN(numericId) && /^\d+$/.test(accountIdOrCode)) {
+        accountId = numericId;
+      } else {
+        const id = await this.chartOfAccountsService.getAccountIdByCode(accountIdOrCode);
+        if (!id) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Account not found', messageAr: 'الحساب غير موجود' });
+        accountId = id;
+      }
     }
 
     const where: Record<string, unknown> = { accountId };
@@ -1235,9 +1248,10 @@ export class AccountingService {
     return lines.map((l) => {
       runningBalance += l.debitAmount - l.creditAmount;
       return {
-        date: l.journalEntry.entryDate,
+        id: l.id,
+        entryDate: l.journalEntry.entryDate,
         entryNumber: l.journalEntry.entryNumber,
-        description: l.description ?? l.journalEntry.description,
+        description: l.description ?? l.journalEntry.description ?? '',
         debit: l.debitAmount,
         credit: l.creditAmount,
         balance: runningBalance,

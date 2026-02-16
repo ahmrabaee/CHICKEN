@@ -29,6 +29,7 @@ import WastageProfile from "@/pages/wastage/WastageProfile";
 import Reports from "@/pages/Reports";
 import Audit from "@/pages/Audit";
 import Accounting from "@/pages/Accounting";
+import JournalEntryProfile from "@/pages/accounting/JournalEntryProfile";
 import Settings from "@/pages/Settings";
 import Login from "@/pages/Login";
 import Setup from "@/pages/Setup";
@@ -116,6 +117,7 @@ const App = () => (
 
                 {/* Accounting */}
                 <Route path="/accounting" element={<Accounting />} />
+                <Route path="/accounting/journal/new" element={<JournalEntryProfile />} />
 
                 {/* Audit */}
                 <Route path="/audit" element={<Audit />} />

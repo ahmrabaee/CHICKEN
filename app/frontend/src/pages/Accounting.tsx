@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { Eye, Loader2, CheckCircle, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Eye, Loader2, CheckCircle, Plus, Search, ChevronsUpDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,15 +20,17 @@ import {
     useDeleteAccount,
 } from "@/hooks/use-accounting";
 import { AccountFormDialog } from "@/components/accounting/AccountFormDialog";
+import { AccountLedgerDialog } from "@/components/accounting/AccountLedgerDialog";
 import { AccountProfileDialog } from "@/components/accounting/AccountProfileDialog";
 import { toast } from "@/hooks/use-toast";
 import { accountingService } from "@/services/accounting.service";
 import { Account, JournalEntry, TrialBalanceEntry } from "@/types/accounting";
 import { AccountTreeRow } from "@/components/accounting/AccountTreeRow";
 import { ROOT_TYPE_COLORS } from "@/lib/accounting";
+import { formatCurrency, formatDate } from "@/lib/formatters";
+import { Input } from "@/components/ui/input";
 
-function formatCurrency(v: number) { return `₪ ${(v / 100).toFixed(2)}`; }
-function formatDate(d: string) { return new Date(d).toLocaleDateString("ar-SA", { year: "numeric", month: "short", day: "numeric" }); }
+
 
 function entryStatus(entry: JournalEntry): 'draft' | 'posted' {
     return entry.status ?? (entry.isPosted ? 'posted' : 'draft');
@@ -76,6 +79,39 @@ function JournalDetailCard({ entryId, open, onClose }: { entryId: number; open: 
                             <Info label="إجمالي المدين" value={formatCurrency(entryTotalDebit(entry))} />
                             <Info label="إجمالي الدائن" value={formatCurrency(entryTotalCredit(entry))} />
                         </div>
+
+                        {/* Profit Summary Section */}
+                        {(() => {
+                            const income = entry.lines.filter(l => l.account?.rootType === 'Income')
+                                .reduce((sum, l) => sum + (l.credit ?? l.creditAmount ?? 0) - (l.debit ?? l.debitAmount ?? 0), 0);
+                            const expense = entry.lines.filter(l => l.account?.rootType === 'Expense')
+                                .reduce((sum, l) => sum + (l.debit ?? l.debitAmount ?? 0) - (l.credit ?? l.creditAmount ?? 0), 0);
+
+                            if (income === 0 && expense === 0) return null;
+                            const profit = income - expense;
+
+                            return (
+                                <div className="bg-primary/5 border border-primary/10 rounded-lg p-3 flex flex-wrap gap-6 items-center justify-between">
+                                    <div className="flex gap-6">
+                                        <div className="space-y-0.5">
+                                            <p className="text-[10px] text-muted-foreground uppercase font-bold">إجمالي المبيعات</p>
+                                            <p className="text-sm font-semibold">{formatCurrency(income)}</p>
+                                        </div>
+                                        <div className="space-y-0.5">
+                                            <p className="text-[10px] text-muted-foreground uppercase font-bold">تكلفة البضاعة</p>
+                                            <p className="text-sm font-semibold">{formatCurrency(expense)}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-left space-y-0.5">
+                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">صافي الربح</p>
+                                        <p className={`text-lg font-bold ${profit >= 0 ? "text-green-600" : "text-red-600"}`}>
+                                            {formatCurrency(profit)}
+                                        </p>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
                         <Info label="الوصف" value={entry.description} />
 
                         <div className="border rounded-lg overflow-hidden">
@@ -178,23 +214,62 @@ function buildAccountTree(flat: Account[]): (Account & { _children?: (Account & 
 }
 
 export default function Accounting() {
+    const navigate = useNavigate();
     const [tab, setTab] = useState<"accounts" | "journals" | "trial">("accounts");
     const [journalPage, setJournalPage] = useState(1);
     const [detailEntryId, setDetailEntryId] = useState<number | null>(null);
     const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set());
     const [deleteTarget, setDeleteTarget] = useState<Account | null>(null);
     const [formDialogOpen, setFormDialogOpen] = useState(false);
+    const [ledgerAccount, setLedgerAccount] = useState<Account | null>(null);
     const [formMode, setFormMode] = useState<"create" | "edit">("create");
     const [editAccount, setEditAccount] = useState<Account | null>(null);
     const [profileAccount, setProfileAccount] = useState<Account | null>(null);
+    const [accountSearch, setAccountSearch] = useState("");
 
-    const { data: accountsData, isLoading: accountsLoading } = useAccounts();
+    const { data: accountsData, isLoading: accountsLoading, refetch: refetchAccounts } = useAccounts();
     const { data: journalsData, isLoading: journalsLoading } = useJournalEntries({ page: journalPage, pageSize: 20 });
     const { data: trialData, isLoading: trialLoading } = useTrialBalance();
     const deleteAccountMutation = useDeleteAccount();
 
-    const rawAccounts = accountsData?.data || [];
+    const rawAccounts = Array.isArray(accountsData?.data)
+        ? accountsData.data
+        : Array.isArray(accountsData)
+            ? accountsData
+            : [];
     const accountTree = useMemo(() => buildAccountTree(rawAccounts), [rawAccounts]);
+
+    // Search filter: find matching accounts + expand their ancestor chains
+    const filteredTree = useMemo(() => {
+        if (!accountSearch.trim()) return accountTree;
+        const term = accountSearch.trim().toLowerCase();
+        const matchIds = new Set<number>();
+        const ancestorIds = new Set<number>();
+        const byId = new Map<number, Account>(rawAccounts.map((a): [number, Account] => [a.id, a]));
+        for (const a of rawAccounts) {
+            if (a.code.toLowerCase().includes(term) || a.name.toLowerCase().includes(term) || (a.nameEn ?? "").toLowerCase().includes(term)) {
+                matchIds.add(a.id);
+                let pid = a.parentId;
+                while (pid) {
+                    ancestorIds.add(pid);
+                    pid = byId.get(pid)?.parentId ?? null;
+                }
+            }
+        }
+        const keepIds = new Set([...matchIds, ...ancestorIds]);
+        function filterNodes(nodes: typeof accountTree): typeof accountTree {
+            return nodes
+                .filter((n) => keepIds.has(n.id))
+                .map((n) => ({ ...n, _children: n._children ? filterNodes(n._children as typeof accountTree) : [] }));
+        }
+        return filterNodes(accountTree);
+    }, [accountTree, accountSearch, rawAccounts]);
+
+    // Collect all group account IDs for expand-all
+    const allGroupIds = useMemo(() => new Set(rawAccounts.filter((a) => a.isGroup).map((a) => a.id)), [rawAccounts]);
+
+    const handleExpandAll = () => setExpandedIds(new Set(allGroupIds));
+    const handleCollapseAll = () => setExpandedIds(new Set());
 
     const handleToggleExpand = (id: number) => {
         setExpandedIds((prev) => {
@@ -244,6 +319,26 @@ export default function Accounting() {
         setProfileAccount(account);
     };
 
+    const handleViewLedger = (account: Account) => {
+        setLedgerAccount(account);
+    };
+
+    const handleAccountCreated = (newAccount?: Account) => {
+        if (!newAccount?.parentId) return;
+        const byId = new Map<number, Account>(rawAccounts.map((a): [number, Account] => [a.id, a]));
+        const idsToExpand = new Set<number>();
+        let currentId: number | null = newAccount.parentId;
+        while (currentId) {
+            idsToExpand.add(currentId);
+            currentId = byId.get(currentId)?.parentId ?? null;
+        }
+        setExpandedIds((prev) => {
+            const next = new Set(prev);
+            idsToExpand.forEach((id) => next.add(id));
+            return next;
+        });
+    };
+
     const groupAccountsForParent = rawAccounts.filter((a) => a.isGroup);
     const journals = journalsData?.data || [];
     const journalPagination = journalsData?.pagination;
@@ -273,10 +368,30 @@ export default function Accounting() {
                                 إضافة حساب
                             </Button>
                         </div>
+                        <div className="flex items-center gap-2 p-3 border-b bg-muted/30">
+                            <div className="relative flex-1 max-w-sm">
+                                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="بحث بالكود أو الاسم..."
+                                    value={accountSearch}
+                                    onChange={(e) => setAccountSearch(e.target.value)}
+                                    className="pr-9"
+                                />
+                            </div>
+                            <Button variant="outline" size="sm" onClick={handleExpandAll} title="فتح الكل">
+                                <ChevronsUpDown className="w-4 h-4 ml-1" />
+                                فتح الكل
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={handleCollapseAll} title="إغلاق الكل">
+                                إغلاق الكل
+                            </Button>
+                        </div>
                         {accountsLoading ? (
                             <div className="flex items-center justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
                         ) : rawAccounts.length === 0 ? (
                             <div className="text-center py-16 text-muted-foreground"><p>لا توجد حسابات</p></div>
+                        ) : filteredTree.length === 0 && accountSearch ? (
+                            <div className="text-center py-12 text-muted-foreground"><p>لا توجد نتائج لـ "{accountSearch}"</p></div>
                         ) : (
                             <Table>
                                 <TableHeader>
@@ -291,11 +406,11 @@ export default function Accounting() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {accountTree.map((root) => (
+                                    {filteredTree.map((root) => (
                                         <AccountTreeRow
                                             key={root.id}
                                             account={root}
-                                            expandedIds={expandedIds}
+                                            expandedIds={accountSearch ? new Set([...expandedIds, ...allGroupIds]) : expandedIds}
                                             onToggle={handleToggleExpand}
                                             onView={handleViewAccount}
                                             onEdit={handleEditAccount}
@@ -314,6 +429,13 @@ export default function Accounting() {
                 <>
                     <Card>
                         <CardContent className="p-0">
+                            <div className="flex justify-between items-center p-4 border-b">
+                                <h2 className="text-lg font-semibold">قيود اليومية</h2>
+                                <Button onClick={() => navigate("/accounting/journal/new")} className="gap-2">
+                                    <Plus className="w-4 h-4" />
+                                    إضافة قيد
+                                </Button>
+                            </div>
                             {journalsLoading ? (
                                 <div className="flex items-center justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
                             ) : journals.length === 0 ? (
@@ -433,6 +555,8 @@ export default function Accounting() {
                 mode={formMode}
                 account={editAccount}
                 parentAccounts={groupAccountsForParent}
+                onRefetch={async () => { await refetchAccounts(); }}
+                onSuccess={handleAccountCreated}
             />
 
             <AccountProfileDialog
@@ -441,6 +565,13 @@ export default function Accounting() {
                 account={profileAccount}
                 onEdit={handleEditAccount}
                 onDelete={handleDeleteClick}
+                onViewLedger={handleViewLedger}
+            />
+
+            <AccountLedgerDialog
+                open={!!ledgerAccount}
+                onOpenChange={(open) => !open && setLedgerAccount(null)}
+                account={ledgerAccount}
             />
         </div>
     );

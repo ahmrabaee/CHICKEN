@@ -34,8 +34,17 @@ export const useCreateAccount = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (data: CreateAccountDto) => accountingService.createAccount(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['accounting', 'accounts'] });
+        onSuccess: async (newAccount) => {
+            if (newAccount) {
+                const queryKey = ['accounting', 'accounts', undefined] as const;
+                queryClient.setQueryData(queryKey, (old: { data?: unknown[] } | undefined) => {
+                    if (!old) return old;
+                    const list = Array.isArray(old?.data) ? [...old.data] : [];
+                    if (list.some((a: { id?: number }) => a.id === newAccount.id)) return old;
+                    return { ...old, data: [...list, newAccount] };
+                });
+            }
+            await queryClient.refetchQueries({ queryKey: ['accounting', 'accounts'] });
             toast({ title: 'تم إنشاء الحساب بنجاح' });
         },
         onError: (error: any) => {
@@ -48,8 +57,8 @@ export const useUpdateAccount = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: ({ id, data }: { id: number; data: UpdateAccountDto }) => accountingService.updateAccount(id, data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['accounting', 'accounts'] });
+        onSuccess: async () => {
+            await queryClient.refetchQueries({ queryKey: ['accounting', 'accounts'] });
             toast({ title: 'تم تحديث الحساب بنجاح' });
         },
         onError: (error: any) => {
@@ -62,8 +71,8 @@ export const useDeleteAccount = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (id: number) => accountingService.deleteAccount(id),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['accounting', 'accounts'] });
+        onSuccess: async () => {
+            await queryClient.refetchQueries({ queryKey: ['accounting', 'accounts'] });
             toast({ title: 'تم حذف الحساب بنجاح' });
         },
         onError: (error: any) => {

@@ -11,14 +11,20 @@ export class RecordSalePaymentDto {
   @IsNumber()
   amount: number;
 
-  @ApiProperty({ enum: ['cash', 'card', 'bank_transfer', 'mobile_payment'] })
+  @ApiProperty({ enum: ['cash', 'card', 'bank_transfer', 'mobile_payment', 'check'] })
   @IsString()
+  @IsIn(['cash', 'card', 'bank_transfer', 'mobile_payment', 'check'])
   paymentMethod: string;
 
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
   referenceNumber?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  paymentDate?: string;
 
   @ApiPropertyOptional()
   @IsString()
@@ -35,14 +41,25 @@ export class RecordPurchasePaymentDto {
   @IsNumber()
   amount: number;
 
-  @ApiProperty({ enum: ['cash', 'card', 'bank_transfer', 'check'] })
+  @ApiProperty({ enum: ['cash', 'card', 'bank_transfer', 'mobile_payment', 'check'] })
   @IsString()
+  @IsOptional()
   paymentMethod: string;
 
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
   referenceNumber?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  receiptNumber?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  paymentDate?: string;
 
   @ApiPropertyOptional()
   @IsString()

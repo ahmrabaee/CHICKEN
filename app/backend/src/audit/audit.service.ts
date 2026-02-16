@@ -4,7 +4,7 @@ import { createPaginatedResult, PaginationQueryDto } from '../common';
 
 @Injectable()
 export class AuditService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async getLogs(
     pagination: PaginationQueryDto,
@@ -39,7 +39,13 @@ export class AuditService {
       this.prisma.auditLog.count({ where }),
     ]);
 
-    return createPaginatedResult(logs, page, pageSize, totalItems);
+    const mappedLogs = logs.map((l) => ({
+      ...l,
+      createdAt: l.timestamp,
+      userName: l.user?.fullName || l.user?.username || l.username,
+    }));
+
+    return createPaginatedResult(mappedLogs, page, pageSize, totalItems);
   }
 
   async log(

@@ -68,6 +68,7 @@ export interface CreatePurchaseDto {
     purchaseDate?: string;
     dueDate?: string;
     taxAmount?: number;
+    amountPaid?: number;
     notes?: string;
     lines: CreatePurchaseLineDto[];
 }

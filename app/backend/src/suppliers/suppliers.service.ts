@@ -1,10 +1,18 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { createPaginatedResult, PaginationQueryDto } from '../common';
+import { PaymentLedgerService } from '../accounting/payment-ledger/payment-ledger.service';
+import { PdfService } from '../pdf/pdf.service';
+import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
+import { buildStatementPdfOptions } from '../pdf/templates/statement.template';
 
 @Injectable()
 export class SuppliersService {
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    private prisma: PrismaService,
+    private paymentLedgerService: PaymentLedgerService,
+    private pdfService: PdfService,
+  ) { }
 
   async findAll(pagination: PaginationQueryDto) {
     const { page = 1, pageSize = 20 } = pagination;
@@ -92,5 +100,41 @@ export class SuppliersService {
     }
 
     return this.prisma.supplier.delete({ where: { id } });
+  }
+
+  async getStatementPdf(id: number, query: PdfQueryDto) {
+    const supplier = await this.findById(id);
+
+    const start = query.startDate ? new Date(query.startDate) : new Date(new Date().setDate(1));
+    const end = query.endDate ? new Date(query.endDate) : new Date();
+
+    const statementData = await this.paymentLedgerService.getStatement(
+      'supplier',
+      id,
+      start,
+      end,
+    );
+
+    const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+
+    const pdfData = {
+      partyName: query.language === 'ar' ? (supplier.name || supplier.nameEn || '') : (supplier.nameEn || supplier.name || ''),
+      partyAddress: supplier.address || undefined,
+      partyPhone: supplier.phone || undefined,
+      partyTaxNumber: supplier.taxNumber || undefined,
+      startDate: start.toISOString().split('T')[0],
+      endDate: end.toISOString().split('T')[0],
+      openingBalance: statementData.openingBalance,
+      totalDebits: statementData.totalDebits,
+      totalCredits: statementData.totalCredits,
+      closingBalance: statementData.closingBalance,
+      transactions: statementData.transactions.map((t: any) => ({
+        ...t,
+        date: t.date.toISOString().split('T')[0],
+      })),
+    };
+
+    const options = buildStatementPdfOptions(meta as any, pdfData);
+    return this.pdfService.generate(options);
   }
 }

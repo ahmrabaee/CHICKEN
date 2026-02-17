@@ -3,6 +3,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AccountingService } from '../accounting/accounting.service';
 import { StockLedgerService } from './stock-ledger/stock-ledger.service';
 import { StockAccountMapperService } from './stock-ledger/stock-account-mapper.service';
+import { PdfService } from '../pdf/pdf.service';
+import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
+import { buildReportPdfOptions } from '../pdf/templates/report.template';
 import {
   InventoryResponseDto,
   InventoryLotResponseDto,
@@ -19,7 +22,8 @@ export class InventoryService {
     private accountingService: AccountingService,
     private stockLedgerService: StockLedgerService,
     private stockAccountMapperService: StockAccountMapperService,
-  ) {}
+    private pdfService: PdfService,
+  ) { }
 
   /**
    * Get current stock summary for all items
@@ -507,5 +511,54 @@ export class InventoryService {
       currentQuantityGrams: currentQty,
       availableQuantityGrams: currentQty - (inv.reservedQuantityGrams || 0),
     };
+  }
+
+  async getInventoryReportPdf(query: PdfQueryDto) {
+    const inventories = await this.prisma.inventory.findMany({
+      where: {
+        item: { isActive: true },
+        currentQuantityGrams: { gt: 0 } // Only items in stock
+      },
+      include: {
+        item: { include: { category: true } },
+        branch: true
+      },
+      orderBy: { item: { name: 'asc' } },
+    });
+
+    const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+
+    const rows = inventories.map(inv => ({
+      item: inv.item.name,
+      category: inv.item.category?.name || 'Uncategorized',
+      quantity: inv.currentQuantityGrams / 1000,
+      avgCost: inv.averageCost / 10, // Minor units to major? averageCost is minor per kg?
+      // averageCost is minor units per kg.
+      // totalValue is minor units.
+      value: inv.totalValue,
+      branch: inv.branch?.name || 'Main',
+    }));
+
+    const totalValue = rows.reduce((sum, r) => sum + r.value, 0);
+
+    const options = buildReportPdfOptions(meta as any, {
+      title: 'Inventory Report',
+      titleAr: 'تقرير المخزون',
+      subtitle: `As of ${new Date().toISOString().split('T')[0]}`,
+      columns: [
+        { header: 'Item', headerAr: 'الصنف', field: 'item', width: '*' },
+        { header: 'Category', headerAr: 'التصنيف', field: 'category', width: 'auto' },
+        { header: 'Qty (kg)', headerAr: 'الكمية (كجم)', field: 'quantity', width: 'auto', format: 'weight' },
+        // { header: 'Avg Cost', headerAr: 'متوسط التكلفة', field: 'avgCost', width: 'auto', format: 'currency' },
+        { header: 'Value', headerAr: 'القيمة', field: 'value', width: 'auto', format: 'currency' },
+        { header: 'Branch', headerAr: 'الفرع', field: 'branch', width: 'auto' },
+      ],
+      rows,
+      summaryItems: [
+        { label: 'Total Inventory Value', labelAr: 'إجمالي قيمة المخزون', value: totalValue, format: 'currency', bold: true }
+      ]
+    });
+
+    return this.pdfService.generate(options);
   }
 }

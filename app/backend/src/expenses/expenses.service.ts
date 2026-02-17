@@ -2,13 +2,17 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccountingService } from '../accounting/accounting.service';
 import { createPaginatedResult, PaginationQueryDto } from '../common';
+import { PdfService } from '../pdf/pdf.service';
+import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
+import { buildReportPdfOptions } from '../pdf/templates/report.template';
 
 @Injectable()
 export class ExpensesService {
   constructor(
     private prisma: PrismaService,
     private accountingService: AccountingService,
-  ) {}
+    private pdfService: PdfService,
+  ) { }
 
   async findAll(pagination: PaginationQueryDto, expenseType?: string) {
     const { page = 1, pageSize = 20 } = pagination;
@@ -148,5 +152,60 @@ export class ExpensesService {
   private async generateExpenseNumber(): Promise<string> {
     const count = await this.prisma.expense.count();
     return `EXP-${(count + 1).toString().padStart(6, '0')}`;
+  }
+
+  async getExpenseReportPdf(query: PdfQueryDto) {
+    const { startDate, endDate, language = 'en' } = query;
+    const dateFilter: any = {};
+    if (startDate) dateFilter.gte = new Date(startDate);
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      dateFilter.lte = end;
+    }
+
+    const where: any = {};
+    if (startDate || endDate) {
+      where.expenseDate = dateFilter;
+    }
+
+    const expenses = await this.prisma.expense.findMany({
+      where,
+      include: { category: true, supplier: true },
+      orderBy: { expenseDate: 'asc' },
+    });
+
+    const meta = await this.pdfService.getStoreMeta(this.prisma, language);
+
+    const rows = expenses.map(e => ({
+      date: e.expenseDate.toISOString().split('T')[0],
+      number: e.expenseNumber,
+      category: e.category?.name || 'Uncategorized',
+      supplier: e.supplier?.name || '-',
+      amount: e.amount,
+      type: e.expenseType,
+    }));
+
+    const totalExpenses = rows.reduce((sum, r) => sum + r.amount, 0);
+
+    const options = buildReportPdfOptions(meta as any, {
+      title: 'Expenses Report',
+      titleAr: 'تقرير المصروفات',
+      subtitle: `${startDate || 'Start'} - ${endDate || 'End'}`,
+      columns: [
+        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto' },
+        { header: 'Exp No', headerAr: 'رقم المصروف', field: 'number', width: 'auto' },
+        { header: 'Category', headerAr: 'التصنيف', field: 'category', width: '*' },
+        { header: 'Supplier', headerAr: 'المورد', field: 'supplier', width: 'auto' },
+        { header: 'Type', headerAr: 'النوع', field: 'type', width: 'auto' },
+        { header: 'Amount', headerAr: 'المبلغ', field: 'amount', width: 'auto', format: 'currency' },
+      ],
+      rows,
+      summaryItems: [
+        { label: 'Total Expenses', labelAr: 'إجمالي المصروفات', value: totalExpenses, format: 'currency', bold: true }
+      ]
+    });
+
+    return this.pdfService.generate(options);
   }
 }

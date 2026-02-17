@@ -8,6 +8,8 @@
  * - System Settings
  * - Expense Categories
  * - Default Admin User
+ * - Customers & Suppliers
+ * - Transactions (Sales, Purchases, Expenses, Payments) to test reports
  * 
  * Run with: npm run db:seed
  * 
@@ -159,7 +161,7 @@ async function seedInitialStock(): Promise<void> {
     const unitPrice = item.defaultPurchasePrice ?? item.defaultSalePrice;
     const totalValue = Math.round((stockGrams / 1000) * unitPrice);
 
-    if (existingInv && existingInv.currentQuantityGrams > 0) continue;
+    if (existingInv && existingInv.length > 0 && existingInv[0].currentQuantityGrams > 0) continue;
 
     const invData = {
       branchId: branch.id,
@@ -169,28 +171,31 @@ async function seedInitialStock(): Promise<void> {
       averageCost: unitPrice,
     };
 
-    await prisma.inventory.upsert({
-      where: { itemId: item.id },
-      update: invData,
-      create: {
-        itemId: item.id,
-        ...invData,
-      },
-    });
+    const existing = await prisma.inventory.findFirst({ where: { itemId: item.id, branchId: branch.id } });
+
+    if (!existing) {
+      await prisma.inventory.create({
+        data: {
+          itemId: item.id,
+          ...invData,
+        }
+      });
+    }
 
     const lotNumber = `LOT-SEED-${item.code}`;
-    await prisma.inventoryLot.upsert({
-      where: { lotNumber },
-      update: {},
-      create: {
-        itemId: item.id,
-        branchId: branch.id,
-        lotNumber,
-        totalQuantityGrams: stockGrams,
-        remainingQuantityGrams: stockGrams,
-        unitPurchasePrice: unitPrice,
-      },
-    });
+    const existingLot = await prisma.inventoryLot.findUnique({ where: { lotNumber } });
+    if (!existingLot) {
+      await prisma.inventoryLot.create({
+        data: {
+          itemId: item.id,
+          branchId: branch.id,
+          lotNumber,
+          totalQuantityGrams: stockGrams,
+          remainingQuantityGrams: stockGrams,
+          unitPurchasePrice: unitPrice,
+        }
+      });
+    }
   }
 
   console.log('✓ Initial stock seeded');
@@ -618,8 +623,285 @@ async function seedDefaultAdmin(): Promise<void> {
 }
 
 // =============================================================================
+// NEW SEED FUNCTIONS FOR REPORT TESTING
+// =============================================================================
+
+async function seedCustomers(): Promise<void> {
+  console.log('Seeding customers...');
+  const customers = [
+    { name: 'مطعم أ', nameEn: 'Restaurant A', phone: '0501234567', email: 'resta@test.com', address: 'Riyadh' },
+    { name: 'فندق ب', nameEn: 'Hotel B', phone: '0507654321', email: 'hotelb@test.com', address: 'Jeddah' },
+    { name: 'عميل نقدي', nameEn: 'Cash Customer', phone: '0000000000' },
+  ];
+
+  // Specific dates for report testing (Feb 2026)
+  const SEED_DATES = [
+    new Date('2026-02-16T10:00:00'),
+    new Date('2026-02-18T14:30:00'),
+    new Date('2026-02-19T09:15:00'),
+  ];
+
+  for (const c of customers) {
+    const existing = await prisma.customer.findFirst({
+      where: { phone: c.phone }
+    });
+
+    if (!existing) {
+      await prisma.customer.create({
+        data: {
+          name: c.name,
+          nameEn: c.nameEn,
+          phone: c.phone,
+          email: c.email,
+          address: c.address,
+          customerNumber: `C${Math.floor(Math.random() * 100000) + Date.now().toString().slice(-4)}`,
+        }
+      });
+    }
+  }
+  console.log('✓ Customers seeded');
+}
+
+async function seedSuppliers(): Promise<void> {
+  console.log('Seeding suppliers...');
+  const suppliers = [
+    { name: 'مورد الدواجن المتحدة', nameEn: 'United Poultry Supplier', phone: '0551112222' },
+    { name: 'شركة الأعلاف الوطنية', nameEn: 'National Feed Co', phone: '0553334444' },
+  ];
+
+  for (const s of suppliers) {
+    const existing = await prisma.supplier.findFirst({
+      where: { phone: s.phone }
+    });
+
+    if (!existing) {
+      await prisma.supplier.create({
+        data: {
+          name: s.name,
+          nameEn: s.nameEn,
+          phone: s.phone,
+          supplierNumber: `S${Math.floor(Math.random() * 100000) + Date.now().toString().slice(-4)}`,
+          contactPerson: 'Manager',
+        }
+      });
+    }
+  }
+  console.log('✓ Suppliers seeded');
+}
+
+async function seedPurchases(): Promise<void> {
+  console.log('Seeding purchases...');
+  const suppliers = await prisma.supplier.findMany();
+  const items = await prisma.item.findMany();
+  if (suppliers.length === 0 || items.length === 0) return;
+
+  // Create 3 purchases
+  for (let i = 0; i < 3; i++) {
+    const supplier = suppliers[i % suppliers.length];
+    const item = items[0]; // Just picking first item for simplicity
+
+    // Creating a completed purchase
+    await prisma.purchase.create({
+      data: {
+        purchaseNumber: `PUR-SEED-${Date.now()}-${i}`,
+        purchaseDate: [
+          new Date('2026-02-16T10:00:00'),
+          new Date('2026-02-18T14:30:00'),
+          new Date('2026-02-19T09:15:00')
+        ][i % 3], // Cycle through dates
+        supplierId: supplier.id,
+        supplierName: supplier.name,
+        paymentStatus: 'paid',
+        docstatus: 1, // Submitted
+        totalAmount: 50000, // 500.00 SAR
+        grandTotal: 50000,
+        purchaseLines: {
+          create: {
+            lineNumber: 1,
+            itemId: item.id,
+            itemCode: item.code,
+            itemName: item.name,
+            weightGrams: 20000, // 20kg
+            pricePerKg: 2500, // 25.00 SAR
+            lineTotalAmount: 50000,
+          }
+        }
+      }
+    });
+  }
+  console.log('✓ Purchases seeded');
+}
+
+async function seedSales(): Promise<void> {
+  console.log('Seeding sales...');
+  const customers = await prisma.customer.findMany();
+  const items = await prisma.item.findMany();
+  const branch = await prisma.branch.findFirst({ where: { isMainBranch: true } });
+  const admin = await prisma.user.findUnique({ where: { username: 'admin' } });
+
+  if (customers.length === 0 || items.length === 0 || !branch || !admin) return;
+
+  // Create 5 sales
+  for (let i = 0; i < 5; i++) {
+    const customer = customers[i % customers.length];
+    const item = items[0];
+
+    await prisma.sale.create({
+      data: {
+        saleNumber: `SAL-SEED-${Date.now()}-${i}`,
+        saleDate: [
+          new Date('2026-02-16T10:00:00'),
+          new Date('2026-02-18T14:30:00'),
+          new Date('2026-02-19T09:15:00')
+        ][i % 3], // Cycle through dates
+        customerId: customer.id,
+        customerName: customer.name,
+        paymentStatus: 'paid',
+        docstatus: 1, // Submitted
+        totalAmount: 10000, // 100.00 SAR
+        grandTotal: 10000,
+        cashierId: admin.id,
+        branchId: branch.id,
+        saleLines: {
+          create: {
+            lineNumber: 1,
+            itemId: item.id,
+            itemCode: item.code,
+            itemName: item.name,
+            weightGrams: 2000, // 2kg
+            pricePerKg: 5000, // 50.00 SAR
+            netPricePerKg: 5000, // Added required field
+            lineTotalAmount: 10000,
+          }
+        }
+      }
+    });
+  }
+  console.log('✓ Sales seeded');
+}
+
+async function seedExpenses(): Promise<void> {
+  console.log('Seeding expenses...');
+  const category = await prisma.expenseCategory.findFirst({ where: { code: 'ELECTRICITY' } });
+  const admin = await prisma.user.findUnique({ where: { username: 'admin' } });
+  if (!category || !admin) return;
+
+  // Create 3 expenses
+  for (let i = 0; i < 3; i++) {
+
+    await prisma.expense.create({
+      data: {
+        expenseNumber: `EXP-SEED-${Date.now()}-${i}`,
+        expenseDate: [
+          new Date('2026-02-16T10:00:00'),
+          new Date('2026-02-18T14:30:00'),
+          new Date('2026-02-19T09:15:00')
+        ][i % 3],
+        expenseType: 'operational',
+        categoryId: category.id,
+        amount: 5000 * (i + 1),
+        description: `Expense ${i + 1} - Bill Payment`,
+        docstatus: 1,
+        createdById: admin.id,
+      }
+    });
+  }
+  console.log('✓ Expenses seeded');
+}
+
+async function seedPayments(): Promise<void> {
+  console.log('Seeding payments...');
+
+  const admin = await prisma.user.findUnique({ where: { username: 'admin' } });
+  if (!admin) return;
+
+  const dates = [
+    new Date('2026-02-16T11:00:00'),
+    new Date('2026-02-18T15:00:00'),
+    new Date('2026-02-19T10:00:00')
+  ];
+
+  // 1. Payment for a Sale (Receipt)
+  const sale = await prisma.sale.findFirst();
+  if (sale) {
+    await prisma.payment.create({
+      data: {
+        paymentNumber: `PAY-SAL-${Date.now()}`,
+        paymentDate: dates[0],
+        referenceType: 'sale',
+        referenceId: sale.id,
+        partyType: 'customer',
+        partyId: sale.customerId,
+        amount: sale.grandTotal || 0,
+        paymentMethod: 'cash',
+        docstatus: 1,
+        receivedById: admin.id,
+        notes: 'Payment for Sale',
+      }
+    });
+  }
+
+  // 2. Payment for a Purchase
+  const purchase = await prisma.purchase.findFirst();
+  if (purchase) {
+    await prisma.payment.create({
+      data: {
+        paymentNumber: `PAY-PUR-${Date.now()}`,
+        paymentDate: dates[1],
+        referenceType: 'purchase',
+        referenceId: purchase.id,
+        partyType: 'supplier',
+        partyId: purchase.supplierId,
+        amount: purchase.grandTotal || 0,
+        paymentMethod: 'bank_transfer',
+        docstatus: 1,
+        receivedById: admin.id,
+        notes: 'Payment for Purchase',
+      }
+    });
+  }
+
+  // 3. General Receipt (Advance)
+  await prisma.payment.create({
+    data: {
+      paymentNumber: `PAY-ADV-${Date.now()}`,
+      paymentDate: dates[2],
+      referenceType: null, // Advance
+      partyType: 'customer',
+      partyId: sale?.customerId,
+      amount: 1500,
+      paymentMethod: 'cash',
+      docstatus: 1,
+      receivedById: admin.id,
+      notes: 'Advance Payment',
+    }
+  });
+
+  console.log('✓ Payments seeded');
+}
+
+// =============================================================================
 // MAIN SEED RUNNER
 // =============================================================================
+
+async function seedTransactions(): Promise<void> {
+  // Wrapper to ensure order
+  await seedCustomers();
+  await seedSuppliers();
+
+  // Purchases depend on Suppliers
+  await seedPurchases();
+
+  // Sales depend on Customer (and Stock if validation enabled, but seed bypasses service logic)
+  await seedSales();
+
+  // Expenses depend on Categories (and optionally Suppliers)
+  // Expenses depend on Categories (and optionally Suppliers)
+  await seedExpenses();
+
+  // Create payments last
+  await seedPayments();
+}
 
 async function main(): Promise<void> {
   console.log('='.repeat(60));
@@ -637,6 +919,9 @@ async function main(): Promise<void> {
     await seedItems();
     await seedInitialStock();
     await seedDefaultAdmin();
+
+    // New Transactional Data
+    await seedTransactions();
 
     console.log('='.repeat(60));
     console.log('✓ Database seeding completed successfully!');

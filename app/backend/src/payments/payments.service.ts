@@ -9,6 +9,9 @@ import {
   PeriodLockGuard,
 } from '../common';
 import { ACCOUNT_CODES } from '../accounting/accounting.service';
+import { PdfService } from '../pdf/pdf.service';
+import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
+import { buildPaymentVoucherPdfOptions } from '../pdf/templates/payment-voucher.template';
 
 @Injectable()
 export class PaymentsService {
@@ -16,7 +19,8 @@ export class PaymentsService {
     private prisma: PrismaService,
     private accountingService: AccountingService,
     private paymentLedgerService: PaymentLedgerService,
-  ) {}
+    private pdfService: PdfService,
+  ) { }
 
   async findAll(pagination: PaginationQueryDto, referenceType?: string) {
     const { page = 1, pageSize = 20 } = pagination;
@@ -53,6 +57,58 @@ export class PaymentsService {
     }
 
     return payment;
+  }
+
+  async getPaymentPdf(id: number, query: PdfQueryDto) {
+    const payment = await this.prisma.payment.findUnique({
+      where: { id },
+      include: { receivedBy: true, branch: true },
+    });
+
+    if (!payment) {
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Payment not found',
+        messageAr: 'الدفعة غير موجودة',
+      });
+    }
+
+    let referenceNumber: string | undefined;
+    if (payment.referenceType === 'sale' && payment.referenceId) {
+      const sale = await this.prisma.sale.findUnique({
+        where: { id: payment.referenceId },
+        select: { saleNumber: true },
+      });
+      referenceNumber = sale?.saleNumber;
+    } else if (payment.referenceType === 'purchase' && payment.referenceId) {
+      const purchase = await this.prisma.purchase.findUnique({
+        where: { id: payment.referenceId },
+        select: { purchaseNumber: true },
+      });
+      referenceNumber = purchase?.purchaseNumber;
+    }
+
+    const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+
+    const pdfData = {
+      paymentNumber: payment.paymentNumber,
+      date: payment.paymentDate.toISOString(),
+      amount: payment.amount,
+      method: payment.paymentMethod,
+      partyName: payment.partyName || undefined,
+      partyType: payment.partyType || undefined,
+      referenceType: payment.referenceType || undefined,
+      referenceId: payment.referenceId || undefined,
+      referenceNumber,
+      receivedBy: payment.receivedBy?.fullName || 'System',
+      branchName: payment.branch?.name || undefined,
+      notes: payment.notes || undefined,
+      status: payment.isVoided ? 'Voided' : 'Valid',
+      isVoided: payment.isVoided,
+    };
+
+    const options = buildPaymentVoucherPdfOptions(meta as any, pdfData);
+    return this.pdfService.generate(options);
   }
 
   async recordSalePayment(dto: any, userId: number) {
@@ -107,12 +163,12 @@ export class PaymentsService {
 
       // Update sale payment status
       const newPaidAmount = paidAmount + dto.amount;
-      const paymentStatus = newPaidAmount >= sale.totalAmount ? 'paid' 
+      const paymentStatus = newPaidAmount >= sale.totalAmount ? 'paid'
         : newPaidAmount > 0 ? 'partial' : 'unpaid';
 
       await tx.sale.update({
         where: { id: dto.saleId },
-        data: { 
+        data: {
           amountPaid: newPaidAmount,
           paymentStatus,
         },
@@ -121,7 +177,7 @@ export class PaymentsService {
       // Update debt if exists
       await tx.debt.updateMany({
         where: { sourceType: 'sale', sourceId: dto.saleId },
-        data: { 
+        data: {
           amountPaid: { increment: dto.amount },
           status: paymentStatus === 'paid' ? 'paid' : 'partial',
         },
@@ -216,7 +272,7 @@ export class PaymentsService {
       // Update debt if exists
       await tx.debt.updateMany({
         where: { sourceType: 'purchase', sourceId: dto.purchaseId },
-        data: { 
+        data: {
           amountPaid: { increment: dto.amount },
           status: paymentStatus === 'paid' ? 'paid' : 'partial',
         },

@@ -1,9 +1,11 @@
 import {
-  Controller, Get, Post, Param, Query, Body, ParseIntPipe, UseGuards,
+  Controller, Get, Post, Param, Query, Body, ParseIntPipe, UseGuards, Res,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { InventoryService } from './inventory.service';
 import { CreateAdjustmentDto, InventoryQueryDto } from './dto';
+import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
+import { Response } from 'express';
 import { Roles, RolesGuard, CurrentUser, CurrentUserData, PaginationQueryDto } from '../common';
 
 @ApiTags('inventory')
@@ -13,9 +15,21 @@ export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) { }
 
   @Get()
-  @ApiOperation({ summary: 'Get current stock summary for all items' })
-  async findAll(@Query() query: InventoryQueryDto) {
+  @ApiOperation({ summary: 'List inventory items' })
+  findAll(@Query() query: InventoryQueryDto) {
     return this.inventoryService.findAll(query);
+  }
+
+  @Get('report/pdf')
+  @ApiOperation({ summary: 'Download inventory report PDF' })
+  async getInventoryReportPdf(@Query() query: PdfQueryDto, @Res() res: Response) {
+    const buffer = await this.inventoryService.getInventoryReportPdf(query);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'attachment; filename="inventory-report.pdf"',
+      'Content-Length': buffer.length.toString(),
+    });
+    res.end(buffer);
   }
 
   @Get('low-stock')

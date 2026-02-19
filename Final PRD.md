@@ -1,5 +1,5 @@
 # Butcher Shop Accounting & POS System – PRD
-
+----
 ### TL;DR
 
 A comprehensive accounting and point-of-sale (POS) system designed specifically for a small butcher shop (1–2 employees), prioritizing easy operation, detailed inventory tracking by batch and import date, customer debt management, returns, alerts, and fine-grained permissions between the shop owner (Admin) and cashier. The system supports all payment types, supplier management, inventory stock transfer between product types, and remote access from anywhere.

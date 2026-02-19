@@ -1,9 +1,11 @@
 import {
-  Controller, Get, Post, Param, Query, Body, ParseIntPipe, HttpCode, HttpStatus, UseGuards,
+  Controller, Get, Post, Param, Query, Body, ParseIntPipe, HttpCode, HttpStatus, UseGuards, Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { SalesService } from './sales.service';
 import { CreateSaleDto, VoidSaleDto, AddPaymentDto, SaleQueryDto } from './dto';
+import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
 import { Roles, RolesGuard, CurrentUser, CurrentUserData, PaginationQueryDto } from '../common';
 
 @ApiTags('sales')
@@ -23,6 +25,18 @@ export class SalesController {
     return this.salesService.findAll(query, query, user.id, isAdmin);
   }
 
+  @Get('report/pdf')
+  @ApiOperation({ summary: 'Download sales report PDF' })
+  async getSalesReportPdf(@Query() query: PdfQueryDto, @Res() res: Response) {
+    const buffer = await this.salesService.getSalesReportPdf(query);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'attachment; filename="sales-report.pdf"',
+      'Content-Length': buffer.length.toString(),
+    });
+    res.end(buffer);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get sale details with cost allocation' })
   @ApiParam({ name: 'id', description: 'Sale ID' })
@@ -37,15 +51,31 @@ export class SalesController {
     return this.salesService.getReceipt(id);
   }
 
+  @Get(':id/pdf')
+  @ApiOperation({ summary: 'Download sales invoice PDF' })
+  @ApiParam({ name: 'id', description: 'Sale ID' })
+  async getInvoicePdf(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() query: PdfQueryDto,
+    @Res() res: Response,
+  ) {
+    const buffer = await this.salesService.getInvoicePdf(id, query);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="invoice-${id}.pdf"`,
+      'Content-Length': buffer.length.toString(),
+    });
+    res.end(buffer);
+  }
+
   @Post()
   @ApiOperation({ summary: 'Create new sale (POS transaction)' })
   @ApiResponse({ status: 201, description: 'Sale created successfully' })
-  async create(
-    @Body() dto: CreateSaleDto,
-    @CurrentUser() user: CurrentUserData,
-  ) {
-    return this.salesService.create(dto, user.id, user.roles);
+  async create(@Body() dto: CreateSaleDto, @CurrentUser() user: any) {
+    return this.salesService.create(dto, user.id, user.branchId);
   }
+
+
 
   @Post(':id/void')
   @UseGuards(RolesGuard)

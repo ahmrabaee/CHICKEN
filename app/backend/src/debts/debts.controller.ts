@@ -4,7 +4,10 @@ import {
   Param,
   Query,
   ParseIntPipe,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
+import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { DebtsService } from './debts.service';
 import { DebtQueryDto } from './dto/debt.dto';
@@ -24,6 +27,18 @@ export class DebtsController {
     return this.debtsService.findReceivables(query);
   }
 
+  @Get('receivables/pdf')
+  @ApiOperation({ summary: 'Download receivables report PDF' })
+  async getReceivablesPdf(@Query() query: PdfQueryDto, @Res() res: Response) {
+    const buffer = await this.debtsService.getReceivablesPdf(query);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'attachment; filename="receivables-report.pdf"',
+      'Content-Length': buffer.length.toString(),
+    });
+    res.end(buffer);
+  }
+
   @Get('payables')
   @Roles('Admin', 'Manager')
   @ApiOperation({ summary: 'List supplier payables (money we owe)' })
@@ -31,6 +46,19 @@ export class DebtsController {
     @Query() query: DebtQueryDto,
   ) {
     return this.debtsService.findPayables(query);
+  }
+
+  @Get('payables/pdf')
+  @Roles('Admin', 'Manager')
+  @ApiOperation({ summary: 'Download payables report PDF' })
+  async getPayablesPdf(@Query() query: PdfQueryDto, @Res() res: Response) {
+    const buffer = await this.debtsService.getPayablesPdf(query);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'attachment; filename="payables-report.pdf"',
+      'Content-Length': buffer.length.toString(),
+    });
+    res.end(buffer);
   }
 
   @Get('summary')

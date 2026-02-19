@@ -30,6 +30,7 @@ import { CreditNoteModule } from './accounting/credit-note/credit-note.module';
 import { ReportsModule } from './reports/reports.module';
 import { SettingsModule } from './settings/settings.module';
 import { AuditModule } from './audit/audit.module';
+import { PdfModule } from './pdf/pdf.module';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { AuditModule } from './audit/audit.module';
     ReportsModule,
     SettingsModule,
     AuditModule,
+    PdfModule,
   ],
   providers: [
     // Global exception filter
@@ -81,4 +83,4 @@ import { AuditModule } from './audit/audit.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

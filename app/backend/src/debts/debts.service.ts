@@ -1,10 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { createPaginatedResult, PaginationQueryDto } from '../common';
+import { PdfService } from '../pdf/pdf.service';
+import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
+import { buildReportPdfOptions } from '../pdf/templates/report.template';
 
 @Injectable()
 export class DebtsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private pdfService: PdfService,
+  ) { }
 
   async findReceivables(pagination: PaginationQueryDto) {
     const { page = 1, pageSize = 20 } = pagination;
@@ -89,7 +95,7 @@ export class DebtsService {
 
   async getCustomerBalance(customerId: number) {
     const debts = await this.prisma.debt.findMany({
-      where: { 
+      where: {
         direction: 'receivable',
         partyType: 'customer',
         partyId: customerId,
@@ -108,7 +114,7 @@ export class DebtsService {
 
   async getSupplierBalance(supplierId: number) {
     const debts = await this.prisma.debt.findMany({
-      where: { 
+      where: {
         direction: 'payable',
         partyType: 'supplier',
         partyId: supplierId,
@@ -220,5 +226,83 @@ export class DebtsService {
 
       return { success: true };
     });
+  }
+
+  async getReceivablesPdf(query: PdfQueryDto) {
+    const debts = await this.prisma.debt.findMany({
+      where: { direction: 'receivable', status: { not: 'paid' } },
+      orderBy: { totalAmount: 'desc' },
+    });
+
+    const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+
+    const rows = debts.map(d => ({
+      party: d.partyName || 'Unknown',
+      date: d.createdAt.toISOString().split('T')[0],
+      total: d.totalAmount,
+      paid: d.amountPaid,
+      balance: d.totalAmount - d.amountPaid,
+      status: d.status
+    }));
+
+    const totalReceivable = rows.reduce((sum, r) => sum + r.balance, 0);
+
+    const options = buildReportPdfOptions(meta as any, {
+      title: 'Accounts Receivable Report',
+      titleAr: 'تقرير الذمم المدينة',
+      subtitle: `As of ${new Date().toISOString().split('T')[0]}`,
+      columns: [
+        { header: 'Party', headerAr: 'العميل', field: 'party', width: '*' },
+        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto' },
+        { header: 'Total', headerAr: 'الإجمالي', field: 'total', width: 'auto', format: 'currency' },
+        { header: 'Paid', headerAr: 'المدفوع', field: 'paid', width: 'auto', format: 'currency' },
+        { header: 'Balance', headerAr: 'الرصيد', field: 'balance', width: 'auto', format: 'currency', bold: true },
+      ],
+      rows,
+      summaryItems: [
+        { label: 'Total Receivables', labelAr: 'إجمالي الذمم', value: totalReceivable, format: 'currency', bold: true }
+      ]
+    });
+
+    return this.pdfService.generate(options);
+  }
+
+  async getPayablesPdf(query: PdfQueryDto) {
+    const debts = await this.prisma.debt.findMany({
+      where: { direction: 'payable', status: { not: 'paid' } },
+      orderBy: { totalAmount: 'desc' },
+    });
+
+    const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+
+    const rows = debts.map(d => ({
+      party: d.partyName || 'Unknown',
+      date: d.createdAt.toISOString().split('T')[0],
+      total: d.totalAmount,
+      paid: d.amountPaid,
+      balance: d.totalAmount - d.amountPaid,
+      status: d.status
+    }));
+
+    const totalPayable = rows.reduce((sum, r) => sum + r.balance, 0);
+
+    const options = buildReportPdfOptions(meta as any, {
+      title: 'Accounts Payable Report',
+      titleAr: 'تقرير الذمم الدائنة',
+      subtitle: `As of ${new Date().toISOString().split('T')[0]}`,
+      columns: [
+        { header: 'Party', headerAr: 'المورد', field: 'party', width: '*' },
+        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto' },
+        { header: 'Total', headerAr: 'الإجمالي', field: 'total', width: 'auto', format: 'currency' },
+        { header: 'Paid', headerAr: 'المدفوع', field: 'paid', width: 'auto', format: 'currency' },
+        { header: 'Balance', headerAr: 'الرصيد', field: 'balance', width: 'auto', format: 'currency', bold: true },
+      ],
+      rows,
+      summaryItems: [
+        { label: 'Total Payables', labelAr: 'إجمالي الدائن', value: totalPayable, format: 'currency', bold: true }
+      ]
+    });
+
+    return this.pdfService.generate(options);
   }
 }

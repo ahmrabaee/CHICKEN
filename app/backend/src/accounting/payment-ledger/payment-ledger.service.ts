@@ -9,7 +9,7 @@ import type { CreatePLEInput } from './payment-ledger.types';
  */
 @Injectable()
 export class PaymentLedgerService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   private async getAccountIdByCode(code: string, tx?: any): Promise<number> {
     const db = tx ?? this.prisma;
@@ -179,5 +179,76 @@ export class PaymentLedgerService {
       where: { voucherType, voucherId },
       data: { delinked: true },
     });
+  }
+
+  /**
+   * Get Statement of Account for a party
+   */
+  async getStatement(
+    partyType: string,
+    partyId: number,
+    startDate: Date,
+    endDate: Date,
+    tx?: any,
+  ) {
+    const db = tx ?? this.prisma;
+
+    // 1. Calculate Opening Balance
+    const openingAgg = await db.paymentLedgerEntry.aggregate({
+      _sum: { amount: true },
+      where: {
+        partyType,
+        partyId,
+        postingDate: { lt: startDate },
+        delinked: false,
+      },
+    });
+    const openingBalance = openingAgg._sum.amount || 0;
+
+    // 2. Fetch Transactions
+    const entries = await db.paymentLedgerEntry.findMany({
+      where: {
+        partyType,
+        partyId,
+        postingDate: { gte: startDate, lte: endDate },
+        delinked: false,
+      },
+      orderBy: { postingDate: 'asc' },
+    });
+
+    // 3. Process Transactions
+    let runningBalance = openingBalance;
+    let totalDebits = 0;
+    let totalCredits = 0;
+
+    const transactions = entries.map((entry: any) => {
+      // Debit = Positive amount (Asset Increase / Liability Decrease)
+      // Credit = Negative amount (Asset Decrease / Liability Increase)
+      const debit = entry.amount > 0 ? entry.amount : 0;
+      const credit = entry.amount < 0 ? Math.abs(entry.amount) : 0;
+
+      runningBalance += entry.amount;
+      totalDebits += debit;
+      totalCredits += credit;
+
+      return {
+        id: entry.id,
+        date: entry.postingDate,
+        type: entry.voucherType, // e.g., 'sale', 'payment'
+        reference: `${entry.voucherType} #${entry.voucherId}`,
+        debit,
+        credit,
+        balance: runningBalance,
+        notes: entry.remarks,
+      };
+    });
+
+    return {
+      openingBalance,
+      transactions, // Map to DTO in controller/service
+      closingBalance: runningBalance,
+      totalDebits,
+      totalCredits,
+    };
   }
 }

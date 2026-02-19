@@ -9,6 +9,7 @@ import {
   Query,
   ParseIntPipe,
   UseGuards,
+  Res,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AccountingService } from './accounting.service';
@@ -17,6 +18,8 @@ import { CreateJournalEntryDto } from './dto/accounting.dto';
 import { CreateAccountDto } from './chart-of-accounts/dto/create-account.dto';
 import { UpdateAccountDto } from './chart-of-accounts/dto/update-account.dto';
 import { PaginationQueryDto, Roles, CurrentUser, RolesGuard } from '../common';
+import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
+import { Response } from 'express';
 
 @ApiTags('accounting')
 @ApiBearerAuth('JWT-auth')
@@ -132,5 +135,68 @@ export class AccountingController {
     @Query('endDate') endDate?: string,
   ) {
     return this.accountingService.getAccountLedger(accountCode, startDate, endDate);
+  }
+
+  // PDF Reports
+  @Get('reports/balance-sheet/pdf')
+  @ApiOperation({ summary: 'Download Balance Sheet PDF' })
+  @ApiQuery({ name: 'asOfDate', required: false })
+  @ApiQuery({ name: 'language', required: false })
+  async getBalanceSheetPdf(@Query() query: PdfQueryDto, @Res() res: Response) {
+    const buffer = await this.accountingService.getBalanceSheetPdf(query);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'attachment; filename="balance-sheet.pdf"',
+      'Content-Length': buffer.length.toString(),
+    });
+    res.end(buffer);
+  }
+
+  @Get('reports/income-statement/pdf')
+  @ApiOperation({ summary: 'Download Income Statement PDF' })
+  @ApiQuery({ name: 'startDate', required: false })
+  @ApiQuery({ name: 'endDate', required: false })
+  @ApiQuery({ name: 'language', required: false })
+  async getIncomeStatementPdf(@Query() query: PdfQueryDto, @Res() res: Response) {
+    const buffer = await this.accountingService.getIncomeStatementPdf(query);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'attachment; filename="income-statement.pdf"',
+      'Content-Length': buffer.length.toString(),
+    });
+    res.end(buffer);
+  }
+
+  @Get('reports/trial-balance/pdf')
+  @ApiOperation({ summary: 'Download Trial Balance PDF' })
+  @ApiQuery({ name: 'asOfDate', required: false })
+  @ApiQuery({ name: 'language', required: false })
+  async getTrialBalancePdf(@Query() query: PdfQueryDto, @Res() res: Response) {
+    const buffer = await this.accountingService.getTrialBalancePdf(query);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'attachment; filename="trial-balance.pdf"',
+      'Content-Length': buffer.length.toString(),
+    });
+    res.end(buffer);
+  }
+
+  @Get('reports/ledger/:accountCode/pdf')
+  @ApiOperation({ summary: 'Download Account Ledger PDF' })
+  @ApiQuery({ name: 'startDate', required: false })
+  @ApiQuery({ name: 'endDate', required: false })
+  @ApiQuery({ name: 'language', required: false })
+  async getAccountLedgerPdf(
+    @Param('accountCode') accountCode: string,
+    @Query() query: PdfQueryDto,
+    @Res() res: Response,
+  ) {
+    const buffer = await this.accountingService.getAccountLedgerPdf(accountCode, query);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="ledger-${accountCode}.pdf"`,
+      'Content-Length': buffer.length.toString(),
+    });
+    res.end(buffer);
   }
 }

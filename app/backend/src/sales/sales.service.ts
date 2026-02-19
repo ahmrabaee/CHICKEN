@@ -16,6 +16,10 @@ import {
   PaginationQueryDto,
   PeriodLockGuard,
 } from '../common';
+import { PdfService } from '../pdf/pdf.service';
+import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
+import { buildInvoicePdfOptions } from '../pdf/templates/invoice.template';
+import { buildReportPdfOptions } from '../pdf/templates/report.template';
 
 @Injectable()
 export class SalesService {
@@ -27,7 +31,8 @@ export class SalesService {
     private stockLedgerService: StockLedgerService,
     private stockAccountMapperService: StockAccountMapperService,
     private taxCalculationService: TaxCalculationService,
-  ) {}
+    private pdfService: PdfService,
+  ) { }
 
   async findAll(query: SaleQueryDto, pagination: PaginationQueryDto, userId: number, isAdmin: boolean) {
     const { page = 1, pageSize = 20 } = pagination;
@@ -141,6 +146,109 @@ export class SalesService {
     };
   }
 
+  async getInvoicePdf(id: number, query: PdfQueryDto) {
+    const sale = await this.prisma.sale.findUnique({
+      where: { id },
+      include: {
+        customer: true,
+        saleLines: { include: { item: true } },
+        cashier: { select: { fullName: true } },
+        branch: { select: { name: true } },
+      },
+    });
+
+    if (!sale) {
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Sale not found',
+        messageAr: 'عملية البيع غير موجودة',
+      });
+    }
+
+    const payments = await this.prisma.payment.findMany({
+      where: { referenceType: 'sale', referenceId: id },
+    });
+
+    const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+
+    const pdfData = {
+      saleNumber: sale.saleNumber,
+      saleDate: sale.saleDate.toISOString(),
+      customerName: sale.customer?.name || sale.customerName || (query.language === 'ar' ? 'عميل نقدي' : 'Walk-in Customer'),
+      customerPhone: sale.customer?.phone || sale.customerPhone || undefined,
+      cashierName: sale.cashier?.fullName || 'System',
+      branchName: sale.branch?.name || '',
+      items: sale.saleLines.map((line) => ({
+        name: line.item?.name || line.itemName,
+        quantity: line.weightGrams / 1000,
+        unitPrice: line.pricePerKg,
+        total: line.lineTotalAmount,
+      })),
+      subtotal: sale.grossTotalAmount,
+      discount: sale.discountAmount,
+      taxAmount: sale.taxAmount,
+      totalAmount: sale.totalAmount,
+      paidAmount: sale.amountPaid,
+      balanceDue: sale.totalAmount - sale.amountPaid,
+      payments: payments.map((p) => ({
+        method: p.paymentMethod,
+        amount: p.amount,
+        date: p.paymentDate.toISOString(),
+      })),
+      isVoided: sale.isVoided,
+      voidReason: sale.voidReason ?? undefined,
+    };
+
+    const options = buildInvoicePdfOptions(meta as any, pdfData);
+
+    return this.pdfService.generate(options);
+  }
+
+  async getSalesReportPdf(query: PdfQueryDto) {
+    const start = query.startDate ? new Date(query.startDate) : new Date(new Date().setDate(1));
+    const end = query.endDate ? new Date(query.endDate) : new Date();
+
+    const sales = await this.prisma.sale.findMany({
+      where: {
+        saleDate: { gte: start, lte: end },
+        docstatus: 1, // Submitted
+      },
+      include: { customer: true },
+      orderBy: { saleDate: 'asc' },
+    });
+
+    const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+
+    const rows = sales.map(s => ({
+      date: s.saleDate.toISOString().split('T')[0],
+      number: s.saleNumber,
+      customer: s.customer?.name || s.customerName || 'Cash Customer',
+      total: s.grandTotal ?? s.totalAmount, // Fallback
+      status: s.paymentStatus,
+    }));
+
+    const totalSales = rows.reduce((sum, r) => sum + (r.total || 0), 0);
+
+    const options = buildReportPdfOptions(meta as any, {
+      title: 'Sales Report',
+      titleAr: 'تقرير المبيعات',
+      subtitle: `${start.toISOString().split('T')[0]} - ${end.toISOString().split('T')[0]}`,
+      columns: [
+        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto' },
+        { header: 'Sale No', headerAr: 'رقم البيع', field: 'number', width: 'auto' },
+        { header: 'Customer', headerAr: 'العميل', field: 'customer', width: '*' },
+        { header: 'Total', headerAr: 'الإجمالي', field: 'total', width: 'auto', format: 'currency' },
+        { header: 'Status', headerAr: 'الحالة', field: 'status', width: 'auto' },
+      ],
+      rows,
+      summaryItems: [
+        { label: 'Total Sales', labelAr: 'إجمالي المبيعات', value: totalSales, format: 'currency', bold: true }
+      ]
+    });
+
+    return this.pdfService.generate(options);
+  }
+
   async create(dto: CreateSaleDto, cashierId: number, userRoles: string[]) {
     const isAdmin = userRoles.includes('admin');
     const maxDiscountPct = isAdmin ? 10000 : 500; // Admin unlimited, cashier 5%
@@ -239,7 +347,7 @@ export class SalesService {
         : 0;
       const totalDiscount = saleDiscount + discountFromPct;
       const subtotal = grossTotal - totalDiscount;
-      
+
       let netTotal = subtotal;
       let totalTaxAmount = 0;
       let grandTotal = subtotal;

@@ -8,10 +8,13 @@ import {
   Body,
   Query,
   ParseIntPipe,
+  Header,
+  StreamableFile,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ExpensesService } from './expenses.service';
 import { CreateExpenseDto, UpdateExpenseDto, ExpenseQueryDto } from './dto/expense.dto';
+import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
 import { Roles, CurrentUser } from '../common';
 
 @ApiTags('expenses')
@@ -32,6 +35,15 @@ export class ExpensesController {
   @ApiOperation({ summary: 'Get expense categories' })
   getCategories() {
     return this.expensesService.getCategories();
+  }
+
+  @Get('report/pdf')
+  @ApiOperation({ summary: 'Get expenses report as PDF' })
+  @Header('Content-Type', 'application/pdf')
+  @Header('Content-Disposition', 'attachment; filename=expenses-report.pdf')
+  async getReportPdf(@Query() query: PdfQueryDto): Promise<StreamableFile> {
+    const buffer = await this.expensesService.getExpenseReportPdf(query);
+    return new StreamableFile(buffer);
   }
 
   @Get('summary')

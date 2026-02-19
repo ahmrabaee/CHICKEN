@@ -5,6 +5,10 @@ import { StockAccountMapperService } from '../inventory/stock-ledger/stock-accou
 import { AccountingService } from '../accounting/accounting.service';
 import { PaymentLedgerService } from '../accounting/payment-ledger/payment-ledger.service';
 import { createPaginatedResult, PaginationQueryDto } from '../common';
+import { PdfService } from '../pdf/pdf.service';
+import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
+import { buildPurchaseOrderPdfOptions } from '../pdf/templates/purchase-order.template';
+import { buildReportPdfOptions } from '../pdf/templates/report.template';
 
 @Injectable()
 export class PurchasesService {
@@ -14,6 +18,7 @@ export class PurchasesService {
     private paymentLedgerService: PaymentLedgerService,
     private stockLedgerService: StockLedgerService,
     private stockAccountMapperService: StockAccountMapperService,
+    private pdfService: PdfService,
   ) { }
 
   async findAll(pagination: PaginationQueryDto) {
@@ -57,6 +62,101 @@ export class PurchasesService {
     });
 
     return { ...purchase, payments };
+  }
+
+  async getPurchaseOrderPdf(id: number, query: PdfQueryDto) {
+    const purchase = await this.prisma.purchase.findUnique({
+      where: { id },
+      include: {
+        supplier: true,
+        purchaseLines: { include: { item: true } },
+      },
+    });
+
+    if (!purchase) {
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Purchase not found',
+        messageAr: 'أمر الشراء غير موجود',
+      });
+    }
+
+    const payments = await this.prisma.payment.findMany({
+      where: { referenceType: 'purchase', referenceId: id },
+    });
+    const amountPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+
+    const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+
+    const pdfData = {
+      purchaseNumber: purchase.purchaseNumber,
+      purchaseDate: purchase.purchaseDate.toISOString(),
+      dueDate: purchase.dueDate?.toISOString(),
+      supplierName: purchase.supplier?.name || purchase.supplierName,
+      supplierPhone: purchase.supplier?.phone ?? undefined,
+      items: purchase.purchaseLines.map((line) => ({
+        itemName: line.itemName,
+        itemCode: line.itemCode,
+        quantity: line.weightGrams / 1000,
+        unitPrice: line.pricePerKg,
+        total: line.lineTotalAmount,
+      })),
+      taxAmount: purchase.taxAmount || 0,
+      totalAmount: purchase.totalAmount,
+      paymentStatus: purchase.paymentStatus,
+      amountPaid: amountPaid,
+      balanceDue: purchase.totalAmount - amountPaid,
+      notes: purchase.notes ?? undefined,
+    };
+
+    const options = buildPurchaseOrderPdfOptions(meta as any, pdfData);
+
+    return this.pdfService.generate(options);
+  }
+
+  async getPurchasesReportPdf(query: PdfQueryDto) {
+    const start = query.startDate ? new Date(query.startDate) : new Date(new Date().setDate(1));
+    const end = query.endDate ? new Date(query.endDate) : new Date();
+
+    const purchases = await this.prisma.purchase.findMany({
+      where: {
+        purchaseDate: { gte: start, lte: end },
+        // docstatus? 1 usually means submitted/approved
+      },
+      include: { supplier: true },
+      orderBy: { purchaseDate: 'asc' },
+    });
+
+    const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+
+    const rows = purchases.map(p => ({
+      date: p.purchaseDate.toISOString().split('T')[0],
+      number: p.purchaseNumber,
+      supplier: p.supplier?.name || p.supplierName || 'Unknown',
+      total: p.totalAmount,
+      status: p.paymentStatus,
+    }));
+
+    const totalPurchases = rows.reduce((sum, r) => sum + (r.total || 0), 0);
+
+    const options = buildReportPdfOptions(meta as any, {
+      title: 'Purchases Report',
+      titleAr: 'تقرير المشتريات',
+      subtitle: `${start.toISOString().split('T')[0]} - ${end.toISOString().split('T')[0]}`,
+      columns: [
+        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto' },
+        { header: 'PO No', headerAr: 'رقم الشراء', field: 'number', width: 'auto' },
+        { header: 'Supplier', headerAr: 'المورد', field: 'supplier', width: '*' },
+        { header: 'Total', headerAr: 'الإجمالي', field: 'total', width: 'auto', format: 'currency' },
+        { header: 'Status', headerAr: 'الحالة', field: 'status', width: 'auto' },
+      ],
+      rows,
+      summaryItems: [
+        { label: 'Total Purchases', labelAr: 'إجمالي المشتريات', value: totalPurchases, format: 'currency', bold: true }
+      ]
+    });
+
+    return this.pdfService.generate(options);
   }
 
   async create(dto: any, userId: number) {

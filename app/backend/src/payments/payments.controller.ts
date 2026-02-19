@@ -6,7 +6,10 @@ import {
   Body,
   Query,
   ParseIntPipe,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
+import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
 import {
@@ -34,6 +37,22 @@ export class PaymentsController {
   @ApiOperation({ summary: 'Get payment by ID' })
   findById(@Param('id', ParseIntPipe) id: number) {
     return this.paymentsService.findById(id);
+  }
+
+  @Get(':id/pdf')
+  @ApiOperation({ summary: 'Download payment voucher PDF' })
+  async getPaymentPdf(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() query: PdfQueryDto,
+    @Res() res: Response,
+  ) {
+    const buffer = await this.paymentsService.getPaymentPdf(id, query);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="payment-${id}.pdf"`,
+      'Content-Length': buffer.length.toString(),
+    });
+    res.end(buffer);
   }
 
   @Post('sale')

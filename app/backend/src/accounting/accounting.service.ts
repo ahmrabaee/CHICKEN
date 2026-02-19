@@ -6,6 +6,11 @@ import { PreventGroupPostingGuard } from './chart-of-accounts/prevent-group-post
 import { GlEngineService } from './gl-engine/gl-engine.service';
 import { TaxEngineService } from './tax/tax-engine.service';
 import { GLMapEntry } from './gl-engine/types/gl-map.types';
+import { PdfService } from '../pdf/pdf.service';
+import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
+import { PdfSection, PdfSectionItem } from '../pdf/pdf.types';
+import { buildFinancialStatementPdfOptions } from '../pdf/templates/financial-statement.template';
+import { buildReportPdfOptions } from '../pdf/templates/report.template';
 
 // Standard account codes - must match prisma/seed.ts chart of accounts
 export const ACCOUNT_CODES = {
@@ -52,6 +57,7 @@ export class AccountingService {
     private preventGroupPostingGuard: PreventGroupPostingGuard,
     private glEngineService: GlEngineService,
     private taxEngineService: TaxEngineService,
+    private pdfService: PdfService,
   ) { }
 
   // ============ GL ENGINE INTEGRATION (Blueprint 02) ============
@@ -1257,5 +1263,271 @@ export class AccountingService {
         balance: runningBalance,
       };
     });
+  }
+
+  // ============ FINANCIAL STATEMENTS ============
+
+  async getBalanceSheet(asOfDate?: string) {
+    const accounts = await this.getTrialBalance(asOfDate);
+
+    const assets = accounts.filter(a => a.accountType === 'asset');
+    const liabilities = accounts.filter(a => a.accountType === 'liability');
+    const equity = accounts.filter(a => a.accountType === 'equity');
+
+    const totalAssets = assets.reduce((sum, a) => sum + a.balance, 0);
+    const totalLiabilities = liabilities.reduce((sum, a) => sum + a.balance, 0);
+    const totalEquity = equity.reduce((sum, a) => sum + a.balance, 0);
+
+    return {
+      assets,
+      liabilities,
+      equity,
+      totalAssets,
+      totalLiabilities,
+      totalEquity,
+      asOfDate: asOfDate || new Date().toISOString().split('T')[0],
+    };
+  }
+
+  async getIncomeStatement(startDate: string, endDate: string) {
+    // Get all journal entry lines within the date range
+    const lines = await this.prisma.journalEntryLine.findMany({
+      where: {
+        journalEntry: {
+          entryDate: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+          isPosted: true,
+        },
+      },
+      include: {
+        account: true,
+      },
+    });
+
+    // Group by account
+    const accountBalances = new Map<number, { account: any; balance: number }>();
+
+    lines.forEach(line => {
+      const existing = accountBalances.get(line.accountId);
+      const balance = line.debitAmount - line.creditAmount;
+
+      if (existing) {
+        existing.balance += balance;
+      } else {
+        accountBalances.set(line.accountId, {
+          account: line.account,
+          balance,
+        });
+      }
+    });
+
+    const accounts = Array.from(accountBalances.values());
+    const revenue = accounts.filter(a => a.account.accountType === 'revenue');
+    const expenses = accounts.filter(a => a.account.accountType === 'expense');
+
+    // For revenue accounts, credit is positive (revenue increases with credits)
+    const totalRevenue = revenue.reduce((sum, a) => sum - a.balance, 0); // Negate because balance is debit - credit
+    const totalExpenses = expenses.reduce((sum, a) => sum + a.balance, 0);
+    const netIncome = totalRevenue - totalExpenses;
+
+    return {
+      revenue: revenue.map(r => ({
+        accountCode: r.account.code,
+        accountName: r.account.name,
+        amount: -r.balance, // Negate to show positive revenue
+      })),
+      expenses: expenses.map(e => ({
+        accountCode: e.account.code,
+        accountName: e.account.name,
+        amount: e.balance,
+      })),
+      totalRevenue,
+      totalExpenses,
+      netIncome,
+      startDate,
+      endDate,
+    };
+  }
+
+  // ============ PDF GENERATION ============
+
+  async getBalanceSheetPdf(query: PdfQueryDto) {
+    const asOfDate = query.asOfDate || new Date().toISOString().split('T')[0];
+    const bs = await this.getBalanceSheet(asOfDate);
+    const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+
+    const sections: PdfSection[] = [
+      {
+        title: 'Assets',
+        titleAr: 'الأصول',
+        items: bs.assets.map(a => ({
+          label: a.accountName,
+          labelAr: a.accountName,
+          value: a.balance,
+        })),
+        total: bs.totalAssets,
+      },
+      {
+        title: 'Liabilities',
+        titleAr: 'الخصوم',
+        items: bs.liabilities.map(l => ({
+          label: l.accountName,
+          labelAr: l.accountName,
+          value: l.balance,
+        })),
+        total: bs.totalLiabilities,
+      },
+      {
+        title: 'Equity',
+        titleAr: 'حقوق الملكية',
+        items: bs.equity.map(e => ({
+          label: e.accountName,
+          labelAr: e.accountName,
+          value: e.balance,
+        })),
+        total: bs.totalEquity,
+      },
+    ];
+
+    const options = buildFinancialStatementPdfOptions(meta as any, {
+      title: 'Balance Sheet',
+      titleAr: 'الميزانية العمومية',
+      subtitle: `As of ${asOfDate}`,
+      sections,
+      grandTotal: {
+        label: 'Total Equity & Liabilities',
+        labelAr: 'إجمالي الخصوم وحقوق الملكية',
+        value: bs.totalLiabilities + bs.totalEquity,
+      },
+    });
+
+    return this.pdfService.generate(options);
+  }
+
+  async getIncomeStatementPdf(query: PdfQueryDto) {
+    const start = query.startDate || new Date(new Date().setDate(1)).toISOString().split('T')[0];
+    const end = query.endDate || new Date().toISOString().split('T')[0];
+    const is = await this.getIncomeStatement(start, end);
+    const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+
+    const sections: PdfSection[] = [
+      {
+        title: 'Revenue',
+        titleAr: 'الإيرادات',
+        items: is.revenue.map(r => ({
+          label: r.accountName,
+          labelAr: r.accountName,
+          value: r.amount,
+        })),
+        total: is.totalRevenue,
+      },
+      {
+        title: 'Expenses',
+        titleAr: 'المصروفات',
+        items: is.expenses.map(e => ({
+          label: e.accountName,
+          labelAr: e.accountName,
+          value: e.amount,
+        })),
+        total: is.totalExpenses,
+      },
+    ];
+
+    const options = buildFinancialStatementPdfOptions(meta as any, {
+      title: 'Income Statement',
+      titleAr: 'قائمة الدخل',
+      subtitle: `${start} to ${end}`,
+      sections,
+      grandTotal: {
+        label: 'Net Income',
+        labelAr: 'صافي الدخل',
+        value: is.netIncome,
+      },
+    });
+
+    return this.pdfService.generate(options);
+  }
+
+  async getTrialBalancePdf(query: PdfQueryDto) {
+    const asOfDate = query.asOfDate;
+    const tb = await this.getTrialBalance(asOfDate);
+    const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+
+    const rows = tb.map(t => ({
+      code: t.accountCode,
+      name: t.accountName,
+      debit: t.debit,
+      credit: t.credit,
+    }));
+
+    const totalDebit = tb.reduce((sum, t) => sum + t.debit, 0);
+    const totalCredit = tb.reduce((sum, t) => sum + t.credit, 0);
+
+    const options = buildReportPdfOptions(meta as any, {
+      title: 'Trial Balance',
+      titleAr: 'ميزان المراجعة',
+      subtitle: asOfDate ? `As of ${asOfDate}` : `As of ${new Date().toISOString().split('T')[0]}`,
+      columns: [
+        { header: 'Code', headerAr: 'الكود', field: 'code', width: 'auto' },
+        { header: 'Account', headerAr: 'الحساب', field: 'name', width: '*' },
+        { header: 'Debit', headerAr: 'مدين', field: 'debit', width: 'auto', format: 'currency' },
+        { header: 'Credit', headerAr: 'دائن', field: 'credit', width: 'auto', format: 'currency' },
+      ],
+      rows,
+      summaryItems: [
+        { label: 'Total Debit', labelAr: 'إجمالي المدين', value: totalDebit, format: 'currency', bold: true },
+        { label: 'Total Credit', labelAr: 'إجمالي الدائن', value: totalCredit, format: 'currency', bold: true },
+      ],
+    });
+
+    return this.pdfService.generate(options);
+  }
+
+  async getAccountLedgerPdf(accountCode: string, query: PdfQueryDto) {
+    const start = query.startDate;
+    const end = query.endDate;
+    const ledger = await this.getAccountLedger(accountCode, start, end);
+    const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+
+    const account = await this.chartOfAccountsService.getAccountByCode(accountCode);
+    if (!account) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Account not found', messageAr: 'الحساب غير موجود' });
+    }
+
+    const rows = ledger.map((l: any) => ({
+      date: l.date.toISOString().split('T')[0],
+      entry: l.entryNumber,
+      description: l.description,
+      debit: l.debit,
+      credit: l.credit,
+      balance: l.balance,
+    }));
+
+    const subtitle = start && end
+      ? `${start} to ${end}`
+      : start
+        ? `From ${start}`
+        : end
+          ? `Up to ${end}`
+          : 'All Transactions';
+
+    const options = buildReportPdfOptions(meta as any, {
+      title: `Account Ledger: ${account.name}`,
+      titleAr: `دفتر الحساب: ${account.name}`,
+      subtitle,
+      columns: [
+        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto' },
+        { header: 'Entry', headerAr: 'القيد', field: 'entry', width: 'auto' },
+        { header: 'Description', headerAr: 'الوصف', field: 'description', width: '*' },
+        { header: 'Debit', headerAr: 'مدين', field: 'debit', width: 'auto', format: 'currency' },
+        { header: 'Credit', headerAr: 'دائن', field: 'credit', width: 'auto', format: 'currency' },
+        { header: 'Balance', headerAr: 'الرصيد', field: 'balance', width: 'auto', format: 'currency' },
+      ],
+      rows,
+    });
+
+    return this.pdfService.generate(options);
   }
 }

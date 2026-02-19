@@ -5,7 +5,7 @@
 
 export type PartyType = 'customer' | 'supplier';
 export type AccountType = 'receivable' | 'payable';
-export type VoucherType = 'sale' | 'purchase' | 'payment' | 'credit_note';
+export type VoucherType = 'sale' | 'purchase' | 'payment' | 'credit_note' | 'expense';
 
 export interface CreatePLEInput {
   partyType: PartyType;

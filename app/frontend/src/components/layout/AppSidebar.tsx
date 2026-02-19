@@ -78,10 +78,7 @@ const navigation: NavItem[] = [
     title: "Purchasing",
     titleAr: "الشراء",
     icon: ShoppingBag,
-    children: [
-      { title: "Purchase Orders", titleAr: "أوامر الشراء", href: "/purchasing", icon: FileText },
-      { title: "Receive Stock", titleAr: "استلام البضاعة", href: "/purchasing/new", icon: Package },
-    ],
+    href: "/purchasing",
   },
   {
     title: "Customers",

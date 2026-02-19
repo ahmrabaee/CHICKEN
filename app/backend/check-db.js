@@ -2,25 +2,33 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-async function main() {
-    console.log('--- DATABASE DIAGNOSIS ---');
+async function check() {
     try {
-        const users = await prisma.user.findMany({
-            select: { id: true, username: true, isActive: true, lastLoginAt: true }
-        });
-        console.log('Users in DB:', JSON.stringify(users, null, 2));
-
-        const auditLogs = await prisma.auditLog.findMany({
+        const purchases = await prisma.purchase.findMany({
+            orderBy: { createdAt: 'desc' },
             take: 5,
-            orderBy: { timestamp: 'desc' }
         });
-        console.log('Recent Audit Logs:', JSON.stringify(auditLogs, null, 2));
+        console.log('--- Latest Purchases ---');
+        console.log(JSON.stringify(purchases, null, 2));
+
+        const debts = await prisma.debt.findMany({
+            orderBy: { createdAt: 'desc' },
+            take: 5,
+        });
+        console.log('\n--- Latest Debts ---');
+        console.log(JSON.stringify(debts, null, 2));
+
+        const suppliers = await prisma.supplier.findMany({
+            take: 5
+        });
+        console.log('\n--- Suppliers ---');
+        console.log(JSON.stringify(suppliers, null, 2));
 
     } catch (err) {
-        console.error('Error:', err);
+        console.error(err);
     } finally {
         await prisma.$disconnect();
     }
 }
 
-main();
+check();

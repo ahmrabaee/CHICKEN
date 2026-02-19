@@ -2,6 +2,12 @@ import { Content, ContextPageSize, DynamicContent } from 'pdfmake/interfaces';
 import { PdfMeta } from './pdf.types';
 import { PDF_DESIGN } from './pdf.constants';
 
+/** inline=1 يتجنّب اعتراض IDM على التحميل */
+export function getPdfContentDisposition(filename: string, inline?: string): string {
+    const disp = (inline === '1' || inline === 'true') ? 'inline' : 'attachment';
+    return `${disp}; filename="${filename}"`;
+}
+
 export function formatCurrency(amount: number | string): string {
     return Number(amount).toFixed(2);
 }

@@ -47,6 +47,9 @@ function formatCurrency(v: number) {
 
 const emptyLine: CreateJournalEntryLineDto = { accountId: 0, debit: 0, credit: 0 };
 
+/** Blueprint 02: Tolerance in minor units — allows round-off (e.g. 5 = 0.05 ₪) */
+const TOLERANCE_MINOR_UNITS = 5;
+
 // ---------- Line Schema ----------
 const lineSchema = z.object({
     accountId: z.coerce.number(),
@@ -67,9 +70,12 @@ const formSchema = z
             );
             const debit = valid.reduce((s, l) => s + (l.debit || 0), 0);
             const credit = valid.reduce((s, l) => s + (l.credit || 0), 0);
-            return valid.length >= 2 && debit === credit && debit > 0;
+            const diff = Math.abs(debit - credit);
+            const withinTolerance = diff <= TOLERANCE_MINOR_UNITS;
+            const hasAmount = debit > 0 || credit > 0;
+            return valid.length >= 2 && withinTolerance && hasAmount;
         },
-        { message: "القيد غير متوازن (يجب تساوي المدين والدائن مع سطرين على الأقل)" }
+        { message: `القيد غير متوازن (يجب تساوي المدين والدائن أو فارق ضمن ${TOLERANCE_MINOR_UNITS / 100} ₪)` }
     );
 
 type FormValues = z.infer<typeof formSchema>;
@@ -95,7 +101,8 @@ export default function JournalEntryProfile() {
     const lines = form.watch("lines");
     const totalDebit = lines.reduce((s, l) => s + (Number(l.debit) || 0), 0);
     const totalCredit = lines.reduce((s, l) => s + (Number(l.credit) || 0), 0);
-    const isBalanced = totalDebit === totalCredit && totalDebit > 0;
+    const diff = Math.abs(totalDebit - totalCredit);
+    const isBalanced = diff <= TOLERANCE_MINOR_UNITS && (totalDebit > 0 || totalCredit > 0);
     const validLineCount = lines.filter(
         (l) => l.accountId && ((l.debit || 0) > 0 || (l.credit || 0) > 0)
     ).length;
@@ -134,9 +141,6 @@ export default function JournalEntryProfile() {
             onSuccess: () => {
                 toast({ title: "تم إنشاء القيد بنجاح" });
                 navigate("/accounting");
-            },
-            onError: () => {
-                toast({ variant: "destructive", title: "فشل إنشاء القيد" });
             },
         });
     };
@@ -349,7 +353,7 @@ export default function JournalEntryProfile() {
                                     >
                                         المدين: {(totalDebit || 0).toFixed(2)} ₪ — الدائن: {(totalCredit || 0).toFixed(2)} ₪
                                         {!isBalanced && validLineCount > 0 && (
-                                            <span className="text-destructive mr-2"> — القيد غير متوازن</span>
+                                            <span className="text-destructive mr-2"> — القيد غير متوازن (الفرق: {(diff / 100).toFixed(2)} ₪)</span>
                                         )}
                                     </div>
                                 </CardContent>
@@ -387,7 +391,11 @@ export default function JournalEntryProfile() {
                                                 isBalanced ? "text-emerald-400" : "text-amber-400"
                                             )}
                                         >
-                                            {isBalanced ? "متوازن ✓" : "غير متوازن"}
+                                            {isBalanced
+                                                ? diff === 0
+                                                    ? "متوازن ✓"
+                                                    : "متوازن (تدوير تلقائي)"
+                                                : "غير متوازن"}
                                         </span>
                                     </div>
 

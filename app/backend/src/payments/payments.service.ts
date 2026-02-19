@@ -130,10 +130,11 @@ export class PaymentsService {
     const amountDue = totalAmount - currentPaidAmount;
 
     if (dto.amount > amountDue) {
+      const fmt = (n: number) => (n / 100).toFixed(2);
       throw new BadRequestException({
         code: 'OVERPAYMENT',
-        message: `Payment amount (${dto.amount}) exceeds amount due (${amountDue})`,
-        messageAr: `مبلغ الدفع (${dto.amount}) يتجاوز المبلغ المستحق (${amountDue})`,
+        message: `Payment amount (${fmt(dto.amount)} ₪) exceeds amount due (${fmt(amountDue)} ₪)`,
+        messageAr: `مبلغ الدفع (${fmt(dto.amount)} ₪) يتجاوز المبلغ المستحق (${fmt(amountDue)} ₪)`,
       });
     }
 
@@ -227,10 +228,11 @@ export class PaymentsService {
     const amountDue = totalAmount - currentPaidAmount;
 
     if (dto.amount > amountDue) {
+      const fmt = (n: number) => (n / 100).toFixed(2);
       throw new BadRequestException({
         code: 'OVERPAYMENT',
-        message: `Payment amount (${dto.amount}) exceeds amount due (${amountDue})`,
-        messageAr: `مبلغ الدفع (${dto.amount}) يتجاوز المبلغ المستحق (${amountDue})`,
+        message: `Payment amount (${fmt(dto.amount)} ₪) exceeds amount due (${fmt(amountDue)} ₪)`,
+        messageAr: `مبلغ الدفع (${fmt(dto.amount)} ₪) يتجاوز المبلغ المستحق (${fmt(amountDue)} ₪)`,
       });
     }
 
@@ -540,8 +542,8 @@ export class PaymentsService {
     });
   }
 
-  private async getAccountIdByCodeFromTx(tx: any, code: string): Promise<number> {
-    const acc = await tx.account.findUnique({ where: { code } });
+  private async getAccountIdByCodeFromTx(tx: any, code: string, companyId: number | null = 1): Promise<number> {
+    const acc = await tx.account.findFirst({ where: { code, companyId } });
     if (!acc) throw new Error(`Account ${code} not found`);
     return acc.id;
   }

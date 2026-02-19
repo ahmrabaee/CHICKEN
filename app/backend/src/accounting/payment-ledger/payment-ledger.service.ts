@@ -11,9 +11,9 @@ import type { CreatePLEInput } from './payment-ledger.types';
 export class PaymentLedgerService {
   constructor(private prisma: PrismaService) { }
 
-  private async getAccountIdByCode(code: string, tx?: any): Promise<number> {
+  private async getAccountIdByCode(code: string, tx?: any, companyId: number | null = 1): Promise<number> {
     const db = tx ?? this.prisma;
-    const acc = await db.account.findUnique({ where: { code } });
+    const acc = await db.account.findFirst({ where: { code, companyId } });
     if (!acc) throw new Error(`Account ${code} not found`);
     return acc.id;
   }

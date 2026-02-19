@@ -55,7 +55,7 @@ export interface CanDeleteAccountResponse {
 export interface JournalEntryLine {
     id: number;
     accountId: number;
-    account?: { id: number; code: string; name: string; accountCurrency?: string | null };
+    account?: { id: number; code: string; name: string; rootType?: string; accountCurrency?: string | null };
     accountName?: string;
     accountCode?: string;
     debit?: number;
@@ -70,6 +70,7 @@ export interface JournalEntryLine {
     costCenter?: { id: number; code: string; name: string } | null;
     partyType?: string | null;
     partyId?: number | null;
+    partyName?: string | null;
     againstVoucherType?: string | null;
     againstVoucherId?: number | null;
     voucherDetailNo?: string | null;
@@ -97,6 +98,10 @@ export interface JournalEntry {
     isReversed?: boolean;
     reversedByEntryId?: number;
     reversedByEntry?: JournalEntry;
+    /** Source: 'payment', 'sale', 'reversal', etc. */
+    sourceType?: string;
+    /** ID of source document (payment, sale, or original entry for reversal) */
+    sourceId?: number;
 }
 
 export interface CreateJournalEntryLineDto {

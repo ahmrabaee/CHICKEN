@@ -13,6 +13,7 @@ export class StockAccountMapperService {
   /**
    * Get stock account ID for a branch. Returns account ID (for JournalEntryLine) or null to use code.
    * The accounting service uses account codes - we return the code string for compatibility.
+   * MUST return a leaf account (isGroup=false) - group accounts cannot receive postings.
    */
   async getStockAccountCode(branchId: number | null): Promise<string> {
     if (!branchId) {
@@ -22,9 +23,10 @@ export class StockAccountMapperService {
       where: { id: branchId },
       include: { stockAccount: true },
     });
-    if (branch?.stockAccountId && branch.stockAccount) {
+    if (branch?.stockAccountId && branch.stockAccount && !branch.stockAccount.isGroup) {
       return branch.stockAccount.code;
     }
+    // Fallback: branch has no stock account, or it's a group (e.g. 1130) - use default leaf 1131
     return ACCOUNT_CODES.INVENTORY;
   }
 

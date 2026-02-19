@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -61,8 +61,8 @@ const App = () => (
                 <Route path="/inventory" element={<Inventory />} />
                 <Route path="/inventory/new" element={<ItemProfile />} />
                 <Route path="/inventory/:id" element={<ItemProfile />} />
-                <Route path="/categories" element={<Inventory />} />
-                <Route path="/adjustments" element={<Inventory />} />
+                <Route path="/categories" element={<Navigate to="/inventory?tab=categories" replace />} />
+                <Route path="/adjustments" element={<Navigate to="/inventory" replace />} />
 
                 {/* Sales */}
                 <Route path="/sales" element={<Sales />} />

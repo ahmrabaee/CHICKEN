@@ -358,6 +358,7 @@ export class PurchasesService {
         {
           totalAmount: totalReceivedValue,
           amountPaid: Math.min(purchase.amountPaid, totalReceivedValue),
+          supplierId: purchase.supplierId,
           stockAccountCode,
         },
       );

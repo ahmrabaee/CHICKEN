@@ -12,17 +12,14 @@ import {
   Settings,
   LogOut,
   ChevronDown,
-  ChevronLeft,
+  ChevronRight,
   Menu,
-  Layers,
-  ClipboardList,
   History,
   FileText,
   CreditCard,
   TrendingUp,
   PieChart,
   Receipt,
-  Boxes,
   UserCircle,
   Loader2,
   Building2,
@@ -66,11 +63,7 @@ const navigation: NavItem[] = [
     title: "Inventory",
     titleAr: "المخزون",
     icon: Package,
-    children: [
-      { title: "Items", titleAr: "العناصر", href: "/inventory", icon: Boxes },
-      { title: "Categories", titleAr: "الفئات", href: "/categories", icon: Layers },
-      { title: "Adjustments", titleAr: "التعديلات", href: "/adjustments", icon: ClipboardList },
-    ],
+    href: "/inventory",
   },
   {
     title: "Sales",
@@ -152,7 +145,9 @@ const navigation: NavItem[] = [
     title: "Accounting",
     titleAr: "المحاسبة",
     icon: BookOpen,
-    href: "/accounting",
+    children: [
+      { title: "Journal Entries", titleAr: "قيود اليومية", href: "/accounting", icon: FileText },
+    ],
   },
   {
     title: "Audit",
@@ -176,7 +171,7 @@ const navigation: NavItem[] = [
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  const [openGroups, setOpenGroups] = useState<string[]>(["Sales", "Inventory"]);
+  const [openGroups, setOpenGroups] = useState<string[]>(["Sales", "Accounting"]);
   const location = useLocation();
   const logoutMutation = useLogout();
 
@@ -224,7 +219,7 @@ export function AppSidebar() {
           onClick={() => setCollapsed(!collapsed)}
           className="text-sidebar-foreground hover:bg-sidebar-accent"
         >
-          {collapsed ? <Menu className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+          {collapsed ? <Menu className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
         </Button>
       </div>
 

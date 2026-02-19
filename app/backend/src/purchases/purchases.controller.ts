@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
+import { getPdfContentDisposition } from '../pdf/pdf.helpers';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PurchasesService } from './purchases.service';
 import { CreatePurchaseDto, ReceivePurchaseDto } from './dto/purchase.dto';
@@ -34,7 +35,7 @@ export class PurchasesController {
     const buffer = await this.purchasesService.getPurchasesReportPdf(query);
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': 'attachment; filename="purchases-report.pdf"',
+      'Content-Disposition': getPdfContentDisposition('purchases-report.pdf', query.inline),
       'Content-Length': buffer.length.toString(),
     });
     res.end(buffer);
@@ -58,7 +59,7 @@ export class PurchasesController {
     const buffer = await this.purchasesService.getPurchaseOrderPdf(id, query);
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="purchase-${id}.pdf"`,
+      'Content-Disposition': getPdfContentDisposition(`purchase-${id}.pdf`, query.inline),
       'Content-Length': buffer.length.toString(),
     });
     res.end(buffer);

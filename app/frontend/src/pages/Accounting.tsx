@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, Loader2, CheckCircle, Plus, Search, ChevronsUpDown } from "lucide-react";
+import { Eye, Loader2, CheckCircle, Plus, Search, ChevronsUpDown, Download, FileText, RotateCcw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,6 +29,7 @@ import { AccountTreeRow } from "@/components/accounting/AccountTreeRow";
 import { ROOT_TYPE_COLORS } from "@/lib/accounting";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { Input } from "@/components/ui/input";
+import { PdfPreviewDialog } from "@/components/reports/PdfPreviewDialog";
 
 
 
@@ -49,7 +50,7 @@ const typeLabels: Record<string, string> = {
     asset: "أصول", liability: "خصوم", equity: "حقوق ملكية", revenue: "إيرادات", expense: "مصروفات",
 };
 
-function JournalDetailCard({ entryId, open, onClose }: { entryId: number; open: boolean; onClose: () => void }) {
+function JournalDetailCard({ entryId, open, onClose, onOpenEntry }: { entryId: number; open: boolean; onClose: () => void; onOpenEntry?: (id: number) => void }) {
     const { data: entry, isLoading } = useJournalEntry(entryId);
     const postEntry = usePostJournalEntry();
 
@@ -61,19 +62,61 @@ function JournalDetailCard({ entryId, open, onClose }: { entryId: number; open: 
                     <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
                 ) : entry ? (
                     <div className="space-y-4">
+                        {(entry.isReversed || entry.sourceType === "reversal") && (
+                            <div className={`rounded-lg p-3 flex items-center gap-2 ${entry.isReversed ? "bg-amber-50 dark:bg-amber-950/30 border border-amber-200" : "bg-slate-50 dark:bg-slate-900/50 border border-slate-200"}`}>
+                                <RotateCcw className="w-5 h-5 flex-shrink-0 text-amber-600" />
+                                <div className="text-sm">
+                                    {entry.isReversed ? (
+                                        <span>هذا القيد <strong>معكوس</strong> — تم استبداله بقيد عكسي.</span>
+                                    ) : (
+                                        <span>هذا قيد <strong>عكسي</strong> — يستبدل قيداً أصلياً تم إلغاؤه.</span>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             <Info label="رقم القيد" value={entry.entryNumber} />
                             <Info label="التاريخ" value={formatDate(entry.entryDate)} />
                             <Info label="الحالة" value={
-                                entryStatus(entry) === "posted"
-                                    ? <StatusBadge status="success">مرحّل</StatusBadge>
-                                    : <StatusBadge status="warning">مسودة</StatusBadge>
+                                <div className="flex flex-wrap gap-1.5 items-center">
+                                    {entryStatus(entry) === "posted" ? <StatusBadge status="success">مرحّل</StatusBadge> : <StatusBadge status="warning">مسودة</StatusBadge>}
+                                    {entry.isReversed && (
+                                        <Badge variant="secondary" className="bg-amber-100 text-amber-800 gap-0.5">
+                                            <RotateCcw className="w-3 h-3" /> معكوس
+                                        </Badge>
+                                    )}
+                                    {entry.sourceType === "reversal" && (
+                                        <Badge variant="outline" className="border-amber-300 text-amber-700">
+                                            قيد عكسي
+                                        </Badge>
+                                    )}
+                                </div>
                             } />
-                            {entry.isReversed && (
-                                <Info label="معكوس" value={
-                                    <span className="text-amber-600 flex items-center gap-1">
-                                        قيد معكوس — عكس بواسطة #{(entry.reversedByEntryId ?? entry.reversedByEntry?.id) || "?"}
-                                    </span>
+                            {entry.isReversed && (() => {
+                                const revId = entry.reversedByEntryId ?? entry.reversedByEntry?.id;
+                                return (
+                                    <Info label="عكس بواسطة" value={
+                                        revId && onOpenEntry ? (
+                                            <Button variant="link" className="h-auto p-0 text-amber-600 hover:text-amber-700 font-medium" onClick={() => onOpenEntry(revId)}>
+                                                قيد #{revId} ← انقر للانتقال
+                                            </Button>
+                                        ) : (
+                                            <span className="text-amber-600">
+                                                قيد #{revId || "?"}
+                                            </span>
+                                        )
+                                    } />
+                                );
+                            })()}
+                            {entry.sourceType === "reversal" && entry.sourceId && (
+                                <Info label="عكس لقيد" value={
+                                    onOpenEntry ? (
+                                        <Button variant="link" className="h-auto p-0 text-amber-600 hover:text-amber-700 font-medium" onClick={() => onOpenEntry(entry.sourceId!)}>
+                                            قيد #{entry.sourceId} ← انقر للانتقال
+                                        </Button>
+                                    ) : (
+                                        <span className="text-amber-600">قيد #{entry.sourceId}</span>
+                                    )
                                 } />
                             )}
                             <Info label="إجمالي المدين" value={formatCurrency(entryTotalDebit(entry))} />
@@ -121,6 +164,7 @@ function JournalDetailCard({ entryId, open, onClose }: { entryId: number; open: 
                                         <TableHead className="text-right">الحساب</TableHead>
                                         <TableHead className="text-center">مدين</TableHead>
                                         <TableHead className="text-center">دائن</TableHead>
+                                        <TableHead className="text-right">الطرف (Dimension)</TableHead>
                                         <TableHead className="text-right">مركز التكلفة</TableHead>
                                         <TableHead className="text-right">الوصف</TableHead>
                                     </TableRow>
@@ -165,6 +209,19 @@ function JournalDetailCard({ entryId, open, onClose }: { entryId: number; open: 
                                                         </div>
                                                     ) : "-"}
                                                 </TableCell>
+                                                <TableCell className="text-sm">
+                                                    {line.partyName ? (
+                                                        <div className="flex flex-col">
+                                                            <span className="font-medium">{line.partyName}</span>
+                                                            <span className="text-[10px] text-muted-foreground uppercase">{line.partyType}</span>
+                                                        </div>
+                                                    ) : line.againstVoucherType ? (
+                                                        <div className="flex flex-col">
+                                                            <span className="text-xs text-amber-700 font-medium">ضد: {line.againstVoucherType}</span>
+                                                            <span className="text-[10px] text-muted-foreground">#{line.againstVoucherId}</span>
+                                                        </div>
+                                                    ) : "-"}
+                                                </TableCell>
                                                 <TableCell className="text-sm text-muted-foreground">
                                                     {line.costCenter ? `${line.costCenter.code} - ${line.costCenter.name}` : "-"}
                                                 </TableCell>
@@ -198,16 +255,25 @@ function Info({ label, value }: { label: string; value: React.ReactNode }) {
     );
 }
 
-function buildAccountTree(flat: Account[]): (Account & { _children?: (Account & { _children?: unknown[] })[] })[] {
-    const byId = new Map(flat.map((a) => [a.id, { ...a, _children: [] as (Account & { _children?: unknown[] })[] }]));
-    const roots: (Account & { _children?: (Account & { _children?: unknown[] })[] })[] = [];
+interface AccountWithChildren extends Account {
+    _children?: AccountWithChildren[];
+}
+
+function buildAccountTree(flat: Account[]): AccountWithChildren[] {
+    const byId = new Map<number, AccountWithChildren>(
+        flat.map((a) => [a.id, { ...a, _children: [] }])
+    );
+    const roots: AccountWithChildren[] = [];
     for (const a of flat) {
         const node = byId.get(a.id)!;
         if (!a.parentId) {
             roots.push(node);
         } else {
             const parent = byId.get(a.parentId);
-            if (parent && parent._children) parent._children.push(node);
+            if (parent) {
+                if (!parent._children) parent._children = [];
+                parent._children.push(node);
+            }
         }
     }
     return roots;
@@ -226,6 +292,24 @@ export default function Accounting() {
     const [editAccount, setEditAccount] = useState<Account | null>(null);
     const [profileAccount, setProfileAccount] = useState<Account | null>(null);
     const [accountSearch, setAccountSearch] = useState("");
+    const [accountingPdfDialog, setAccountingPdfDialog] = useState<{
+        open: boolean;
+        type: string;
+        title: string;
+        params: object;
+    }>({ open: false, type: "", title: "", params: {} });
+
+    const getAccountingPdfParams = (type: "balance" | "income" | "trial") => {
+        const n = new Date();
+        const asOf = n.toISOString().slice(0, 10);
+        const start = new Date(n.getFullYear(), n.getMonth(), 1).toISOString().slice(0, 10);
+        if (type === "income") return { startDate: start, endDate: asOf, language: "ar" as const };
+        return { asOfDate: asOf, language: "ar" as const };
+    };
+
+    const openPdfDialog = (type: string, title: string, params: object) => {
+        setAccountingPdfDialog({ open: true, type, title, params });
+    };
 
     const { data: accountsData, isLoading: accountsLoading, refetch: refetchAccounts } = useAccounts();
     const { data: journalsData, isLoading: journalsLoading } = useJournalEntries({ page: journalPage, pageSize: 20 });
@@ -346,9 +430,40 @@ export default function Accounting() {
 
     return (
         <div className="space-y-6" dir="rtl">
-            <div>
-                <h1 className="text-2xl font-bold text-foreground">المحاسبة</h1>
-                <p className="text-muted-foreground mt-1">دليل الحسابات وقيود اليومية</p>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-foreground">المحاسبة</h1>
+                    <p className="text-muted-foreground mt-1">دليل الحسابات وقيود اليومية</p>
+                </div>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => openPdfDialog("balance-sheet", "قائمة المركز المالي PDF", getAccountingPdfParams("balance"))}
+                    >
+                        <FileText className="w-4 h-4" />
+                        قائمة المركز المالي
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => openPdfDialog("income-statement", "قائمة الدخل PDF", getAccountingPdfParams("income"))}
+                    >
+                        <FileText className="w-4 h-4" />
+                        قائمة الدخل
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => openPdfDialog("trial-balance", "ميزان المراجعة PDF", getAccountingPdfParams("trial"))}
+                    >
+                        <Download className="w-4 h-4" />
+                        ميزان المراجعة
+                    </Button>
+                </div>
             </div>
 
             <div className="flex gap-2">
@@ -454,26 +569,44 @@ export default function Accounting() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {journals.map((j: JournalEntry) => (
-                                            <TableRow key={j.id} className="data-table-row">
-                                                <TableCell className="font-mono text-sm">{j.entryNumber}</TableCell>
-                                                <TableCell className="max-w-[200px] truncate">{j.description}</TableCell>
-                                                <TableCell className="text-center text-muted-foreground">{formatDate(j.entryDate)}</TableCell>
-                                                <TableCell className="text-center">{formatCurrency(entryTotalDebit(j))}</TableCell>
-                                                <TableCell className="text-center">{formatCurrency(entryTotalCredit(j))}</TableCell>
-                                                <TableCell className="text-center">
-                                                    <div className="flex flex-col items-center gap-1">
-                                                        {entryStatus(j) === "posted" ? <StatusBadge status="success">مرحّل</StatusBadge> : <StatusBadge status="warning">مسودة</StatusBadge>}
-                                                        {j.isReversed && <span className="text-xs text-amber-600">معكوس</span>}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-center">
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDetailEntryId(j.id)}>
-                                                        <Eye className="w-4 h-4" />
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
+                                        {journals.map((j: JournalEntry) => {
+                                            const isReversed = !!j.isReversed;
+                                            const isReversal = j.sourceType === "reversal";
+                                            return (
+                                                <TableRow
+                                                    key={j.id}
+                                                    className={`data-table-row ${isReversed || isReversal ? "bg-amber-50/60 dark:bg-amber-950/20 border-r-2 border-r-amber-400" : ""}`}
+                                                >
+                                                    <TableCell className="font-mono text-sm">{j.entryNumber}</TableCell>
+                                                    <TableCell className="max-w-[200px] truncate">{j.description}</TableCell>
+                                                    <TableCell className="text-center text-muted-foreground">{formatDate(j.entryDate)}</TableCell>
+                                                    <TableCell className="text-center">{formatCurrency(entryTotalDebit(j))}</TableCell>
+                                                    <TableCell className="text-center">{formatCurrency(entryTotalCredit(j))}</TableCell>
+                                                    <TableCell className="text-center">
+                                                        <div className="flex flex-col items-center gap-1.5">
+                                                            {entryStatus(j) === "posted" ? <StatusBadge status="success">مرحّل</StatusBadge> : <StatusBadge status="warning">مسودة</StatusBadge>}
+                                                            {isReversed && (
+                                                                <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-800 hover:bg-amber-100 gap-0.5">
+                                                                    <RotateCcw className="w-3 h-3" />
+                                                                    معكوس
+                                                                </Badge>
+                                                            )}
+                                                            {isReversal && (
+                                                                <Badge variant="outline" className="text-xs border-amber-300 text-amber-700 gap-0.5">
+                                                                    <RotateCcw className="w-3 h-3" />
+                                                                    قيد عكسي
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDetailEntryId(j.id)}>
+                                                            <Eye className="w-4 h-4" />
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
                                     </TableBody>
                                 </Table>
                             )}
@@ -530,7 +663,7 @@ export default function Accounting() {
                 </Card>
             )}
 
-            {detailEntryId && <JournalDetailCard entryId={detailEntryId} open={!!detailEntryId} onClose={() => setDetailEntryId(null)} />}
+            {detailEntryId && <JournalDetailCard entryId={detailEntryId} open={!!detailEntryId} onClose={() => setDetailEntryId(null)} onOpenEntry={(id) => setDetailEntryId(id)} />}
 
             <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
                 <AlertDialogContent>
@@ -573,6 +706,16 @@ export default function Accounting() {
                 onOpenChange={(open) => !open && setLedgerAccount(null)}
                 account={ledgerAccount}
             />
+
+            {accountingPdfDialog.open && (
+                <PdfPreviewDialog
+                    open={accountingPdfDialog.open}
+                    onOpenChange={(open) => !open && setAccountingPdfDialog((p) => ({ ...p, open: false }))}
+                    reportType={accountingPdfDialog.type}
+                    params={accountingPdfDialog.params}
+                    title={accountingPdfDialog.title}
+                />
+            )}
         </div>
     );
 }

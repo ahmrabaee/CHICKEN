@@ -38,6 +38,7 @@ export class GlRoundingService {
     const roundOffEntry: GLMapEntry = {
       accountId: roundOffAccountId,
       skipMerge: true,
+      isRoundOff: true,
       description: 'تدوير تقريبي',
     };
 

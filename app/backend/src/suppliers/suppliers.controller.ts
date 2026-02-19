@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
+import { getPdfContentDisposition } from '../pdf/pdf.helpers';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SuppliersService } from './suppliers.service';
 import { CreateSupplierDto, UpdateSupplierDto } from './dto/supplier.dto';
@@ -46,7 +47,7 @@ export class SuppliersController {
     const buffer = await this.suppliersService.getStatementPdf(id, query);
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="statement-supplier-${id}.pdf"`,
+      'Content-Disposition': getPdfContentDisposition(`statement-supplier-${id}.pdf`, query.inline),
       'Content-Length': buffer.length.toString(),
     });
     res.end(buffer);

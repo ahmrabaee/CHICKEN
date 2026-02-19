@@ -35,6 +35,7 @@ import { creditNoteService } from "@/services/credit-note.service";
 import { CreditNoteCreateDialog } from "@/components/credit-note/CreditNoteCreateDialog";
 import { Sale } from "@/types/sales";
 import { toast } from "@/hooks/use-toast";
+import { downloadReportPdf } from "@/services/pdf.service";
 
 /** Format minor units (fils/cents) to display currency */
 function formatCurrency(minorUnits: number): string {
@@ -81,6 +82,19 @@ function getPaymentMethodLabel(method: string) {
 function SaleDetailCard({ saleId, open, onClose }: { saleId: number; open: boolean; onClose: () => void }) {
   const { data: sale, isLoading } = useSale(saleId);
   const [showCreditNoteDialog, setShowCreditNoteDialog] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const handleDownloadInvoicePdf = async () => {
+    setPdfLoading(true);
+    try {
+      await downloadReportPdf("sale-invoice", { id: saleId, language: "ar" });
+      toast({ title: "تم التحميل", description: "تم تحميل فاتورة المبيعات بنجاح" });
+    } catch {
+      toast({ variant: "destructive", title: "فشل التحميل", description: "تعذر تحميل ملف PDF" });
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   const { data: outstandingData } = useQuery({
     queryKey: ["reconciliation", "outstanding", "sale", saleId],
@@ -114,15 +128,29 @@ function SaleDetailCard({ saleId, open, onClose }: { saleId: number; open: boole
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold flex items-center gap-3 flex-row-reverse">
-            تفاصيل الفاتورة {sale?.saleNumber || ""}
-            {(sale?.docstatus !== undefined || sale?.isVoided !== undefined) && (
-              <DocumentStatusBadge
-                docstatus={(sale as any).docstatus ?? (sale.isVoided ? 2 : 1)}
-                isVoided={sale.isVoided}
-              />
+          <div className="flex items-center justify-between gap-4 flex-row-reverse">
+            <DialogTitle className="text-xl font-bold flex items-center gap-3 flex-row-reverse">
+              تفاصيل الفاتورة {sale?.saleNumber || ""}
+              {(sale?.docstatus !== undefined || sale?.isVoided !== undefined) && (
+                <DocumentStatusBadge
+                  docstatus={(sale as any).docstatus ?? (sale.isVoided ? 2 : 1)}
+                  isVoided={sale.isVoided}
+                />
+              )}
+            </DialogTitle>
+            {sale && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 shrink-0"
+                onClick={handleDownloadInvoicePdf}
+                disabled={pdfLoading}
+              >
+                {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                تحميل PDF
+              </Button>
             )}
-          </DialogTitle>
+          </div>
         </DialogHeader>
 
         {isLoading ? (

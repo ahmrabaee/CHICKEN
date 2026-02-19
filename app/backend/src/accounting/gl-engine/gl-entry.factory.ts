@@ -63,6 +63,7 @@ export class GlEntryFactory {
           voucherDetailNo: line.voucherDetailNo ?? undefined,
           description: line.description,
           isOpening: line.isOpening ?? false,
+          isRoundOff: line.isRoundOff ?? false,
         },
       });
     }

@@ -5,16 +5,46 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import type { ValidationError } from 'class-validator';
 
+const ALLOWED_ORIGINS = [
+  'http://localhost:1420',
+  'http://127.0.0.1:1420',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'tauri://localhost',
+  'http://tauri.localhost',
+];
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Force CORS headers on EVERY response (including 401, 500, etc.)
+  const httpAdapter = app.getHttpAdapter();
+  httpAdapter.use((req: any, res: any, next: any) => {
+    const origin = req.headers.origin;
+    if (origin && ALLOWED_ORIGINS.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+      res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length');
+    }
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(204);
+    }
+    next();
+  });
 
   // Global prefix for all routes
   app.setGlobalPrefix('v1');
 
-  // Enable CORS for Tauri frontend
+  // Enable CORS for Tauri frontend + Vite dev server
   app.enableCors({
-    origin: ['http://localhost:1420', 'http://localhost:5173', 'tauri://localhost'],
+    origin: ALLOWED_ORIGINS,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    exposedHeaders: ['Content-Disposition', 'Content-Length'],
     credentials: true,
+    preflightContinue: false,
   });
 
   // Global validation pipe
@@ -22,6 +52,7 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true,
       transform: true,
+      transformOptions: { enableImplicitConversion: true },
       forbidNonWhitelisted: true,
       exceptionFactory: (errors: ValidationError[]) => {
         console.warn('[VALIDATION ERROR]:', JSON.stringify(errors, null, 2));

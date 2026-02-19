@@ -7,6 +7,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery }
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto, UpdateCustomerDto, CustomerResponseDto, CustomerListQueryDto } from './dto';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
+import { getPdfContentDisposition } from '../pdf/pdf.helpers';
 import { Roles, RolesGuard, CurrentUser, CurrentUserData, PaginatedResult } from '../common';
 
 @ApiTags('customers')
@@ -70,7 +71,7 @@ export class CustomersController {
     const buffer = await this.customersService.getStatementPdf(id, query);
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="statement-customer-${id}.pdf"`,
+      'Content-Disposition': getPdfContentDisposition(`statement-customer-${id}.pdf`, query.inline),
       'Content-Length': buffer.length.toString(),
     });
     res.end(buffer);

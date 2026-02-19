@@ -27,4 +27,10 @@ export class PdfQueryDto {
     @IsOptional()
     @IsNumberString()
     branchId?: string;
+
+    /** عند 1 أو true: إرجاع inline بدل attachment — يتجنّب اعتراض IDM على التحميل */
+    @ApiPropertyOptional({ description: 'inline=1 لتجنب اعتراض برامج التحميل (IDM)' })
+    @IsOptional()
+    @IsIn(['1', 'true', '0', 'false'])
+    inline?: string;
 }

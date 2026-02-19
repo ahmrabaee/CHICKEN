@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Download } from "lucide-react";
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -8,8 +8,11 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { useAccountLedger } from "@/hooks/use-accounting";
 import { formatCurrency, formatDate } from "@/lib/formatters";
+import { downloadReportPdf } from "@/services/pdf.service";
+import { toast } from "@/hooks/use-toast";
 import type { Account } from "@/types/accounting";
 
 interface AccountLedgerDialogProps {
@@ -28,6 +31,25 @@ export function AccountLedgerDialog({
     const currentYear = new Date().getFullYear();
     const [startDate, setStartDate] = useState(`${currentYear}-01-01`);
     const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
+    const [pdfLoading, setPdfLoading] = useState(false);
+
+    const handleDownloadLedgerPdf = async () => {
+        if (!account?.code) return;
+        setPdfLoading(true);
+        try {
+            await downloadReportPdf("ledger", {
+                accountCode: account.code,
+                startDate,
+                endDate,
+                language: "ar",
+            });
+            toast({ title: "تم التحميل", description: "تم تحميل كشف الحساب بنجاح" });
+        } catch {
+            toast({ variant: "destructive", title: "فشل التحميل", description: "تعذر تحميل ملف PDF" });
+        } finally {
+            setPdfLoading(false);
+        }
+    };
 
     const { data: ledgerEntries, isLoading } = useAccountLedger(
         account?.code || "",
@@ -44,7 +66,7 @@ export function AccountLedgerDialog({
                     <DialogTitle>كشف حساب — {account.code} {account.name}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
-                    <div className="flex gap-4 items-end">
+                    <div className="flex gap-4 items-end flex-wrap">
                         <div className="space-y-2">
                             <Label>من تاريخ</Label>
                             <Input
@@ -61,6 +83,16 @@ export function AccountLedgerDialog({
                                 onChange={(e) => setEndDate(e.target.value)}
                             />
                         </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-2"
+                            onClick={handleDownloadLedgerPdf}
+                            disabled={pdfLoading}
+                        >
+                            {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                            تحميل PDF
+                        </Button>
                     </div>
 
                     {isLoading ? (

@@ -35,7 +35,7 @@ export const paymentService = {
             `/payments/${id}/cancel`,
             data
         );
-        return response.data.data;
+        return response.data?.data ?? response.data ?? { success: true };
     },
 
     /** Blueprint 04: Create advance payment (no invoice) */

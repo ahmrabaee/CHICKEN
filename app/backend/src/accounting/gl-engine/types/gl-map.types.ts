@@ -23,6 +23,8 @@ export interface GLMapEntry {
   voucherDetailNo?: string | null;
   isOpening?: boolean;
   skipMerge?: boolean;
+  /** Blueprint 02: Round-off line indicator for UI */
+  isRoundOff?: boolean;
 }
 
 export interface GLPostMetadata {

@@ -120,15 +120,16 @@ export class AccountingService {
       ACCOUNT_CODES.DISCOUNTS_GIVEN, ACCOUNT_CODES.COST_OF_GOODS_SOLD, stockCode,
     ]);
     const entries: GLMapEntry[] = [];
-    if (amountPaid > 0) entries.push({ accountId: ids[ACCOUNT_CODES.CASH], debit: amountPaid, description: 'Cash received' });
+    if (amountPaid > 0) entries.push({ accountId: ids[ACCOUNT_CODES.CASH], debit: amountPaid, partyType: data.customerId ? 'customer' : undefined, partyId: data.customerId, description: 'Cash received' });
     if (amountDue > 0 && data.customerId) entries.push({ accountId: ids[ACCOUNT_CODES.ACCOUNTS_RECEIVABLE], debit: amountDue, partyType: 'customer', partyId: data.customerId, description: 'Credit sale' });
-    entries.push({ accountId: ids[ACCOUNT_CODES.SALES_REVENUE], credit: revenueAmount, description: 'Sales revenue' });
-    if (discountAmount && discountAmount > 0) entries.push({ accountId: ids[ACCOUNT_CODES.DISCOUNTS_GIVEN], debit: discountAmount, description: 'Sales discount' });
+    entries.push({ accountId: ids[ACCOUNT_CODES.SALES_REVENUE], credit: revenueAmount, partyType: data.customerId ? 'customer' : undefined, partyId: data.customerId, description: 'Sales revenue' });
+    if (discountAmount && discountAmount > 0) entries.push({ accountId: ids[ACCOUNT_CODES.DISCOUNTS_GIVEN], debit: discountAmount, partyType: data.customerId ? 'customer' : undefined, partyId: data.customerId, description: 'Sales discount' });
     if (useTax && data.taxTemplateId && (data.totalTaxAmount ?? 0) > 0) {
       const taxEntries = await this.taxEngineService.getSalesTaxGLEntries(data.taxTemplateId, data.netTotal!, 2);
-      entries.push(...taxEntries);
+      // Optional: attach party to tax entries too if needed
+      entries.push(...taxEntries.map(e => ({ ...e, partyType: data.customerId ? 'customer' as const : undefined, partyId: data.customerId })));
     }
-    entries.push({ accountId: ids[ACCOUNT_CODES.COST_OF_GOODS_SOLD], debit: totalCost, description: 'Cost of goods sold' });
+    entries.push({ accountId: ids[ACCOUNT_CODES.COST_OF_GOODS_SOLD], debit: totalCost, partyType: data.customerId ? 'customer' : undefined, partyId: data.customerId, description: 'Cost of goods sold' });
     entries.push({ accountId: ids[stockCode], credit: totalCost, description: 'Inventory reduction' });
     return entries;
   }
@@ -163,23 +164,23 @@ export class AccountingService {
   }
 
   async getPurchaseGLMap(data: {
-    totalAmount: number; amountPaid: number; stockAccountCode?: string;
+    totalAmount: number; amountPaid: number; supplierId?: number; stockAccountCode?: string;
     taxTemplateId?: number; netTotal?: number; totalTaxAmount?: number; grandTotal?: number;
   }): Promise<GLMapEntry[]> {
-    const { totalAmount, amountPaid } = data;
+    const { totalAmount, amountPaid, supplierId } = data;
     const useTax = !!(await this.isTaxEngineEnabled()) && data.taxTemplateId && data.netTotal != null && data.grandTotal != null;
     const payableTotal = useTax ? data.grandTotal! : totalAmount;
     const inventoryAmount = useTax ? data.netTotal! : totalAmount;
     const amountDue = payableTotal - amountPaid;
     const stockCode = data.stockAccountCode ?? ACCOUNT_CODES.INVENTORY;
     const ids = await this.resolveAccountIds([stockCode, ACCOUNT_CODES.CASH, ACCOUNT_CODES.ACCOUNTS_PAYABLE]);
-    const entries: GLMapEntry[] = [{ accountId: ids[stockCode], debit: inventoryAmount, description: 'Inventory purchase' }];
+    const entries: GLMapEntry[] = [{ accountId: ids[stockCode], debit: inventoryAmount, partyType: supplierId ? 'supplier' : undefined, partyId: supplierId, description: 'Inventory purchase' }];
     if (useTax && (data.totalTaxAmount ?? 0) > 0) {
       const taxEntries = await this.taxEngineService.getPurchaseTaxGLEntries(data.taxTemplateId!, data.netTotal!, 2);
-      entries.push(...taxEntries);
+      entries.push(...taxEntries.map(e => ({ ...e, partyType: supplierId ? 'supplier' as const : undefined, partyId: supplierId })));
     }
-    if (amountPaid > 0) entries.push({ accountId: ids[ACCOUNT_CODES.CASH], credit: amountPaid, description: 'Cash payment' });
-    if (amountDue > 0) entries.push({ accountId: ids[ACCOUNT_CODES.ACCOUNTS_PAYABLE], credit: amountDue, description: 'Credit purchase' });
+    if (amountPaid > 0) entries.push({ accountId: ids[ACCOUNT_CODES.CASH], credit: amountPaid, partyType: supplierId ? 'supplier' : undefined, partyId: supplierId, description: 'Cash payment' });
+    if (amountDue > 0) entries.push({ accountId: ids[ACCOUNT_CODES.ACCOUNTS_PAYABLE], credit: amountDue, partyType: supplierId ? 'supplier' : undefined, partyId: supplierId, description: 'Credit purchase' });
     return entries;
   }
 
@@ -478,6 +479,7 @@ export class AccountingService {
     data: {
       totalAmount: number;
       amountPaid: number;
+      supplierId?: number;
       stockAccountCode?: string;
     },
   ) {
@@ -512,7 +514,12 @@ export class AccountingService {
     }
 
     if (await this.isGlEngineEnabled()) {
-      const glMap = await this.getPurchaseGLMap({ totalAmount, amountPaid, stockAccountCode: data.stockAccountCode });
+      const glMap = await this.getPurchaseGLMap({
+        totalAmount,
+        amountPaid,
+        supplierId: data.supplierId,
+        stockAccountCode: data.stockAccountCode
+      });
       return this.glEngineService.post(glMap, {
         voucherType: 'purchase',
         voucherId: purchaseId,
@@ -1039,7 +1046,15 @@ export class AccountingService {
   async getJournalEntryById(id: number) {
     const entry = await this.prisma.journalEntry.findUnique({
       where: { id },
-      include: { lines: { include: { account: true, costCenter: true } }, createdBy: true },
+      include: {
+        lines: {
+          include: {
+            account: { select: { id: true, code: true, name: true, nameEn: true, accountCurrency: true } },
+            costCenter: { select: { id: true, code: true, name: true } },
+          },
+        },
+        createdBy: { select: { id: true, username: true, fullName: true } },
+      },
     });
 
     if (!entry) {
@@ -1050,7 +1065,28 @@ export class AccountingService {
       });
     }
 
-    return entry;
+    // Resolve Party names
+    const linesWithParty = await Promise.all(
+      entry.lines.map(async (line) => {
+        let partyName: string | null = null;
+        if (line.partyType === 'customer' && line.partyId) {
+          const customer = await this.prisma.customer.findUnique({
+            where: { id: line.partyId },
+            select: { name: true },
+          });
+          partyName = customer?.name ?? null;
+        } else if (line.partyType === 'supplier' && line.partyId) {
+          const supplier = await this.prisma.supplier.findUnique({
+            where: { id: line.partyId },
+            select: { name: true },
+          });
+          partyName = supplier?.name ?? null;
+        }
+        return { ...line, partyName };
+      }),
+    );
+
+    return { ...entry, lines: linesWithParty };
   }
 
   async createJournalEntry(dto: any, userId: number) {

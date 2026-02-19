@@ -62,6 +62,7 @@ import {
   useDeleteSupplier,
 } from "@/hooks/use-suppliers";
 import { Supplier } from "@/types/supplier";
+import { PdfPreviewDialog } from "@/components/reports/PdfPreviewDialog";
 
 /**
  * Format amount from minor units to display
@@ -75,7 +76,16 @@ function formatAmount(amount: number): string {
 
 // ----- Supplier Detail Card Component -----
 function SupplierDetailCard({ supplier, onClose }: { supplier: Supplier; onClose: () => void }) {
+  const [showStatementPdf, setShowStatementPdf] = useState(false);
+  const n = new Date();
+  const pdfParams = {
+    id: supplier.id,
+    startDate: new Date(n.getFullYear(), 0, 1).toISOString().slice(0, 10),
+    endDate: n.toISOString().slice(0, 10),
+    language: 'ar' as const,
+  };
   return (
+    <>
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent
         className="max-w-2xl p-0 overflow-hidden border-0 rounded-2xl shadow-2xl"
@@ -85,6 +95,15 @@ function SupplierDetailCard({ supplier, onClose }: { supplier: Supplier; onClose
         <div className="relative bg-gradient-to-l from-emerald-600 via-teal-600 to-cyan-700 p-6 pb-8">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cdefs%3E%3Cpattern%20id%3D%22a%22%20patternUnits%3D%22userSpaceOnUse%22%20width%3D%2220%22%20height%3D%2220%22%3E%3Ccircle%20cx%3D%2210%22%20cy%3D%2210%22%20r%3D%221%22%20fill%3D%22rgba(255%2C255%2C255%2C0.08)%22%2F%3E%3C%2Fpattern%3E%3C%2Fdefs%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20fill%3D%22url(%23a)%22%2F%3E%3C%2Fsvg%3E')] opacity-50" />
           <div className="relative flex items-start justify-between">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="bg-white/20 hover:bg-white/30 text-white border border-white/30 gap-2 shrink-0"
+              onClick={() => setShowStatementPdf(true)}
+            >
+              <Download className="w-4 h-4" />
+              كشف حساب PDF
+            </Button>
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 bg-white/15 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
                 <Building2 className="w-7 h-7 text-white" />
@@ -250,6 +269,16 @@ function SupplierDetailCard({ supplier, onClose }: { supplier: Supplier; onClose
         </div>
       </DialogContent>
     </Dialog>
+    {showStatementPdf && (
+      <PdfPreviewDialog
+        open={showStatementPdf}
+        onOpenChange={setShowStatementPdf}
+        reportType="supplier-statement"
+        params={pdfParams}
+        title={`كشف حساب المورد — ${supplier.name}`}
+      />
+    )}
+    </>
   );
 }
 

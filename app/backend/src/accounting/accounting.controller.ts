@@ -19,6 +19,7 @@ import { CreateAccountDto } from './chart-of-accounts/dto/create-account.dto';
 import { UpdateAccountDto } from './chart-of-accounts/dto/update-account.dto';
 import { PaginationQueryDto, Roles, CurrentUser, RolesGuard } from '../common';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
+import { getPdfContentDisposition } from '../pdf/pdf.helpers';
 import { Response } from 'express';
 
 @ApiTags('accounting')
@@ -146,7 +147,7 @@ export class AccountingController {
     const buffer = await this.accountingService.getBalanceSheetPdf(query);
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': 'attachment; filename="balance-sheet.pdf"',
+      'Content-Disposition': getPdfContentDisposition('balance-sheet.pdf', query.inline),
       'Content-Length': buffer.length.toString(),
     });
     res.end(buffer);
@@ -161,7 +162,7 @@ export class AccountingController {
     const buffer = await this.accountingService.getIncomeStatementPdf(query);
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': 'attachment; filename="income-statement.pdf"',
+      'Content-Disposition': getPdfContentDisposition('income-statement.pdf', query.inline),
       'Content-Length': buffer.length.toString(),
     });
     res.end(buffer);
@@ -175,7 +176,7 @@ export class AccountingController {
     const buffer = await this.accountingService.getTrialBalancePdf(query);
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': 'attachment; filename="trial-balance.pdf"',
+      'Content-Disposition': getPdfContentDisposition('trial-balance.pdf', query.inline),
       'Content-Length': buffer.length.toString(),
     });
     res.end(buffer);
@@ -194,7 +195,7 @@ export class AccountingController {
     const buffer = await this.accountingService.getAccountLedgerPdf(accountCode, query);
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="ledger-${accountCode}.pdf"`,
+      'Content-Disposition': getPdfContentDisposition(`ledger-${accountCode}.pdf`, query.inline),
       'Content-Length': buffer.length.toString(),
     });
     res.end(buffer);

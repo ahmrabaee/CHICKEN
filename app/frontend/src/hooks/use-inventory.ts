@@ -16,10 +16,10 @@ import { toast } from '@/hooks/use-toast';
 /**
  * Categories Hooks
  */
-export const useCategories = () => {
+export const useCategories = (includeInactive = false) => {
     return useQuery({
-        queryKey: ['categories'],
-        queryFn: () => categoryService.getCategories(),
+        queryKey: ['categories', includeInactive],
+        queryFn: () => categoryService.getCategories(includeInactive),
     });
 };
 
@@ -30,6 +30,47 @@ export const useCreateCategory = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['categories'] });
             toast({ title: 'تم إضافة التصنيف بنجاح' });
+        },
+    });
+};
+
+export const useUpdateCategory = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }: { id: number; data: Partial<Category> }) =>
+            categoryService.updateCategory(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['categories'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory'] });
+            queryClient.invalidateQueries({ queryKey: ['items'] });
+            toast({ title: 'تم تحديث التصنيف بنجاح' });
+        },
+        onError: (error: any) => {
+            toast({
+                variant: 'destructive',
+                title: 'خطأ في تحديث التصنيف',
+                description: error.response?.data?.messageAr || 'حدث خطأ غير متوقع',
+            });
+        },
+    });
+};
+
+export const useDeleteCategory = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: number) => categoryService.deleteCategory(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['categories'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory'] });
+            queryClient.invalidateQueries({ queryKey: ['items'] });
+            toast({ title: 'تم حذف التصنيف بنجاح' });
+        },
+        onError: (error: any) => {
+            toast({
+                variant: 'destructive',
+                title: 'خطأ في حذف التصنيف',
+                description: error.response?.data?.messageAr || 'حدث خطأ غير متوقع',
+            });
         },
     });
 };

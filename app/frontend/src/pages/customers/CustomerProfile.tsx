@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,6 +22,7 @@ import {
     FileText,
     Hash,
     Percent,
+    Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +54,7 @@ import {
     useDeleteCustomer,
 } from "@/hooks/use-customers";
 import { PriceLevel } from "@/types/customer";
+import { PdfPreviewDialog } from "@/components/reports/PdfPreviewDialog";
 
 // Zod schema for form validation
 const customerSchema = z.object({
@@ -92,6 +94,7 @@ export default function CustomerProfile() {
     const navigate = useNavigate();
     const isEditing = !!id;
     const customerId = isEditing ? parseInt(id!) : 0;
+    const [showStatementPdf, setShowStatementPdf] = useState(false);
 
     // Fetch existing customer data
     const { data: existingCustomer, isLoading: isFetching } = useCustomer(customerId);
@@ -225,15 +228,26 @@ export default function CustomerProfile() {
                 </div>
                 <div className="flex items-center gap-3">
                     {isEditing && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-rose-600 border-rose-200 hover:bg-rose-50"
-                            onClick={handleDelete}
-                        >
-                            <Trash2 className="w-4 h-4 ml-2" />
-                            حذف العميل
-                        </Button>
+                        <>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-2"
+                                onClick={() => setShowStatementPdf(true)}
+                            >
+                                <Download className="w-4 h-4" />
+                                كشف حساب PDF
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-rose-600 border-rose-200 hover:bg-rose-50"
+                                onClick={handleDelete}
+                            >
+                                <Trash2 className="w-4 h-4 ml-2" />
+                                حذف العميل
+                            </Button>
+                        </>
                     )}
                     <Button
                         onClick={form.handleSubmit(onSubmit)}
@@ -616,6 +630,20 @@ export default function CustomerProfile() {
                     </Card>
                 </div>
             </div>
+            {isEditing && existingCustomer && showStatementPdf && (
+                <PdfPreviewDialog
+                    open={showStatementPdf}
+                    onOpenChange={setShowStatementPdf}
+                    reportType="customer-statement"
+                    params={{
+                        id: customerId,
+                        startDate: new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10),
+                        endDate: new Date().toISOString().slice(0, 10),
+                        language: "ar",
+                    }}
+                    title={`كشف حساب الزبون — ${existingCustomer.name}`}
+                />
+            )}
         </div>
     );
 }

@@ -8,6 +8,8 @@ export interface Category {
     nameEn?: string;
     description?: string;
     itemCount?: number;
+    displayOrder?: number;
+    isActive?: boolean;
 }
 
 export interface ItemInventorySummary {

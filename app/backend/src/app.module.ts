@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import * as path from 'path';
 
 // Core modules
 import { PrismaModule } from './prisma/prisma.module';
@@ -31,13 +32,17 @@ import { ReportsModule } from './reports/reports.module';
 import { SettingsModule } from './settings/settings.module';
 import { AuditModule } from './audit/audit.module';
 import { PdfModule } from './pdf/pdf.module';
+import { BackupModule } from './modules/backup/backup.module';
 
 @Module({
   imports: [
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: [
+        path.resolve(__dirname, '..', '.env'),
+        '.env',
+      ],
     }),
 
     // Database
@@ -64,6 +69,7 @@ import { PdfModule } from './pdf/pdf.module';
     SettingsModule,
     AuditModule,
     PdfModule,
+    BackupModule,
   ],
   providers: [
     // Global exception filter

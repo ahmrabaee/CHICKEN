@@ -7,9 +7,6 @@ console.log('🔧 Axios configured with base URL:', API_BASE_URL);
 
 const axiosInstance = axios.create({
     baseURL: API_BASE_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
     withCredentials: true, // Important for CORS with credentials
 });
 
@@ -34,6 +31,14 @@ const processQueue = (error: AxiosError | null = null) => {
 // Request interceptor: Add access token to all requests
 axiosInstance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
+        if (typeof FormData !== 'undefined' && config.data instanceof FormData && config.headers) {
+            // Let the browser set multipart boundaries for FormData uploads.
+            if (typeof (config.headers as { set?: (name: string, value?: string) => void }).set === 'function') {
+                (config.headers as { set: (name: string, value?: string) => void }).set('Content-Type', undefined);
+            } else {
+                delete (config.headers as Record<string, unknown>)['Content-Type'];
+            }
+        }
         console.log(`🌐 [Request] ${config.method?.toUpperCase()} ${config.url}`, config.data);
         const token = getAccessToken();
         if (token && config.headers) {

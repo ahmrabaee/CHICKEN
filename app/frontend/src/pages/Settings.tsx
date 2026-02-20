@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Save, Upload, User, Bell, Printer, Globe, Key, Check, X, Calculator, Receipt } from "lucide-react";
+import { Save, Upload, User, Bell, Printer, Globe, Key, Check, X, Calculator, Receipt, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { authService } from "@/services/auth.service";
 import { AccountingSettingsTab } from "@/components/settings/AccountingSettingsTab";
 import { TaxTemplatesTab } from "@/components/settings/TaxTemplatesTab";
+import { BackupSettingsTab } from "@/features/backup/components/BackupSettingsTab";
 
 const changePasswordSchema = z.object({
   oldPassword: z.string().min(1, "كلمة المرور الحالية مطلوبة"),
@@ -110,7 +111,7 @@ export default function Settings() {
 
       {/* Tabs */}
       <Tabs defaultValue="shop" className="space-y-6" dir="rtl">
-        <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-4 gap-2 sm:grid-cols-8">
           <TabsTrigger value="shop" className="gap-2">
             <Globe className="w-4 h-4" />
             المحل
@@ -138,6 +139,10 @@ export default function Settings() {
           <TabsTrigger value="notifications" className="gap-2">
             <Bell className="w-4 h-4" />
             الإشعارات
+          </TabsTrigger>
+          <TabsTrigger value="backup" className="gap-2">
+            <Database className="w-4 h-4" />
+            النسخ الاحتياطي
           </TabsTrigger>
         </TabsList>
 
@@ -483,6 +488,11 @@ export default function Settings() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Backup Settings */}
+        <TabsContent value="backup" className="space-y-6">
+          <BackupSettingsTab />
         </TabsContent>
       </Tabs>
     </div>

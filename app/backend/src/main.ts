@@ -90,6 +90,7 @@ async function bootstrap() {
     .addTag('reports', 'Reports & analytics')
     .addTag('settings', 'System configuration')
     .addTag('audit', 'Audit logs')
+    .addTag('backup', 'Backup management')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -105,7 +106,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  
+
   console.log(`
 ╔══════════════════════════════════════════════════════════╗
 ║           Chicken Shop POS API Server                    ║

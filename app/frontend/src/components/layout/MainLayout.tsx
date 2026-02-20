@@ -2,12 +2,14 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { AppSidebar } from "./AppSidebar";
 import { cn } from "@/lib/utils";
+import { BackupAutoSyncAgent } from "@/features/backup/components/BackupAutoSyncAgent";
 
 export function MainLayout() {
   const [sidebarCollapsed] = useState(false);
 
   return (
     <div dir="rtl" className="min-h-screen bg-background">
+      <BackupAutoSyncAgent />
       <AppSidebar />
       <main
         className={cn(

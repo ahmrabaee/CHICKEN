@@ -1214,3 +1214,25 @@ model CostCenter {
   @@index([companyId])
   @@map("cost_centers")
 }
+
+// =============================================================================
+// SECTION: BACKUP SUBSYSTEM
+// =============================================================================
+
+/// Tracks every backup run (auto or manual)
+model BackupRun {
+  id              Int       @id @default(autoincrement())
+  type            String    // "auto" | "manual"
+  status          String    // "running" | "success" | "failed"
+  startedAt       DateTime  @default(now()) @map("started_at")
+  finishedAt      DateTime? @map("finished_at")
+  filename        String?
+  sizeBytes       Int?      @map("size_bytes")
+  checksumSha256  String?   @map("checksum_sha256")
+  errorMessage    String?   @map("error_message")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@index([type, status])
+  @@index([startedAt])
+  @@map("backup_runs")
+}

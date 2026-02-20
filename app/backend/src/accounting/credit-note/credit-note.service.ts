@@ -201,8 +201,8 @@ export class CreditNoteService {
     return p;
   }
 
-  private async getAccountId(tx: any, code: string): Promise<number> {
-    const acc = await tx.account.findUnique({ where: { code } });
+  private async getAccountId(tx: any, code: string, companyId: number | null = 1): Promise<number> {
+    const acc = await tx.account.findFirst({ where: { code, companyId } });
     if (!acc) throw new Error(`Account ${code} not found`);
     return acc.id;
   }

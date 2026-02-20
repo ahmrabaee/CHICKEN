@@ -556,10 +556,10 @@ async function seedDefaultBranch(): Promise<void> {
     },
   });
 
-  // Blueprint 06: Set default stock account (1130) for branches
+  // Blueprint 06: Set default stock account (1131) for branches - MUST be leaf (isGroup=false), not 1130 which is a group
   const company = await prisma.company.findFirst({ where: { code: 'DEFAULT' } });
   const stockAccount = company
-    ? await prisma.account.findFirst({ where: { code: '1130', companyId: company.id } })
+    ? await prisma.account.findFirst({ where: { code: '1131', companyId: company.id } })
     : null;
   if (stockAccount) {
     await prisma.branch.updateMany({

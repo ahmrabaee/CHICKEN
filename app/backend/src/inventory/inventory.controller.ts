@@ -5,6 +5,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery }
 import { InventoryService } from './inventory.service';
 import { CreateAdjustmentDto, InventoryQueryDto } from './dto';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
+import { getPdfContentDisposition } from '../pdf/pdf.helpers';
 import { Response } from 'express';
 import { Roles, RolesGuard, CurrentUser, CurrentUserData, PaginationQueryDto } from '../common';
 
@@ -26,7 +27,7 @@ export class InventoryController {
     const buffer = await this.inventoryService.getInventoryReportPdf(query);
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': 'attachment; filename="inventory-report.pdf"',
+      'Content-Disposition': getPdfContentDisposition('inventory-report.pdf', query.inline),
       'Content-Length': buffer.length.toString(),
     });
     res.end(buffer);

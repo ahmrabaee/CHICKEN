@@ -4,9 +4,10 @@ import { AccountTreeBuilderService } from './account-tree-builder.service';
 import { AccountValidatorService } from './account-validator.service';
 import { PreventGroupPostingGuard } from './prevent-group-posting.guard';
 import { ChartOfAccountsService } from './chart-of-accounts.service';
+import { AccountController } from './account.controller';
 
 @Module({
-  controllers: [],
+  controllers: [AccountController],
   providers: [
     AccountRepository,
     AccountTreeBuilderService,
@@ -16,4 +17,4 @@ import { ChartOfAccountsService } from './chart-of-accounts.service';
   ],
   exports: [ChartOfAccountsService, AccountRepository, PreventGroupPostingGuard, AccountTreeBuilderService],
 })
-export class ChartOfAccountsModule {}
+export class ChartOfAccountsModule { }

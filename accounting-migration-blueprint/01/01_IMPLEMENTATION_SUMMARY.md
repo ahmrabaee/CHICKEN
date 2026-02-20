@@ -65,3 +65,5 @@ npx prisma migrate reset
 
 ## الفرونت اند
 - خطة التنفيذ التفصيلية: `01_FRONTEND_IMPLEMENTATION_PLAN.md`
+- **JournalEntryProfile:** صفحة كاملة لإنشاء قيود يدوية (`/accounting/journal/new`) مع DatePicker وحسابات قابلة للقيد فقط
+- **AccountLedgerDialog:** عرض كشف حساب (دفتر الأستاذ) من نافذة تفاصيل الحساب — زر "كشف حساب"

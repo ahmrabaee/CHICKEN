@@ -6,6 +6,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@ne
 import { SalesService } from './sales.service';
 import { CreateSaleDto, VoidSaleDto, AddPaymentDto, SaleQueryDto } from './dto';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
+import { getPdfContentDisposition } from '../pdf/pdf.helpers';
 import { Roles, RolesGuard, CurrentUser, CurrentUserData, PaginationQueryDto } from '../common';
 
 @ApiTags('sales')
@@ -31,7 +32,7 @@ export class SalesController {
     const buffer = await this.salesService.getSalesReportPdf(query);
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': 'attachment; filename="sales-report.pdf"',
+      'Content-Disposition': getPdfContentDisposition('sales-report.pdf', query.inline),
       'Content-Length': buffer.length.toString(),
     });
     res.end(buffer);
@@ -62,7 +63,7 @@ export class SalesController {
     const buffer = await this.salesService.getInvoicePdf(id, query);
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="invoice-${id}.pdf"`,
+      'Content-Disposition': getPdfContentDisposition(`invoice-${id}.pdf`, query.inline),
       'Content-Length': buffer.length.toString(),
     });
     res.end(buffer);
@@ -71,8 +72,8 @@ export class SalesController {
   @Post()
   @ApiOperation({ summary: 'Create new sale (POS transaction)' })
   @ApiResponse({ status: 201, description: 'Sale created successfully' })
-  async create(@Body() dto: CreateSaleDto, @CurrentUser() user: any) {
-    return this.salesService.create(dto, user.id, user.branchId);
+  async create(@Body() dto: CreateSaleDto, @CurrentUser() user: CurrentUserData) {
+    return this.salesService.create(dto, user.id, user.roles ?? [], user.branchId);
   }
 
 

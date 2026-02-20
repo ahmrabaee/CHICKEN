@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,6 +20,7 @@ import {
     Info,
     History,
     Trash2,
+    Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,6 +58,7 @@ import {
     useDeleteSupplier,
 } from "@/hooks/use-suppliers";
 import { CreateSupplierDto } from "@/types/supplier";
+import { PdfPreviewDialog } from "@/components/reports/PdfPreviewDialog";
 
 /**
  * Build API payload: only send optional fields when they have values.
@@ -115,6 +117,7 @@ export default function SupplierProfile() {
     const navigate = useNavigate();
     const isEditMode = !!id;
     const supplierId = isEditMode ? parseInt(id) : 0;
+    const [showStatementPdf, setShowStatementPdf] = useState(false);
 
     // Data fetching & Mutations
     const { data: existingSupplier, isLoading: isFetching } = useSupplier(supplierId);
@@ -231,15 +234,26 @@ export default function SupplierProfile() {
                 </div>
                 <div className="flex items-center gap-3">
                     {isEditMode && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-rose-600 border-rose-200 hover:bg-rose-50"
-                            onClick={handleDelete}
-                        >
-                            <Trash2 className="w-4 h-4 ml-2" />
-                            حذف المورد
-                        </Button>
+                        <>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-2"
+                                onClick={() => setShowStatementPdf(true)}
+                            >
+                                <Download className="w-4 h-4" />
+                                كشف حساب PDF
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-rose-600 border-rose-200 hover:bg-rose-50"
+                                onClick={handleDelete}
+                            >
+                                <Trash2 className="w-4 h-4 ml-2" />
+                                حذف المورد
+                            </Button>
+                        </>
                     )}
                     <Button
                         onClick={form.handleSubmit(onSubmit)}
@@ -658,6 +672,20 @@ export default function SupplierProfile() {
                     </Card>
                 </div>
             </div>
+            {isEditMode && existingSupplier && showStatementPdf && (
+                <PdfPreviewDialog
+                    open={showStatementPdf}
+                    onOpenChange={setShowStatementPdf}
+                    reportType="supplier-statement"
+                    params={{
+                        id: supplierId,
+                        startDate: new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10),
+                        endDate: new Date().toISOString().slice(0, 10),
+                        language: "ar",
+                    }}
+                    title={`كشف حساب المورد — ${existingSupplier.name}`}
+                />
+            )}
         </div>
     );
 }

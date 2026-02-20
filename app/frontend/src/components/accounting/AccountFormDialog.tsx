@@ -20,7 +20,8 @@ interface AccountFormDialogProps {
     mode: "create" | "edit";
     account?: Account | null;
     parentAccounts: Account[];
-    onSuccess?: () => void;
+    onSuccess?: (newAccount?: Account) => void;
+    onRefetch?: () => void | Promise<void>;
 }
 
 const defaultValues: CreateAccountDto = {
@@ -38,14 +39,18 @@ export function AccountFormDialog({
     account,
     parentAccounts,
     onSuccess,
+    onRefetch,
 }: AccountFormDialogProps) {
     const [code, setCode] = useState(defaultValues.code);
     const [name, setName] = useState(defaultValues.name);
+    const [nameEn, setNameEn] = useState("");
     const [accountType, setAccountType] = useState<string>(defaultValues.accountType);
     const [parentId, setParentId] = useState<number | null>(null);
     const [isGroup, setIsGroup] = useState(defaultValues.isGroup);
     const [isActive, setIsActive] = useState(true);
     const [freezeAccount, setFreezeAccount] = useState(false);
+    const [balanceMustBe, setBalanceMustBe] = useState<string>("__none");
+    const [accountCurrency, setAccountCurrency] = useState("");
 
     const createMutation = useCreateAccount();
     const updateMutation = useUpdateAccount();
@@ -56,32 +61,49 @@ export function AccountFormDialog({
             if (mode === "edit" && account) {
                 setCode(account.code);
                 setName(account.name);
+                setNameEn(account.nameEn ?? "");
                 setAccountType(account.accountType || "Other");
                 setParentId(account.parentId ?? null);
                 setIsGroup(account.isGroup ?? false);
                 setIsActive(account.isActive ?? true);
                 setFreezeAccount(account.freezeAccount ?? false);
+                setBalanceMustBe(account.balanceMustBe ?? "__none");
+                setAccountCurrency(account.accountCurrency ?? "");
             } else {
                 setCode(defaultValues.code);
                 setName(defaultValues.name);
+                setNameEn("");
                 setAccountType(defaultValues.accountType);
                 setParentId(defaultValues.parentId ?? null);
                 setIsGroup(defaultValues.isGroup);
                 setIsActive(true);
                 setFreezeAccount(false);
+                setBalanceMustBe("__none");
+                setAccountCurrency("");
             }
         }
     }, [open, mode, account]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const balanceVal = balanceMustBe === "__none" ? undefined : balanceMustBe as "Debit" | "Credit";
         if (mode === "create") {
             createMutation.mutate(
-                { code, name, accountType, parentId: parentId || undefined, isGroup },
                 {
-                    onSuccess: () => {
+                    code,
+                    name,
+                    nameEn: nameEn || undefined,
+                    accountType,
+                    parentId: parentId || undefined,
+                    isGroup,
+                    balanceMustBe: balanceVal,
+                    accountCurrency: accountCurrency || undefined,
+                },
+                {
+                    onSuccess: async (newAccount) => {
+                        await onRefetch?.();
                         onOpenChange(false);
-                        onSuccess?.();
+                        onSuccess?.(newAccount);
                     },
                 }
             );
@@ -91,17 +113,21 @@ export function AccountFormDialog({
                     id: account.id,
                     data: {
                         name,
+                        nameEn: nameEn || undefined,
                         accountType,
                         parentId: parentId ?? undefined,
                         isGroup,
                         isActive,
                         freezeAccount,
+                        balanceMustBe: balanceVal,
+                        accountCurrency: accountCurrency || undefined,
                     },
                 },
                 {
-                    onSuccess: () => {
+                    onSuccess: async (updatedAccount) => {
+                        await onRefetch?.();
                         onOpenChange(false);
-                        onSuccess?.();
+                        onSuccess?.(updatedAccount);
                     },
                 }
             );
@@ -132,6 +158,9 @@ export function AccountFormDialog({
                                     disabled={mode === "edit"}
                                     className="font-mono"
                                 />
+                                {mode === "edit" && (
+                                    <p className="text-xs text-muted-foreground">لا يمكن تغيير الكود بعد الإنشاء</p>
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="name">اسم الحساب</Label>
@@ -143,6 +172,18 @@ export function AccountFormDialog({
                                     required
                                 />
                             </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="nameEn">الاسم بالإنجليزية</Label>
+                            <Input
+                                id="nameEn"
+                                value={nameEn}
+                                onChange={(e) => setNameEn(e.target.value)}
+                                placeholder="Account name in English"
+                                dir="ltr"
+                                className="text-left"
+                            />
                         </div>
 
                         <div className="space-y-2">
@@ -179,6 +220,34 @@ export function AccountFormDialog({
                                     ))}
                                 </SelectContent>
                             </Select>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="balanceMustBe">اتجاه الرصيد</Label>
+                                <Select value={balanceMustBe} onValueChange={setBalanceMustBe}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="بدون تقييد" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="__none">بدون تقييد</SelectItem>
+                                        <SelectItem value="Debit">مدين فقط</SelectItem>
+                                        <SelectItem value="Credit">دائن فقط</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="accountCurrency">عملة الحساب</Label>
+                                <Input
+                                    id="accountCurrency"
+                                    value={accountCurrency}
+                                    onChange={(e) => setAccountCurrency(e.target.value.toUpperCase())}
+                                    placeholder="مثال: SAR"
+                                    maxLength={3}
+                                    dir="ltr"
+                                    className="font-mono text-left"
+                                />
+                            </div>
                         </div>
 
                         <div className="flex items-center justify-between gap-4">

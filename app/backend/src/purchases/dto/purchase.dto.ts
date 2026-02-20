@@ -47,6 +47,11 @@ export class CreatePurchaseDto {
   @IsOptional()
   taxAmount?: number;
 
+  @ApiPropertyOptional({ description: 'Amount paid in minor units' })
+  @IsNumber()
+  @IsOptional()
+  amountPaid?: number;
+
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
@@ -76,4 +81,4 @@ export class ReceivePurchaseDto {
   lines: ReceiveLineDto[];
 }
 
-export class UpdatePurchaseDto extends PartialType(CreatePurchaseDto) {}
+export class UpdatePurchaseDto extends PartialType(CreatePurchaseDto) { }

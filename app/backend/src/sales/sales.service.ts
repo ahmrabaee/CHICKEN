@@ -249,7 +249,7 @@ export class SalesService {
     return this.pdfService.generate(options);
   }
 
-  async create(dto: CreateSaleDto, cashierId: number, userRoles: string[]) {
+  async create(dto: CreateSaleDto, cashierId: number, userRoles: string[], branchId?: number) {
     const isAdmin = userRoles.includes('admin');
     const maxDiscountPct = isAdmin ? 10000 : 500; // Admin unlimited, cashier 5%
 
@@ -373,6 +373,7 @@ export class SalesService {
           customerName: customer?.name ?? dto.customerName ?? null,
           customerPhone: customer?.phone ?? dto.customerPhone ?? null,
           cashierId,
+          branchId: branchId ?? undefined,
           grossTotalAmount: grossTotal,
           discountAmount: totalDiscount,
           discountPct: dto.discountPct,

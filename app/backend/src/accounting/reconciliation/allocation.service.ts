@@ -195,8 +195,8 @@ export class AllocationService {
     }
   }
 
-  private async getAccountIdByCode(code: string, db: any): Promise<number> {
-    const acc = await db.account.findUnique({ where: { code } });
+  private async getAccountIdByCode(code: string, db: any, companyId: number | null = 1): Promise<number> {
+    const acc = await db.account.findFirst({ where: { code, companyId } });
     if (!acc) throw new Error(`Account ${code} not found`);
     return acc.id;
   }

@@ -72,8 +72,10 @@ export interface CancelPaymentDto {
 export interface RecordPurchasePaymentDto {
     purchaseId: number;
     amount: number;
-    paymentMethod: 'cash' | 'card' | 'bank_transfer' | 'check';
+    paymentMethod: string;
     referenceNumber?: string;
+    receiptNumber?: string;
+    paymentDate?: string;
     notes?: string;
 }
 

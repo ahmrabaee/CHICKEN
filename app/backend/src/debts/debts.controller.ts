@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
+import { getPdfContentDisposition } from '../pdf/pdf.helpers';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { DebtsService } from './debts.service';
 import { DebtQueryDto } from './dto/debt.dto';
@@ -33,7 +34,7 @@ export class DebtsController {
     const buffer = await this.debtsService.getReceivablesPdf(query);
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': 'attachment; filename="receivables-report.pdf"',
+      'Content-Disposition': getPdfContentDisposition('receivables-report.pdf', query.inline),
       'Content-Length': buffer.length.toString(),
     });
     res.end(buffer);
@@ -55,7 +56,7 @@ export class DebtsController {
     const buffer = await this.debtsService.getPayablesPdf(query);
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': 'attachment; filename="payables-report.pdf"',
+      'Content-Disposition': getPdfContentDisposition('payables-report.pdf', query.inline),
       'Content-Length': buffer.length.toString(),
     });
     res.end(buffer);

@@ -18,6 +18,8 @@ import { DocumentStatusBadge } from "@/components/posting";
 import { usePurchases, usePurchase } from "@/hooks/use-purchases";
 import { Purchase } from "@/types/purchases";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "@/hooks/use-toast";
+import { downloadReportPdf } from "@/services/pdf.service";
 import { reconciliationService } from "@/services/reconciliation.service";
 import { creditNoteService } from "@/services/credit-note.service";
 import { CreditNoteCreateDialog } from "@/components/credit-note/CreditNoteCreateDialog";
@@ -60,6 +62,19 @@ function getPaymentBadge(status: string) {
 function PurchaseDetailCard({ purchaseId, open, onClose }: { purchaseId: number; open: boolean; onClose: () => void }) {
   const { data: purchase, isLoading } = usePurchase(purchaseId);
   const [showCreditNoteDialog, setShowCreditNoteDialog] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const handleDownloadOrderPdf = async () => {
+    setPdfLoading(true);
+    try {
+      await downloadReportPdf("purchase-order", { id: purchaseId, language: "ar" });
+      toast({ title: "تم التحميل", description: "تم تحميل أمر الشراء بنجاح" });
+    } catch {
+      toast({ variant: "destructive", title: "فشل التحميل", description: "تعذر تحميل ملف PDF" });
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   const { data: outstandingData } = useQuery({
     queryKey: ["reconciliation", "outstanding", "purchase", purchaseId],
@@ -92,14 +107,28 @@ function PurchaseDetailCard({ purchaseId, open, onClose }: { purchaseId: number;
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold flex items-center gap-3 flex-row-reverse">
-            تفاصيل أمر الشراء {purchase?.purchaseNumber || ""}
-            <DocumentStatusBadge
-              docstatus={purchase?.docstatus}
-              isVoided={purchase?.status === "cancelled"}
-              isApproved={purchase?.status === "received" || purchase?.status === "partial" || purchase?.status === "ordered"}
-            />
-          </DialogTitle>
+          <div className="flex items-center justify-between gap-4 flex-row-reverse">
+            <DialogTitle className="text-xl font-bold flex items-center gap-3 flex-row-reverse">
+              تفاصيل أمر الشراء {purchase?.purchaseNumber || ""}
+              <DocumentStatusBadge
+                docstatus={purchase?.docstatus}
+                isVoided={purchase?.status === "cancelled"}
+                isApproved={purchase?.status === "received" || purchase?.status === "partial" || purchase?.status === "ordered"}
+              />
+            </DialogTitle>
+            {purchase && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 shrink-0"
+                onClick={handleDownloadOrderPdf}
+                disabled={pdfLoading}
+              >
+                {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                تحميل PDF
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
         {isLoading ? (
@@ -364,10 +393,23 @@ export default function Purchasing() {
                     <TableCell className="font-mono text-sm">{purchase.purchaseNumber}</TableCell>
                     <TableCell className="font-medium">{purchase.supplierName}</TableCell>
                     <TableCell className="text-center text-muted-foreground">{formatDate(purchase.purchaseDate)}</TableCell>
-                    <TableCell className="text-center font-semibold">{formatCurrency(purchase.grandTotal)}</TableCell>
-                    <TableCell className="text-center text-green-600 dark:text-green-400">{formatCurrency(purchase.amountPaid)}</TableCell>
-                    <TableCell className="text-center">{getStatusBadge(purchase.status)}</TableCell>
-                    <TableCell className="text-center">{getPaymentBadge(purchase.paymentStatus)}</TableCell>
+                    <TableCell className="text-center font-semibold">{formatCurrency(purchase.grandTotal || purchase.totalAmount)}</TableCell>
+                    <TableCell className="text-center text-green-600 dark:text-green-400">{formatCurrency(purchase.amountPaid || 0)}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        {getStatusBadge(purchase.status)}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        {getPaymentBadge(purchase.paymentStatus)}
+                        {(purchase.grandTotal || purchase.totalAmount) - (purchase.amountPaid || 0) > 0 && (
+                          <span className="text-[10px] text-red-500 font-english" dir="ltr">
+                            -{formatCurrency((purchase.grandTotal || purchase.totalAmount) - (purchase.amountPaid || 0))}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">
                         <Button variant="ghost" size="icon" className="h-8 w-8" title="عرض التفاصيل"

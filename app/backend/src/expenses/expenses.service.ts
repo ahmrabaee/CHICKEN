@@ -85,6 +85,37 @@ export class ExpensesService {
         dto.paymentMethod,
       );
 
+      // Create debt record if on credit
+      if (dto.paymentMethod === 'credit') {
+        const supplier = dto.supplierId
+          ? await tx.supplier.findUnique({ where: { id: dto.supplierId } })
+          : null;
+
+        await tx.debt.create({
+          data: {
+            debtNumber: `DEB-${expense.expenseNumber}`,
+            direction: 'payable',
+            partyType: 'supplier',
+            partyId: dto.supplierId ?? null,
+            partyName: supplier?.name ?? 'Other Supplier',
+            sourceType: 'expense',
+            sourceId: expense.id,
+            totalAmount: dto.amount,
+            amountPaid: 0,
+            dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
+            status: 'open',
+            branchId: dto.branchId,
+          },
+        });
+
+        if (dto.supplierId) {
+          await tx.supplier.update({
+            where: { id: dto.supplierId },
+            data: { currentBalance: { increment: dto.amount } },
+          });
+        }
+      }
+
       return expense;
     });
   }

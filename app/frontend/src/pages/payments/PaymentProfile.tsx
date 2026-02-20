@@ -511,8 +511,10 @@ export default function PaymentProfile() {
                 await recordPurchasePayment.mutateAsync({
                     purchaseId: refId,
                     amount: amountMinor,
-                    paymentMethod: values.paymentMethod as any,
+                    paymentMethod: values.paymentMethod,
                     referenceNumber: values.receiptNumber,
+                    receiptNumber: values.receiptNumber,
+                    paymentDate: values.paymentDate,
                     notes: values.notes,
                 });
             }
@@ -665,10 +667,10 @@ export default function PaymentProfile() {
                                                                     {form.watch("partyType") === "customer"
                                                                         ? (customersData?.data || []).map((c: { id: number; name: string }) => (
                                                                             <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
-                                                                          ))
+                                                                        ))
                                                                         : (suppliersData?.data || []).map((s: { id: number; name: string }) => (
                                                                             <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
-                                                                          ))}
+                                                                        ))}
                                                                 </SelectContent>
                                                             </Select>
                                                         </FormItem>
@@ -676,76 +678,76 @@ export default function PaymentProfile() {
                                                 />
                                             </>
                                         ) : (
-                                        <FormField
-                                            control={form.control}
-                                            name="referenceId"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>{paymentType === "sale" ? "فاتورة البيع *" : "أمر الشراء *"}</FormLabel>
-                                                    <Select
-                                                        onValueChange={(v) => field.onChange(v ? Number(v) : 0)}
-                                                        value={field.value ? String(field.value) : undefined}
-                                                    >
-                                                        <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder={paymentType === "sale" ? "اختر فاتورة..." : "اختر أمر شراء..."} />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent dir="rtl">
-                                                            {paymentType === "sale" ? (
-                                                                (() => {
-                                                                    const eligibleSales = (salesData?.data || []).filter(
-                                                                        (s: any) => !s.isVoided && (s.totalAmount - s.amountPaid) > 0
-                                                                    );
-                                                                    if (eligibleSales.length === 0) {
-                                                                        return (
-                                                                            <div className="px-2 py-4 text-center text-sm text-muted-foreground" dir="rtl">
-                                                                                لا توجد فواتير بمبلغ متبقٍ. أنشئ فاتورة من نقطة البيع أو المبيعات أولاً.
-                                                                            </div>
+                                            <FormField
+                                                control={form.control}
+                                                name="referenceId"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>{paymentType === "sale" ? "فاتورة البيع *" : "أمر الشراء *"}</FormLabel>
+                                                        <Select
+                                                            onValueChange={(v) => field.onChange(v ? Number(v) : 0)}
+                                                            value={field.value ? String(field.value) : undefined}
+                                                        >
+                                                            <FormControl>
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder={paymentType === "sale" ? "اختر فاتورة..." : "اختر أمر شراء..."} />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent dir="rtl">
+                                                                {paymentType === "sale" ? (
+                                                                    (() => {
+                                                                        const eligibleSales = (salesData?.data || []).filter(
+                                                                            (s: any) => !s.isVoided && (s.totalAmount - s.amountPaid) > 0
                                                                         );
-                                                                    }
-                                                                    return eligibleSales.map((s: any) => (
-                                                                        <SelectItem key={s.id} value={s.id.toString()}>
-                                                                            {s.saleNumber} - {s.customerName || "زبون"} (المتبقي: ₪{((s.totalAmount - s.amountPaid) / 100).toFixed(2)})
-                                                                        </SelectItem>
-                                                                    ));
-                                                                })()
-                                                            ) : (
-                                                                (() => {
-                                                                    const eligiblePurchases = (purchasesData?.data || []).filter(
-                                                                        (p: any) => p.status !== "cancelled" && (p.grandTotal - p.amountPaid) > 0
-                                                                    );
-                                                                    if (eligiblePurchases.length === 0) {
-                                                                        return (
-                                                                            <div className="px-2 py-4 text-center text-sm text-muted-foreground" dir="rtl">
-                                                                                لا توجد أوامر شراء بمبلغ متبقٍ. أنشئ أمر شراء أولاً.
-                                                                            </div>
+                                                                        if (eligibleSales.length === 0) {
+                                                                            return (
+                                                                                <div className="px-2 py-4 text-center text-sm text-muted-foreground" dir="rtl">
+                                                                                    لا توجد فواتير بمبلغ متبقٍ. أنشئ فاتورة من نقطة البيع أو المبيعات أولاً.
+                                                                                </div>
+                                                                            );
+                                                                        }
+                                                                        return eligibleSales.map((s: any) => (
+                                                                            <SelectItem key={s.id} value={s.id.toString()}>
+                                                                                {s.saleNumber} - {s.customerName || "زبون"} (المتبقي: ₪{((s.totalAmount - s.amountPaid) / 100).toFixed(2)})
+                                                                            </SelectItem>
+                                                                        ));
+                                                                    })()
+                                                                ) : (
+                                                                    (() => {
+                                                                        const eligiblePurchases = (purchasesData?.data || []).filter(
+                                                                            (p: any) => p.status !== "cancelled" && (p.grandTotal - p.amountPaid) > 0
                                                                         );
-                                                                    }
-                                                                    return eligiblePurchases.map((p: any) => (
-                                                                        <SelectItem key={p.id} value={p.id.toString()}>
-                                                                            {p.purchaseNumber} - {p.supplierName} (المتبقي: ₪{((p.grandTotal - p.amountPaid) / 100).toFixed(2)})
-                                                                        </SelectItem>
-                                                                    ));
-                                                                })()
-                                                            )}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    {paymentType === "sale" && (!salesData?.data?.length || (salesData.data as any[]).filter((s: any) => !s.isVoided && (s.totalAmount - s.amountPaid) > 0).length === 0) && (
-                                                        <p className="text-xs text-amber-600 mt-1">
-                                                            لا توجد فواتير بمبلغ متبقٍ. <Button type="button" variant="link" className="p-0 h-auto text-xs" onClick={() => navigate("/sales/new")}>أنشئ فاتورة من نقطة البيع</Button> أو <Button type="button" variant="link" className="p-0 h-auto text-xs" onClick={() => navigate("/sales")}>المبيعات</Button> أولاً.
-                                                        </p>
-                                                    )}
-                                                    {paymentType === "purchase" && (!purchasesData?.data?.length || (purchasesData.data as any[]).filter((p: any) => p.status !== "cancelled" && (p.grandTotal - p.amountPaid) > 0).length === 0) && (
-                                                        <p className="text-xs text-amber-600 mt-1">
-                                                            لا توجد أوامر شراء بمبلغ متبقٍ. <Button type="button" variant="link" className="p-0 h-auto text-xs" onClick={() => navigate("/purchasing")}>أنشئ أمر شراء</Button> أولاً.
-                                                        </p>
-                                                    )}
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    )}
+                                                                        if (eligiblePurchases.length === 0) {
+                                                                            return (
+                                                                                <div className="px-2 py-4 text-center text-sm text-muted-foreground" dir="rtl">
+                                                                                    لا توجد أوامر شراء بمبلغ متبقٍ. أنشئ أمر شراء أولاً.
+                                                                                </div>
+                                                                            );
+                                                                        }
+                                                                        return eligiblePurchases.map((p: any) => (
+                                                                            <SelectItem key={p.id} value={p.id.toString()}>
+                                                                                {p.purchaseNumber} - {p.supplierName} (المتبقي: ₪{((p.grandTotal - p.amountPaid) / 100).toFixed(2)})
+                                                                            </SelectItem>
+                                                                        ));
+                                                                    })()
+                                                                )}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        {paymentType === "sale" && (!salesData?.data?.length || (salesData.data as any[]).filter((s: any) => !s.isVoided && (s.totalAmount - s.amountPaid) > 0).length === 0) && (
+                                                            <p className="text-xs text-amber-600 mt-1">
+                                                                لا توجد فواتير بمبلغ متبقٍ. <Button type="button" variant="link" className="p-0 h-auto text-xs" onClick={() => navigate("/sales/new")}>أنشئ فاتورة من نقطة البيع</Button> أو <Button type="button" variant="link" className="p-0 h-auto text-xs" onClick={() => navigate("/sales")}>المبيعات</Button> أولاً.
+                                                            </p>
+                                                        )}
+                                                        {paymentType === "purchase" && (!purchasesData?.data?.length || (purchasesData.data as any[]).filter((p: any) => p.status !== "cancelled" && (p.grandTotal - p.amountPaid) > 0).length === 0) && (
+                                                            <p className="text-xs text-amber-600 mt-1">
+                                                                لا توجد أوامر شراء بمبلغ متبقٍ. <Button type="button" variant="link" className="p-0 h-auto text-xs" onClick={() => navigate("/purchasing")}>أنشئ أمر شراء</Button> أولاً.
+                                                            </p>
+                                                        )}
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>

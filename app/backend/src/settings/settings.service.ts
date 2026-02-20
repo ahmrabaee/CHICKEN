@@ -3,14 +3,24 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class SettingsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async getAll() {
     const settings = await this.prisma.systemSetting.findMany();
-    return settings.reduce((acc, s) => {
+    const settingsMap = settings.reduce((acc, s) => {
       acc[s.key] = this.parseValue(s.value, s.dataType);
       return acc;
     }, {} as Record<string, any>);
+
+    // Include company info
+    const company = await this.prisma.company.findFirst({
+      include: { roundOffAccount: true, roundOffCostCenter: true },
+    });
+
+    return {
+      ...settingsMap,
+      company: company || null,
+    };
   }
 
   async getByKey(key: string) {
@@ -36,7 +46,11 @@ export class SettingsService {
 
   async set(key: string, value: any, description?: string, dataType?: string) {
     const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
-    const detectedType = dataType ?? this.detectType(value);
+    let detectedType = dataType ?? this.detectType(value);
+    // Treat "true"/"false" strings as boolean so parseValue returns correct type on read
+    if ((value === 'true' || value === 'false') && detectedType === 'string') {
+      detectedType = 'boolean';
+    }
 
     return this.prisma.systemSetting.upsert({
       where: { key },
@@ -88,6 +102,26 @@ export class SettingsService {
       await this.set(s.key, s.value);
     }
     return { updated: settings.length };
+  }
+
+  async updateCompany(data: any) {
+    let company = await this.prisma.company.findFirst();
+    if (!company) {
+      // Create a default company if none exists (fallback)
+      company = await this.prisma.company.create({
+        data: {
+          code: 'DEFAULT',
+          name: 'Default Company',
+          ...data,
+        },
+      });
+      return company;
+    }
+
+    return this.prisma.company.update({
+      where: { id: company.id },
+      data,
+    });
   }
 
   private parseValue(value: string, dataType: string): any {

@@ -10,9 +10,11 @@ export const categoryService = {
     /**
      * List all categories
      * GET /v1/categories
+     * @param includeInactive - Include inactive categories (for admin management)
      */
-    async getCategories(): Promise<Category[]> {
-        const response = await axiosInstance.get<ApiResponse<Category[]>>('/categories');
+    async getCategories(includeInactive = false): Promise<Category[]> {
+        const params = includeInactive ? { includeInactive: 'true' } : {};
+        const response = await axiosInstance.get<ApiResponse<Category[]>>('/categories', { params });
         return response.data.data;
     },
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Eye, Loader2, Plus, Ban } from "lucide-react";
+import { Search, Eye, Loader2, Plus, Ban, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,6 +18,7 @@ import { usePayments, usePayment, useCancelPayment } from "@/hooks/use-payments"
 import { Payment } from "@/types/payments";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { downloadReportPdf } from "@/services/pdf.service";
 
 function formatCurrency(v: number) { return `₪ ${(v / 100).toFixed(2)}`; }
 function formatDate(d: string) { return new Date(d).toLocaleDateString("ar-SA", { year: "numeric", month: "short", day: "numeric" }); }
@@ -31,6 +32,19 @@ function PaymentDetailCard({ paymentId, open, onClose }: { paymentId: number; op
     const { data: payment, isLoading } = usePayment(paymentId);
     const cancelPayment = useCancelPayment();
     const [showCancelDialog, setShowCancelDialog] = useState(false);
+    const [pdfLoading, setPdfLoading] = useState(false);
+
+    const handleDownloadPdf = async () => {
+        setPdfLoading(true);
+        try {
+            await downloadReportPdf("payment-voucher", { id: paymentId, language: "ar" });
+            toast({ title: "تم التحميل", description: "تم تحميل سند الدفع بنجاح" });
+        } catch {
+            toast({ variant: "destructive", title: "فشل التحميل", description: "تعذر تحميل ملف PDF" });
+        } finally {
+            setPdfLoading(false);
+        }
+    };
     const docstatus = payment?.docstatus ?? (payment?.isVoided ? 2 : 1);
     const canCancel = docstatus === 1 && !payment?.isVoided;
 
@@ -48,10 +62,24 @@ function PaymentDetailCard({ paymentId, open, onClose }: { paymentId: number; op
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto" dir="rtl" style={{ textAlign: "right" }}>
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-bold flex items-center gap-3 flex-row-reverse">
-                        تفاصيل الدفعة {payment?.paymentNumber || ""}
-                        <DocumentStatusBadge docstatus={docstatus} isVoided={payment?.isVoided} />
-                    </DialogTitle>
+                    <div className="flex items-center justify-between gap-4 flex-row-reverse">
+                        <DialogTitle className="text-xl font-bold flex items-center gap-3 flex-row-reverse">
+                            تفاصيل الدفعة {payment?.paymentNumber || ""}
+                            <DocumentStatusBadge docstatus={docstatus} isVoided={payment?.isVoided} />
+                        </DialogTitle>
+                        {payment && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-2 shrink-0"
+                                onClick={handleDownloadPdf}
+                                disabled={pdfLoading}
+                            >
+                                {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                                تحميل PDF
+                            </Button>
+                        )}
+                    </div>
                 </DialogHeader>
                 {isLoading ? (
                     <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>

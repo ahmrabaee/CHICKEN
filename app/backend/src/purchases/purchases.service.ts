@@ -183,7 +183,13 @@ export class PurchasesService {
       }
 
       const taxAmount = dto.taxAmount ?? 0;
-      totalAmount += taxAmount;
+      const netTotal = totalAmount; // Sum of lines
+      const grandTotal = netTotal + taxAmount;
+      const amountPaid = dto.amountPaid ?? 0;
+
+      let paymentStatus = 'unpaid';
+      if (amountPaid >= grandTotal && grandTotal > 0) paymentStatus = 'paid';
+      else if (amountPaid > 0) paymentStatus = 'partial';
 
       const purchase = await tx.purchase.create({
         data: {
@@ -193,9 +199,11 @@ export class PurchasesService {
           purchaseDate: dto.purchaseDate ? new Date(dto.purchaseDate) : new Date(),
           dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
           taxAmount,
-          totalAmount,
-          paymentStatus: 'unpaid',
-          amountPaid: 0,
+          totalAmount: grandTotal, // Backward compatibility or specific use
+          netTotal,
+          grandTotal,
+          paymentStatus,
+          amountPaid,
           notes: dto.notes,
           createdById: userId,
         },
@@ -220,6 +228,94 @@ export class PurchasesService {
             pricePerKg: line.pricePerKg,
             lineTotalAmount: lineTotal,
             isLiveBird: line.isLiveBird ?? false,
+          },
+        });
+      }
+
+      // Create debt record if amount due
+      const amountDue = grandTotal - amountPaid;
+      if (amountDue > 0) {
+        await tx.debt.create({
+          data: {
+            debtNumber: `DEB-${purchase.purchaseNumber}`,
+            direction: 'payable',
+            partyType: 'supplier',
+            partyId: dto.supplierId,
+            partyName: supplier.name,
+            sourceType: 'purchase',
+            sourceId: purchase.id,
+            totalAmount: grandTotal,
+            amountPaid: amountPaid,
+            dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
+            status: paymentStatus === 'paid' ? 'paid' : 'open',
+            branchId: dto.branchId,
+          },
+        });
+
+        // Update supplier balance
+        await tx.supplier.update({
+          where: { id: dto.supplierId },
+          data: { currentBalance: { increment: amountDue } },
+        });
+
+        // Blueprint 04: PLE for payables
+        await this.paymentLedgerService.createPLEForPurchase(
+          tx,
+          purchase.id,
+          dto.supplierId,
+          grandTotal,
+          new Date(),
+          dto.dueDate ? new Date(dto.dueDate) : null,
+        );
+
+        // Create Payment + PLE when partial payment at creation (aligns Debt with PLE)
+        if (amountPaid > 0) {
+          const paymentCount = await tx.payment.count();
+          const paymentNumber = `PAY-${(paymentCount + 1).toString().padStart(6, '0')}`;
+          const now = new Date();
+          const payment = await tx.payment.create({
+            data: {
+              paymentNumber,
+              paymentDate: now,
+              amount: amountPaid,
+              paymentMethod: (dto.paymentMethod as string) ?? 'cash',
+              referenceType: 'purchase',
+              referenceId: purchase.id,
+              partyType: 'supplier',
+              partyId: dto.supplierId,
+              partyName: supplier.name,
+              receivedById: userId,
+              branchId: dto.branchId ?? purchase.branchId,
+              docstatus: 1,
+            },
+          });
+          await this.paymentLedgerService.createPLEForPaymentAgainstPurchase(
+            tx,
+            payment.id,
+            purchase.id,
+            dto.supplierId,
+            amountPaid,
+            now,
+          );
+        }
+      } else if (amountPaid > 0 && grandTotal > 0) {
+        // Full payment at creation: create Payment for audit trail (no Debt/PLE needed)
+        const paymentCount = await tx.payment.count();
+        const paymentNumber = `PAY-${(paymentCount + 1).toString().padStart(6, '0')}`;
+        await tx.payment.create({
+          data: {
+            paymentNumber,
+            paymentDate: new Date(),
+            amount: amountPaid,
+            paymentMethod: (dto.paymentMethod as string) ?? 'cash',
+            referenceType: 'purchase',
+            referenceId: purchase.id,
+            partyType: 'supplier',
+            partyId: dto.supplierId,
+            partyName: supplier.name,
+            receivedById: userId,
+            branchId: dto.branchId ?? purchase.branchId,
+            docstatus: 1,
           },
         });
       }
@@ -349,19 +445,10 @@ export class PurchasesService {
         userId,
         {
           totalAmount: totalReceivedValue,
-          amountPaid: 0, // Payment is recorded separately
+          amountPaid: Math.min(purchase.amountPaid, totalReceivedValue),
+          supplierId: purchase.supplierId,
           stockAccountCode,
         },
-      );
-
-      // Blueprint 04: PLE for payables
-      await this.paymentLedgerService.createPLEForPurchase(
-        tx,
-        purchase.id,
-        purchase.supplierId,
-        purchase.totalAmount,
-        new Date(),
-        purchase.dueDate,
       );
 
       return this.findById(id);

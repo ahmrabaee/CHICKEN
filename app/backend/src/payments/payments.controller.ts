@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
+import { getPdfContentDisposition } from '../pdf/pdf.helpers';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
 import {
@@ -33,12 +34,6 @@ export class PaymentsController {
     return this.paymentsService.findAll(query, query.type);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get payment by ID' })
-  findById(@Param('id', ParseIntPipe) id: number) {
-    return this.paymentsService.findById(id);
-  }
-
   @Get(':id/pdf')
   @ApiOperation({ summary: 'Download payment voucher PDF' })
   async getPaymentPdf(
@@ -49,7 +44,7 @@ export class PaymentsController {
     const buffer = await this.paymentsService.getPaymentPdf(id, query);
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="payment-${id}.pdf"`,
+      'Content-Disposition': getPdfContentDisposition(`payment-${id}.pdf`, query.inline),
       'Content-Length': buffer.length.toString(),
     });
     res.end(buffer);
@@ -84,5 +79,11 @@ export class PaymentsController {
     @CurrentUser() user: any,
   ) {
     return this.paymentsService.cancelPayment(id, dto.reason, user.id);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get payment by ID' })
+  findById(@Param('id', ParseIntPipe) id: number) {
+    return this.paymentsService.findById(id);
   }
 }

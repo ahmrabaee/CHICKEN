@@ -124,18 +124,17 @@ export class PaymentsService {
       });
     }
 
-    // Get existing payments for this sale
-    const existingPayments = await this.prisma.payment.findMany({
-      where: { referenceType: 'sale', referenceId: dto.saleId, isVoided: false },
-    });
-    const paidAmount = existingPayments.reduce((sum: number, p) => sum + p.amount, 0);
-    const amountDue = sale.totalAmount - paidAmount;
+    // Use sale.amountPaid as the base for amount due calculation
+    const currentPaidAmount = sale.amountPaid ?? 0;
+    const totalAmount = sale.totalAmount;
+    const amountDue = totalAmount - currentPaidAmount;
 
     if (dto.amount > amountDue) {
+      const fmt = (n: number) => (n / 100).toFixed(2);
       throw new BadRequestException({
         code: 'OVERPAYMENT',
-        message: 'Payment amount exceeds amount due',
-        messageAr: 'مبلغ الدفع يتجاوز المبلغ المستحق',
+        message: `Payment amount (${fmt(dto.amount)} ₪) exceeds amount due (${fmt(amountDue)} ₪)`,
+        messageAr: `مبلغ الدفع (${fmt(dto.amount)} ₪) يتجاوز المبلغ المستحق (${fmt(amountDue)} ₪)`,
       });
     }
 
@@ -153,7 +152,7 @@ export class PaymentsService {
           partyType: sale.customerId ? 'customer' : null,
           partyId: sale.customerId,
           partyName: sale.customerName,
-          receiptNumber: dto.receiptNumber,
+          receiptNumber: dto.referenceNumber,
           receivedById: userId,
           branchId: sale.branchId,
           notes: dto.notes,
@@ -162,14 +161,14 @@ export class PaymentsService {
       });
 
       // Update sale payment status
-      const newPaidAmount = paidAmount + dto.amount;
-      const paymentStatus = newPaidAmount >= sale.totalAmount ? 'paid'
+      const newPaidAmount = currentPaidAmount + dto.amount;
+      const paymentStatus = newPaidAmount >= totalAmount ? 'paid'
         : newPaidAmount > 0 ? 'partial' : 'unpaid';
 
       await tx.sale.update({
         where: { id: dto.saleId },
         data: {
-          amountPaid: newPaidAmount,
+          amountPaid: { increment: dto.amount },
           paymentStatus,
         },
       });
@@ -222,18 +221,18 @@ export class PaymentsService {
       });
     }
 
-    // Get existing payments for this purchase
-    const existingPayments = await this.prisma.payment.findMany({
-      where: { referenceType: 'purchase', referenceId: dto.purchaseId, isVoided: false },
-    });
-    const paidAmount = existingPayments.reduce((sum: number, p) => sum + p.amount, 0);
-    const amountDue = purchase.totalAmount - paidAmount;
+    // Use purchase.amountPaid as the base for amount due calculation
+    // This accounts for the initial payment made during purchase creation
+    const currentPaidAmount = purchase.amountPaid ?? 0;
+    const totalAmount = purchase.grandTotal ?? purchase.totalAmount;
+    const amountDue = totalAmount - currentPaidAmount;
 
     if (dto.amount > amountDue) {
+      const fmt = (n: number) => (n / 100).toFixed(2);
       throw new BadRequestException({
         code: 'OVERPAYMENT',
-        message: 'Payment amount exceeds amount due',
-        messageAr: 'مبلغ الدفع يتجاوز المبلغ المستحق',
+        message: `Payment amount (${fmt(dto.amount)} ₪) exceeds amount due (${fmt(amountDue)} ₪)`,
+        messageAr: `مبلغ الدفع (${fmt(dto.amount)} ₪) يتجاوز المبلغ المستحق (${fmt(amountDue)} ₪)`,
       });
     }
 
@@ -251,7 +250,7 @@ export class PaymentsService {
           partyType: 'supplier',
           partyId: purchase.supplierId,
           partyName: purchase.supplierName,
-          receiptNumber: dto.receiptNumber,
+          receiptNumber: dto.receiptNumber || dto.referenceNumber,
           receivedById: userId,
           branchId: purchase.branchId,
           notes: dto.notes,
@@ -259,24 +258,59 @@ export class PaymentsService {
         },
       });
 
-      // Update purchase payment status
-      const newPaidAmount = paidAmount + dto.amount;
-      const paymentStatus = newPaidAmount >= purchase.totalAmount ? 'paid'
-        : newPaidAmount > 0 ? 'partial' : 'unpaid';
+      // Update purchase amountPaid and status
+      const newTotalPaidAmount = currentPaidAmount + dto.amount;
+      const paymentStatus = newTotalPaidAmount >= totalAmount ? 'paid'
+        : newTotalPaidAmount > 0 ? 'partial' : 'unpaid';
 
       await tx.purchase.update({
         where: { id: dto.purchaseId },
-        data: { paymentStatus },
-      });
-
-      // Update debt if exists
-      await tx.debt.updateMany({
-        where: { sourceType: 'purchase', sourceId: dto.purchaseId },
         data: {
           amountPaid: { increment: dto.amount },
-          status: paymentStatus === 'paid' ? 'paid' : 'partial',
+          paymentStatus
         },
       });
+
+      // Update debt if exists, or create it when missing (e.g. purchase created without debt)
+      const existingDebt = await tx.debt.findFirst({
+        where: { sourceType: 'purchase', sourceId: dto.purchaseId },
+      });
+
+      if (existingDebt) {
+        await tx.debt.updateMany({
+          where: { sourceType: 'purchase', sourceId: dto.purchaseId },
+          data: {
+            amountPaid: { increment: dto.amount },
+            status: paymentStatus === 'paid' ? 'paid' : 'partial',
+          },
+        });
+      } else {
+        // Create debt record when missing (self-healing for purchases created without debt)
+        await tx.debt.create({
+          data: {
+            debtNumber: `DEB-${purchase.purchaseNumber}`,
+            direction: 'payable',
+            partyType: 'supplier',
+            partyId: purchase.supplierId,
+            partyName: purchase.supplierName,
+            sourceType: 'purchase',
+            sourceId: dto.purchaseId,
+            totalAmount: totalAmount,
+            amountPaid: newTotalPaidAmount,
+            dueDate: purchase.dueDate,
+            status: paymentStatus === 'paid' ? 'paid' : 'partial',
+            branchId: purchase.branchId,
+          },
+        });
+        // Update supplier balance for the outstanding amount
+        const amountStillDue = totalAmount - newTotalPaidAmount;
+        if (amountStillDue > 0) {
+          await tx.supplier.update({
+            where: { id: purchase.supplierId },
+            data: { currentBalance: { increment: amountStillDue } },
+          });
+        }
+      }
 
       // Create journal entry for payment made
       await this.accountingService.createPaymentMadeJournalEntry(
@@ -297,6 +331,122 @@ export class PaymentsService {
         dto.amount,
         payment.paymentDate,
       );
+
+      return payment;
+    });
+  }
+
+  async recordExpensePayment(dto: any, userId: number) {
+    const expense = await this.prisma.expense.findUnique({
+      where: { id: dto.expenseId },
+    });
+
+    if (!expense) {
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Expense not found',
+        messageAr: 'المصروف غير موجود',
+      });
+    }
+
+    // Get the associated debt
+    const debt = await this.prisma.debt.findFirst({
+      where: { sourceType: 'expense', sourceId: dto.expenseId, status: { not: 'paid' } },
+    });
+
+    if (!debt) {
+      throw new BadRequestException({
+        code: 'NO_OUTSTANDING_DEBT',
+        message: 'No outstanding debt found for this expense',
+        messageAr: 'لا يوجد دين مستحق لهذا المصروف',
+      });
+    }
+
+    const amountDue = debt.totalAmount - debt.amountPaid;
+    if (dto.amount > amountDue) {
+      throw new BadRequestException({
+        code: 'OVERPAYMENT',
+        message: 'Payment exceeds amount due',
+        messageAr: 'المبلغ يتجاوز المستحق',
+      });
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const paymentNumber = await this.generatePaymentNumber();
+
+      const payment = await tx.payment.create({
+        data: {
+          paymentNumber,
+          paymentDate: dto.paymentDate ? new Date(dto.paymentDate) : new Date(),
+          amount: dto.amount,
+          paymentMethod: dto.paymentMethod ?? 'cash',
+          referenceType: 'expense',
+          referenceId: dto.expenseId,
+          partyType: 'supplier',
+          partyId: expense.supplierId,
+          partyName: debt.partyName,
+          receivedById: userId,
+          branchId: expense.branchId,
+          notes: dto.notes,
+          docstatus: 1,
+        },
+      });
+
+      // Update debt
+      const newAmountPaid = debt.amountPaid + dto.amount;
+      const status = newAmountPaid >= debt.totalAmount ? 'paid' : 'partial';
+
+      await tx.debt.update({
+        where: { id: debt.id },
+        data: {
+          amountPaid: newAmountPaid,
+          status,
+        },
+      });
+
+      // Update supplier balance if applicable
+      if (expense.supplierId) {
+        await tx.supplier.update({
+          where: { id: expense.supplierId },
+          data: { currentBalance: { decrement: dto.amount } },
+        });
+      }
+
+      // Create journal entry for payment
+      await this.accountingService.createPaymentMadeJournalEntry(
+        tx,
+        payment.id,
+        payment.paymentNumber,
+        expense.branchId ?? null,
+        userId,
+        dto.amount,
+      );
+
+      // Blueprint 04: PLE for payment against expense (payable)
+      if (expense.supplierId) {
+        const accountsPayableId = await tx.account.findFirst({
+          where: { code: ACCOUNT_CODES.ACCOUNTS_PAYABLE, companyId: 1 }
+        }).then(a => a?.id);
+
+        if (accountsPayableId) {
+          await this.paymentLedgerService.createPLE(
+            {
+              partyType: 'supplier',
+              partyId: expense.supplierId,
+              accountType: 'payable',
+              accountId: accountsPayableId,
+              voucherType: 'payment',
+              voucherId: payment.id,
+              againstVoucherType: 'expense',
+              againstVoucherId: expense.id,
+              amount: dto.amount, // Positive reduces payable
+              postingDate: payment.paymentDate,
+              remarks: `Payment against Expense #${expense.expenseNumber}`,
+            },
+            tx,
+          );
+        }
+      }
 
       return payment;
     });
@@ -417,6 +567,36 @@ export class PaymentsService {
               status: debtStatus,
             },
           });
+        }
+      } else if (payment.referenceType === 'expense' && payment.referenceId != null) {
+        const expense = await tx.expense.findUnique({
+          where: { id: payment.referenceId },
+        });
+        if (expense) {
+          // Expenses don't have amountPaid field in model, but they have Debt record
+          const debts = await tx.debt.findMany({
+            where: { sourceType: 'expense', sourceId: payment.referenceId },
+          });
+
+          for (const debt of debts) {
+            const newDebtPaid = debt.amountPaid - payment.amount;
+            const newStatus = newDebtPaid <= 0 ? 'open' : newDebtPaid >= debt.totalAmount ? 'paid' : 'partial';
+
+            await tx.debt.update({
+              where: { id: debt.id },
+              data: {
+                amountPaid: newDebtPaid,
+                status: newStatus,
+              },
+            });
+
+            if (debt.partyType === 'supplier' && debt.partyId) {
+              await tx.supplier.update({
+                where: { id: debt.partyId },
+                data: { currentBalance: { increment: payment.amount } },
+              });
+            }
+          }
         }
       }
 
@@ -540,8 +720,8 @@ export class PaymentsService {
     });
   }
 
-  private async getAccountIdByCodeFromTx(tx: any, code: string): Promise<number> {
-    const acc = await tx.account.findUnique({ where: { code } });
+  private async getAccountIdByCodeFromTx(tx: any, code: string, companyId: number | null = 1): Promise<number> {
+    const acc = await tx.account.findFirst({ where: { code, companyId } });
     if (!acc) throw new Error(`Account ${code} not found`);
     return acc.id;
   }

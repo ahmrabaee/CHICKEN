@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import {
   Search,
   Plus,
@@ -41,6 +41,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { StockStatusBadge } from "@/components/ui/status-badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { CategoriesManagement } from "@/components/inventory/CategoriesManagement";
 
 import {
   useInventory,
@@ -55,6 +57,18 @@ import InventoryMovementsDialog from "@/components/inventory/InventoryMovementsD
 
 export default function Inventory() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const activeTab = tabParam === "categories" ? "categories" : "items";
+
+  const handleTabChange = (value: string) => {
+    if (value === "categories") {
+      setSearchParams({ tab: "categories" });
+    } else {
+      setSearchParams({});
+    }
+  };
+
   const [queryParams, setQueryParams] = useState<InventoryQuery>({
     page: 1,
     pageSize: 10,
@@ -116,6 +130,13 @@ export default function Inventory() {
         </div>
       </div>
 
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="items">الأصناف</TabsTrigger>
+          <TabsTrigger value="categories">الفئات</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="items" className="space-y-6 mt-0">
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-l-4 border-l-blue-500">
@@ -350,6 +371,12 @@ export default function Inventory() {
         item={viewingHistoryItem}
         onClose={() => setViewingHistoryItem(null)}
       />
+        </TabsContent>
+
+        <TabsContent value="categories" className="mt-0">
+          <CategoriesManagement />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

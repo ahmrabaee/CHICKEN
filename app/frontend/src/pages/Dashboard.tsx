@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/table";
 import { Link } from "react-router-dom";
 import { useDashboard } from "@/hooks/use-reports";
+import { useRole } from "@/hooks/useRole";
 
 function formatMinor(amount: number): string {
   return `₪ ${(amount / 100).toFixed(2)}`;
@@ -53,6 +54,7 @@ const recentSales = [
 ];
 
 export default function Dashboard() {
+  const { isAdmin } = useRole();
   const { data: dashboard, isLoading: dashboardLoading } = useDashboard();
 
   return (
@@ -97,12 +99,14 @@ export default function Dashboard() {
               icon={TrendingUp}
               variant="success"
             />
-            <StatCard
-              title="أرباح اليوم"
-              value={dashboard?.sales?.today ? formatMinor(dashboard.sales.today.totalProfit) : "₪ 0.00"}
-              icon={TrendingUp}
-              variant="success"
-            />
+            {isAdmin && (
+              <StatCard
+                title="أرباح اليوم"
+                value={dashboard?.sales?.today ? formatMinor(dashboard.sales.today.totalProfit) : "₪ 0.00"}
+                icon={TrendingUp}
+                variant="success"
+              />
+            )}
             <StatCard
               title="قطع منخفضة المخزون"
               value={dashboard?.inventory?.lowStockCount ?? 0}
@@ -118,12 +122,14 @@ export default function Dashboard() {
               icon={CreditCard}
               variant="danger"
             />
-            <StatCard
-              title="ديون للتجار (ذمم دائنة)"
-              value={dashboard != null ? formatMinor(dashboard.payables) : "₪ 0.00"}
-              icon={Wallet}
-              variant="warning"
-            />
+            {isAdmin && (
+              <StatCard
+                title="ديون للتجار (ذمم دائنة)"
+                value={dashboard != null ? formatMinor(dashboard.payables) : "₪ 0.00"}
+                icon={Wallet}
+                variant="warning"
+              />
+            )}
           </div>
         </>
       )}

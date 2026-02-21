@@ -1,11 +1,12 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ReportsService } from './reports.service';
-import { Roles } from '../common';
+import { Roles, RolesGuard } from '../common';
 
 @ApiTags('reports')
 @ApiBearerAuth('JWT-auth')
-@Roles('admin', 'manager')
+@UseGuards(RolesGuard)
+@Roles('admin', 'accountant')
 @Controller('reports')
 export class ReportsController {
   constructor(private reportsService: ReportsService) {}

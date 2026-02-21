@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
+import { PageAccessService } from '../page-access/page-access.service';
 import {
   LoginResponse,
   RefreshResponse,
@@ -23,6 +24,7 @@ export interface JwtPayload {
   roles: string[];
   permissions: string[];
   branchId?: number;
+  allowedPages?: string[];
   type?: 'access' | 'refresh';
 }
 
@@ -34,6 +36,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private pageAccessService: PageAccessService,
   ) {}
 
   /**
@@ -92,6 +95,8 @@ export class AuthService {
     // Collect roles and permissions
     const roles = user.userRoles.map((ur) => ur.role.name);
     const permissions = this.collectPermissions(user.userRoles);
+    const primaryRole = roles[0] || 'unknown';
+    const allowedPages = await this.pageAccessService.getAllowedPathsForUser(user.id, primaryRole);
 
     // Generate tokens
     const payload: JwtPayload = {
@@ -100,6 +105,7 @@ export class AuthService {
       roles,
       permissions,
       branchId: user.defaultBranchId ?? undefined,
+      allowedPages,
     };
 
     const accessToken = this.generateAccessToken(payload);
@@ -133,10 +139,11 @@ export class AuthService {
       username: user.username,
       fullName: user.fullName,
       fullNameEn: user.fullNameEn ?? undefined,
-      role: roles[0] || 'unknown',
+      role: primaryRole,
       permissions,
       defaultBranchId: user.defaultBranchId ?? undefined,
       preferredLanguage: user.preferredLanguage,
+      allowedPages,
     };
 
     return {
@@ -209,9 +216,11 @@ export class AuthService {
       });
     }
 
-    // Generate new access token
+    // Generate new access token (include allowedPages for page-access guards)
     const roles = user.userRoles.map((ur) => ur.role.name);
     const permissions = this.collectPermissions(user.userRoles);
+    const primaryRole = roles[0] || 'unknown';
+    const allowedPages = await this.pageAccessService.getAllowedPathsForUser(user.id, primaryRole);
 
     const newPayload: JwtPayload = {
       sub: user.id,
@@ -219,6 +228,7 @@ export class AuthService {
       roles,
       permissions,
       branchId: user.defaultBranchId ?? undefined,
+      allowedPages,
     };
 
     const accessToken = this.generateAccessToken(newPayload);
@@ -292,6 +302,41 @@ export class AuthService {
     await this.createAuditLog(userId, 'update', 'User', userId, {
       action: 'password_changed',
     });
+  }
+
+  /**
+   * Get current user with allowedPages (for /auth/me)
+   */
+  async getMe(userId: number): Promise<AuthUserResponse> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        userRoles: { include: { role: true } },
+      },
+    });
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException({
+        code: 'USER_NOT_FOUND',
+        message: 'User not found or inactive',
+        messageAr: 'المستخدم غير موجود أو غير نشط',
+      });
+    }
+    const roles = user.userRoles.map((ur) => ur.role.name);
+    const permissions = this.collectPermissions(user.userRoles);
+    const primaryRole = roles[0] || 'unknown';
+    const allowedPages = await this.pageAccessService.getAllowedPathsForUser(userId, primaryRole);
+
+    return {
+      id: user.id,
+      username: user.username,
+      fullName: user.fullName,
+      fullNameEn: user.fullNameEn ?? undefined,
+      role: primaryRole,
+      permissions,
+      defaultBranchId: user.defaultBranchId ?? undefined,
+      preferredLanguage: user.preferredLanguage,
+      allowedPages,
+    };
   }
 
   /**
@@ -569,6 +614,7 @@ export class AuthService {
           permissions: adminPermissions,
           defaultBranchId: mainBranch.id,
           preferredLanguage: adminUser.preferredLanguage,
+          allowedPages: ['*'],
         },
       };
     });

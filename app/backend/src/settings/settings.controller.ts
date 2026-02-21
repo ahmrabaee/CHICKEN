@@ -6,15 +6,17 @@ import {
   Delete,
   Param,
   Body,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SettingsService } from './settings.service';
 import { SetSettingDto } from './dto/setting.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
-import { Roles } from '../common';
+import { Roles, RolesGuard } from '../common';
 
 @ApiTags('settings')
 @ApiBearerAuth('JWT-auth')
+@UseGuards(RolesGuard)
 @Roles('admin')
 @Controller('settings')
 export class SettingsController {

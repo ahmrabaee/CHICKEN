@@ -25,7 +25,7 @@ export class AccountController {
   @Get('accounts')
   @ApiOperation({ summary: 'Get chart of accounts (tree)' })
   @ApiQuery({ name: 'postableOnly', required: false, type: Boolean })
-  @Roles('admin', 'manager')
+  @Roles('admin', 'accountant')
   getAccounts(@Query('postableOnly') postableOnly?: string) {
     const postable = postableOnly === 'true';
     return this.chartOfAccountsService.getAccounts(1, postable);
@@ -33,7 +33,7 @@ export class AccountController {
 
   @Get('accounts/code/:code')
   @ApiOperation({ summary: 'Get account by code' })
-  @Roles('admin', 'manager')
+  @Roles('admin', 'accountant')
   getAccountByCode(@Param('code') code: string) {
     return this.chartOfAccountsService.getAccountByCode(code);
   }
@@ -47,7 +47,7 @@ export class AccountController {
 
   @Get('accounts/:id')
   @ApiOperation({ summary: 'Get account by ID or code (backward compatible)' })
-  @Roles('admin', 'manager')
+  @Roles('admin', 'accountant')
   getAccountByIdOrCode(@Param('id') param: string) {
     return this.chartOfAccountsService.getAccountByCodeOrId(param);
   }

@@ -80,6 +80,12 @@ export class AuthUserResponse {
 
   @ApiProperty({ example: 'ar' })
   preferredLanguage: string;
+
+  @ApiPropertyOptional({
+    description: 'Allowed page paths for non-admin (use ["*"] for admin)',
+    example: ['/', '/sales', '/inventory'],
+  })
+  allowedPages?: string[];
 }
 
 export class LoginResponse {

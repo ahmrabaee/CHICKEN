@@ -50,12 +50,14 @@ import {
   useLowStockItems,
   useExpiringItems
 } from "@/hooks/use-inventory";
+import { useRole } from "@/hooks/useRole";
 import { InventoryQuery, InventoryItem } from "@/types/inventory";
 import AdjustStockDialog from "@/components/inventory/AdjustStockDialog";
 import InventoryLotsDialog from "@/components/inventory/InventoryLotsDialog";
 import InventoryMovementsDialog from "@/components/inventory/InventoryMovementsDialog";
 
 export default function Inventory() {
+  const { isAdmin } = useRole();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
@@ -121,12 +123,14 @@ export default function Inventory() {
             <Download className="w-4 h-4" />
             تصدير البيانات
           </Button>
-          <Link to="/inventory/new">
-            <Button className="gap-2">
-              <Plus className="w-4 h-4" />
-              إضافة صنف جديد
-            </Button>
-          </Link>
+          {isAdmin && (
+            <Link to="/inventory/new">
+              <Button className="gap-2">
+                <Plus className="w-4 h-4" />
+                إضافة صنف جديد
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -311,10 +315,12 @@ export default function Inventory() {
                             <History className="w-4 h-4 text-emerald-500" />
                             سجل حركات المخزون
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => setAdjustingItem(item)}>
-                            <Edit className="w-4 h-4 text-orange-500" />
-                            تعديل الكمية (تسوية يدوية)
-                          </DropdownMenuItem>
+                          {isAdmin && (
+                            <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => setAdjustingItem(item)}>
+                              <Edit className="w-4 h-4 text-orange-500" />
+                              تعديل الكمية (تسوية يدوية)
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

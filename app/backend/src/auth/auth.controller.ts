@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Post,
   Body,
   HttpCode,
@@ -23,6 +24,7 @@ import {
   MessageResponse,
   CheckSetupResponse,
   CompleteSetupDto,
+  AuthUserResponse,
 } from './dto';
 import { Public, CurrentUser, CurrentUserData } from '../common';
 
@@ -53,6 +55,14 @@ export class AuthController {
   ): Promise<LoginResponse> {
     const ipAddress = req.ip || req.socket?.remoteAddress || 'unknown';
     return this.authService.login(loginDto.username, loginDto.password, ipAddress);
+  }
+
+  @Get('me')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Get current user with allowedPages' })
+  @ApiResponse({ status: 200, description: 'Current user data', schema: { $ref: '#/components/schemas/AuthUserResponse' } })
+  async getMe(@CurrentUser() user: CurrentUserData): Promise<AuthUserResponse> {
+    return this.authService.getMe(user.id);
   }
 
   @Post('refresh')

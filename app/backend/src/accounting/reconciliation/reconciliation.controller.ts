@@ -15,7 +15,7 @@ import { ApplyAllocationsDto } from './dto/apply-allocations.dto';
 
 @ApiTags('reconciliation')
 @ApiBearerAuth('JWT-auth')
-@Roles('admin', 'manager')
+@Roles('admin', 'accountant')
 @Controller('reconciliation')
 export class ReconciliationController {
   constructor(

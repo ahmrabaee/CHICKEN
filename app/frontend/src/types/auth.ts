@@ -14,6 +14,8 @@ export interface AuthUserResponse {
     permissions: string[];
     defaultBranchId?: number;
     preferredLanguage: string;
+    /** Allowed page paths; ['*'] for admin; paths for accountant */
+    allowedPages?: string[];
 }
 
 export interface LoginResponse {

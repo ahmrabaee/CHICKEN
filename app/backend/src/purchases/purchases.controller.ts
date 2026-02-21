@@ -8,6 +8,7 @@ import {
   Query,
   ParseIntPipe,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
@@ -15,10 +16,12 @@ import { getPdfContentDisposition } from '../pdf/pdf.helpers';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PurchasesService } from './purchases.service';
 import { CreatePurchaseDto, ReceivePurchaseDto } from './dto/purchase.dto';
-import { PaginationQueryDto, Roles, CurrentUser } from '../common';
+import { PaginationQueryDto, Roles, RolesGuard, CurrentUser } from '../common';
 
 @ApiTags('purchases')
 @ApiBearerAuth('JWT-auth')
+@UseGuards(RolesGuard)
+@Roles('admin')
 @Controller('purchases')
 export class PurchasesController {
   constructor(private purchasesService: PurchasesService) { }
@@ -42,6 +45,7 @@ export class PurchasesController {
   }
 
   @Get(':id')
+  @Roles('admin', 'accountant')
   @ApiOperation({ summary: 'Get purchase by ID' })
   findById(@Param('id', ParseIntPipe) id: number) {
     return this.purchasesService.findById(id);
@@ -66,14 +70,12 @@ export class PurchasesController {
   }
 
   @Post()
-  @Roles('admin', 'manager')
   @ApiOperation({ summary: 'Create new purchase order' })
   create(@Body() dto: CreatePurchaseDto, @CurrentUser() user: any) {
     return this.purchasesService.create(dto, user.id);
   }
 
   @Put(':id/receive')
-  @Roles('admin', 'manager')
   @ApiOperation({ summary: 'Receive purchase order goods' })
   receive(
     @Param('id', ParseIntPipe) id: number,

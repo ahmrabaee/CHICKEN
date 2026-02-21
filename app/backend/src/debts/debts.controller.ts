@@ -5,6 +5,7 @@ import {
   Query,
   ParseIntPipe,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
@@ -12,10 +13,11 @@ import { getPdfContentDisposition } from '../pdf/pdf.helpers';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { DebtsService } from './debts.service';
 import { DebtQueryDto } from './dto/debt.dto';
-import { Roles } from '../common';
+import { Roles, RolesGuard, PageAccessGuard, RequirePageAccess } from '../common';
 
 @ApiTags('debts')
 @ApiBearerAuth('JWT-auth')
+@UseGuards(RolesGuard)
 @Controller('debts')
 export class DebtsController {
   constructor(private debtsService: DebtsService) { }
@@ -29,6 +31,7 @@ export class DebtsController {
   }
 
   @Get('receivables/pdf')
+  @Roles('admin', 'accountant')
   @ApiOperation({ summary: 'Download receivables report PDF' })
   async getReceivablesPdf(@Query() query: PdfQueryDto, @Res() res: Response) {
     const buffer = await this.debtsService.getReceivablesPdf(query);
@@ -41,7 +44,8 @@ export class DebtsController {
   }
 
   @Get('payables')
-  @Roles('Admin', 'Manager')
+  @UseGuards(PageAccessGuard)
+  @RequirePageAccess('/debts')
   @ApiOperation({ summary: 'List supplier payables (money we owe)' })
   findPayables(
     @Query() query: DebtQueryDto,
@@ -50,7 +54,8 @@ export class DebtsController {
   }
 
   @Get('payables/pdf')
-  @Roles('Admin', 'Manager')
+  @UseGuards(PageAccessGuard)
+  @RequirePageAccess('/debts')
   @ApiOperation({ summary: 'Download payables report PDF' })
   async getPayablesPdf(@Query() query: PdfQueryDto, @Res() res: Response) {
     const buffer = await this.debtsService.getPayablesPdf(query);
@@ -63,14 +68,16 @@ export class DebtsController {
   }
 
   @Get('summary')
-  @Roles('Admin', 'Manager')
+  @UseGuards(PageAccessGuard)
+  @RequirePageAccess('/debts')
   @ApiOperation({ summary: 'Get debts summary' })
   getSummary() {
     return this.debtsService.getSummary();
   }
 
   @Get('overdue')
-  @Roles('Admin', 'Manager')
+  @UseGuards(PageAccessGuard)
+  @RequirePageAccess('/debts')
   @ApiOperation({ summary: 'Get overdue debts' })
   getOverdue() {
     return this.debtsService.getOverdue();

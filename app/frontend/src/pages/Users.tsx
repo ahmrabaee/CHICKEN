@@ -90,7 +90,8 @@ export default function Users() {
 
     const rolesMap: Record<string, { label: string; color: string }> = {
         'admin': { label: 'مدير', color: 'danger' },
-        'cashier': { label: 'محاسب', color: 'primary' },
+        'accountant': { label: 'محاسب', color: 'primary' },
+        'cashier': { label: 'محاسب', color: 'primary' }, // legacy - backward compat
     };
 
     return (

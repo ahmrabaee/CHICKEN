@@ -6,12 +6,16 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
+import { PageAccessService } from '../page-access/page-access.service';
 import { CreateUserDto, UpdateUserDto, UserResponseDto, UserListQueryDto } from './dto';
 import { createPaginatedResult, PaginationQueryDto } from '../common';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private pageAccessService: PageAccessService,
+  ) {}
 
   /**
    * Get all users with optional filters
@@ -180,6 +184,10 @@ export class UsersService {
         },
       },
     });
+
+    if (role.name === 'accountant') {
+      await this.pageAccessService.ensureUserPageAccess(user.id);
+    }
 
     return this.toResponseDto(user);
   }

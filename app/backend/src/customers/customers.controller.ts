@@ -18,7 +18,7 @@ export class CustomersController {
   constructor(private readonly customersService: CustomersService) { }
 
   @Get()
-  @Roles('admin', 'cashier')
+  @Roles('admin', 'accountant')
   @ApiOperation({ summary: 'List all customers with filters' })
   @ApiResponse({ status: 200, description: 'Paginated list of customers' })
   async findAll(@Query() query: CustomerListQueryDto): Promise<PaginatedResult<CustomerResponseDto>> {
@@ -26,7 +26,7 @@ export class CustomersController {
   }
 
   @Get('search')
-  @Roles('admin', 'cashier')
+  @Roles('admin', 'accountant')
   @ApiOperation({ summary: 'Search customers by name, phone, or customer number' })
   @ApiQuery({ name: 'q', description: 'Search term' })
   @ApiResponse({ status: 200, type: [CustomerResponseDto] })
@@ -35,7 +35,7 @@ export class CustomersController {
   }
 
   @Get(':id')
-  @Roles('admin', 'cashier')
+  @Roles('admin', 'accountant')
   @ApiOperation({ summary: 'Get customer by ID' })
   @ApiParam({ name: 'id', description: 'Customer ID' })
   @ApiResponse({ status: 200, type: CustomerResponseDto })
@@ -44,7 +44,7 @@ export class CustomersController {
   }
 
   @Get('number/:customerNumber')
-  @Roles('admin', 'cashier')
+  @Roles('admin', 'accountant')
   @ApiOperation({ summary: 'Get customer by customer number' })
   @ApiParam({ name: 'customerNumber', description: 'Customer number' })
   @ApiResponse({ status: 200, type: CustomerResponseDto })
@@ -53,7 +53,7 @@ export class CustomersController {
   }
 
   @Get('phone/:phone')
-  @Roles('admin', 'cashier')
+  @Roles('admin', 'accountant')
   @ApiOperation({ summary: 'Get customer by phone number' })
   @ApiParam({ name: 'phone', description: 'Phone number' })
   @ApiResponse({ status: 200, type: CustomerResponseDto })
@@ -78,7 +78,7 @@ export class CustomersController {
   }
 
   @Post()
-  @Roles('admin', 'cashier')
+  @Roles('admin', 'accountant')
   @ApiOperation({ summary: 'Create customer' })
   @ApiResponse({ status: 201, type: CustomerResponseDto })
   async create(
@@ -89,7 +89,7 @@ export class CustomersController {
   }
 
   @Put(':id')
-  @Roles('admin', 'cashier')
+  @Roles('admin', 'accountant')
   @ApiOperation({ summary: 'Update customer' })
   @ApiParam({ name: 'id', description: 'Customer ID' })
   @ApiResponse({ status: 200, type: CustomerResponseDto })

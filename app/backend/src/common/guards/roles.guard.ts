@@ -2,6 +2,12 @@ import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 
+/** Normalize roles: 'cashier' is legacy alias for 'accountant' */
+function normalizeRoles(roles: string[]): string[] {
+  if (!roles?.length) return roles ?? [];
+  return roles.map((r) => (r === 'cashier' ? 'accountant' : r));
+}
+
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
@@ -27,7 +33,8 @@ export class RolesGuard implements CanActivate {
       });
     }
 
-    const hasRole = requiredRoles.some((role) => user.roles.includes(role));
+    const normalizedUserRoles = normalizeRoles(user.roles);
+    const hasRole = requiredRoles.some((role) => normalizedUserRoles.includes(role));
 
     if (!hasRole) {
       throw new ForbiddenException({

@@ -31,6 +31,7 @@ import Audit from "@/pages/Audit";
 import Accounting from "@/pages/Accounting";
 import JournalEntryProfile from "@/pages/accounting/JournalEntryProfile";
 import Settings from "@/pages/Settings";
+import Users from "@/pages/Users";
 import Login from "@/pages/Login";
 import Setup from "@/pages/Setup";
 import Branches from "@/pages/Branches";
@@ -57,9 +58,8 @@ const App = () => (
                 {/* Dashboard */}
                 <Route path="/" element={<Dashboard />} />
 
-                {/* Inventory */}
+                {/* Inventory (inventory/new is admin-only, below) */}
                 <Route path="/inventory" element={<Inventory />} />
-                <Route path="/inventory/new" element={<ItemProfile />} />
                 <Route path="/inventory/:id" element={<ItemProfile />} />
                 <Route path="/categories" element={<Navigate to="/inventory?tab=categories" replace />} />
                 <Route path="/adjustments" element={<Navigate to="/inventory" replace />} />
@@ -69,20 +69,10 @@ const App = () => (
                 <Route path="/sales/new" element={<POS />} />
                 <Route path="/sales/:id" element={<Sales />} />
 
-                {/* Purchasing */}
-                <Route path="/purchasing" element={<Purchasing />} />
-                <Route path="/purchasing/new" element={<PurchaseProfile />} />
-                <Route path="/purchasing/:id" element={<Purchasing />} />
-
                 {/* Customers */}
                 <Route path="/customers" element={<Customers />} />
                 <Route path="/customers/new" element={<CustomerProfile />} />
                 <Route path="/customers/:id" element={<CustomerProfile />} />
-
-                {/* Suppliers/Traders */}
-                <Route path="/traders" element={<Suppliers />} />
-                <Route path="/traders/new" element={<SupplierProfile />} />
-                <Route path="/traders/:id" element={<SupplierProfile />} />
 
                 {/* Payments */}
                 <Route path="/payments" element={<Payments />} />
@@ -91,41 +81,37 @@ const App = () => (
                 <Route path="/reconciliation" element={<Reconciliation />} />
                 <Route path="/credit-notes" element={<CreditNotes />} />
 
-                {/* Expenses */}
-                <Route path="/expenses" element={<Expenses />} />
-                <Route path="/expenses/new" element={<ExpenseProfile />} />
-                <Route path="/expenses/:id" element={<ExpenseProfile />} />
-
-                {/* Debts */}
-                <Route path="/debts" element={<Debts />} />
-
-                {/* Wastage */}
-                <Route path="/wastage" element={<Wastage />} />
-                <Route path="/wastage/new" element={<WastageProfile />} />
-
                 {/* Reports */}
                 <Route path="/reports/sales" element={<Reports />} />
                 <Route path="/reports/purchases" element={<Reports />} />
                 <Route path="/reports/inventory" element={<Reports />} />
-                <Route path="/reports/expenses" element={<Reports />} />
-                <Route path="/reports/profit-loss" element={<Reports />} />
                 <Route path="/reports/wastage" element={<Reports />} />
-                <Route path="/reports/stock-vs-gl" element={<Reports />} />
+                <Route path="/reports/expenses" element={<Reports />} />
                 <Route path="/reports/financial" element={<Reports />} />
+                <Route path="/reports/profit-loss" element={<Reports />} />
+                <Route path="/reports/stock-vs-gl" element={<Reports />} />
                 <Route path="/reports/tax" element={<Reports />} />
                 <Route path="/reports/vat" element={<Reports />} />
-
                 {/* Accounting */}
                 <Route path="/accounting" element={<Accounting />} />
                 <Route path="/accounting/journal/new" element={<JournalEntryProfile />} />
-
-                {/* Audit */}
+                {/* All routes - PageAccessGate enforces dynamic access */}
                 <Route path="/audit" element={<Audit />} />
-
-                {/* Settings */}
                 <Route path="/settings" element={<Settings />} />
-
-                {/* Branches */}
+                <Route path="/users" element={<Users />} />
+                <Route path="/traders" element={<Suppliers />} />
+                <Route path="/traders/new" element={<SupplierProfile />} />
+                <Route path="/traders/:id" element={<SupplierProfile />} />
+                <Route path="/expenses" element={<Expenses />} />
+                <Route path="/expenses/new" element={<ExpenseProfile />} />
+                <Route path="/expenses/:id" element={<ExpenseProfile />} />
+                <Route path="/debts" element={<Debts />} />
+                <Route path="/wastage" element={<Wastage />} />
+                <Route path="/wastage/new" element={<WastageProfile />} />
+                <Route path="/purchasing" element={<Purchasing />} />
+                <Route path="/purchasing/new" element={<PurchaseProfile />} />
+                <Route path="/purchasing/:id" element={<Purchasing />} />
+                <Route path="/inventory/new" element={<ItemProfile />} />
                 <Route path="/branches" element={<Branches />} />
                 <Route path="/branches/new" element={<BranchProfile />} />
                 <Route path="/branches/:id" element={<BranchProfile />} />

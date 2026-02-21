@@ -41,7 +41,7 @@ export class InventoryController {
 
   @Get('expiring')
   @UseGuards(RolesGuard)
-  @Roles('admin')
+  @Roles('admin', 'accountant')
   @ApiOperation({ summary: 'Get items expiring soon' })
   @ApiQuery({ name: 'days', required: false, description: 'Days ahead to check (default: 3)' })
   async getExpiring(@Query('days') days?: number) {

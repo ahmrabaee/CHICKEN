@@ -8,6 +8,7 @@ import {
     MessageResponse,
     CheckSetupResponse,
     CompleteSetupDto,
+    AuthUserResponse,
 } from '@/types/auth';
 import { ApiResponse } from '@/types/api';
 
@@ -22,6 +23,15 @@ export const authService = {
      */
     async login(credentials: LoginDto): Promise<LoginResponse> {
         const response = await axiosInstance.post<ApiResponse<LoginResponse>>('/auth/login', credentials);
+        return response.data.data;
+    },
+
+    /**
+     * Get current user with allowedPages
+     * GET /v1/auth/me
+     */
+    async getMe(): Promise<AuthUserResponse> {
+        const response = await axiosInstance.get<ApiResponse<AuthUserResponse>>('/auth/me');
         return response.data.data;
     },
 

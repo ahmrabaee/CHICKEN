@@ -15,7 +15,7 @@ export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Get()
-  @Roles('admin', 'cashier')
+  @Roles('admin', 'accountant')
   @ApiOperation({ summary: 'List all categories' })
   @ApiQuery({ name: 'includeInactive', required: false, type: Boolean })
   @ApiResponse({ status: 200, type: [CategoryResponseDto] })
@@ -26,7 +26,7 @@ export class CategoriesController {
   }
 
   @Get(':id')
-  @Roles('admin', 'cashier')
+  @Roles('admin', 'accountant')
   @ApiOperation({ summary: 'Get category by ID' })
   @ApiParam({ name: 'id', description: 'Category ID' })
   @ApiResponse({ status: 200, type: CategoryResponseDto })
@@ -35,7 +35,7 @@ export class CategoriesController {
   }
 
   @Get('code/:code')
-  @Roles('admin', 'cashier')
+  @Roles('admin', 'accountant')
   @ApiOperation({ summary: 'Get category by code' })
   @ApiParam({ name: 'code', description: 'Category code' })
   @ApiResponse({ status: 200, type: CategoryResponseDto })

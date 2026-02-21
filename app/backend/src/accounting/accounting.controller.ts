@@ -26,7 +26,7 @@ import { Response } from 'express';
 @ApiBearerAuth('JWT-auth')
 @Controller('accounting')
 @UseGuards(RolesGuard)
-@Roles('admin', 'manager')
+@Roles('admin', 'accountant')
 export class AccountingController {
   constructor(
     private accountingService: AccountingService,

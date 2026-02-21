@@ -11,6 +11,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { PaginationQueryDto } from '../../common';
 
 export class CreateUserDto {
   @ApiProperty({
@@ -158,7 +159,7 @@ export class UserResponseDto {
   isLoggedIn: boolean;
 }
 
-export class UserListQueryDto {
+export class UserListQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({
     description: 'Filter by active status',
   })

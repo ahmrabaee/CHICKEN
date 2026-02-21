@@ -51,7 +51,7 @@ export class TaxTemplateController {
 
   @Get('vat-report')
   @ApiOperation({ summary: 'VAT report' })
-  @Roles('admin', 'manager')
+  @Roles('admin', 'accountant')
   getVatReport(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,

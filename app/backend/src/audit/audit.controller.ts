@@ -1,10 +1,11 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AuditService } from './audit.service';
-import { PaginationQueryDto, Roles } from '../common';
+import { PaginationQueryDto, Roles, RolesGuard } from '../common';
 
 @ApiTags('audit')
 @ApiBearerAuth('JWT-auth')
+@UseGuards(RolesGuard)
 @Roles('admin')
 @Controller('audit')
 export class AuditController {

@@ -1,6 +1,8 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Loader2 } from 'lucide-react';
+import { normalizeRole } from '@/constants/roles';
+import { AccessDenied } from '@/components/AccessDenied';
 
 interface ProtectedRouteProps {
     allowedRoles?: string[];
@@ -40,21 +42,14 @@ export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
 
     // 4. Authenticated routes logic
     if (location.pathname !== '/setup') {
-        console.log('🛡️ ProtectedRoute Check:', {
-            path: location.pathname,
-            isAuthenticated,
-            hasUser: !!user,
-            setupCompleted
-        });
-
         if (!isAuthenticated) {
-            console.log('🚫 Not authenticated, redirecting to /login from:', location.pathname);
             return <Navigate to="/login" replace state={{ from: location }} />;
         }
 
         if (allowedRoles && user) {
-            if (!allowedRoles.includes(user.role)) {
-                return <Navigate to="/" replace />;
+            const effectiveRole = normalizeRole(user.role);
+            if (!allowedRoles.includes(user.role) && !allowedRoles.includes(effectiveRole || '')) {
+                return <AccessDenied />;
             }
         }
     }

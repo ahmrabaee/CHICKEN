@@ -2,7 +2,7 @@
  * Database Seed Script
  * 
  * Populates the database with initial reference data:
- * - Roles (Admin, Cashier)
+ * - Roles (Admin, Accountant)
  * - Categories (Chicken product types)
  * - Chart of Accounts
  * - System Settings
@@ -44,7 +44,7 @@ const ADMIN_PERMISSIONS = [
   "audit.view"
 ];
 
-const CASHIER_PERMISSIONS = [
+const ACCOUNTANT_PERMISSIONS = [
   "dashboard.view",
   "sales.create", "sales.view", "sales.discount.limited",
   "purchases.view",
@@ -75,18 +75,118 @@ async function seedRoles(): Promise<void> {
   });
 
   await prisma.role.upsert({
-    where: { name: 'cashier' },
+    where: { name: 'accountant' },
     update: {},
     create: {
-      name: 'cashier',
-      nameAr: 'كاشير',
+      name: 'accountant',
+      nameAr: 'محاسب',
       description: 'POS operations with limited administrative access',
-      permissions: JSON.stringify(CASHIER_PERMISSIONS),
+      permissions: JSON.stringify(ACCOUNTANT_PERMISSIONS),
       isSystemRole: true,
     },
   });
 
   console.log('✓ Roles seeded');
+}
+
+const PAGE_DEFINITIONS = [
+  { key: 'dashboard', path: '/', titleAr: 'لوحة التحكم', groupKey: null, isAdminOnly: false, sortOrder: 0 },
+  { key: 'inventory', path: '/inventory', titleAr: 'المخزون', groupKey: 'inventory', isAdminOnly: false, sortOrder: 10 },
+  { key: 'inventory-new', path: '/inventory/new', titleAr: 'إضافة صنف', groupKey: 'inventory', isAdminOnly: true, sortOrder: 11 },
+  { key: 'sales', path: '/sales', titleAr: 'البيع', groupKey: 'sales', isAdminOnly: false, sortOrder: 20 },
+  { key: 'sales-pos', path: '/sales/new', titleAr: 'نقطة البيع', groupKey: 'sales', isAdminOnly: false, sortOrder: 21 },
+  { key: 'customers', path: '/customers', titleAr: 'الزبائن', groupKey: null, isAdminOnly: false, sortOrder: 30 },
+  { key: 'payments', path: '/payments', titleAr: 'المدفوعات', groupKey: null, isAdminOnly: false, sortOrder: 40 },
+  { key: 'reconciliation', path: '/reconciliation', titleAr: 'مطابقة الدفعات', groupKey: null, isAdminOnly: false, sortOrder: 41 },
+  { key: 'credit-notes', path: '/credit-notes', titleAr: 'الإشعارات الدائنة', groupKey: null, isAdminOnly: false, sortOrder: 42 },
+  { key: 'accounting', path: '/accounting', titleAr: 'المحاسبة', groupKey: null, isAdminOnly: false, sortOrder: 50 },
+  { key: 'reports-sales', path: '/reports/sales', titleAr: 'تقارير المبيعات', groupKey: 'reports', isAdminOnly: false, sortOrder: 60 },
+  { key: 'reports-holdings', path: '/reports/inventory', titleAr: 'تقارير المخزون', groupKey: 'reports', isAdminOnly: false, sortOrder: 61 },
+  { key: 'reports-purchases', path: '/reports/purchases', titleAr: 'تقارير المشتريات', groupKey: 'reports', isAdminOnly: false, sortOrder: 62 },
+  { key: 'reports-wastage', path: '/reports/wastage', titleAr: 'تقارير الهدر', groupKey: 'reports', isAdminOnly: false, sortOrder: 63 },
+  { key: 'traders', path: '/traders', titleAr: 'التجار', groupKey: null, isAdminOnly: true, sortOrder: 70 },
+  { key: 'expenses', path: '/expenses', titleAr: 'المصروفات', groupKey: null, isAdminOnly: true, sortOrder: 80 },
+  { key: 'debts', path: '/debts', titleAr: 'الديون', groupKey: null, isAdminOnly: true, sortOrder: 90 },
+  { key: 'wastage', path: '/wastage', titleAr: 'الهدر', groupKey: null, isAdminOnly: true, sortOrder: 100 },
+  { key: 'purchasing', path: '/purchasing', titleAr: 'الشراء', groupKey: null, isAdminOnly: true, sortOrder: 110 },
+  { key: 'reports-expenses', path: '/reports/expenses', titleAr: 'تقارير المصروفات', groupKey: 'reports', isAdminOnly: true, sortOrder: 120 },
+  { key: 'reports-financial', path: '/reports/financial', titleAr: 'التقارير المالية', groupKey: 'reports', isAdminOnly: true, sortOrder: 121 },
+  { key: 'reports-profit-loss', path: '/reports/profit-loss', titleAr: 'قائمة الدخل', groupKey: 'reports', isAdminOnly: true, sortOrder: 122 },
+  { key: 'reports-stock-vs-gl', path: '/reports/stock-vs-gl', titleAr: 'المخزون مقابل الدفاتر', groupKey: 'reports', isAdminOnly: true, sortOrder: 123 },
+  { key: 'reports-tax', path: '/reports/tax', titleAr: 'تقارير الضرائب', groupKey: 'reports', isAdminOnly: true, sortOrder: 124 },
+  { key: 'reports-vat', path: '/reports/vat', titleAr: 'ضريبة القيمة المضافة', groupKey: 'reports', isAdminOnly: true, sortOrder: 125 },
+  { key: 'audit', path: '/audit', titleAr: 'سجل المراجعة', groupKey: null, isAdminOnly: true, sortOrder: 130 },
+  { key: 'branches', path: '/branches', titleAr: 'الفروع', groupKey: null, isAdminOnly: true, sortOrder: 140 },
+  { key: 'settings', path: '/settings', titleAr: 'الإعدادات', groupKey: null, isAdminOnly: true, sortOrder: 150 },
+  { key: 'users', path: '/users', titleAr: 'المستخدمين', groupKey: null, isAdminOnly: true, sortOrder: 160 },
+];
+
+const ACCOUNTANT_ALLOWED_KEYS = [
+  'dashboard', 'inventory', 'sales', 'sales-pos', 'customers', 'payments',
+  'reconciliation', 'credit-notes', 'accounting',
+  'reports-sales', 'reports-holdings', 'reports-purchases', 'reports-wastage',
+];
+
+async function seedPageDefinitions(): Promise<void> {
+  console.log('Seeding page definitions...');
+
+  for (const p of PAGE_DEFINITIONS) {
+    await prisma.pageDefinition.upsert({
+      where: { key: p.key },
+      update: {
+        path: p.path,
+        titleAr: p.titleAr,
+        groupKey: p.groupKey,
+        sortOrder: p.sortOrder,
+        isAdminOnly: p.isAdminOnly,
+      },
+      create: {
+        key: p.key,
+        path: p.path,
+        titleAr: p.titleAr,
+        groupKey: p.groupKey,
+        sortOrder: p.sortOrder,
+        isAdminOnly: p.isAdminOnly,
+      },
+    });
+  }
+
+  const accountantRole = await prisma.role.findUnique({ where: { name: 'accountant' } });
+  if (!accountantRole) {
+    console.warn('Accountant role not found, skipping role_page_access seed');
+    return;
+  }
+
+  const pages = await prisma.pageDefinition.findMany();
+  for (const page of pages) {
+    const allowed = page.isAdminOnly ? false : ACCOUNTANT_ALLOWED_KEYS.includes(page.key);
+    await prisma.rolePageAccess.upsert({
+      where: {
+        roleId_pageId: { roleId: accountantRole.id, pageId: page.id },
+      },
+      update: { allowed },
+      create: {
+        roleId: accountantRole.id,
+        pageId: page.id,
+        allowed,
+      },
+    });
+  }
+
+  for (const u of await prisma.user.findMany({
+    where: { userRoles: { some: { role: { name: { in: ['accountant', 'cashier'] } } } } },
+  })) {
+    for (const page of pages) {
+      const allowed = page.isAdminOnly ? false : ACCOUNTANT_ALLOWED_KEYS.includes(page.key);
+      await prisma.userPageAccess.upsert({
+        where: { userId_pageId: { userId: u.id, pageId: page.id } },
+        update: {},
+        create: { userId: u.id, pageId: page.id, allowed },
+      });
+    }
+  }
+
+  console.log('✓ Page definitions seeded');
 }
 
 async function seedCategories(): Promise<void> {
@@ -404,7 +504,7 @@ async function seedSystemSettings(): Promise<void> {
     // POS
     { key: 'pos.require_customer', value: 'false', description: 'Require customer for all sales', dataType: 'boolean', settingGroup: 'pos' },
     { key: 'pos.allow_credit_sale', value: 'true', description: 'Allow credit sales', dataType: 'boolean', settingGroup: 'pos' },
-    { key: 'pos.cashier_max_discount_pct', value: '500', description: 'Max discount for cashier (basis points: 500 = 5%)', dataType: 'number', settingGroup: 'pos' },
+    { key: 'pos.accountant_max_discount_pct', value: '500', description: 'Max discount for accountant (basis points: 500 = 5%)', dataType: 'number', settingGroup: 'pos' },
     { key: 'pos.print_receipt', value: 'true', description: 'Auto-print receipt after sale', dataType: 'boolean', settingGroup: 'pos' },
     { key: 'pos.receipt_copies', value: '1', description: 'Number of receipt copies', dataType: 'number', settingGroup: 'pos' },
 
@@ -910,6 +1010,7 @@ async function main(): Promise<void> {
 
   try {
     await seedRoles();
+    await seedPageDefinitions();
     await seedCategories();
     await seedAccounts();
     await seedSystemSettings();

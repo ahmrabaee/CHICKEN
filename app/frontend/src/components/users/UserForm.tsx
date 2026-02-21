@@ -58,7 +58,7 @@ export default function UserForm({ user, onSuccess }: UserFormProps) {
             fullNameEn: user?.fullNameEn || "",
             email: user?.email || "",
             phone: user?.phone || "",
-            roleId: user?.roles?.[0] === 'admin' ? "1" : "2",
+            roleId: user?.roles?.[0] === 'admin' ? "1" : "2", // 1=admin, 2=accountant
             defaultBranchId: user?.defaultBranchId?.toString() || "",
             preferredLanguage: (user?.preferredLanguage as any) || "ar",
         },

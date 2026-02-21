@@ -14,7 +14,7 @@ import { CreateCreditNoteDto } from './dto/create-credit-note.dto';
 
 @ApiTags('credit-notes')
 @ApiBearerAuth('JWT-auth')
-@Roles('admin', 'manager')
+@Roles('admin', 'accountant')
 @Controller('credit-notes')
 export class CreditNoteController {
   constructor(private creditNoteService: CreditNoteService) {}

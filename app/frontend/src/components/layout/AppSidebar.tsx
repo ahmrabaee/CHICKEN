@@ -38,17 +38,22 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useLogout } from "@/hooks/use-auth";
+import { useAuth } from "@/context/AuthContext";
+import { useRole } from "@/hooks/useRole";
+import { ROLE_LABELS, normalizeRole } from "@/constants/roles";
 
 interface NavItem {
   title: string;
   titleAr: string;
   icon: React.ElementType;
   href?: string;
+  adminOnly?: boolean;
   children?: {
     title: string;
     titleAr: string;
     href: string;
     icon: React.ElementType;
+    adminOnly?: boolean;
   }[];
 }
 
@@ -79,6 +84,7 @@ const navigation: NavItem[] = [
     titleAr: "الشراء",
     icon: ShoppingBag,
     href: "/purchasing",
+    adminOnly: true,
   },
   {
     title: "Customers",
@@ -93,6 +99,7 @@ const navigation: NavItem[] = [
     title: "Suppliers",
     titleAr: "التجار",
     icon: Store,
+    adminOnly: true,
     children: [
       { title: "Supplier List", titleAr: "قائمة التجار", href: "/traders", icon: Store },
       { title: "Payables", titleAr: "المستحقات", href: "/traders/payables", icon: Wallet },
@@ -113,18 +120,21 @@ const navigation: NavItem[] = [
     titleAr: "المصروفات",
     icon: Wallet,
     href: "/expenses",
+    adminOnly: true,
   },
   {
     title: "Debts",
     titleAr: "الديون",
     icon: ArrowLeftRight,
     href: "/debts",
+    adminOnly: true,
   },
   {
     title: "Wastage",
     titleAr: "الهدر",
     icon: Trash2,
     href: "/wastage",
+    adminOnly: true,
   },
   {
     title: "Reports",
@@ -133,9 +143,9 @@ const navigation: NavItem[] = [
     children: [
       { title: "Sales Reports", titleAr: "تقارير المبيعات", href: "/reports/sales", icon: TrendingUp },
       { title: "Inventory Reports", titleAr: "تقارير المخزون", href: "/reports/inventory", icon: Package },
-      { title: "Stock vs GL", titleAr: "المخزون مقابل الدفاتر", href: "/reports/stock-vs-gl", icon: Scale },
-      { title: "Financial Reports", titleAr: "التقارير المالية", href: "/reports/financial", icon: PieChart },
-      { title: "Tax Reports", titleAr: "تقارير الضرائب", href: "/reports/tax", icon: Receipt },
+      { title: "Stock vs GL", titleAr: "المخزون مقابل الدفاتر", href: "/reports/stock-vs-gl", icon: Scale, adminOnly: true },
+      { title: "Financial Reports", titleAr: "التقارير المالية", href: "/reports/financial", icon: PieChart, adminOnly: true },
+      { title: "Tax Reports", titleAr: "تقارير الضرائب", href: "/reports/tax", icon: Receipt, adminOnly: true },
     ],
   },
   {
@@ -151,26 +161,54 @@ const navigation: NavItem[] = [
     titleAr: "سجل المراجعة",
     icon: Shield,
     href: "/audit",
+    adminOnly: true,
   },
   {
     title: "Branches",
     titleAr: "الفروع",
     icon: Building2,
     href: "/branches",
+    adminOnly: true,
   },
   {
     title: "Settings",
     titleAr: "الإعدادات",
     icon: Settings,
     href: "/settings",
+    adminOnly: true,
+  },
+  {
+    title: "Users",
+    titleAr: "المستخدمين",
+    icon: Users,
+    href: "/users",
+    adminOnly: true,
   },
 ];
 
+function getVisibleNavItems(nav: NavItem[], canAccessPath: (path: string) => boolean): NavItem[] {
+  return nav.filter((item) => {
+    if (item.href) return canAccessPath(item.href);
+    if (item.children) return item.children.some((c) => canAccessPath(c.href));
+    return false;
+  });
+}
+
+function getVisibleChildren(item: NavItem, canAccessPath: (path: string) => boolean) {
+  if (!item.children) return [];
+  return item.children.filter((c) => canAccessPath(c.href));
+}
+
 export function AppSidebar() {
+  const { user } = useAuth();
+  const { canAccessPath } = useRole();
   const [collapsed, setCollapsed] = useState(false);
   const [openGroups, setOpenGroups] = useState<string[]>(["Sales", "Accounting"]);
   const location = useLocation();
   const logoutMutation = useLogout();
+
+  const effectiveRole = normalizeRole(user?.role);
+  const visibleNav = getVisibleNavItems(navigation, canAccessPath);
 
   const toggleGroup = (title: string) => {
     setOpenGroups((prev) =>
@@ -223,7 +261,7 @@ export function AppSidebar() {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-2">
         <ul className="space-y-1">
-          {navigation.map((item) => (
+          {visibleNav.map((item) => (
             <li key={item.title}>
               {item.children ? (
                 <Collapsible
@@ -258,7 +296,7 @@ export function AppSidebar() {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <ul className="mt-1 mr-4 space-y-1 border-r border-sidebar-border pr-2">
-                      {item.children.map((child) => (
+                      {getVisibleChildren(item, canAccessPath).map((child) => (
                         <li key={child.href}>
                           <Link
                             to={child.href}
@@ -307,8 +345,8 @@ export function AppSidebar() {
               <UserCircle className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">المدير</p>
-              <p className="text-xs text-sidebar-muted truncate">Admin</p>
+              <p className="text-sm font-medium truncate">{ROLE_LABELS[user?.role || ""] || user?.fullName || "—"}</p>
+              <p className="text-xs text-sidebar-muted truncate">{effectiveRole === "admin" ? "Admin" : "Accountant"}</p>
             </div>
           </div>
         )}

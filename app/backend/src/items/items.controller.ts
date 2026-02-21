@@ -15,7 +15,7 @@ export class ItemsController {
   constructor(private readonly itemsService: ItemsService) {}
 
   @Get()
-  @Roles('admin', 'cashier')
+  @Roles('admin', 'accountant')
   @ApiOperation({ summary: 'List all items with filters' })
   @ApiResponse({ status: 200, description: 'Paginated list of items' })
   async findAll(@Query() query: ItemListQueryDto): Promise<PaginatedResult<ItemResponseDto>> {
@@ -23,7 +23,7 @@ export class ItemsController {
   }
 
   @Get(':id')
-  @Roles('admin', 'cashier')
+  @Roles('admin', 'accountant')
   @ApiOperation({ summary: 'Get item by ID' })
   @ApiParam({ name: 'id', description: 'Item ID' })
   @ApiResponse({ status: 200, type: ItemResponseDto })
@@ -32,7 +32,7 @@ export class ItemsController {
   }
 
   @Get('code/:code')
-  @Roles('admin', 'cashier')
+  @Roles('admin', 'accountant')
   @ApiOperation({ summary: 'Get item by code' })
   @ApiParam({ name: 'code', description: 'Item code' })
   @ApiResponse({ status: 200, type: ItemResponseDto })
@@ -41,7 +41,7 @@ export class ItemsController {
   }
 
   @Get('barcode/:barcode')
-  @Roles('admin', 'cashier')
+  @Roles('admin', 'accountant')
   @ApiOperation({ summary: 'Get item by barcode' })
   @ApiParam({ name: 'barcode', description: 'Item barcode' })
   @ApiResponse({ status: 200, type: ItemResponseDto })

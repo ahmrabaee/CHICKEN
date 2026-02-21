@@ -44,6 +44,7 @@ import {
 import { useVATReport } from "@/hooks/use-tax";
 import type { DateRangeQuery } from "@/types/reports";
 import { PdfPreviewDialog } from "@/components/reports/PdfPreviewDialog";
+import { useRole } from "@/hooks/useRole";
 
 function formatMinor(amount: number): string {
   return (amount / 100).toFixed(2);
@@ -98,19 +99,22 @@ const REPORT_PDF_MAP: Record<
   },
 };
 
-const reportLinks = [
+const ALL_REPORT_LINKS = [
   { href: "/reports/sales", label: "المبيعات", icon: TrendingUp },
   { href: "/reports/purchases", label: "المشتريات", icon: Receipt },
   { href: "/reports/inventory", label: "المخزون", icon: Package },
-  { href: "/reports/expenses", label: "المصروفات", icon: Wallet },
-  { href: "/reports/profit-loss", label: "الأرباح والخسائر", icon: PieChart },
+  { href: "/reports/expenses", label: "المصروفات", icon: Wallet, adminOnly: true },
+  { href: "/reports/profit-loss", label: "الأرباح والخسائر", icon: PieChart, adminOnly: true },
   { href: "/reports/wastage", label: "الهدر", icon: Trash2 },
-  { href: "/reports/stock-vs-gl", label: "المخزون vs الدفاتر", icon: Scale },
-  { href: "/reports/vat", label: "ضريبة القيمة المضافة", icon: Receipt },
+  { href: "/reports/stock-vs-gl", label: "المخزون vs الدفاتر", icon: Scale, adminOnly: true },
+  { href: "/reports/vat", label: "ضريبة القيمة المضافة", icon: Receipt, adminOnly: true },
 ];
 
+
 export default function Reports() {
+  const { canAccessPath } = useRole();
   const location = useLocation();
+  const reportLinks = ALL_REPORT_LINKS.filter((l) => canAccessPath(l.href));
   const currentPath = location.pathname;
   const [dateRange, setDateRange] = useState<DateRangeQuery>(getDefaultDateRange());
   const [rangePreset, setRangePreset] = useState("month");

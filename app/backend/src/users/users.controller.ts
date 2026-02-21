@@ -31,7 +31,6 @@ import {
   CurrentUserData,
   Roles,
   RolesGuard,
-  PaginationQueryDto,
 } from '../common';
 import { AdminResetPasswordDto, MessageResponse } from '../auth/dto';
 
@@ -52,11 +51,8 @@ export class UsersController {
     status: 200,
     description: 'List of users',
   })
-  async findAll(
-    @Query() query: UserListQueryDto,
-    @Query() pagination: PaginationQueryDto,
-  ) {
-    return this.usersService.findAll(query, pagination);
+  async findAll(@Query() query: UserListQueryDto) {
+    return this.usersService.findAll(query, query);
   }
 
   @Get('me')

@@ -9,6 +9,7 @@ import {
   Query,
   ParseIntPipe,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
@@ -16,11 +17,12 @@ import { getPdfContentDisposition } from '../pdf/pdf.helpers';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SuppliersService } from './suppliers.service';
 import { CreateSupplierDto, UpdateSupplierDto } from './dto/supplier.dto';
-import { PaginationQueryDto, Roles } from '../common';
+import { PaginationQueryDto, Roles, RolesGuard } from '../common';
 
 @ApiTags('suppliers')
 @ApiBearerAuth('JWT-auth')
-@Roles('admin', 'manager')
+@UseGuards(RolesGuard)
+@Roles('admin')
 @Controller('suppliers')
 export class SuppliersController {
   constructor(private suppliersService: SuppliersService) { }

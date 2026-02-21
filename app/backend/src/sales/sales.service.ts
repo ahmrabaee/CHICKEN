@@ -251,7 +251,7 @@ export class SalesService {
 
   async create(dto: CreateSaleDto, cashierId: number, userRoles: string[], branchId?: number) {
     const isAdmin = userRoles.includes('admin');
-    const maxDiscountPct = isAdmin ? 10000 : 500; // Admin unlimited, cashier 5%
+    const maxDiscountPct = isAdmin ? 10000 : 500; // Admin unlimited, accountant 5%
 
     // Validate discount
     if (dto.discountPct && dto.discountPct > maxDiscountPct) {

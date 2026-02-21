@@ -54,7 +54,7 @@ export const backupApi = {
     },
 
     async createManualBackup(): Promise<{ message: string }> {
-        const res = await axiosInstance.post<{ message: string } | ApiResponseEnvelope<{ message: string }>>(`${BASE}/backup`);
+        const res = await axiosInstance.post<{ message: string } | ApiResponseEnvelope<{ message: string }>>(`${BASE}/backup`, {});
         return unwrapApiData(res.data);
     },
 

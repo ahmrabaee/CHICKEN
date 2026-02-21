@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  ServiceUnavailableException,
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -451,8 +452,15 @@ export class AuthService {
         businessNameEn: businessNameEn?.value || undefined,
       };
     } catch (err) {
-      this.logger.warn('checkSetup failed, assuming not configured', err);
-      return { setupCompleted: false };
+      this.logger.error(
+        'checkSetup failed: setup status unavailable',
+        err instanceof Error ? err.stack : undefined,
+      );
+      throw new ServiceUnavailableException({
+        code: 'SETUP_STATUS_UNAVAILABLE',
+        message: 'Setup status is temporarily unavailable',
+        messageAr: 'حالة الإعداد غير متاحة حالياً',
+      });
     }
   }
 
@@ -506,8 +514,20 @@ export class AuthService {
       // 3. Check if admin username already exists
       const existingUser = await tx.user.findUnique({
         where: { username: dto.adminUsername },
+        include: {
+          userRoles: {
+            select: {
+              roleId: true,
+            },
+          },
+        },
       });
-      if (existingUser) {
+      const existingHasAdminRole =
+        existingUser?.userRoles.some((ur) => ur.roleId === adminRole.id) ?? false;
+      const canReuseExistingUser =
+        !!existingUser && (existingHasAdminRole || existingUser.userRoles.length === 0);
+
+      if (existingUser && !canReuseExistingUser) {
         throw new BadRequestException({
           code: 'USERNAME_EXISTS',
           message: 'Username already exists',
@@ -518,23 +538,42 @@ export class AuthService {
       // 4. Hash admin password
       const passwordHash = await bcrypt.hash(dto.adminPassword, 12);
 
-      // 5. Create admin user
-      const adminUser = await tx.user.create({
-        data: {
-          username: dto.adminUsername,
-          passwordHash,
-          fullName: dto.adminFullName,
-          fullNameEn: dto.adminFullNameEn,
-          preferredLanguage: dto.preferredLanguage,
-          defaultBranchId: mainBranch.id,
-          isActive: true,
-          workStartDate: new Date(),
-        },
-      });
+      // 5. Create or reuse admin user
+      const adminUser = existingUser
+        ? await tx.user.update({
+            where: { id: existingUser.id },
+            data: {
+              passwordHash,
+              fullName: dto.adminFullName,
+              fullNameEn: dto.adminFullNameEn,
+              preferredLanguage: dto.preferredLanguage,
+              defaultBranchId: mainBranch.id,
+              isActive: true,
+            },
+          })
+        : await tx.user.create({
+            data: {
+              username: dto.adminUsername,
+              passwordHash,
+              fullName: dto.adminFullName,
+              fullNameEn: dto.adminFullNameEn,
+              preferredLanguage: dto.preferredLanguage,
+              defaultBranchId: mainBranch.id,
+              isActive: true,
+              workStartDate: new Date(),
+            },
+          });
 
       // 6. Assign admin role
-      await tx.userRole.create({
-        data: {
+      await tx.userRole.upsert({
+        where: {
+          userId_roleId: {
+            userId: adminUser.id,
+            roleId: adminRole.id,
+          },
+        },
+        update: {},
+        create: {
           userId: adminUser.id,
           roleId: adminRole.id,
         },

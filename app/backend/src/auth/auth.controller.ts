@@ -152,6 +152,10 @@ export class AuthController {
     description: 'Setup status retrieved',
     type: CheckSetupResponse,
   })
+  @ApiResponse({
+    status: 503,
+    description: 'Setup status unavailable (backend/database not reachable)',
+  })
   async checkSetup(): Promise<CheckSetupResponse> {
     return this.authService.checkSetup();
   }

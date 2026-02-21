@@ -19,8 +19,14 @@ npm run db:generate
 # Create database and run migrations
 npm run db:push
 
-# Seed initial data
+# Seed production baseline data (safe default)
 npm run db:seed
+
+# Optional: add local/dev fixture data (admin + sample transactions)
+npm run db:seed:dev
+
+# Clean first-time baseline setup (removes all existing data)
+npm run db:reset:baseline
 ```
 
 ## Available Scripts
@@ -31,7 +37,11 @@ npm run db:seed
 | `npm run db:push` | Push schema to database |
 | `npm run db:migrate` | Create and apply migrations (dev) |
 | `npm run db:migrate:prod` | Apply migrations (production) |
-| `npm run db:seed` | Seed reference data |
+| `npm run db:seed` | Seed production baseline data |
+| `npm run db:seed:baseline` | Explicit baseline-only seed |
+| `npm run db:seed:dev` | Seed baseline + deterministic dev fixtures |
+| `npm run db:seed:test` | Seed baseline + deterministic test fixtures |
+| `npm run db:reset:baseline` | Reset DB and seed clean baseline |
 | `npm run db:studio` | Open Prisma Studio |
 | `npm run db:reset` | Reset database (WARNING: deletes all data) |
 | `npm run build` | Compile TypeScript |
@@ -89,12 +99,12 @@ npm run db:seed
 
 ## Default Credentials
 
-After seeding, you can login with:
+After running `npm run db:seed:dev` or `npm run db:seed:test`, you can login with:
 
 - **Username:** `admin`
 - **Password:** `Admin@123`
 
-> ⚠️ Change the default password in production!
+`npm run db:seed` (baseline) does not create default users.
 
 ## Data Conventions
 

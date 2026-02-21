@@ -1,16 +1,14 @@
 import {
-  Users,
-  Package,
-  TrendingUp,
   AlertTriangle,
-  CreditCard,
-  Wallet,
-  ShoppingCart,
   Calendar,
+  CreditCard,
   Loader2,
+  ShoppingCart,
+  TrendingUp,
+  Wallet,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { StatCard } from "@/components/dashboard/StatCard";
-import { StatusBadge, PaymentStatusBadge, StockStatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -21,45 +19,113 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Link } from "react-router-dom";
+import { PaymentStatusBadge, StockStatusBadge } from "@/components/ui/status-badge";
+import { useReceivables, usePayables } from "@/hooks/use-debts";
+import { useLowStockItems } from "@/hooks/use-inventory";
 import { useDashboard } from "@/hooks/use-reports";
 import { useRole } from "@/hooks/useRole";
+import { useSales } from "@/hooks/use-sales";
+import { formatCurrency } from "@/lib/formatters";
 
 function formatMinor(amount: number): string {
-  return `₪ ${(amount / 100).toFixed(2)}`;
+  return formatCurrency(amount);
 }
 
-// Mock data
-const lowStockItems = [
-  { id: 1, name: "صدور دجاج", category: "طازج", current: 2, min: 5, unit: "كغم" },
-  { id: 2, name: "أفخاذ دجاج", category: "طازج", current: 3, min: 5, unit: "كغم" },
-  { id: 3, name: "دجاج مشوي", category: "مطبوخ", current: 0, min: 3, unit: "قطعة" },
-];
+function formatDate(date?: string | null): string {
+  if (!date) return "-";
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return "-";
+  return parsed.toISOString().split("T")[0];
+}
 
-const customerDebts = [
-  { id: 1, name: "أحمد محمود", phone: "0599123456", amount: 350, dueDate: "2026-02-10" },
-  { id: 2, name: "محمد علي", phone: "0598765432", amount: 180, dueDate: "2026-02-08" },
-  { id: 3, name: "خالد حسن", phone: "0597654321", amount: 520, dueDate: "2026-02-15" },
-];
+function formatGramsAsKg(grams: number): string {
+  return `${(grams / 1000).toFixed(2)} كغم`;
+}
 
-const supplierDebts = [
-  { id: 1, name: "مزرعة الخير", amount: 2500, dueDate: "2026-02-07" },
-  { id: 2, name: "شركة التوزيع", amount: 1800, dueDate: "2026-02-12" },
-];
+function toPaymentBadgeStatus(
+  status?: string,
+): "Paid" | "PartiallyPaid" | "Unpaid" {
+  if (status === "paid") return "Paid";
+  if (status === "partial") return "PartiallyPaid";
+  return "Unpaid";
+}
 
-const recentSales = [
-  { id: "INV-2026-0042", customer: "أحمد محمود", amount: 156, status: "Paid" as const, date: "2026-02-04" },
-  { id: "INV-2026-0041", customer: "محمد علي", amount: 89, status: "PartiallyPaid" as const, date: "2026-02-04" },
-  { id: "INV-2026-0040", customer: "خالد حسن", amount: 234, status: "Unpaid" as const, date: "2026-02-03" },
-];
+function getOutstandingAmount(debt: Record<string, unknown>): number {
+  if (typeof debt.remainingAmount === "number") return debt.remainingAmount;
+
+  const totalAmount =
+    typeof debt.totalAmount === "number"
+      ? debt.totalAmount
+      : typeof debt.originalAmount === "number"
+        ? debt.originalAmount
+        : 0;
+  const amountPaid =
+    typeof debt.amountPaid === "number"
+      ? debt.amountPaid
+      : typeof debt.paidAmount === "number"
+        ? debt.paidAmount
+        : 0;
+
+  return Math.max(0, totalAmount - amountPaid);
+}
+
+function getDebtPartyName(debt: Record<string, unknown>): string {
+  const raw =
+    (typeof debt.partyName === "string" && debt.partyName) ||
+    (typeof debt.customerName === "string" && debt.customerName) ||
+    (typeof debt.supplierName === "string" && debt.supplierName) ||
+    (typeof debt.name === "string" && debt.name) ||
+    "";
+
+  return raw || "-";
+}
+
+function getDebtPhone(debt: Record<string, unknown>): string {
+  return (
+    (typeof debt.customerPhone === "string" && debt.customerPhone) ||
+    (typeof debt.phone === "string" && debt.phone) ||
+    "-"
+  );
+}
 
 export default function Dashboard() {
   const { isAdmin } = useRole();
+  const previewSize = 3;
+
   const { data: dashboard, isLoading: dashboardLoading } = useDashboard();
+  const { data: lowStockData, isLoading: lowStockLoading, isError: lowStockError } =
+    useLowStockItems();
+  const {
+    data: receivablesData,
+    isLoading: receivablesLoading,
+    isError: receivablesError,
+  } = useReceivables({ page: 1, pageSize: previewSize });
+  const {
+    data: payablesData,
+    isLoading: payablesLoading,
+    isError: payablesError,
+  } = usePayables({ page: 1, pageSize: previewSize });
+  const { data: salesData, isLoading: salesLoading, isError: salesError } = useSales({
+    page: 1,
+    pageSize: previewSize,
+  });
+
+  const lowStockItems = (lowStockData ?? []).slice(0, previewSize);
+  const customerDebts = (((receivablesData?.data as unknown[]) ?? []).slice(
+    0,
+    previewSize,
+  ) as Array<Record<string, unknown>>);
+  const supplierDebts = (((payablesData?.data as unknown[]) ?? []).slice(
+    0,
+    previewSize,
+  ) as Array<Record<string, unknown>>);
+  const recentSales = (((salesData?.data as unknown[]) ?? []).slice(
+    0,
+    previewSize,
+  ) as Array<Record<string, unknown>>);
 
   return (
     <div className="space-y-6" dir="rtl">
-      {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">لوحة التحكم</h1>
@@ -79,7 +145,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Stats Grid — from GET /reports/dashboard */}
       {dashboardLoading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -95,14 +160,14 @@ export default function Dashboard() {
             />
             <StatCard
               title="إيرادات اليوم"
-              value={dashboard?.sales?.today ? formatMinor(dashboard.sales.today.totalAmount) : "₪ 0.00"}
+              value={dashboard?.sales?.today ? formatMinor(dashboard.sales.today.totalAmount) : formatMinor(0)}
               icon={TrendingUp}
               variant="success"
             />
             {isAdmin && (
               <StatCard
                 title="أرباح اليوم"
-                value={dashboard?.sales?.today ? formatMinor(dashboard.sales.today.totalProfit) : "₪ 0.00"}
+                value={dashboard?.sales?.today ? formatMinor(dashboard.sales.today.totalProfit) : formatMinor(0)}
                 icon={TrendingUp}
                 variant="success"
               />
@@ -118,14 +183,14 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <StatCard
               title="ديون الزبائن (مستحقات)"
-              value={dashboard != null ? formatMinor(dashboard.receivables) : "₪ 0.00"}
+              value={dashboard != null ? formatMinor(dashboard.receivables) : formatMinor(0)}
               icon={CreditCard}
               variant="danger"
             />
             {isAdmin && (
               <StatCard
                 title="ديون للتجار (ذمم دائنة)"
-                value={dashboard != null ? formatMinor(dashboard.payables) : "₪ 0.00"}
+                value={dashboard != null ? formatMinor(dashboard.payables) : formatMinor(0)}
                 icon={Wallet}
                 variant="warning"
               />
@@ -134,9 +199,7 @@ export default function Dashboard() {
         </>
       )}
 
-      {/* Data Widgets */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Low Stock Items */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
@@ -161,36 +224,63 @@ export default function Dashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {lowStockItems.map((item) => (
-                  <TableRow key={item.id} className="data-table-row">
-                    <TableCell className="font-medium">{item.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{item.category}</TableCell>
-                    <TableCell className="text-center">
-                      {item.current} / {item.min} {item.unit}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <StockStatusBadge current={item.current} min={item.min} />
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Button size="sm" variant="outline">
-                        طلب
-                      </Button>
+                {lowStockLoading && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-6">
+                      <Loader2 className="w-4 h-4 animate-spin mx-auto" />
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
+                {!lowStockLoading && lowStockError && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
+                      تعذر تحميل البيانات
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!lowStockLoading && !lowStockError && lowStockItems.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
+                      لا توجد أصناف منخفضة حالياً
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!lowStockLoading &&
+                  !lowStockError &&
+                  lowStockItems.map((item) => (
+                    <TableRow key={item.itemId} className="data-table-row">
+                      <TableCell className="font-medium">{item.itemName}</TableCell>
+                      <TableCell className="text-muted-foreground">{item.categoryName}</TableCell>
+                      <TableCell className="text-center">
+                        {formatGramsAsKg(item.currentQuantityGrams)} / {formatGramsAsKg(item.minStockLevel)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <StockStatusBadge
+                          current={item.currentQuantityGrams}
+                          min={item.minStockLevel}
+                        />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Link to="/inventory">
+                          <Button size="sm" variant="outline">
+                            متابعة
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
 
-        {/* Customer Debts */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-danger" />
               ديون الزبائن
             </CardTitle>
-            <Link to="/customers/credits">
+            <Link to="/debts">
               <Button variant="ghost" size="sm">
                 عرض الكل
               </Button>
@@ -208,41 +298,64 @@ export default function Dashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {customerDebts.map((debt) => (
-                  <TableRow key={debt.id} className="data-table-row">
-                    <TableCell className="font-medium">{debt.name}</TableCell>
-                    <TableCell className="text-muted-foreground font-english" dir="ltr">
-                      {debt.phone}
-                    </TableCell>
-                    <TableCell className="text-center text-danger font-semibold">
-                      ₪ {debt.amount}
-                    </TableCell>
-                    <TableCell className="text-center text-muted-foreground">
-                      {debt.dueDate}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Button size="sm" variant="outline">
-                        تحصيل
-                      </Button>
+                {receivablesLoading && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-6">
+                      <Loader2 className="w-4 h-4 animate-spin mx-auto" />
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
+                {!receivablesLoading && receivablesError && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
+                      تعذر تحميل البيانات
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!receivablesLoading && !receivablesError && customerDebts.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
+                      لا توجد ديون زبائن
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!receivablesLoading &&
+                  !receivablesError &&
+                  customerDebts.map((debt, index) => (
+                    <TableRow key={String(debt.id ?? `recv-${index}`)} className="data-table-row">
+                      <TableCell className="font-medium">{getDebtPartyName(debt)}</TableCell>
+                      <TableCell className="text-muted-foreground font-english" dir="ltr">
+                        {getDebtPhone(debt)}
+                      </TableCell>
+                      <TableCell className="text-center text-danger font-semibold">
+                        {formatMinor(getOutstandingAmount(debt))}
+                      </TableCell>
+                      <TableCell className="text-center text-muted-foreground">
+                        {formatDate(typeof debt.dueDate === "string" ? debt.dueDate : null)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Link to="/debts">
+                          <Button size="sm" variant="outline">
+                            تحصيل
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
       </div>
 
-      {/* Third Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Supplier Debts */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
               <Wallet className="w-5 h-5 text-warning" />
               ديون للتجار
             </CardTitle>
-            <Link to="/traders/payables">
+            <Link to="/debts">
               <Button variant="ghost" size="sm">
                 عرض الكل
               </Button>
@@ -259,28 +372,52 @@ export default function Dashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {supplierDebts.map((debt) => (
-                  <TableRow key={debt.id} className="data-table-row">
-                    <TableCell className="font-medium">{debt.name}</TableCell>
-                    <TableCell className="text-center text-warning font-semibold">
-                      ₪ {debt.amount}
-                    </TableCell>
-                    <TableCell className="text-center text-muted-foreground">
-                      {debt.dueDate}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Button size="sm" variant="outline">
-                        دفع
-                      </Button>
+                {payablesLoading && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-6">
+                      <Loader2 className="w-4 h-4 animate-spin mx-auto" />
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
+                {!payablesLoading && payablesError && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
+                      تعذر تحميل البيانات
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!payablesLoading && !payablesError && supplierDebts.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
+                      لا توجد ديون موردين
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!payablesLoading &&
+                  !payablesError &&
+                  supplierDebts.map((debt, index) => (
+                    <TableRow key={String(debt.id ?? `pay-${index}`)} className="data-table-row">
+                      <TableCell className="font-medium">{getDebtPartyName(debt)}</TableCell>
+                      <TableCell className="text-center text-warning font-semibold">
+                        {formatMinor(getOutstandingAmount(debt))}
+                      </TableCell>
+                      <TableCell className="text-center text-muted-foreground">
+                        {formatDate(typeof debt.dueDate === "string" ? debt.dueDate : null)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Link to="/debts">
+                          <Button size="sm" variant="outline">
+                            دفع
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
 
-        {/* Recent Sales */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
@@ -304,18 +441,49 @@ export default function Dashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentSales.map((sale) => (
-                  <TableRow key={sale.id} className="data-table-row">
-                    <TableCell className="font-mono text-sm">{sale.id}</TableCell>
-                    <TableCell className="font-medium">{sale.customer}</TableCell>
-                    <TableCell className="text-center font-semibold">
-                      ₪ {sale.amount}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <PaymentStatusBadge status={sale.status} />
+                {salesLoading && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-6">
+                      <Loader2 className="w-4 h-4 animate-spin mx-auto" />
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
+                {!salesLoading && salesError && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
+                      تعذر تحميل البيانات
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!salesLoading && !salesError && recentSales.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
+                      لا توجد مبيعات حتى الآن
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!salesLoading &&
+                  !salesError &&
+                  recentSales.map((sale, index) => (
+                    <TableRow key={String(sale.id ?? `sale-${index}`)} className="data-table-row">
+                      <TableCell className="font-mono text-sm">
+                        {typeof sale.saleNumber === "string" ? sale.saleNumber : `SAL-${sale.id ?? "-"}`}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {(typeof sale.customerName === "string" && sale.customerName) || "عميل نقدي"}
+                      </TableCell>
+                      <TableCell className="text-center font-semibold">
+                        {formatMinor(typeof sale.totalAmount === "number" ? sale.totalAmount : 0)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <PaymentStatusBadge
+                          status={toPaymentBadgeStatus(
+                            typeof sale.paymentStatus === "string" ? sale.paymentStatus : undefined,
+                          )}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           </CardContent>
@@ -324,3 +492,6 @@ export default function Dashboard() {
     </div>
   );
 }
+
+
+

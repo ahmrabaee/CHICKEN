@@ -112,40 +112,40 @@ export default function Settings() {
 
       {/* Tabs */}
       <Tabs defaultValue="shop" className="space-y-6" dir="rtl">
-        <TabsList className="grid w-full grid-cols-4 gap-2 sm:grid-cols-8">
-          <TabsTrigger value="shop" className="gap-2">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-9">
+          <TabsTrigger value="shop" className="w-full gap-2">
             <Globe className="w-4 h-4" />
             المحل
           </TabsTrigger>
-          <TabsTrigger value="account" className="gap-2">
+          <TabsTrigger value="account" className="w-full gap-2">
             <Key className="w-4 h-4" />
             الحساب
           </TabsTrigger>
-          <TabsTrigger value="accounting" className="gap-2">
+          <TabsTrigger value="accounting" className="w-full gap-2">
             <Calculator className="w-4 h-4" />
             المحاسبة
           </TabsTrigger>
-          <TabsTrigger value="tax-templates" className="gap-2">
+          <TabsTrigger value="tax-templates" className="w-full gap-2">
             <Receipt className="w-4 h-4" />
             قوالب الضرائب
           </TabsTrigger>
-          <TabsTrigger value="page-access" className="gap-2">
+          <TabsTrigger value="page-access" className="w-full gap-2">
             <Shield className="w-4 h-4" />
             صلاحيات الصفحات
           </TabsTrigger>
-          <TabsTrigger value="users" className="gap-2">
+          <TabsTrigger value="users" className="w-full gap-2">
             <User className="w-4 h-4" />
             المستخدمين
           </TabsTrigger>
-          <TabsTrigger value="printers" className="gap-2">
+          <TabsTrigger value="printers" className="w-full gap-2">
             <Printer className="w-4 h-4" />
             الطابعات
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-2">
+          <TabsTrigger value="notifications" className="w-full gap-2">
             <Bell className="w-4 h-4" />
             الإشعارات
           </TabsTrigger>
-          <TabsTrigger value="backup" className="gap-2">
+          <TabsTrigger value="backup" className="w-full gap-2">
             <Database className="w-4 h-4" />
             النسخ الاحتياطي
           </TabsTrigger>

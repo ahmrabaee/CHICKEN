@@ -24,7 +24,7 @@ describe('backupApi', () => {
         vi.mocked(axiosInstance.post).mockResolvedValue({ data: { message: 'ok' } });
 
         await backupApi.createManualBackup();
-        expect(axiosInstance.post).toHaveBeenCalledWith('/system/backup');
+        expect(axiosInstance.post).toHaveBeenCalledWith('/system/backup', {});
     });
 
     it('createDownloadLink calls correct endpoint', async () => {

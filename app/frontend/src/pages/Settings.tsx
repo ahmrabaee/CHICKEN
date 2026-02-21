@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Save, Upload, User, Bell, Printer, Globe, Key, Check, X, Calculator, Receipt, Database } from "lucide-react";
+import { Save, Upload, User, Bell, Printer, Globe, Key, Check, X, Calculator, Receipt, Database, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +27,7 @@ import { authService } from "@/services/auth.service";
 import { AccountingSettingsTab } from "@/components/settings/AccountingSettingsTab";
 import { TaxTemplatesTab } from "@/components/settings/TaxTemplatesTab";
 import { BackupSettingsTab } from "@/features/backup/components/BackupSettingsTab";
+import { PageAccessSettingsTab } from "@/components/settings/PageAccessSettingsTab";
 
 const changePasswordSchema = z.object({
   oldPassword: z.string().min(1, "كلمة المرور الحالية مطلوبة"),
@@ -127,6 +128,10 @@ export default function Settings() {
           <TabsTrigger value="tax-templates" className="gap-2">
             <Receipt className="w-4 h-4" />
             قوالب الضرائب
+          </TabsTrigger>
+          <TabsTrigger value="page-access" className="gap-2">
+            <Shield className="w-4 h-4" />
+            صلاحيات الصفحات
           </TabsTrigger>
           <TabsTrigger value="users" className="gap-2">
             <User className="w-4 h-4" />
@@ -365,6 +370,11 @@ export default function Settings() {
         {/* Tax Templates - Blueprint 05 */}
         <TabsContent value="tax-templates" className="space-y-6">
           <TaxTemplatesTab />
+        </TabsContent>
+
+        {/* Page Access - Dynamic accountant permissions */}
+        <TabsContent value="page-access" className="space-y-6">
+          <PageAccessSettingsTab />
         </TabsContent>
 
         {/* Users Settings */}

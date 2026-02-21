@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
 import { AppSidebar } from "./AppSidebar";
+import { PageAccessGate } from "@/components/PageAccessGate";
 import { cn } from "@/lib/utils";
 import { BackupAutoSyncAgent } from "@/features/backup/components/BackupAutoSyncAgent";
 
@@ -18,7 +18,7 @@ export function MainLayout() {
         )}
       >
         <div className="p-6 max-w-[1600px]">
-          <Outlet />
+          <PageAccessGate />
         </div>
       </main>
     </div>

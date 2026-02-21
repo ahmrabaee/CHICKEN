@@ -58,11 +58,11 @@ model Branch {
   @@map("branches")
 }
 
-/// System roles (Admin and Cashier only per PRD)
+/// System roles (Admin and Accountant per PRD)
 /// PRD Section: 3.1 - Role Definitions
 model Role {
   id           Int      @id @default(autoincrement())
-  name         String   @unique // 'admin' or 'cashier'
+  name         String   @unique // 'admin' or 'accountant'
   nameAr       String   @map("name_ar")
   description  String?
   permissions  String? // JSON array: ["sales.create", "sales.view", ...]
@@ -71,9 +71,61 @@ model Role {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   // Relations
-  userRoles UserRole[]
+  userRoles      UserRole[]
+  rolePageAccess RolePageAccess[]
 
   @@map("roles")
+}
+
+/// Page definitions for dynamic access control (DYNAMIC_PAGE_ACCESS_PLAN)
+model PageDefinition {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique
+  path        String
+  titleAr     String   @map("title_ar")
+  titleEn     String?  @map("title_en")
+  groupKey    String?  @map("group_key")
+  sortOrder   Int      @default(0) @map("sort_order")
+  isAdminOnly Boolean  @default(false) @map("is_admin_only")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  rolePageAccess RolePageAccess[]
+  userPageAccess UserPageAccess[]
+
+  @@map("page_definitions")
+}
+
+/// Role-to-page access mapping (legacy default template - can be removed later)
+model RolePageAccess {
+  id        Int      @id @default(autoincrement())
+  roleId    Int      @map("role_id")
+  pageId    Int      @map("page_id")
+  allowed   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  role Role            @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  page PageDefinition @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, pageId])
+  @@map("role_page_access")
+}
+
+/// Per-user page access - each accountant has their own permissions
+model UserPageAccess {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  pageId    Int      @map("page_id")
+  allowed   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  page PageDefinition  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, pageId])
+  @@map("user_page_access")
 }
 
 /// System users (owners, cashiers)
@@ -112,6 +164,7 @@ model User {
   // Relations
   defaultBranch         Branch?         @relation("DefaultBranch", fields: [defaultBranchId], references: [id], onDelete: SetNull)
   userRoles             UserRole[]
+  userPageAccess        UserPageAccess[]
   usersCreated          User[]          @relation("UserCreatedBy")
   usersUpdated          User[]          @relation("UserUpdatedBy")
   rolesAssigned         UserRole[]      @relation("AssignedBy")

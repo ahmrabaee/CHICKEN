@@ -33,6 +33,7 @@ import { SettingsModule } from './settings/settings.module';
 import { AuditModule } from './audit/audit.module';
 import { PdfModule } from './pdf/pdf.module';
 import { BackupModule } from './modules/backup/backup.module';
+import { PageAccessModule } from './page-access/page-access.module';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { BackupModule } from './modules/backup/backup.module';
     AuditModule,
     PdfModule,
     BackupModule,
+    PageAccessModule,
   ],
   providers: [
     // Global exception filter

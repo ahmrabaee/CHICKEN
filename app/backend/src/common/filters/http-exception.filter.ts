@@ -150,6 +150,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       409: 'CONFLICT',
       422: 'UNPROCESSABLE_ENTITY',
       429: 'TOO_MANY_REQUESTS',
+      503: 'SERVICE_UNAVAILABLE',
       500: 'INTERNAL_ERROR',
     };
     return statusCodes[status] || 'UNKNOWN_ERROR';

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Building2, User, ShieldCheck, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
+import { Building2, User, ShieldCheck, ArrowRight, ArrowLeft, Loader2, RefreshCcw, ServerCrash, WifiOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const setupSchema = z.object({
@@ -37,7 +37,8 @@ type SetupFormValues = z.infer<typeof setupSchema>;
 const Setup = () => {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
-    const { refreshSetupStatus } = useAuth();
+    const [isRetryingSetupCheck, setIsRetryingSetupCheck] = useState(false);
+    const { setupStatus, setupCompleted, setupErrorMessage, refreshSetupStatus } = useAuth();
     const navigate = useNavigate();
 
     const form = useForm<SetupFormValues>({
@@ -93,6 +94,76 @@ const Setup = () => {
     };
 
     const prevStep = () => setStep(step - 1);
+
+    const retrySetupCheck = async () => {
+        setIsRetryingSetupCheck(true);
+        try {
+            await refreshSetupStatus();
+        } finally {
+            setIsRetryingSetupCheck(false);
+        }
+    };
+
+    useEffect(() => {
+        if (setupCompleted) {
+            navigate('/', { replace: true });
+        }
+    }, [setupCompleted, navigate]);
+
+    if (setupStatus === 'checking') {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="text-muted-foreground animate-pulse">جاري التحقق من حالة الإعداد...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (setupStatus === 'backend_unreachable' || setupStatus === 'backend_error') {
+        return (
+            <div className="flex items-center justify-center min-h-screen p-4" dir="rtl">
+                <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-sm">
+                    <div className="mb-4 flex items-center gap-3">
+                        {setupStatus === 'backend_unreachable' ? (
+                            <WifiOff className="h-6 w-6 text-amber-500" />
+                        ) : (
+                            <ServerCrash className="h-6 w-6 text-destructive" />
+                        )}
+                        <h2 className="text-lg font-semibold">
+                            {setupStatus === 'backend_unreachable' ? 'تعذر الاتصال بالخادم' : 'الخادم غير جاهز حالياً'}
+                        </h2>
+                    </div>
+                    <p className="mb-5 text-sm text-muted-foreground">
+                        {setupErrorMessage || 'لا يمكن المتابعة حالياً. شغل الخادم ثم أعد المحاولة.'}
+                    </p>
+                    <Button
+                        type="button"
+                        onClick={retrySetupCheck}
+                        disabled={isRetryingSetupCheck}
+                        className="w-full gap-2"
+                    >
+                        {isRetryingSetupCheck ? (
+                            <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                جاري إعادة المحاولة...
+                            </>
+                        ) : (
+                            <>
+                                <RefreshCcw className="h-4 w-4" />
+                                إعادة المحاولة
+                            </>
+                        )}
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
+    if (setupStatus === 'setup_complete') {
+        return null;
+    }
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-4 font-tajawal" dir="rtl">

@@ -1,17 +1,14 @@
 /**
  * Database Seed Script
  * 
- * Populates the database with initial reference data:
- * - Roles (Admin, Accountant)
- * - Categories (Chicken product types)
- * - Chart of Accounts
- * - System Settings
- * - Expense Categories
- * - Default Admin User
- * - Customers & Suppliers
- * - Transactions (Sales, Purchases, Expenses, Payments) to test reports
- * 
- * Run with: npm run db:seed
+ * Supports profile-based seeding:
+ * - `baseline`: required production baseline configuration/reference data only
+ * - `dev` / `test`: baseline + deterministic fixtures (admin user + sample transactions)
+ *
+ * Run with:
+ * - npm run db:seed
+ * - npm run db:seed:dev
+ * - npm run db:seed:test
  * 
  * @module prisma/seed
  */
@@ -26,6 +23,30 @@ const prisma = new PrismaClient();
 // =============================================================================
 
 const SALT_ROUNDS = 12;
+
+type SeedProfile = 'baseline' | 'dev' | 'test';
+
+interface SeedOptions {
+  profile: SeedProfile;
+  forceFixturesInProduction: boolean;
+}
+
+function parseSeedOptions(): SeedOptions {
+  const profileArg = process.argv.find((arg) => arg.startsWith('--profile='));
+  const profileValue = profileArg?.split('=')[1] ?? process.env.SEED_PROFILE ?? 'baseline';
+
+  if (profileValue !== 'baseline' && profileValue !== 'dev' && profileValue !== 'test') {
+    throw new Error(`Invalid seed profile "${profileValue}". Use one of: baseline, dev, test.`);
+  }
+
+  const forceFixturesFlag = process.argv.includes('--force-fixtures-in-production');
+  const forceFixturesEnv = (process.env.SEED_ALLOW_PROD_FIXTURES || '').toLowerCase() === 'true';
+
+  return {
+    profile: profileValue,
+    forceFixturesInProduction: forceFixturesFlag || forceFixturesEnv,
+  };
+}
 
 // Role permissions (JSON)
 const ADMIN_PERMISSIONS = [
@@ -469,7 +490,7 @@ async function seedAccountsBlueprint01(
   return { count: legacyAccounts.length, companyId };
 }
 
-async function seedSystemSettings(): Promise<void> {
+async function seedSystemSettings(options: { setupCompleted: boolean }): Promise<void> {
   console.log('Seeding system settings...');
 
   const settings = [
@@ -535,16 +556,19 @@ async function seedSystemSettings(): Promise<void> {
     { key: 'tax_engine_enabled', value: 'false', description: 'Use Tax Engine - separate VAT GL posting', dataType: 'boolean', settingGroup: 'accounting', isSystem: true },
 
     // First-Time Setup (NEW - PRD Requirements)
-    { key: 'setup_completed', value: 'true', description: 'Whether the initial system setup has been completed', dataType: 'boolean', settingGroup: 'system', isSystem: true },
+    { key: 'setup_completed', value: options.setupCompleted ? 'true' : 'false', description: 'Whether the initial system setup has been completed', dataType: 'boolean', settingGroup: 'system', isSystem: true },
     { key: 'business_name', value: '', description: 'Business name in Arabic (primary language)', dataType: 'string', settingGroup: 'business', isSystem: true },
     { key: 'business_name_en', value: '', description: 'Business name in English (secondary language)', dataType: 'string', settingGroup: 'business', isSystem: true },
-    { key: 'setup_completed_at', value: '', description: 'ISO 8601 timestamp when setup was completed', dataType: 'string', settingGroup: 'system', isSystem: true },
+    { key: 'setup_completed_at', value: options.setupCompleted ? new Date().toISOString() : '', description: 'ISO 8601 timestamp when setup was completed', dataType: 'string', settingGroup: 'system', isSystem: true },
   ];
 
   for (const setting of settings) {
+    const shouldForceUpdate =
+      setting.key === 'setup_completed' || setting.key === 'setup_completed_at';
+
     await prisma.systemSetting.upsert({
       where: { key: setting.key },
-      update: {},
+      update: shouldForceUpdate ? { value: setting.value } : {},
       create: setting,
     });
   }
@@ -739,140 +763,247 @@ async function seedDefaultAdmin(): Promise<void> {
 // NEW SEED FUNCTIONS FOR REPORT TESTING
 // =============================================================================
 
+const FIXTURE_DATES = [
+  new Date('2026-02-16T10:00:00'),
+  new Date('2026-02-18T14:30:00'),
+  new Date('2026-02-19T09:15:00'),
+];
+
+const FIXTURE_CUSTOMERS = [
+  { customerNumber: 'C-SEED-001', name: 'Restaurant A', nameAr: 'مطعم أ', phone: '0501234567', email: 'resta@test.com', address: 'Riyadh' },
+  { customerNumber: 'C-SEED-002', name: 'Hotel B', nameAr: 'فندق ب', phone: '0507654321', email: 'hotelb@test.com', address: 'Jeddah' },
+  { customerNumber: 'C-SEED-003', name: 'Cash Customer', nameAr: 'عميل نقدي', phone: '0000000000', email: null, address: null },
+] as const;
+
+const FIXTURE_SUPPLIERS = [
+  { supplierNumber: 'S-SEED-001', name: 'United Poultry Supplier', nameAr: 'مورد الدواجن المتحدة', phone: '0551112222' },
+  { supplierNumber: 'S-SEED-002', name: 'National Feed Co', nameAr: 'شركة الأعلاف الوطنية', phone: '0553334444' },
+] as const;
+
+async function cleanupLegacyFixtureData(): Promise<void> {
+  console.log('Cleaning previous fixture data...');
+
+  await prisma.payment.deleteMany({
+    where: { paymentNumber: { startsWith: 'PAY-SEED-' } },
+  });
+
+  await prisma.sale.deleteMany({
+    where: { saleNumber: { startsWith: 'SAL-SEED-' } },
+  });
+
+  await prisma.purchase.deleteMany({
+    where: { purchaseNumber: { startsWith: 'PUR-SEED-' } },
+  });
+
+  await prisma.expense.deleteMany({
+    where: { expenseNumber: { startsWith: 'EXP-SEED-' } },
+  });
+
+  console.log('✓ Fixture cleanup completed');
+}
+
 async function seedCustomers(): Promise<void> {
   console.log('Seeding customers...');
-  const customers = [
-    { name: 'مطعم أ', nameEn: 'Restaurant A', phone: '0501234567', email: 'resta@test.com', address: 'Riyadh' },
-    { name: 'فندق ب', nameEn: 'Hotel B', phone: '0507654321', email: 'hotelb@test.com', address: 'Jeddah' },
-    { name: 'عميل نقدي', nameEn: 'Cash Customer', phone: '0000000000' },
-  ];
-
-  // Specific dates for report testing (Feb 2026)
-  const SEED_DATES = [
-    new Date('2026-02-16T10:00:00'),
-    new Date('2026-02-18T14:30:00'),
-    new Date('2026-02-19T09:15:00'),
-  ];
-
-  for (const c of customers) {
-    const existing = await prisma.customer.findFirst({
-      where: { phone: c.phone }
+  for (const customer of FIXTURE_CUSTOMERS) {
+    await prisma.customer.upsert({
+      where: { customerNumber: customer.customerNumber },
+      update: {
+        name: customer.nameAr,
+        nameEn: customer.name,
+        phone: customer.phone,
+        email: customer.email,
+        address: customer.address,
+        isActive: true,
+      },
+      create: {
+        customerNumber: customer.customerNumber,
+        name: customer.nameAr,
+        nameEn: customer.name,
+        phone: customer.phone,
+        email: customer.email,
+        address: customer.address,
+        isActive: true,
+      },
     });
-
-    if (!existing) {
-      await prisma.customer.create({
-        data: {
-          name: c.name,
-          nameEn: c.nameEn,
-          phone: c.phone,
-          email: c.email,
-          address: c.address,
-          customerNumber: `C${Math.floor(Math.random() * 100000) + Date.now().toString().slice(-4)}`,
-        }
-      });
-    }
   }
-  console.log('✓ Customers seeded');
+  console.log('OK Customers seeded');
 }
 
 async function seedSuppliers(): Promise<void> {
   console.log('Seeding suppliers...');
-  const suppliers = [
-    { name: 'مورد الدواجن المتحدة', nameEn: 'United Poultry Supplier', phone: '0551112222' },
-    { name: 'شركة الأعلاف الوطنية', nameEn: 'National Feed Co', phone: '0553334444' },
-  ];
-
-  for (const s of suppliers) {
-    const existing = await prisma.supplier.findFirst({
-      where: { phone: s.phone }
+  for (const supplier of FIXTURE_SUPPLIERS) {
+    await prisma.supplier.upsert({
+      where: { supplierNumber: supplier.supplierNumber },
+      update: {
+        name: supplier.nameAr,
+        nameEn: supplier.name,
+        phone: supplier.phone,
+        contactPerson: 'Manager',
+        isActive: true,
+      },
+      create: {
+        supplierNumber: supplier.supplierNumber,
+        name: supplier.nameAr,
+        nameEn: supplier.name,
+        phone: supplier.phone,
+        contactPerson: 'Manager',
+        isActive: true,
+      },
     });
-
-    if (!existing) {
-      await prisma.supplier.create({
-        data: {
-          name: s.name,
-          nameEn: s.nameEn,
-          phone: s.phone,
-          supplierNumber: `S${Math.floor(Math.random() * 100000) + Date.now().toString().slice(-4)}`,
-          contactPerson: 'Manager',
-        }
-      });
-    }
   }
-  console.log('✓ Suppliers seeded');
+  console.log('OK Suppliers seeded');
 }
 
 async function seedPurchases(): Promise<void> {
   console.log('Seeding purchases...');
-  const suppliers = await prisma.supplier.findMany();
-  const items = await prisma.item.findMany();
-  if (suppliers.length === 0 || items.length === 0) return;
+  const suppliers = await prisma.supplier.findMany({
+    where: { supplierNumber: { in: FIXTURE_SUPPLIERS.map((s) => s.supplierNumber) } },
+  });
+  const supplierByNumber = new Map(suppliers.map((supplier) => [supplier.supplierNumber, supplier]));
 
-  // Create 3 purchases
-  for (let i = 0; i < 3; i++) {
-    const supplier = suppliers[i % suppliers.length];
-    const item = items[0]; // Just picking first item for simplicity
+  const item = await prisma.item.findFirst({ where: { isActive: true }, orderBy: { id: 'asc' } });
+  if (!item) {
+    throw new Error('Cannot seed fixture purchases: no active items found. Run seedItems first.');
+  }
 
-    // Creating a completed purchase
-    await prisma.purchase.create({
-      data: {
-        purchaseNumber: `PUR-SEED-${Date.now()}-${i}`,
-        purchaseDate: [
-          new Date('2026-02-16T10:00:00'),
-          new Date('2026-02-18T14:30:00'),
-          new Date('2026-02-19T09:15:00')
-        ][i % 3], // Cycle through dates
+  const branch = await prisma.branch.findFirst({ where: { isMainBranch: true } });
+  const branchId = branch?.id ?? null;
+
+  const fixtures = [
+    { purchaseNumber: 'PUR-SEED-0001', supplierNumber: 'S-SEED-001', purchaseDate: FIXTURE_DATES[0] },
+    { purchaseNumber: 'PUR-SEED-0002', supplierNumber: 'S-SEED-002', purchaseDate: FIXTURE_DATES[1] },
+    { purchaseNumber: 'PUR-SEED-0003', supplierNumber: 'S-SEED-001', purchaseDate: FIXTURE_DATES[2] },
+  ] as const;
+
+  for (const fixture of fixtures) {
+    const supplier = supplierByNumber.get(fixture.supplierNumber);
+    if (!supplier) {
+      throw new Error(`Cannot seed fixture purchases: supplier ${fixture.supplierNumber} not found.`);
+    }
+
+    const lineTotalAmount = 50000;
+
+    await prisma.purchase.upsert({
+      where: { purchaseNumber: fixture.purchaseNumber },
+      update: {
+        purchaseDate: fixture.purchaseDate,
         supplierId: supplier.id,
         supplierName: supplier.name,
         paymentStatus: 'paid',
-        docstatus: 1, // Submitted
-        totalAmount: 50000, // 500.00 SAR
-        grandTotal: 50000,
+        docstatus: 1,
+        totalAmount: lineTotalAmount,
+        grandTotal: lineTotalAmount,
+        amountPaid: lineTotalAmount,
+        branchId,
+        purchaseLines: {
+          deleteMany: {},
+          create: {
+            lineNumber: 1,
+            itemId: item.id,
+            itemCode: item.code,
+            itemName: item.name,
+            weightGrams: 20000,
+            pricePerKg: 2500,
+            lineTotalAmount,
+          },
+        },
+      },
+      create: {
+        purchaseNumber: fixture.purchaseNumber,
+        purchaseDate: fixture.purchaseDate,
+        supplierId: supplier.id,
+        supplierName: supplier.name,
+        paymentStatus: 'paid',
+        docstatus: 1,
+        totalAmount: lineTotalAmount,
+        grandTotal: lineTotalAmount,
+        amountPaid: lineTotalAmount,
+        branchId,
         purchaseLines: {
           create: {
             lineNumber: 1,
             itemId: item.id,
             itemCode: item.code,
             itemName: item.name,
-            weightGrams: 20000, // 20kg
-            pricePerKg: 2500, // 25.00 SAR
-            lineTotalAmount: 50000,
-          }
-        }
-      }
+            weightGrams: 20000,
+            pricePerKg: 2500,
+            lineTotalAmount,
+          },
+        },
+      },
     });
   }
-  console.log('✓ Purchases seeded');
+
+  console.log('OK Purchases seeded');
 }
 
 async function seedSales(): Promise<void> {
   console.log('Seeding sales...');
-  const customers = await prisma.customer.findMany();
-  const items = await prisma.item.findMany();
+  const customers = await prisma.customer.findMany({
+    where: { customerNumber: { in: FIXTURE_CUSTOMERS.map((c) => c.customerNumber) } },
+  });
+  const customerByNumber = new Map(customers.map((customer) => [customer.customerNumber, customer]));
   const branch = await prisma.branch.findFirst({ where: { isMainBranch: true } });
   const admin = await prisma.user.findUnique({ where: { username: 'admin' } });
+  const item = await prisma.item.findFirst({ where: { isActive: true }, orderBy: { id: 'asc' } });
 
-  if (customers.length === 0 || items.length === 0 || !branch || !admin) return;
+  if (!branch || !admin || !item) {
+    throw new Error('Cannot seed fixture sales: missing branch, admin user, or active item.');
+  }
 
-  // Create 5 sales
-  for (let i = 0; i < 5; i++) {
-    const customer = customers[i % customers.length];
-    const item = items[0];
+  const fixtures = [
+    { saleNumber: 'SAL-SEED-0001', customerNumber: 'C-SEED-001', saleDate: FIXTURE_DATES[0] },
+    { saleNumber: 'SAL-SEED-0002', customerNumber: 'C-SEED-002', saleDate: FIXTURE_DATES[1] },
+    { saleNumber: 'SAL-SEED-0003', customerNumber: 'C-SEED-003', saleDate: FIXTURE_DATES[2] },
+    { saleNumber: 'SAL-SEED-0004', customerNumber: 'C-SEED-001', saleDate: FIXTURE_DATES[1] },
+    { saleNumber: 'SAL-SEED-0005', customerNumber: 'C-SEED-002', saleDate: FIXTURE_DATES[2] },
+  ] as const;
 
-    await prisma.sale.create({
-      data: {
-        saleNumber: `SAL-SEED-${Date.now()}-${i}`,
-        saleDate: [
-          new Date('2026-02-16T10:00:00'),
-          new Date('2026-02-18T14:30:00'),
-          new Date('2026-02-19T09:15:00')
-        ][i % 3], // Cycle through dates
+  for (const fixture of fixtures) {
+    const customer = customerByNumber.get(fixture.customerNumber);
+    if (!customer) {
+      throw new Error(`Cannot seed fixture sales: customer ${fixture.customerNumber} not found.`);
+    }
+
+    const lineTotalAmount = 10000;
+
+    await prisma.sale.upsert({
+      where: { saleNumber: fixture.saleNumber },
+      update: {
+        saleDate: fixture.saleDate,
         customerId: customer.id,
         customerName: customer.name,
         paymentStatus: 'paid',
-        docstatus: 1, // Submitted
-        totalAmount: 10000, // 100.00 SAR
-        grandTotal: 10000,
+        amountPaid: lineTotalAmount,
+        docstatus: 1,
+        totalAmount: lineTotalAmount,
+        grandTotal: lineTotalAmount,
+        cashierId: admin.id,
+        branchId: branch.id,
+        saleLines: {
+          deleteMany: {},
+          create: {
+            lineNumber: 1,
+            itemId: item.id,
+            itemCode: item.code,
+            itemName: item.name,
+            weightGrams: 2000,
+            pricePerKg: 5000,
+            netPricePerKg: 5000,
+            lineTotalAmount,
+          },
+        },
+      },
+      create: {
+        saleNumber: fixture.saleNumber,
+        saleDate: fixture.saleDate,
+        customerId: customer.id,
+        customerName: customer.name,
+        paymentStatus: 'paid',
+        amountPaid: lineTotalAmount,
+        docstatus: 1,
+        totalAmount: lineTotalAmount,
+        grandTotal: lineTotalAmount,
         cashierId: admin.id,
         branchId: branch.id,
         saleLines: {
@@ -881,167 +1012,236 @@ async function seedSales(): Promise<void> {
             itemId: item.id,
             itemCode: item.code,
             itemName: item.name,
-            weightGrams: 2000, // 2kg
-            pricePerKg: 5000, // 50.00 SAR
-            netPricePerKg: 5000, // Added required field
-            lineTotalAmount: 10000,
-          }
-        }
-      }
+            weightGrams: 2000,
+            pricePerKg: 5000,
+            netPricePerKg: 5000,
+            lineTotalAmount,
+          },
+        },
+      },
     });
   }
-  console.log('✓ Sales seeded');
+
+  console.log('OK Sales seeded');
 }
 
 async function seedExpenses(): Promise<void> {
   console.log('Seeding expenses...');
   const category = await prisma.expenseCategory.findFirst({ where: { code: 'ELECTRICITY' } });
   const admin = await prisma.user.findUnique({ where: { username: 'admin' } });
-  if (!category || !admin) return;
+  if (!category || !admin) {
+    throw new Error('Cannot seed fixture expenses: missing ELECTRICITY category or admin user.');
+  }
 
-  // Create 3 expenses
-  for (let i = 0; i < 3; i++) {
+  const fixtures = [
+    { expenseNumber: 'EXP-SEED-0001', amount: 5000, expenseDate: FIXTURE_DATES[0], description: 'Fixture Expense 1 - Bill Payment' },
+    { expenseNumber: 'EXP-SEED-0002', amount: 10000, expenseDate: FIXTURE_DATES[1], description: 'Fixture Expense 2 - Bill Payment' },
+    { expenseNumber: 'EXP-SEED-0003', amount: 15000, expenseDate: FIXTURE_DATES[2], description: 'Fixture Expense 3 - Bill Payment' },
+  ] as const;
 
-    await prisma.expense.create({
-      data: {
-        expenseNumber: `EXP-SEED-${Date.now()}-${i}`,
-        expenseDate: [
-          new Date('2026-02-16T10:00:00'),
-          new Date('2026-02-18T14:30:00'),
-          new Date('2026-02-19T09:15:00')
-        ][i % 3],
+  for (const fixture of fixtures) {
+    await prisma.expense.upsert({
+      where: { expenseNumber: fixture.expenseNumber },
+      update: {
+        expenseDate: fixture.expenseDate,
         expenseType: 'operational',
         categoryId: category.id,
-        amount: 5000 * (i + 1),
-        description: `Expense ${i + 1} - Bill Payment`,
+        amount: fixture.amount,
+        description: fixture.description,
         docstatus: 1,
         createdById: admin.id,
-      }
+      },
+      create: {
+        expenseNumber: fixture.expenseNumber,
+        expenseDate: fixture.expenseDate,
+        expenseType: 'operational',
+        categoryId: category.id,
+        amount: fixture.amount,
+        description: fixture.description,
+        docstatus: 1,
+        createdById: admin.id,
+      },
     });
   }
-  console.log('✓ Expenses seeded');
+
+  console.log('OK Expenses seeded');
 }
 
 async function seedPayments(): Promise<void> {
   console.log('Seeding payments...');
 
   const admin = await prisma.user.findUnique({ where: { username: 'admin' } });
-  if (!admin) return;
-
-  const dates = [
-    new Date('2026-02-16T11:00:00'),
-    new Date('2026-02-18T15:00:00'),
-    new Date('2026-02-19T10:00:00')
-  ];
-
-  // 1. Payment for a Sale (Receipt)
-  const sale = await prisma.sale.findFirst();
-  if (sale) {
-    await prisma.payment.create({
-      data: {
-        paymentNumber: `PAY-SAL-${Date.now()}`,
-        paymentDate: dates[0],
-        referenceType: 'sale',
-        referenceId: sale.id,
-        partyType: 'customer',
-        partyId: sale.customerId,
-        amount: sale.grandTotal || 0,
-        paymentMethod: 'cash',
-        docstatus: 1,
-        receivedById: admin.id,
-        notes: 'Payment for Sale',
-      }
-    });
+  if (!admin) {
+    throw new Error('Cannot seed fixture payments: admin user not found.');
   }
 
-  // 2. Payment for a Purchase
-  const purchase = await prisma.purchase.findFirst();
-  if (purchase) {
-    await prisma.payment.create({
-      data: {
-        paymentNumber: `PAY-PUR-${Date.now()}`,
-        paymentDate: dates[1],
-        referenceType: 'purchase',
-        referenceId: purchase.id,
-        partyType: 'supplier',
-        partyId: purchase.supplierId,
-        amount: purchase.grandTotal || 0,
-        paymentMethod: 'bank_transfer',
-        docstatus: 1,
-        receivedById: admin.id,
-        notes: 'Payment for Purchase',
-      }
-    });
+  const sale = await prisma.sale.findUnique({ where: { saleNumber: 'SAL-SEED-0001' } });
+  const purchase = await prisma.purchase.findUnique({ where: { purchaseNumber: 'PUR-SEED-0001' } });
+  const customer = await prisma.customer.findUnique({ where: { customerNumber: 'C-SEED-001' } });
+
+  if (!sale || !purchase || !customer) {
+    throw new Error('Cannot seed fixture payments: required seeded sale/purchase/customer not found.');
   }
 
-  // 3. General Receipt (Advance)
-  await prisma.payment.create({
-    data: {
-      paymentNumber: `PAY-ADV-${Date.now()}`,
-      paymentDate: dates[2],
-      referenceType: null, // Advance
+  await prisma.payment.upsert({
+    where: { paymentNumber: 'PAY-SEED-SAL-0001' },
+    update: {
+      paymentDate: new Date('2026-02-16T11:00:00'),
+      referenceType: 'sale',
+      referenceId: sale.id,
       partyType: 'customer',
-      partyId: sale?.customerId,
+      partyId: sale.customerId,
+      amount: sale.grandTotal || 0,
+      paymentMethod: 'cash',
+      docstatus: 1,
+      receivedById: admin.id,
+      notes: 'Fixture payment for seeded sale',
+    },
+    create: {
+      paymentNumber: 'PAY-SEED-SAL-0001',
+      paymentDate: new Date('2026-02-16T11:00:00'),
+      referenceType: 'sale',
+      referenceId: sale.id,
+      partyType: 'customer',
+      partyId: sale.customerId,
+      amount: sale.grandTotal || 0,
+      paymentMethod: 'cash',
+      docstatus: 1,
+      receivedById: admin.id,
+      notes: 'Fixture payment for seeded sale',
+    },
+  });
+
+  await prisma.payment.upsert({
+    where: { paymentNumber: 'PAY-SEED-PUR-0001' },
+    update: {
+      paymentDate: new Date('2026-02-18T15:00:00'),
+      referenceType: 'purchase',
+      referenceId: purchase.id,
+      partyType: 'supplier',
+      partyId: purchase.supplierId,
+      amount: purchase.grandTotal || 0,
+      paymentMethod: 'bank_transfer',
+      docstatus: 1,
+      receivedById: admin.id,
+      notes: 'Fixture payment for seeded purchase',
+    },
+    create: {
+      paymentNumber: 'PAY-SEED-PUR-0001',
+      paymentDate: new Date('2026-02-18T15:00:00'),
+      referenceType: 'purchase',
+      referenceId: purchase.id,
+      partyType: 'supplier',
+      partyId: purchase.supplierId,
+      amount: purchase.grandTotal || 0,
+      paymentMethod: 'bank_transfer',
+      docstatus: 1,
+      receivedById: admin.id,
+      notes: 'Fixture payment for seeded purchase',
+    },
+  });
+
+  await prisma.payment.upsert({
+    where: { paymentNumber: 'PAY-SEED-ADV-0001' },
+    update: {
+      paymentDate: new Date('2026-02-19T10:00:00'),
+      referenceType: null,
+      partyType: 'customer',
+      partyId: customer.id,
+      partyName: customer.name,
       amount: 1500,
       paymentMethod: 'cash',
       docstatus: 1,
       receivedById: admin.id,
-      notes: 'Advance Payment',
-    }
+      notes: 'Fixture advance payment',
+    },
+    create: {
+      paymentNumber: 'PAY-SEED-ADV-0001',
+      paymentDate: new Date('2026-02-19T10:00:00'),
+      referenceType: null,
+      partyType: 'customer',
+      partyId: customer.id,
+      partyName: customer.name,
+      amount: 1500,
+      paymentMethod: 'cash',
+      docstatus: 1,
+      receivedById: admin.id,
+      notes: 'Fixture advance payment',
+    },
   });
 
-  console.log('✓ Payments seeded');
+  console.log('OK Payments seeded');
 }
-
 // =============================================================================
 // MAIN SEED RUNNER
 // =============================================================================
 
 async function seedTransactions(): Promise<void> {
-  // Wrapper to ensure order
+  await cleanupLegacyFixtureData();
   await seedCustomers();
   await seedSuppliers();
-
-  // Purchases depend on Suppliers
   await seedPurchases();
-
-  // Sales depend on Customer (and Stock if validation enabled, but seed bypasses service logic)
   await seedSales();
-
-  // Expenses depend on Categories (and optionally Suppliers)
-  // Expenses depend on Categories (and optionally Suppliers)
   await seedExpenses();
-
-  // Create payments last
   await seedPayments();
 }
 
 async function main(): Promise<void> {
+  const options = parseSeedOptions();
+
   console.log('='.repeat(60));
-  console.log('Starting database seed...');
+  console.log(`Starting database seed (profile=${options.profile})...`);
   console.log('='.repeat(60));
 
+  if (
+    options.profile !== 'baseline' &&
+    process.env.NODE_ENV === 'production' &&
+    !options.forceFixturesInProduction
+  ) {
+    throw new Error(
+      'Refusing to seed dev/test fixtures in production. Use --force-fixtures-in-production only if intentional.',
+    );
+  }
+
   try {
+    if (options.profile === 'baseline') {
+      try {
+        const existingUsers = await prisma.user.count();
+        if (existingUsers > 0) {
+          console.log(
+            'Baseline seed keeps existing runtime data (users/transactions). ' +
+              'For a clean first-time baseline database, reset first: ' +
+              'npm run db:reset:baseline',
+          );
+        }
+      } catch {
+        // Ignore pre-check failures on partially initialized databases.
+      }
+    }
+
+    const setupCompleted = options.profile !== 'baseline';
+
     await seedRoles();
     await seedPageDefinitions();
     await seedCategories();
     await seedAccounts();
-    await seedSystemSettings();
+    await seedSystemSettings({ setupCompleted });
     await seedTaxTemplates();
     await seedExpenseCategories();
-    await seedDefaultBranch();
-    await seedItems();
-    await seedInitialStock();
-    await seedDefaultAdmin();
 
-    // New Transactional Data
-    await seedTransactions();
+    if (options.profile !== 'baseline') {
+      await seedDefaultBranch();
+      await seedItems();
+      await seedInitialStock();
+      await seedDefaultAdmin();
+      await seedTransactions();
+    }
 
     console.log('='.repeat(60));
-    console.log('✓ Database seeding completed successfully!');
+    console.log(`Database seeding completed successfully (profile=${options.profile})`);
     console.log('='.repeat(60));
   } catch (error) {
-    console.error('✗ Seed failed:', error);
+    console.error('Seed failed:', error);
     throw error;
   }
 }

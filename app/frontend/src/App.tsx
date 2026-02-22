@@ -26,6 +26,8 @@ import ExpenseProfile from "@/pages/expenses/ExpenseProfile";
 import Debts from "@/pages/Debts";
 import Wastage from "@/pages/Wastage";
 import WastageProfile from "@/pages/wastage/WastageProfile";
+import StockTransfer from "@/pages/stock-transfer/StockTransfer";
+import StockTransferProfile from "@/pages/stock-transfer/StockTransferProfile";
 import Reports from "@/pages/Reports";
 import Audit from "@/pages/Audit";
 import Accounting from "@/pages/Accounting";
@@ -108,6 +110,8 @@ const App = () => (
                 <Route path="/debts" element={<Debts />} />
                 <Route path="/wastage" element={<Wastage />} />
                 <Route path="/wastage/new" element={<WastageProfile />} />
+                <Route path="/stock-transfer" element={<StockTransfer />} />
+                <Route path="/stock-transfer/new" element={<StockTransferProfile />} />
                 <Route path="/purchasing" element={<Purchasing />} />
                 <Route path="/purchasing/new" element={<PurchaseProfile />} />
                 <Route path="/purchasing/:id" element={<Purchasing />} />

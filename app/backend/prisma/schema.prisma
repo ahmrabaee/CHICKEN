@@ -54,6 +54,7 @@ model Branch {
   auditLogs         AuditLog[]
   stockAccount      Account?            @relation(fields: [stockAccountId], references: [id], onDelete: SetNull)
   creditNotes       CreditNote[]
+  stockTransfers    StockTransfer[] @relation("StockTransferBranch")
 
   @@map("branches")
 }
@@ -186,6 +187,8 @@ model User {
   purchasesReceived     Purchase[]      @relation("PurchaseReceivedBy")
   purchasesApproved     Purchase[]      @relation("PurchaseApprovedBy")
   purchasesCreated      Purchase[]      @relation("PurchaseCreatedBy")
+  stockTransfersCreated StockTransfer[] @relation("StockTransferCreatedBy")
+  stockTransfersCompleted StockTransfer[] @relation("StockTransferCompletedBy")
   paymentsReceived      Payment[]
   paymentsCancelled     Payment[]       @relation("PaymentCancelledBy")
   expensesApproved      Expense[]       @relation("ExpenseApprovedBy")
@@ -231,12 +234,14 @@ model Category {
   icon                 String?
   defaultShelfLifeDays Int?     @map("default_shelf_life_days")
   storageType          String?  @map("storage_type") // 'fresh', 'frozen', 'processed'
+  purchaseItemId       Int?     @map("purchase_item_id") // Item used when purchasing this category (e.g. raw chicken)
   isActive             Boolean  @default(true) @map("is_active")
   createdAt            DateTime @default(now()) @map("created_at")
   updatedAt            DateTime @updatedAt @map("updated_at")
 
   // Relations
-  items Item[]
+  items        Item[]
+  purchaseItem Item?    @relation("CategoryPurchaseItem", fields: [purchaseItemId], references: [id], onDelete: SetNull)
 
   @@map("categories")
 }
@@ -269,8 +274,9 @@ model Item {
   updatedById          Int?     @map("updated_by")
 
   // Relations
-  category       Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  createdBy      User?           @relation("ItemCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  category            Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  purchaseCategories  Category[]      @relation("CategoryPurchaseItem")
+  createdBy           User?           @relation("ItemCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   updatedBy      User?           @relation("ItemUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
   inventory          Inventory?
   inventoryLots      InventoryLot[]
@@ -279,6 +285,7 @@ model Item {
   wastageRecords     WastageRecord[]
   saleLines          SaleLine[]
   purchaseLines      PurchaseLine[]
+  stockTransferLines StockTransferLine[]
 
   @@index([categoryId])
   @@index([name])
@@ -316,6 +323,7 @@ model InventoryLot {
   itemId                 Int       @map("item_id")
   purchaseId             Int?      @map("purchase_id")
   purchaseLineId         Int?      @map("purchase_line_id")
+  stockTransferId        Int?      @map("stock_transfer_id")
   branchId               Int?      @map("branch_id")
   lotNumber              String    @unique @map("lot_number")
   batchNumber            String?   @map("batch_number")
@@ -333,7 +341,9 @@ model InventoryLot {
   item            Item                     @relation(fields: [itemId], references: [id], onDelete: Restrict)
   purchase        Purchase?                @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
   purchaseLine    PurchaseLine?            @relation(fields: [purchaseLineId], references: [id], onDelete: SetNull)
-  branch          Branch?                  @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  stockTransfer       StockTransfer?     @relation(fields: [stockTransferId], references: [id], onDelete: SetNull)
+  sourceStockTransfers StockTransfer[]   @relation("StockTransferSource")
+  branch              Branch?           @relation(fields: [branchId], references: [id], onDelete: SetNull)
   createdBy       User?                    @relation("LotCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   stockMovements  StockMovement[]
   wastageRecords  WastageRecord[]
@@ -343,7 +353,61 @@ model InventoryLot {
   @@index([expiryDate])
   @@index([branchId])
   @@index([purchaseId])
+  @@index([stockTransferId])
   @@map("inventory_lots")
+}
+
+/// Stock transfer: convert raw chicken inventory to products (wings, breast, whole, etc.)
+/// plan_of_wastage.md
+model StockTransfer {
+  id                 Int       @id @default(autoincrement())
+  transferNumber     String    @unique @map("transfer_number")
+  sourceLotId        Int       @map("source_lot_id")
+  transferDate       DateTime  @default(now()) @map("transfer_date")
+  branchId           Int?      @map("branch_id")
+  expiryDate         DateTime  @map("expiry_date")
+  totalWeightGrams   Int       @map("total_weight_grams")
+  totalCostValue     Int       @default(0) @map("total_cost_value")
+  status             String    @default("draft") @map("status") // draft, completed, cancelled
+  notes              String?
+  createdById        Int?      @map("created_by")
+  completedAt        DateTime? @map("completed_at")
+  completedById      Int?      @map("completed_by")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  sourceLot     InventoryLot       @relation("StockTransferSource", fields: [sourceLotId], references: [id], onDelete: Restrict)
+  branch        Branch?           @relation("StockTransferBranch", fields: [branchId], references: [id], onDelete: SetNull)
+  createdBy     User?             @relation("StockTransferCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  completedBy   User?             @relation("StockTransferCompletedBy", fields: [completedById], references: [id], onDelete: SetNull)
+  lines         StockTransferLine[]
+  inventoryLots InventoryLot[]
+
+  @@index([transferDate])
+  @@index([status])
+  @@index([sourceLotId])
+  @@index([branchId])
+  @@map("stock_transfers")
+}
+
+model StockTransferLine {
+  id                Int       @id @default(autoincrement())
+  stockTransferId   Int       @map("stock_transfer_id")
+  itemId            Int       @map("item_id")
+  lineNumber        Int       @map("line_number")
+  weightGrams       Int       @map("weight_grams")
+  unitCost          Int       @map("unit_cost") // minor units per kg
+  lineCostValue     Int       @map("line_cost_value")
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  stockTransfer StockTransfer @relation(fields: [stockTransferId], references: [id], onDelete: Cascade)
+  item          Item         @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@unique([stockTransferId, lineNumber])
+  @@index([itemId])
+  @@map("stock_transfer_lines")
 }
 
 /// Audit trail for inventory changes

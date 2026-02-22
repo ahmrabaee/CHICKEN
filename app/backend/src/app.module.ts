@@ -18,6 +18,7 @@ import { BranchesModule } from './branches/branches.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ItemsModule } from './items/items.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { StockTransferModule } from './stock-transfer/stock-transfer.module';
 import { WastageModule } from './wastage/wastage.module';
 import { SalesModule } from './sales/sales.module';
 import { PurchasesModule } from './purchases/purchases.module';
@@ -56,6 +57,7 @@ import { PageAccessModule } from './page-access/page-access.module';
     CategoriesModule,
     ItemsModule,
     InventoryModule,
+    StockTransferModule,
     WastageModule,
     SalesModule,
     PurchasesModule,

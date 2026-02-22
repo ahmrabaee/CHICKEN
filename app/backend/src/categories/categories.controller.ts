@@ -14,6 +14,14 @@ import { Roles, RolesGuard } from '../common';
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
+  @Get('purchaseable')
+  @Roles('admin', 'accountant')
+  @ApiOperation({ summary: 'List categories that can be purchased (e.g. raw chicken)' })
+  @ApiResponse({ status: 200, type: [CategoryResponseDto] })
+  async findPurchaseable(): Promise<CategoryResponseDto[]> {
+    return this.categoriesService.findPurchaseable();
+  }
+
   @Get()
   @Roles('admin', 'accountant')
   @ApiOperation({ summary: 'List all categories' })

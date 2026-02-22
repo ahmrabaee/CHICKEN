@@ -30,9 +30,8 @@ import { Switch } from "@/components/ui/switch";
 
 import { toast } from "sonner";
 import { useSuppliers } from "@/hooks/use-suppliers";
-import { useItems } from "@/hooks/use-inventory";
+import { usePurchaseableCategories } from "@/hooks/use-inventory";
 import { useCreatePurchase } from "@/hooks/use-purchases";
-import type { Item } from "@/types/inventory";
 import type { CreatePurchaseDto } from "@/types/purchases";
 
 // UI uses major units (₪) and kg. API expects minor units and grams.
@@ -46,13 +45,13 @@ const purchaseSchema = z.object({
   lines: z
     .array(
       z.object({
-        itemId: z.coerce.number().min(1, "اختر الصنف"),
+        itemId: z.coerce.number().min(1, "اختر الفئة"),
         weightKg: z.coerce.number().positive("الوزن مطلوب"),
         pricePerKg: z.coerce.number().min(0, "السعر غير صحيح"),
         isLiveBird: z.boolean().optional().default(false),
       })
     )
-    .min(1, "أضف صنفًا واحدًا على الأقل"),
+    .min(1, "أضف فئةً واحدة على الأقل"),
 });
 
 type PurchaseFormValues = z.infer<typeof purchaseSchema>;
@@ -69,9 +68,7 @@ export default function PurchaseProfile() {
   const navigate = useNavigate();
   const createPurchase = useCreatePurchase();
 
-  // Lightweight server-side search for suppliers/items (keeps UI fast for large lists)
   const [supplierSearch, setSupplierSearch] = useState("");
-  const [itemSearch, setItemSearch] = useState("");
 
   const { data: suppliersResp, isLoading: suppliersLoading } = useSuppliers({
     page: 1,
@@ -80,19 +77,7 @@ export default function PurchaseProfile() {
   });
   const suppliers = suppliersResp?.data || [];
 
-  const { data: itemsResp, isLoading: itemsLoading } = useItems({
-    isActive: true,
-    page: 1,
-    pageSize: 100,
-    search: itemSearch || undefined,
-  });
-  const items = itemsResp?.data || [];
-
-  const itemsById = useMemo(() => {
-    const map = new Map<number, Item>();
-    for (const it of items) map.set(it.id, it);
-    return map;
-  }, [items]);
+  const { data: purchaseableCategories = [], isLoading: categoriesLoading } = usePurchaseableCategories();
 
   const form = useForm<PurchaseFormValues>({
     resolver: zodResolver(purchaseSchema),
@@ -103,7 +88,7 @@ export default function PurchaseProfile() {
       taxAmount: 0,
       amountPaid: 0,
       notes: "",
-      lines: [{ itemId: 0, weightKg: 1, pricePerKg: 0, isLiveBird: false }],
+      lines: [{ itemId: 0, weightKg: 1, pricePerKg: 0, isLiveBird: false }], // itemId = category.purchaseItemId
     },
     mode: "onChange",
   });
@@ -146,7 +131,7 @@ export default function PurchaseProfile() {
         isLiveBird: !!l.isLiveBird,
       }));
     if (lines.length === 0) {
-      toast.error("أضف صنفًا واحدًا على الأقل بوزن صحيح");
+      toast.error("أضف فئةً واحدة على الأقل بوزن صحيح");
       return;
     }
     const dto: CreatePurchaseDto = {
@@ -296,17 +281,11 @@ export default function PurchaseProfile() {
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <Package className="w-4 h-4 text-muted-foreground" />
-                  <h2 className="font-semibold">الأصناف</h2>
+                  <h2 className="font-semibold">الفئات</h2>
                   <span className="text-xs text-muted-foreground">({fields.length})</span>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Input
-                    placeholder="بحث عن صنف..."
-                    value={itemSearch}
-                    onChange={(e) => setItemSearch(e.target.value)}
-                    className="w-56"
-                  />
                   <Button
                     type="button"
                     variant="outline"
@@ -314,7 +293,7 @@ export default function PurchaseProfile() {
                     onClick={() => append({ itemId: 0, weightKg: 1, pricePerKg: 0, isLiveBird: false })}
                   >
                     <Plus className="w-4 h-4" />
-                    إضافة صنف
+                    إضافة فئة
                   </Button>
                 </div>
               </div>
@@ -330,16 +309,17 @@ export default function PurchaseProfile() {
                         name={`lines.${idx}.itemId`}
                         render={({ field }) => (
                           <FormItem className="md:col-span-5">
-                            <FormLabel>الصنف</FormLabel>
+                            <FormLabel>الفئة</FormLabel>
                             <FormControl>
                               <Select
                                 value={String(field.value || "")}
                                 onValueChange={(v) => {
-                                  field.onChange(v);
-                                  const item = itemsById.get(Number(v));
-                                  if (!item) return;
+                                  const itemId = Number(v);
+                                  field.onChange(itemId);
+                                  const cat = purchaseableCategories.find((c) => c.purchaseItemId === itemId);
+                                  if (!cat?.purchaseItem) return;
                                   const currentPrice = Number(form.getValues(`lines.${idx}.pricePerKg`)) || 0;
-                                  const defaultPriceMinor = item.defaultPurchasePrice ?? 0;
+                                  const defaultPriceMinor = cat.purchaseItem.defaultPurchasePrice ?? 0;
                                   const defaultPriceMajor = defaultPriceMinor / 100;
                                   if (currentPrice === 0 && defaultPriceMajor > 0) {
                                     form.setValue(`lines.${idx}.pricePerKg`, defaultPriceMajor, {
@@ -350,12 +330,12 @@ export default function PurchaseProfile() {
                                 }}
                               >
                                 <SelectTrigger>
-                                  <SelectValue placeholder={itemsLoading ? "تحميل الأصناف..." : "اختر الصنف"} />
+                                  <SelectValue placeholder={categoriesLoading ? "تحميل الفئات..." : "اختر الفئة"} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {items.map((it) => (
-                                    <SelectItem key={it.id} value={String(it.id)}>
-                                      {it.name} — {it.code}
+                                  {purchaseableCategories.map((cat) => (
+                                    <SelectItem key={cat.id} value={String(cat.purchaseItemId)}>
+                                      {cat.name}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>

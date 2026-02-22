@@ -6,6 +6,47 @@ import { CreateCategoryDto, UpdateCategoryDto, CategoryResponseDto } from './dto
 export class CategoriesService {
   constructor(private prisma: PrismaService) {}
 
+  async findPurchaseable(): Promise<CategoryResponseDto[]> {
+    await this.ensureCategoriesHavePurchaseItem();
+    const categories = await this.prisma.category.findMany({
+      where: { isActive: true, purchaseItemId: { not: null } },
+      include: { purchaseItem: true },
+      orderBy: { displayOrder: 'asc' },
+    });
+    return categories.map((c) => this.toResponseDto(c));
+  }
+
+  /**
+   * Ensures all active categories have a linked purchase item (for purchase dropdown).
+   * Creates items for categories that were added before we had auto-linking.
+   */
+  private async ensureCategoriesHavePurchaseItem(): Promise<void> {
+    const categoriesWithoutItem = await this.prisma.category.findMany({
+      where: { isActive: true, purchaseItemId: null },
+    });
+    for (const cat of categoriesWithoutItem) {
+      await this.prisma.$transaction(async (tx) => {
+        const itemCode = await this.generateUniqueItemCode(tx, cat.code);
+        const purchaseItem = await tx.item.create({
+          data: {
+            code: itemCode,
+            name: cat.name,
+            nameEn: cat.nameEn,
+            categoryId: cat.id,
+            defaultSalePrice: 0,
+            defaultPurchasePrice: 0,
+            requiresScale: true,
+            allowNegativeStock: false,
+          },
+        });
+        await tx.category.update({
+          where: { id: cat.id },
+          data: { purchaseItemId: purchaseItem.id },
+        });
+      });
+    }
+  }
+
   async findAll(includeInactive = false): Promise<CategoryResponseDto[]> {
     const categories = await this.prisma.category.findMany({
       where: includeInactive ? {} : { isActive: true },
@@ -39,8 +80,9 @@ export class CategoriesService {
   }
 
   async create(dto: CreateCategoryDto): Promise<CategoryResponseDto> {
+    const code = dto.code?.trim() || (await this.generateCategoryCode());
     const existing = await this.prisma.category.findUnique({
-      where: { code: dto.code },
+      where: { code },
     });
     if (existing) {
       throw new ConflictException({
@@ -50,19 +92,66 @@ export class CategoriesService {
       });
     }
 
-    const category = await this.prisma.category.create({
-      data: {
-        code: dto.code,
-        name: dto.name,
-        nameEn: dto.nameEn,
-        displayOrder: dto.displayOrder ?? 0,
-        icon: dto.icon,
-        defaultShelfLifeDays: dto.defaultShelfLifeDays,
-        storageType: dto.storageType,
-        isActive: dto.isActive ?? true,
-      },
+    const maxOrder = await this.prisma.category.aggregate({
+      _max: { displayOrder: true },
     });
-    return this.toResponseDto(category);
+    const displayOrder = dto.displayOrder ?? (maxOrder._max.displayOrder ?? 0) + 1;
+
+    return this.prisma.$transaction(async (tx) => {
+      const category = await tx.category.create({
+        data: {
+          code,
+          name: dto.name.trim(),
+          nameEn: dto.nameEn?.trim() || null,
+          displayOrder,
+          icon: dto.icon,
+          defaultShelfLifeDays: dto.defaultShelfLifeDays,
+          storageType: dto.storageType,
+          isActive: dto.isActive ?? true,
+        },
+      });
+
+      const itemCode = await this.generateUniqueItemCode(tx, code);
+      const purchaseItem = await tx.item.create({
+        data: {
+          code: itemCode,
+          name: dto.name.trim(),
+          nameEn: dto.nameEn?.trim() || null,
+          categoryId: category.id,
+          defaultSalePrice: 0,
+          defaultPurchasePrice: 0,
+          requiresScale: true,
+          allowNegativeStock: false,
+        },
+      });
+
+      await tx.category.update({
+        where: { id: category.id },
+        data: { purchaseItemId: purchaseItem.id },
+      });
+
+      const updated = await tx.category.findUnique({
+        where: { id: category.id },
+        include: { purchaseItem: true },
+      });
+      return this.toResponseDto(updated);
+    });
+  }
+
+  private async generateUniqueItemCode(tx: any, baseCode: string): Promise<string> {
+    const sanitized = baseCode.replace(/[^A-Za-z0-9]/g, '_').toUpperCase().slice(0, 20);
+    let candidate = `ITEM_${sanitized}`;
+    let n = 1;
+    while (await (tx ?? this.prisma).item.findUnique({ where: { code: candidate } })) {
+      candidate = `ITEM_${sanitized}_${n}`;
+      n++;
+    }
+    return candidate;
+  }
+
+  private async generateCategoryCode(): Promise<string> {
+    const count = await this.prisma.category.count();
+    return `CAT_${(count + 1).toString().padStart(4, '0')}`;
   }
 
   async update(id: number, dto: UpdateCategoryDto): Promise<CategoryResponseDto> {
@@ -122,7 +211,7 @@ export class CategoriesService {
   }
 
   private toResponseDto(category: any): CategoryResponseDto {
-    return {
+    const dto: CategoryResponseDto = {
       id: category.id,
       code: category.code,
       name: category.name,
@@ -135,5 +224,16 @@ export class CategoriesService {
       createdAt: category.createdAt,
       updatedAt: category.updatedAt,
     };
+    if (category.purchaseItemId != null) dto.purchaseItemId = category.purchaseItemId;
+    if (category.purchaseItem) {
+      dto.purchaseItem = {
+        id: category.purchaseItem.id,
+        code: category.purchaseItem.code,
+        name: category.purchaseItem.name,
+        defaultPurchasePrice: category.purchaseItem.defaultPurchasePrice,
+        defaultSalePrice: category.purchaseItem.defaultSalePrice,
+      };
+    }
+    return dto;
   }
 }

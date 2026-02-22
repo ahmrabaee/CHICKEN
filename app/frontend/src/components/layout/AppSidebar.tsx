@@ -29,6 +29,7 @@ import {
   Trash2,
   Scale,
   ArrowLeftRight,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -135,6 +136,12 @@ const navigation: NavItem[] = [
     icon: Trash2,
     href: "/wastage",
     adminOnly: true,
+  },
+  {
+    title: "Stock Transfer",
+    titleAr: "تحويل المخزون",
+    icon: RefreshCw,
+    href: "/stock-transfer",
   },
   {
     title: "Reports",

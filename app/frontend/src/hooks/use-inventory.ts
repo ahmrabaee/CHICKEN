@@ -16,6 +16,13 @@ import { toast } from '@/hooks/use-toast';
 /**
  * Categories Hooks
  */
+export const usePurchaseableCategories = () => {
+    return useQuery({
+        queryKey: ['categories', 'purchaseable'],
+        queryFn: () => categoryService.getPurchaseableCategories(),
+    });
+};
+
 export const useCategories = (includeInactive = false) => {
     return useQuery({
         queryKey: ['categories', includeInactive],

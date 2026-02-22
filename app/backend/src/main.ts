@@ -111,6 +111,7 @@ async function bootstrap() {
     .addTag('items', 'Product/item catalog')
     .addTag('inventory', 'Inventory & stock management')
     .addTag('wastage', 'Wastage & spoilage tracking')
+    .addTag('stock-transfer', 'Stock transfer (raw chicken to products)')
     .addTag('sales', 'Point of Sale operations')
     .addTag('purchases', 'Purchasing & goods receiving')
     .addTag('customers', 'Customer management')

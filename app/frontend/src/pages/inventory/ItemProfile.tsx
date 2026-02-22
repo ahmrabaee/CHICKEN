@@ -17,7 +17,8 @@ import {
     Loader2,
     Trash2,
     Info,
-    PlusCircle
+    PlusCircle,
+    AlertTriangle
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -81,6 +82,7 @@ export default function ItemProfile() {
 
     const { data: categories } = useCategories();
     const [isAdjusting, setIsAdjusting] = useState(false);
+    const [createError, setCreateError] = useState<{ messageAr?: string; message?: string } | null>(null);
     const { data: existingItem, isLoading: isLoadingItem } = useItem(parseInt(id || "0"));
     const createItemMutation = useCreateItem();
 
@@ -143,6 +145,7 @@ export default function ItemProfile() {
     }, [purchasePrice, isEditing, form]);
 
     const onSubmit = async (values: ItemFormValues) => {
+        setCreateError(null);
         try {
             const payload: CreateItemDto = {
                 barcode: values.barcode,
@@ -173,7 +176,12 @@ export default function ItemProfile() {
             navigate("/inventory");
         } catch (error: any) {
             console.error("Failed to save item:", error);
-            toast.error(error.response?.data?.messageAr || "فشل حفظ البيانات");
+            const errData = error.response?.data;
+            setCreateError({
+                messageAr: errData?.messageAr || errData?.message?.[0] || "فشل حفظ البيانات",
+                message: Array.isArray(errData?.message) ? errData.message.join(", ") : errData?.message,
+            });
+            toast.error(errData?.messageAr || errData?.message || "فشل حفظ البيانات");
         }
     };
 
@@ -405,6 +413,7 @@ export default function ItemProfile() {
 
                             {/* Inventory Initialization (Only for New Items) */}
                             {!isEditing && (
+                                <>
                                 <Card className="border-none shadow-premium overflow-hidden border-2 border-primary/20 bg-primary/5">
                                     <div className="bg-primary/10 border-b p-4 flex items-center gap-3">
                                         <div className="p-2 bg-primary text-primary-foreground rounded-lg shadow-sm">
@@ -413,6 +422,34 @@ export default function ItemProfile() {
                                         <h2 className="font-bold text-primary">المخزون الافتتاحي (Opening Stock)</h2>
                                     </div>
                                     <CardContent className="p-6 space-y-6">
+                                    {/* بطاقة توضيح الخطأ عند فشل الحفظ */}
+                                    {createError && (
+                                        <Card className="border-2 border-destructive/50 bg-destructive/5 overflow-hidden">
+                                            <CardContent className="p-5 space-y-4">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="p-2 rounded-lg bg-destructive/10">
+                                                        <AlertTriangle className="w-5 h-5 text-destructive" />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <h3 className="font-bold text-destructive mb-1">حدث خطأ في حفظ الصنف</h3>
+                                                        <p className="text-sm text-muted-foreground mb-3">
+                                                            {createError.messageAr || createError.message}
+                                                        </p>
+                                                        <div className="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
+                                                            <p className="font-semibold text-foreground">ما الذي يمكنك فعله؟</p>
+                                                            <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                                                                <li><strong>الكمية المتوفرة = صفر:</strong> هذا مقبول. يُنشأ الصنف بدون رصيد ويمكنك إضافته لاحقاً عبر "تسوية المخزون".</li>
+                                                                <li><strong>إذا أدخلت كمية أكبر من صفر:</strong> يجب إدخال "سعر تكلفة الرصيد الافتتاحي" أيضاً.</li>
+                                                                <li><strong>مدة الصلاحية:</strong> إذا أدخلت صفر، اترك الحقل فارغاً أو أدخل 1 يوم أو أكثر.</li>
+                                                                <li><strong>مكان التخزين:</strong> اختر من: الثلاجة، المجمد، أو ثلاجة العرض فقط.</li>
+                                                                <li><strong>تأكد من:</strong> اختيار التصنيف، وإدخال سعر البيع بشكل صحيح.</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    )}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <FormField
                                                 control={form.control}
@@ -454,6 +491,7 @@ export default function ItemProfile() {
                                         </div>
                                     </CardContent>
                                 </Card>
+                                </>
                             )}
 
                             {/* Inventory Management Section */}

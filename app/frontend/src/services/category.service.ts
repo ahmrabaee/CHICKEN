@@ -3,10 +3,34 @@ import axiosInstance from '@/lib/axios';
 import { ApiResponse } from '@/types/api';
 import { Category } from '@/types/inventory';
 
+export interface PurchaseableCategory {
+    id: number;
+    code: string;
+    name: string;
+    nameEn?: string;
+    purchaseItemId: number;
+    purchaseItem: {
+        id: number;
+        code: string;
+        name: string;
+        defaultPurchasePrice: number | null;
+        defaultSalePrice: number;
+    };
+}
+
 /**
  * Category API Service
  */
 export const categoryService = {
+    /**
+     * List categories that can be purchased (e.g. raw chicken)
+     * GET /v1/categories/purchaseable
+     */
+    async getPurchaseableCategories(): Promise<PurchaseableCategory[]> {
+        const response = await axiosInstance.get<ApiResponse<PurchaseableCategory[]>>('/categories/purchaseable');
+        return (response.data as any)?.data ?? response.data ?? [];
+    },
+
     /**
      * List all categories
      * GET /v1/categories

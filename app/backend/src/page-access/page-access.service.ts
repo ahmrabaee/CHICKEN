@@ -170,7 +170,7 @@ export class PageAccessService {
     const pages = await this.prisma.pageDefinition.findMany();
     for (const page of pages) {
       const roleAccess = accountantRole.rolePageAccess.find((a) => a.pageId === page.id);
-      const allowed = roleAccess?.allowed ?? (!page.isAdminOnly && ['dashboard','inventory','sales','sales-pos','customers','payments','reconciliation','credit-notes','accounting','reports-sales','reports-holdings','reports-purchases','reports-wastage'].includes(page.key));
+      const allowed = roleAccess?.allowed ?? (!page.isAdminOnly && ['dashboard','inventory','sales','sales-pos','customers','payments','reconciliation','credit-notes','accounting','stock-transfer','reports-sales','reports-holdings','reports-purchases','reports-wastage'].includes(page.key));
       await this.prisma.userPageAccess.upsert({
         where: { userId_pageId: { userId, pageId: page.id } },
         update: {},

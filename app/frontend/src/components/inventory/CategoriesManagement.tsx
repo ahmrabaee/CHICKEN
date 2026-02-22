@@ -40,10 +40,7 @@ import type { Category } from "@/types/inventory";
 import { Badge } from "@/components/ui/badge";
 
 const emptyForm = {
-  code: "",
   name: "",
-  nameEn: "",
-  displayOrder: 0,
   isActive: true,
 };
 
@@ -86,13 +83,10 @@ export function CategoriesManagement() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.code.trim() || !form.name.trim()) return;
+    if (!form.name.trim()) return;
 
     const payload = {
-      code: form.code.trim(),
       name: form.name.trim(),
-      nameEn: form.nameEn?.trim() || undefined,
-      displayOrder: form.displayOrder,
       isActive: form.isActive,
     };
 
@@ -215,46 +209,12 @@ export function CategoriesManagement() {
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="code">الكود (مطلوب)</Label>
-                <Input
-                  id="code"
-                  value={form.code}
-                  onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
-                  placeholder="مثال: CHICKEN_FRESH"
-                  className="text-right"
-                  disabled={!!editingCategory}
-                />
-              </div>
-              <div className="space-y-2">
                 <Label htmlFor="name">الاسم (مطلوب)</Label>
                 <Input
                   id="name"
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="مثال: دجاج طازج"
-                  className="text-right"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="nameEn">الاسم بالإنجليزي</Label>
-                <Input
-                  id="nameEn"
-                  value={form.nameEn}
-                  onChange={(e) => setForm((f) => ({ ...f, nameEn: e.target.value }))}
-                  placeholder="Fresh Chicken"
-                  className="text-right"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="displayOrder">ترتيب العرض</Label>
-                <Input
-                  id="displayOrder"
-                  type="number"
-                  min={0}
-                  value={form.displayOrder}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, displayOrder: parseInt(e.target.value) || 0 }))
-                  }
                   className="text-right"
                 />
               </div>
@@ -270,7 +230,7 @@ export function CategoriesManagement() {
                 <Button type="button" variant="outline" onClick={handleClose}>
                   إلغاء
                 </Button>
-                <Button type="submit" disabled={isPending || !form.code.trim() || !form.name.trim()}>
+                <Button type="submit" disabled={isPending || !form.name.trim()}>
                   {isPending && <Loader2 className="w-4 h-4 animate-spin ml-2" />}
                   {editingCategory ? "حفظ التعديلات" : "إضافة"}
                 </Button>

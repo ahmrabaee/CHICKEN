@@ -191,6 +191,7 @@ export class PurchasesService {
       if (amountPaid >= grandTotal && grandTotal > 0) paymentStatus = 'paid';
       else if (amountPaid > 0) paymentStatus = 'partial';
 
+      const branchId = dto.branchId ?? null;
       const purchase = await tx.purchase.create({
         data: {
           purchaseNumber,
@@ -205,6 +206,9 @@ export class PurchasesService {
           paymentStatus,
           amountPaid,
           notes: dto.notes,
+          branchId,
+          receivedAt: new Date(), // Treat create as immediate receipt for accounting
+          receivedById: userId,
           createdById: userId,
         },
       });
@@ -230,6 +234,107 @@ export class PurchasesService {
             isLiveBird: line.isLiveBird ?? false,
           },
         });
+      }
+
+      // Inventory receipt + accounting (treat create as immediate receipt)
+      let totalInventoryValue = 0;
+      for (let i = 0; i < dto.lines.length; i++) {
+        const line = dto.lines[i];
+        const item = await tx.item.findUnique({ where: { id: line.itemId } });
+        if (!item) continue;
+
+        const lineTotal = Math.round((line.weightGrams / 1000) * line.pricePerKg);
+        totalInventoryValue += lineTotal;
+
+        const lotNumber = await this.generateLotNumber(tx);
+        const lot = await tx.inventoryLot.create({
+          data: {
+            itemId: line.itemId,
+            purchaseId: purchase.id,
+            purchaseLineId: (await tx.purchaseLine.findFirst({
+              where: { purchaseId: purchase.id, lineNumber: i + 1 },
+            }))!.id,
+            branchId,
+            lotNumber,
+            totalQuantityGrams: line.weightGrams,
+            remainingQuantityGrams: line.weightGrams,
+            unitPurchasePrice: line.pricePerKg,
+            receivedAt: new Date(),
+            expiryDate: item.shelfLifeDays
+              ? new Date(Date.now() + item.shelfLifeDays * 24 * 60 * 60 * 1000)
+              : null,
+            createdById: userId,
+          },
+        });
+
+        await tx.inventory.upsert({
+          where: { itemId: line.itemId },
+          update: {
+            currentQuantityGrams: { increment: line.weightGrams },
+            totalValue: { increment: lineTotal },
+            lastRestockedAt: new Date(),
+          },
+          create: {
+            itemId: line.itemId,
+            branchId,
+            currentQuantityGrams: line.weightGrams,
+            reservedQuantityGrams: 0,
+            totalValue: lineTotal,
+            lastRestockedAt: new Date(),
+          },
+        });
+
+        const inv = await tx.inventory.findUnique({ where: { itemId: line.itemId } });
+        if (inv && inv.currentQuantityGrams > 0) {
+          await tx.inventory.update({
+            where: { itemId: line.itemId },
+            data: { averageCost: Math.round((inv.totalValue * 1000) / inv.currentQuantityGrams) },
+          });
+        }
+
+        await tx.stockMovement.create({
+          data: {
+            itemId: line.itemId,
+            lotId: lot.id,
+            branchId,
+            movementType: 'purchase',
+            quantityGrams: line.weightGrams,
+            unitCost: line.pricePerKg,
+            referenceType: 'purchase',
+            referenceId: purchase.id,
+            performedById: userId,
+          },
+        });
+
+        await this.stockLedgerService.createSLE(tx, {
+          itemId: line.itemId,
+          branchId,
+          voucherType: 'purchase',
+          voucherId: purchase.id,
+          voucherDetailNo: `lot-${lot.lotNumber}`,
+          qtyChange: line.weightGrams,
+          valuationRate: line.pricePerKg,
+          stockValueDifference: lineTotal,
+          postingDate: new Date(),
+          remarks: `Purchase ${purchase.purchaseNumber}`,
+        });
+      }
+
+      if (totalInventoryValue > 0) {
+        const stockAccountCode = await this.stockAccountMapperService.getStockAccountCode(branchId);
+        await this.accountingService.createPurchaseJournalEntry(
+          tx,
+          purchase.id,
+          purchase.purchaseNumber,
+          branchId,
+          userId,
+          {
+            totalAmount: totalInventoryValue,
+            amountPaid: amountPaid,
+            supplierId: dto.supplierId,
+            stockAccountCode,
+          },
+        );
       }
 
       // Create debt record if amount due
@@ -337,6 +442,14 @@ export class PurchasesService {
         code: 'NOT_FOUND',
         message: 'Purchase not found',
         messageAr: 'أمر الشراء غير موجود',
+      });
+    }
+
+    if (purchase.receivedAt) {
+      throw new BadRequestException({
+        code: 'ALREADY_RECEIVED',
+        message: 'This purchase has already been received',
+        messageAr: 'تم استلام هذا الشراء مسبقاً',
       });
     }
 

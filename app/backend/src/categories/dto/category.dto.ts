@@ -3,22 +3,22 @@ import { IsString, IsNotEmpty, IsOptional, IsInt, IsBoolean, Min } from 'class-v
 import { Type } from 'class-transformer';
 
 export class CreateCategoryDto {
-  @ApiProperty({ description: 'Category code', example: 'CHICKEN_FRESH' })
+  @ApiPropertyOptional({ description: 'Category code (auto-generated if not provided)' })
   @IsString()
-  @IsNotEmpty()
-  code: string;
+  @IsOptional()
+  code?: string;
 
   @ApiProperty({ description: 'Category name in Arabic', example: 'دجاج طازج' })
   @IsString()
   @IsNotEmpty()
   name: string;
 
-  @ApiPropertyOptional({ description: 'Category name in English', example: 'Fresh Chicken' })
+  @ApiPropertyOptional({ description: 'Category name in English (auto-filled if not provided)' })
   @IsString()
   @IsOptional()
   nameEn?: string;
 
-  @ApiPropertyOptional({ description: 'Display order', example: 1 })
+  @ApiPropertyOptional({ description: 'Display order (auto-assigned if not provided)' })
   @Type(() => Number)
   @IsInt()
   @Min(0)
@@ -82,6 +82,18 @@ export class CategoryResponseDto {
 
   @ApiProperty({ example: true })
   isActive: boolean;
+
+  @ApiPropertyOptional({ description: 'Item ID used when purchasing this category (raw stock)' })
+  purchaseItemId?: number;
+
+  @ApiPropertyOptional({ description: 'Purchase item details (when category is purchasable)' })
+  purchaseItem?: {
+    id: number;
+    code: string;
+    name: string;
+    defaultPurchasePrice: number | null;
+    defaultSalePrice: number;
+  };
 
   @ApiProperty({ example: '2026-01-01T00:00:00.000Z' })
   createdAt: Date;

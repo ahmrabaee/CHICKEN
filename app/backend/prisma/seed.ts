@@ -108,6 +108,7 @@ const PAGE_DEFINITIONS = [
   { key: 'expenses', path: '/expenses', titleAr: 'المصروفات', groupKey: null, isAdminOnly: true, sortOrder: 80 },
   { key: 'debts', path: '/debts', titleAr: 'الديون', groupKey: null, isAdminOnly: true, sortOrder: 90 },
   { key: 'wastage', path: '/wastage', titleAr: 'الهدر', groupKey: null, isAdminOnly: true, sortOrder: 100 },
+  { key: 'stock-transfer', path: '/stock-transfer', titleAr: 'تحويل المخزون', groupKey: null, isAdminOnly: false, sortOrder: 105 },
   { key: 'purchasing', path: '/purchasing', titleAr: 'الشراء', groupKey: null, isAdminOnly: true, sortOrder: 110 },
   { key: 'reports-expenses', path: '/reports/expenses', titleAr: 'تقارير المصروفات', groupKey: 'reports', isAdminOnly: true, sortOrder: 120 },
   { key: 'reports-financial', path: '/reports/financial', titleAr: 'التقارير المالية', groupKey: 'reports', isAdminOnly: true, sortOrder: 121 },
@@ -123,7 +124,7 @@ const PAGE_DEFINITIONS = [
 
 const ACCOUNTANT_ALLOWED_KEYS = [
   'dashboard', 'inventory', 'sales', 'sales-pos', 'customers', 'payments',
-  'reconciliation', 'credit-notes', 'accounting',
+  'reconciliation', 'credit-notes', 'accounting', 'stock-transfer',
   'reports-sales', 'reports-holdings', 'reports-purchases', 'reports-wastage',
 ];
 
@@ -193,6 +194,7 @@ async function seedCategories(): Promise<void> {
   console.log('Seeding categories...');
 
   const categories = [
+    { code: 'CHICKEN_RAW', name: 'دجاج خام', nameEn: 'Raw Chicken', displayOrder: 0, defaultShelfLifeDays: 5, storageType: 'fresh', icon: 'package' },
     { code: 'FRESH_WHOLE', name: 'دجاج طازج كامل', nameEn: 'Fresh Whole Chicken', displayOrder: 1, defaultShelfLifeDays: 2, storageType: 'fresh', icon: 'chicken' },
     { code: 'FRESH_PARTS', name: 'قطع دجاج طازجة', nameEn: 'Fresh Chicken Parts', displayOrder: 2, defaultShelfLifeDays: 2, storageType: 'fresh', icon: 'drumstick' },
     { code: 'FROZEN_WHOLE', name: 'دجاج مجمد كامل', nameEn: 'Frozen Whole Chicken', displayOrder: 3, defaultShelfLifeDays: 90, storageType: 'frozen', icon: 'snowflake' },
@@ -215,11 +217,13 @@ async function seedCategories(): Promise<void> {
 async function seedItems(): Promise<void> {
   console.log('Seeding items...');
 
+  const chickenRaw = await prisma.category.findUnique({ where: { code: 'CHICKEN_RAW' } });
   const freshWhole = await prisma.category.findUnique({ where: { code: 'FRESH_WHOLE' } });
   const freshParts = await prisma.category.findUnique({ where: { code: 'FRESH_PARTS' } });
   const catId = freshParts?.id ?? freshWhole?.id ?? 1;
 
   const items = [
+    { code: 'CHK-RAW-01', name: 'دجاج خام', nameEn: 'Raw Chicken', defaultSalePrice: 0, defaultPurchasePrice: 1800, categoryId: chickenRaw?.id ?? catId },
     { code: 'CHK-WHOLE-01', name: 'فروج كامل', nameEn: 'Whole Chicken', defaultSalePrice: 2200, defaultPurchasePrice: 1800, categoryId: freshWhole?.id ?? catId },
     { code: 'CHK-BREAST-01', name: 'صدور دجاج', nameEn: 'Chicken Breast', defaultSalePrice: 3500, defaultPurchasePrice: 2800, categoryId: catId },
     { code: 'CHK-THIGH-01', name: 'أفخاذ دجاج', nameEn: 'Chicken Thighs', defaultSalePrice: 2800, defaultPurchasePrice: 2200, categoryId: catId },
@@ -244,6 +248,15 @@ async function seedItems(): Promise<void> {
     });
   }
 
+  // Link CHICKEN_RAW category to its purchase item (raw chicken)
+  const rawChickenItem = await prisma.item.findUnique({ where: { code: 'CHK-RAW-01' } });
+  if (rawChickenItem && chickenRaw) {
+    await prisma.category.update({
+      where: { code: 'CHICKEN_RAW' },
+      data: { purchaseItemId: rawChickenItem.id },
+    });
+  }
+
   console.log('✓ Items seeded');
 }
 
@@ -253,7 +266,7 @@ async function seedInitialStock(): Promise<void> {
   const branch = await prisma.branch.findFirst({ where: { isMainBranch: true } });
   if (!branch) return;
 
-  const items = await prisma.item.findMany({ where: { isActive: true }, include: { inventory: true } });
+  const items = await prisma.item.findMany({ where: { isActive: true, code: { not: 'CHK-RAW-01' } }, include: { inventory: true } });
   for (const item of items) {
     const existingInv = item.inventory;
     const stockKg = 50;

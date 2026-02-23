@@ -11,6 +11,7 @@ import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
 import { PdfSection, PdfSectionItem } from '../pdf/pdf.types';
 import { buildFinancialStatementPdfOptions } from '../pdf/templates/financial-statement.template';
 import { buildReportPdfOptions } from '../pdf/templates/report.template';
+import { formatDateForHeader } from '../pdf/pdf.helpers';
 
 // Standard account codes - must match prisma/seed.ts chart of accounts
 export const ACCOUNT_CODES = {
@@ -1430,7 +1431,8 @@ export class AccountingService {
     const options = buildFinancialStatementPdfOptions(meta as any, {
       title: 'Balance Sheet',
       titleAr: 'الميزانية العمومية',
-      subtitle: `As of ${asOfDate}`,
+      subtitle: `As of ${formatDateForHeader(asOfDate || new Date())}`,
+      subtitleAr: `اعتباراً من ${formatDateForHeader(asOfDate || new Date())}`,
       sections,
       grandTotal: {
         label: 'Total Equity & Liabilities',
@@ -1474,7 +1476,8 @@ export class AccountingService {
     const options = buildFinancialStatementPdfOptions(meta as any, {
       title: 'Income Statement',
       titleAr: 'قائمة الدخل',
-      subtitle: `${start} to ${end}`,
+      subtitle: `${formatDateForHeader(start)} to ${formatDateForHeader(end)}`,
+      subtitleAr: `${formatDateForHeader(start)} إلى ${formatDateForHeader(end)}`,
       sections,
       grandTotal: {
         label: 'Net Income',
@@ -1504,7 +1507,8 @@ export class AccountingService {
     const options = buildReportPdfOptions(meta as any, {
       title: 'Trial Balance',
       titleAr: 'ميزان المراجعة',
-      subtitle: asOfDate ? `As of ${asOfDate}` : `As of ${new Date().toISOString().split('T')[0]}`,
+      subtitle: `As of ${formatDateForHeader(asOfDate || new Date())}`,
+      subtitleAr: `اعتباراً من ${formatDateForHeader(asOfDate || new Date())}`,
       columns: [
         { header: 'Code', headerAr: 'الكود', field: 'code', width: 'auto' },
         { header: 'Account', headerAr: 'الحساب', field: 'name', width: '*' },
@@ -1542,19 +1546,27 @@ export class AccountingService {
     }));
 
     const subtitle = start && end
-      ? `${start} to ${end}`
+      ? `${formatDateForHeader(start)} to ${formatDateForHeader(end)}`
       : start
-        ? `From ${start}`
+        ? `From ${formatDateForHeader(start)}`
         : end
-          ? `Up to ${end}`
+          ? `Up to ${formatDateForHeader(end)}`
           : 'All Transactions';
+    const subtitleAr = start && end
+      ? `${formatDateForHeader(start)} إلى ${formatDateForHeader(end)}`
+      : start
+        ? `من ${formatDateForHeader(start)}`
+        : end
+          ? `حتى ${formatDateForHeader(end)}`
+          : 'جميع العمليات';
 
     const options = buildReportPdfOptions(meta as any, {
       title: `Account Ledger: ${account.name}`,
       titleAr: `دفتر الحساب: ${account.name}`,
       subtitle,
+      subtitleAr,
       columns: [
-        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto' },
+        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto', format: 'date' },
         { header: 'Entry', headerAr: 'القيد', field: 'entry', width: 'auto' },
         { header: 'Description', headerAr: 'الوصف', field: 'description', width: '*' },
         { header: 'Debit', headerAr: 'مدين', field: 'debit', width: 'auto', format: 'currency' },

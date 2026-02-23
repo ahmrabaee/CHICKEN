@@ -1,11 +1,14 @@
 # Arabic Fonts Required
 
-To support Arabic PDF generation, you must download the **Cairo** font family (or Amiri) and place the `.ttf` files in this directory.
+To support Arabic PDF generation, add **Cairo** font files to this directory.
 
-1. Download **Cairo** from Google Fonts: https://fonts.google.com/specimen/Cairo
-2. Extract the files.
-3. Rename and copy the following files to this folder:
-   - `Cairo-Regular.ttf`
-   - `Cairo-Bold.ttf`
+## Option 1: Variable Font (recommended)
+Place `Cairo-VariableFont_slnt,wght.ttf` in this folder. One file covers all weights.
 
-The `PdfService` is configured to look for these files. If they are missing, it will fall back to Roboto (English only).
+## Option 2: Static Fonts
+- `Cairo-Regular.ttf`
+- `Cairo-Bold.ttf`
+
+Download from: https://fonts.google.com/specimen/Cairo
+
+If no valid Cairo is found, the service falls back to Arial (Arabic may render poorly).

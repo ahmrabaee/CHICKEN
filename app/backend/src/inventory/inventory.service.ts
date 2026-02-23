@@ -6,6 +6,7 @@ import { StockAccountMapperService } from './stock-ledger/stock-account-mapper.s
 import { PdfService } from '../pdf/pdf.service';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
 import { buildReportPdfOptions } from '../pdf/templates/report.template';
+import { formatDateForHeader } from '../pdf/pdf.helpers';
 import {
   InventoryResponseDto,
   InventoryLotResponseDto,
@@ -544,7 +545,8 @@ export class InventoryService {
     const options = buildReportPdfOptions(meta as any, {
       title: 'Inventory Report',
       titleAr: 'تقرير المخزون',
-      subtitle: `As of ${new Date().toISOString().split('T')[0]}`,
+      subtitle: `As of ${formatDateForHeader(new Date())}`,
+      subtitleAr: `اعتباراً من ${formatDateForHeader(new Date())}`,
       columns: [
         { header: 'Item', headerAr: 'الصنف', field: 'item', width: '*' },
         { header: 'Category', headerAr: 'التصنيف', field: 'category', width: 'auto' },

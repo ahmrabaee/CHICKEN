@@ -1,19 +1,20 @@
 import { StyleDictionary } from 'pdfmake/interfaces';
 
 export const PDF_DESIGN = {
-    // Brand Colors
+    // Brand Colors - Professional blue palette
     colors: {
-        primary: '#1a1a2e',        // Dark navy — headers, titles
-        secondary: '#16213e',      // Slightly lighter — section headers
-        accent: '#0f3460',         // Accent — borders, highlights
-        text: '#333333',           // Body text
-        textLight: '#666666',      // Secondary text
-        textMuted: '#999999',      // Muted text (footer, dates)
-        headerBg: '#f0f0f5',       // Table header background
-        altRowBg: '#fafafa',       // Alternating row background
-        border: '#e0e0e0',         // Table borders
-        success: '#27ae60',        // Positive values
-        danger: '#e74c3c',         // Negative values
+        primary: '#0d47a1',        // Deep blue — headers, titles
+        secondary: '#1565c0',     // Section headers
+        accent: '#1976d2',        // Borders, highlights
+        text: '#212121',          // Body text
+        textLight: '#616161',      // Secondary text
+        textMuted: '#9e9e9e',     // Muted text (footer, dates)
+        headerBg: '#e3f2fd',      // Table header - light blue
+        altRowBg: '#f5f5f5',      // Alternating row background
+        border: '#e0e0e0',        // Table borders
+        success: '#2e7d32',       // Positive values (paid)
+        danger: '#c62828',       // Negative values (unpaid)
+        warning: '#f9a825',      // Pending
         white: '#ffffff',
     },
 
@@ -21,24 +22,31 @@ export const PDF_DESIGN = {
     fonts: {
         default: 'Cairo',
         sizes: {
-            title: 16,
+            title: 18,
             subtitle: 12,
             sectionHeader: 11,
             body: 10,
             small: 8,
             footer: 7,
+            appName: 14,
+            storeName: 11,
         },
     },
 
     // Layout
     margins: {
-        page: [40, 70, 40, 65] as [number, number, number, number],
+        page: [40, 90, 40, 70] as [number, number, number, number],
         section: [0, 0, 0, 15] as [number, number, number, number],
         paragraph: [0, 0, 0, 8] as [number, number, number, number],
         table: [0, 0, 0, 20] as [number, number, number, number],
     },
 
-    // Footer specific
+    // Header / Footer specific
+    header: {
+        logoWidth: 48,
+        logoHeight: 48,
+        dividerHeight: 2,
+    },
     footer: {
         logoWidth: 20,
         logoHeight: 20,

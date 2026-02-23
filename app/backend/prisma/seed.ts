@@ -559,6 +559,10 @@ async function seedSystemSettings(options: { setupCompleted: boolean }): Promise
     { key: 'setup_completed', value: options.setupCompleted ? 'true' : 'false', description: 'Whether the initial system setup has been completed', dataType: 'boolean', settingGroup: 'system', isSystem: true },
     { key: 'business_name', value: '', description: 'Business name in Arabic (primary language)', dataType: 'string', settingGroup: 'business', isSystem: true },
     { key: 'business_name_en', value: '', description: 'Business name in English (secondary language)', dataType: 'string', settingGroup: 'business', isSystem: true },
+    { key: 'business_address', value: '', description: 'Business address for reports', dataType: 'string', settingGroup: 'business' },
+    { key: 'business_phone', value: '', description: 'Business phone for reports', dataType: 'string', settingGroup: 'business' },
+    { key: 'business_email', value: '', description: 'Business email for reports', dataType: 'string', settingGroup: 'business' },
+    { key: 'business_website', value: '', description: 'Business website for reports', dataType: 'string', settingGroup: 'business' },
     { key: 'setup_completed_at', value: options.setupCompleted ? new Date().toISOString() : '', description: 'ISO 8601 timestamp when setup was completed', dataType: 'string', settingGroup: 'system', isSystem: true },
   ];
 

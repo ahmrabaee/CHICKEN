@@ -3,6 +3,7 @@ export interface PdfMeta {
   title: string;
   titleAr?: string;
   storeName: string;
+  storeNameEn?: string;
   branchName?: string;
   taxNumber?: string;
   generatedBy?: string;       // Username
@@ -13,6 +14,14 @@ export interface PdfMeta {
   logoBase64?: string;        // Optional store logo
   subtitle?: string;
   subtitleAr?: string;
+  // Rich header - application & business data
+  appName?: string;           // Arabic: برنامج الإدارة المالية
+  appNameEn?: string;         // English: Financial Management Program
+  appVersion?: string;       // e.g. 1.0.0
+  address?: string;          // Business address
+  phone?: string;            // Business phone
+  email?: string;            // Business email
+  website?: string;          // Business website
 }
 
 export interface PdfTableColumn {
@@ -29,7 +38,7 @@ export interface PdfSummaryItem {
   label: string;
   labelAr?: string;
   value: string | number;
-  format?: 'currency' | 'weight' | 'number' | 'text';
+  format?: 'currency' | 'weight' | 'number' | 'text' | 'date';
   bold?: boolean;
 }
 

@@ -301,7 +301,7 @@ function ExpenseCreateMode({ isSubmitting, onSubmit }: { isSubmitting: boolean; 
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Main Content Areas */}
                     <div className="lg:col-span-2 space-y-6">
@@ -515,7 +515,7 @@ function ExpenseCreateMode({ isSubmitting, onSubmit }: { isSubmitting: boolean; 
                     </div>
 
                     {/* Sidebar Information */}
-                    <div className="space-y-6">
+                    <div className="space-y-6 self-start">
                         {/* Summary Card (Sticky) */}
                         <Card className="shadow-lg border-none sticky top-24 overflow-hidden bg-slate-900 text-white">
                             <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900 opacity-90" />

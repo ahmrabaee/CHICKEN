@@ -278,10 +278,11 @@ export class DebtsService {
     const options = buildReportPdfOptions(meta as any, {
       title: 'Accounts Receivable Report',
       titleAr: 'تقرير الذمم المدينة',
-      subtitle: `As of ${new Date().toISOString().split('T')[0]}`,
+      subtitle: `As of ${formatDateForHeader(new Date())}`,
+      subtitleAr: `اعتباراً من ${formatDateForHeader(new Date())}`,
       columns: [
         { header: 'Party', headerAr: 'العميل', field: 'party', width: '*' },
-        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto' },
+        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto', format: 'date' },
         { header: 'Total', headerAr: 'الإجمالي', field: 'total', width: 'auto', format: 'currency' },
         { header: 'Paid', headerAr: 'المدفوع', field: 'paid', width: 'auto', format: 'currency' },
         { header: 'Balance', headerAr: 'الرصيد', field: 'balance', width: 'auto', format: 'currency', bold: true },

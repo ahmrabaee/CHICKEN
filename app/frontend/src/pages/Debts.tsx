@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Eye, Loader2, ArrowUpRight, ArrowDownLeft, AlertTriangle } from "lucide-react";
+import { Eye, Loader2, ArrowUpRight, ArrowDownLeft, AlertTriangle, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -11,6 +11,7 @@ import {
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useReceivables, usePayables, useDebtSummary, useDebt } from "@/hooks/use-debts";
 import { Debt } from "@/types/debts";
+import { PdfPreviewDialog } from "@/components/reports/PdfPreviewDialog";
 
 function formatCurrency(v: number) { return `₪ ${(v / 100).toFixed(2)}`; }
 function formatDate(d: string) { return new Date(d).toLocaleDateString("ar-SA", { year: "numeric", month: "short", day: "numeric" }); }
@@ -121,6 +122,7 @@ function DebtTable({ debts, isLoading, error, isReceivable }: {
 
 export default function Debts() {
     const [tab, setTab] = useState<"receivables" | "payables">("receivables");
+    const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
 
     const { data: recvData, isLoading: recvLoading, error: recvError } = useReceivables();
     const { data: payData, isLoading: payLoading, error: payError } = usePayables();
@@ -131,10 +133,27 @@ export default function Debts() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-foreground">الديون</h1>
-                <p className="text-muted-foreground mt-1">إدارة المستحقات والالتزامات</p>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-foreground">الديون</h1>
+                    <p className="text-muted-foreground mt-1">إدارة المستحقات والالتزامات</p>
+                </div>
+                <Button
+                    variant="outline"
+                    className="gap-2 bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/30 dark:border-emerald-800 dark:text-emerald-200"
+                    onClick={() => setPdfDialogOpen(true)}
+                >
+                    <Download className="w-4 h-4" />
+                    تصدير PDF
+                </Button>
             </div>
+            <PdfPreviewDialog
+                open={pdfDialogOpen}
+                onOpenChange={setPdfDialogOpen}
+                reportType={tab === "receivables" ? "receivables-report" : "payables-report"}
+                params={{ language: "ar" }}
+                title={tab === "receivables" ? "تقرير الذمم المدينة PDF" : "تقرير الذمم الدائنة PDF"}
+            />
 
             {/* Summary Cards */}
             {summary && (

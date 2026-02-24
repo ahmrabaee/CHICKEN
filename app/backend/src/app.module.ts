@@ -35,6 +35,7 @@ import { AuditModule } from './audit/audit.module';
 import { PdfModule } from './pdf/pdf.module';
 import { BackupModule } from './modules/backup/backup.module';
 import { PageAccessModule } from './page-access/page-access.module';
+import { DailyPricingModule } from './daily-pricing/daily-pricing.module';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { PageAccessModule } from './page-access/page-access.module';
     PdfModule,
     BackupModule,
     PageAccessModule,
+    DailyPricingModule,
   ],
   providers: [
     // Global exception filter

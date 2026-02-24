@@ -21,4 +21,9 @@ export class DebtQueryDto extends PaginationQueryDto {
     @IsOptional()
     @IsIn(['open', 'partial', 'paid', 'overdue', 'written_off'])
     status?: string;
+
+    @ApiPropertyOptional({ description: 'Search by debt number, party name, or notes' })
+    @IsString()
+    @IsOptional()
+    search?: string;
 }

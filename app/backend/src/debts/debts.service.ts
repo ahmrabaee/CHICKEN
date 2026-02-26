@@ -1,9 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { createPaginatedResult, PaginationQueryDto } from '../common';
+import { createPaginatedResult } from '../common';
 import { PdfService } from '../pdf/pdf.service';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
 import { buildReportPdfOptions } from '../pdf/templates/report.template';
+import { formatDateForHeader } from '../pdf/pdf.helpers';
+import { DebtQueryDto } from './dto/debt.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class DebtsService {
@@ -12,11 +15,37 @@ export class DebtsService {
     private pdfService: PdfService,
   ) { }
 
-  async findReceivables(pagination: PaginationQueryDto) {
-    const { page = 1, pageSize = 20 } = pagination;
-    const skip = (page - 1) * pageSize;
+  private buildWhere(direction: 'receivable' | 'payable', query: DebtQueryDto): Prisma.DebtWhereInput {
+    const where: Prisma.DebtWhereInput = { direction };
 
-    const where = { direction: 'receivable' };
+    if (query.status) where.status = query.status;
+
+    if (query.customerId) {
+      where.partyType = 'customer';
+      where.partyId = query.customerId;
+    }
+
+    if (query.supplierId) {
+      where.partyType = 'supplier';
+      where.partyId = query.supplierId;
+    }
+
+    const search = query.search?.trim();
+    if (search) {
+      where.OR = [
+        { debtNumber: { contains: search } },
+        { partyName: { contains: search } },
+        { notes: { contains: search } },
+      ];
+    }
+
+    return where;
+  }
+
+  async findReceivables(query: DebtQueryDto) {
+    const { page = 1, pageSize = 20 } = query;
+    const skip = (page - 1) * pageSize;
+    const where = this.buildWhere('receivable', query);
 
     const [debts, totalItems] = await Promise.all([
       this.prisma.debt.findMany({
@@ -31,11 +60,10 @@ export class DebtsService {
     return createPaginatedResult(debts, page, pageSize, totalItems);
   }
 
-  async findPayables(pagination: PaginationQueryDto) {
-    const { page = 1, pageSize = 20 } = pagination;
+  async findPayables(query: DebtQueryDto) {
+    const { page = 1, pageSize = 20 } = query;
     const skip = (page - 1) * pageSize;
-
-    const where = { direction: 'payable' };
+    const where = this.buildWhere('payable', query);
 
     const [debts, totalItems] = await Promise.all([
       this.prisma.debt.findMany({
@@ -250,10 +278,11 @@ export class DebtsService {
     const options = buildReportPdfOptions(meta as any, {
       title: 'Accounts Receivable Report',
       titleAr: 'تقرير الذمم المدينة',
-      subtitle: `As of ${new Date().toISOString().split('T')[0]}`,
+      subtitle: `As of ${formatDateForHeader(new Date())}`,
+      subtitleAr: `اعتباراً من ${formatDateForHeader(new Date())}`,
       columns: [
         { header: 'Party', headerAr: 'العميل', field: 'party', width: '*' },
-        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto' },
+        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto', format: 'date' },
         { header: 'Total', headerAr: 'الإجمالي', field: 'total', width: 'auto', format: 'currency' },
         { header: 'Paid', headerAr: 'المدفوع', field: 'paid', width: 'auto', format: 'currency' },
         { header: 'Balance', headerAr: 'الرصيد', field: 'balance', width: 'auto', format: 'currency', bold: true },
@@ -289,10 +318,11 @@ export class DebtsService {
     const options = buildReportPdfOptions(meta as any, {
       title: 'Accounts Payable Report',
       titleAr: 'تقرير الذمم الدائنة',
-      subtitle: `As of ${new Date().toISOString().split('T')[0]}`,
+      subtitle: `As of ${formatDateForHeader(new Date())}`,
+      subtitleAr: `اعتباراً من ${formatDateForHeader(new Date())}`,
       columns: [
         { header: 'Party', headerAr: 'المورد', field: 'party', width: '*' },
-        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto' },
+        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto', format: 'date' },
         { header: 'Total', headerAr: 'الإجمالي', field: 'total', width: 'auto', format: 'currency' },
         { header: 'Paid', headerAr: 'المدفوع', field: 'paid', width: 'auto', format: 'currency' },
         { header: 'Balance', headerAr: 'الرصيد', field: 'balance', width: 'auto', format: 'currency', bold: true },

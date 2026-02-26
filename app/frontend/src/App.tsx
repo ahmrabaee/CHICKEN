@@ -84,16 +84,8 @@ const App = () => (
                 <Route path="/credit-notes" element={<CreditNotes />} />
 
                 {/* Reports */}
-                <Route path="/reports/sales" element={<Reports />} />
-                <Route path="/reports/purchases" element={<Reports />} />
-                <Route path="/reports/inventory" element={<Reports />} />
-                <Route path="/reports/wastage" element={<Reports />} />
-                <Route path="/reports/expenses" element={<Reports />} />
-                <Route path="/reports/financial" element={<Reports />} />
-                <Route path="/reports/profit-loss" element={<Reports />} />
-                <Route path="/reports/stock-vs-gl" element={<Reports />} />
-                <Route path="/reports/tax" element={<Reports />} />
-                <Route path="/reports/vat" element={<Reports />} />
+                <Route path="/reports" element={<Reports />} />
+                <Route path="/reports/*" element={<Reports />} />
                 {/* Accounting */}
                 <Route path="/accounting" element={<Accounting />} />
                 <Route path="/accounting/journal/new" element={<JournalEntryProfile />} />

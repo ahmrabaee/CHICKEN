@@ -36,6 +36,7 @@ import { PdfModule } from './pdf/pdf.module';
 import { BackupModule } from './modules/backup/backup.module';
 import { PageAccessModule } from './page-access/page-access.module';
 
+
 @Module({
   imports: [
     // Configuration
@@ -74,6 +75,7 @@ import { PageAccessModule } from './page-access/page-access.module';
     PdfModule,
     BackupModule,
     PageAccessModule,
+
   ],
   providers: [
     // Global exception filter

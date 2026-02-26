@@ -14,6 +14,7 @@ import {
   X,
   Loader2,
   FileText,
+  DollarSign,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,9 @@ import { useCreateSale } from "@/hooks/use-sales";
 import { TaxTemplateSelector } from "@/components/tax/TaxTemplateSelector";
 import { ThermalReceipt } from "@/components/pos/ThermalReceipt";
 import { CustomerSearchCombobox } from "@/components/pos/CustomerSearchCombobox";
+import { DailyPricingGate } from "@/components/pos/DailyPricingGate";
+import { useDailyPricing } from "@/hooks/use-daily-pricing";
+import type { DailyPricingResponse } from "@/types/daily-pricing";
 import type { Item } from "@/types/inventory";
 import type { Customer } from "@/types/customer";
 import type { CreateSaleDto } from "@/types/sales";
@@ -66,7 +70,12 @@ function POS() {
   const [taxTemplateId, setTaxTemplateId] = useState<number | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [showPricingGate, setShowPricingGate] = useState<boolean | null>(null);
+  const [storedDailyPricing, setStoredDailyPricing] =
+    useState<DailyPricingResponse | null>(null);
 
+  const todayStr = new Date().toISOString().split("T")[0];
+  const { data: dailyPricing } = useDailyPricing(todayStr);
   const { data: itemsResp, isLoading: itemsLoading } = useItems({
     isActive: true,
     page: 1,
@@ -89,10 +98,26 @@ function POS() {
     );
   }, [items, searchQuery]);
 
-  /** Add item with quantity in kg (supports float: 0.5, 1.5, 2.25...) */
+  const dailyPriceMap = useMemo(() => {
+    const src = storedDailyPricing ?? dailyPricing;
+    if (!src?.hasPrices || !src.items) return {};
+    return Object.fromEntries(
+      src.items.map((i) => [i.itemId, i.pricePerKg])
+    );
+  }, [storedDailyPricing, dailyPricing]);
+
+  const shouldShowPricingGate =
+    showPricingGate === true ||
+    (showPricingGate === null &&
+      dailyPricing &&
+      !dailyPricing.hasPrices &&
+      !storedDailyPricing);
+
+  /** Add item with quantity in kg - uses daily price when available */
   const addToCart = (item: Item, quantityKg: number = 1) => {
     const qty = Math.max(0.1, quantityKg); // min 0.1 kg
-    const pricePerKg = item.defaultSalePrice ?? 0;
+    const pricePerKg =
+      dailyPriceMap[item.id] ?? item.defaultSalePrice ?? 0;
     const total = Math.round(qty * pricePerKg);
     const existing = cart.find((c) => c.itemId === item.id);
     if (existing) {
@@ -315,12 +340,37 @@ function POS() {
     }
   };
 
+  if (shouldShowPricingGate) {
+    return (
+      <DailyPricingGate
+        onContinue={(saved) => {
+          setStoredDailyPricing(saved);
+          setShowPricingGate(false);
+        }}
+        onCancel={
+          storedDailyPricing || dailyPricing?.hasPrices
+            ? () => setShowPricingGate(false)
+            : undefined
+        }
+      />
+    );
+  }
+
   return (
     <div className="min-h-[calc(100vh-3rem)] flex flex-col bg-gradient-to-br from-slate-50 via-background to-primary/5" dir="rtl">
       {/* Top Bar - Full Width */}
       <div className="flex-shrink-0 px-6 py-4 bg-card/95 backdrop-blur border-b shadow-sm">
         <div className="flex items-center gap-6 max-w-[2000px] mx-auto">
           <h1 className="text-2xl font-bold text-foreground tracking-tight">نقطة البيع</h1>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 rounded-xl"
+            onClick={() => setShowPricingGate(true)}
+          >
+            <DollarSign className="w-4 h-4" />
+            تعديل أسعار اليوم
+          </Button>
           <div className="flex-1 max-w-2xl">
             <div className="relative">
               <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -371,7 +421,7 @@ function POS() {
                 >
                   <span className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">{item.name}</span>
                   <span className="text-xl font-extrabold text-primary">
-                    ₪ {toMajor(item.defaultSalePrice ?? 0)}
+                    ₪ {toMajor(dailyPriceMap[item.id] ?? item.defaultSalePrice ?? 0)}
                   </span>
                   <span className="text-sm text-muted-foreground">/ كجم</span>
                 </button>

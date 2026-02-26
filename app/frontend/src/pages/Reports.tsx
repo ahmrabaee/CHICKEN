@@ -12,6 +12,7 @@ import {
   Wallet,
   DollarSign,
   Scale,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   useSalesReport,
@@ -100,22 +101,24 @@ const REPORT_PDF_MAP: Record<
 };
 
 const ALL_REPORT_LINKS = [
-  { href: "/reports/sales", label: "المبيعات", icon: TrendingUp },
-  { href: "/reports/purchases", label: "المشتريات", icon: Receipt },
-  { href: "/reports/inventory", label: "المخزون", icon: Package },
-  { href: "/reports/expenses", label: "المصروفات", icon: Wallet, adminOnly: true },
-  { href: "/reports/profit-loss", label: "الأرباح والخسائر", icon: PieChart, adminOnly: true },
-  { href: "/reports/wastage", label: "الهدر", icon: Trash2 },
-  { href: "/reports/stock-vs-gl", label: "المخزون vs الدفاتر", icon: Scale, adminOnly: true },
-  { href: "/reports/vat", label: "ضريبة القيمة المضافة", icon: Receipt, adminOnly: true },
+  { href: "/reports/sales", label: "المبيعات", icon: TrendingUp, description: "تحليل أداء المبيعات والأرباح" },
+  { href: "/reports/purchases", label: "المشتريات", icon: Receipt, description: "سجل المشتريات حسب الفترة" },
+  { href: "/reports/inventory", label: "المخزون", icon: Package, description: "تقييم المخزون وحركة البضاعة" },
+  { href: "/reports/expenses", label: "المصروفات", icon: Wallet, adminOnly: true, description: "ملخص المصروفات حسب النوع" },
+  { href: "/reports/profit-loss", label: "الأرباح والخسائر", icon: PieChart, adminOnly: true, description: "قائمة الدخل للفترة" },
+  { href: "/reports/wastage", label: "الهدر", icon: Trash2, description: "سجل الهدر والتلف" },
+  { href: "/reports/stock-vs-gl", label: "المخزون vs الدفاتر", icon: Scale, adminOnly: true, description: "مقارنة قيمة المخزون مع قيود اليومية" },
+  { href: "/reports/vat", label: "ضريبة القيمة المضافة", icon: Receipt, adminOnly: true, description: "Output VAT، Input VAT، صافي المستحق" },
 ];
 
 
 export default function Reports() {
   const { canAccessPath } = useRole();
   const location = useLocation();
+  const navigate = useNavigate();
   const reportLinks = ALL_REPORT_LINKS.filter((l) => canAccessPath(l.href));
   const currentPath = location.pathname;
+  const isSubPage = currentPath !== "/reports";
   const [dateRange, setDateRange] = useState<DateRangeQuery>(getDefaultDateRange());
   const [rangePreset, setRangePreset] = useState("month");
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
@@ -223,9 +226,22 @@ export default function Reports() {
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{content.title}</h1>
-          <p className="text-muted-foreground mt-1">{content.description}</p>
+        <div className="flex items-center gap-4">
+          {isSubPage && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="shrink-0"
+              title="الرجوع"
+            >
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          )}
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">{content.title}</h1>
+            <p className="text-muted-foreground mt-1">{content.description}</p>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           {currentPath === "/reports/stock-vs-gl" && (
@@ -262,20 +278,6 @@ export default function Reports() {
             </Button>
           )}
         </div>
-      </div>
-
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {reportLinks.map((link) => (
-          <Link key={link.href} to={link.href}>
-            <Button
-              variant={currentPath === link.href ? "default" : "outline"}
-              className="gap-2 whitespace-nowrap"
-            >
-              <link.icon className="w-4 h-4" />
-              {link.label}
-            </Button>
-          </Link>
-        ))}
       </div>
 
       {isLoading ? (
@@ -732,14 +734,30 @@ export default function Reports() {
             </div>
           )}
 
-          {/* Default / no report selected */}
+          {/* Landing grid — shown on /reports base path */}
           {!reportLinks.some((l) => l.href === currentPath) && (
-            <Card>
-              <CardContent className="py-16 text-center text-muted-foreground">
-                <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>اختر نوع التقرير من الأعلى</p>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {reportLinks.map((link) => {
+                const LinkIcon = link.icon;
+                return (
+                  <Link key={link.href} to={link.href} className="group">
+                    <Card className="h-full transition-all duration-200 hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 cursor-pointer">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                            <LinkIcon className="w-5 h-5 text-primary" />
+                          </div>
+                          <CardTitle className="text-base">{link.label}</CardTitle>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">{link.description}</p>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
           )}
 
           {/* Empty state when report type matches but no data */}

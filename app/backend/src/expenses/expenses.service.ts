@@ -5,6 +5,7 @@ import { createPaginatedResult, PaginationQueryDto } from '../common';
 import { PdfService } from '../pdf/pdf.service';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
 import { buildReportPdfOptions } from '../pdf/templates/report.template';
+import { formatDateForHeader } from '../pdf/pdf.helpers';
 
 @Injectable()
 export class ExpensesService {
@@ -222,9 +223,10 @@ export class ExpensesService {
     const options = buildReportPdfOptions(meta as any, {
       title: 'Expenses Report',
       titleAr: 'تقرير المصروفات',
-      subtitle: `${startDate || 'Start'} - ${endDate || 'End'}`,
+      subtitle: `${startDate ? formatDateForHeader(startDate) : 'Start'} — ${endDate ? formatDateForHeader(endDate) : 'End'}`,
+      subtitleAr: `${startDate ? formatDateForHeader(startDate) : 'بداية'} — ${endDate ? formatDateForHeader(endDate) : 'نهاية'}`,
       columns: [
-        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto' },
+        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto', format: 'date' },
         { header: 'Exp No', headerAr: 'رقم المصروف', field: 'number', width: 'auto' },
         { header: 'Category', headerAr: 'التصنيف', field: 'category', width: '*' },
         { header: 'Supplier', headerAr: 'المورد', field: 'supplier', width: 'auto' },

@@ -6,11 +6,11 @@ import { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { PrismaService } from '../prisma/prisma.service';
 import { PdfGenerateOptions, PdfMeta } from './pdf.types';
 import { PDF_DESIGN, DEFAULT_STYLES } from './pdf.constants';
-import { buildHeader, buildFooter, formatCurrency, formatWeight, formatDate } from './pdf.helpers';
+import { buildHeader, buildFooter, formatCurrency, formatWeight, formatDateForHeader } from './pdf.helpers';
 
-// Use standard pdfmake for stability check (pdfmake-rtl crashed)
+// pdfmake-rtl: proper Arabic RTL, shaping, bidi
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const PdfPrinterLib = require('pdfmake/js/Printer');
+const PdfPrinterLib = require('pdfmake-rtl/js/Printer');
 const PdfPrinter = PdfPrinterLib.default || PdfPrinterLib;
 
 @Injectable()
@@ -30,41 +30,61 @@ export class PdfService implements OnModuleInit {
         this.logger.log('PdfService initialized with Cairo fonts and RTL support');
     }
 
+    private isValidFont(filePath: string): boolean {
+        try {
+            const buf = fs.readFileSync(filePath);
+            if (!Buffer.isBuffer(buf) || buf.length < 4) return false;
+            const u32 = buf.readUInt32BE(0);
+            const tag = buf.toString('ascii', 0, 4);
+            return u32 === 0x00010000 || tag === 'OTTO' || tag === 'true';
+        } catch {
+            return false;
+        }
+    }
+
     private initializeFonts() {
         const fontDir = path.join(__dirname, 'fonts');
 
-        // Map Cairo to all styles since it supports both Arabic and English well
-        this.fonts = {
-            Cairo: {
-                normal: path.join(fontDir, 'Cairo-Regular.ttf'),
-                bold: path.join(fontDir, 'Cairo-Bold.ttf'),
-                italics: path.join(fontDir, 'Cairo-Regular.ttf'),
-                bolditalics: path.join(fontDir, 'Cairo-Bold.ttf'),
-            },
-        };
+        // 1) Variable font (single file for all weights)
+        const variableFont = path.join(fontDir, 'Cairo-VariableFont_slnt,wght.ttf');
+        if (fs.existsSync(variableFont) && this.isValidFont(variableFont)) {
+            const cairo = {
+                normal: variableFont,
+                bold: variableFont,
+                italics: variableFont,
+                bolditalics: variableFont,
+            };
+            this.fonts = { Cairo: cairo, Roboto: cairo };
+            this.logger.log('Using Cairo variable font (+ RTL)');
+            return;
+        }
 
-        // Validate existence
-        try {
-            if (true || !fs.existsSync(this.fonts.Cairo.normal)) {
-                // Fallback for Windows Dev
-                const systemFont = 'C:\\Windows\\Fonts\\arial.ttf';
-                if (fs.existsSync(systemFont)) {
-                    this.logger.warn(`Cairo font missing, falling back to system Arial: ${systemFont}`);
-                    this.fonts = {
-                        Cairo: {
-                            normal: systemFont,
-                            bold: 'C:\\Windows\\Fonts\\arialbd.ttf',
-                            italics: systemFont,
-                            bolditalics: 'C:\\Windows\\Fonts\\arialbd.ttf',
-                        }
-                    };
-                } else {
-                    throw new Error(`Font missing: ${this.fonts.Cairo.normal} and system fallback failed`);
-                }
-            }
-        } catch (e: any) {
-            this.logger.error(`Font initialization failed: ${e.message}`);
-            // Fallback (will likely fail rendering Arabic, but prevents crash)
+        // 2) Static fonts (Cairo-Regular + Cairo-Bold)
+        const cairoPaths = {
+            normal: path.join(fontDir, 'Cairo-Regular.ttf'),
+            bold: path.join(fontDir, 'Cairo-Bold.ttf'),
+            italics: path.join(fontDir, 'Cairo-Regular.ttf'),
+            bolditalics: path.join(fontDir, 'Cairo-Bold.ttf'),
+        };
+        if (fs.existsSync(cairoPaths.normal) && this.isValidFont(cairoPaths.normal)) {
+            this.fonts = { Cairo: cairoPaths, Roboto: cairoPaths };
+            this.logger.log('Using Cairo static fonts (+ RTL)');
+            return;
+        }
+
+        // 3) Arial fallback
+        const systemFont = 'C:\\Windows\\Fonts\\arial.ttf';
+        if (fs.existsSync(systemFont)) {
+            this.logger.warn('Using Arial fallback (Cairo missing or invalid)');
+            const arial = {
+                normal: systemFont,
+                bold: 'C:\\Windows\\Fonts\\arialbd.ttf',
+                italics: systemFont,
+                bolditalics: 'C:\\Windows\\Fonts\\arialbd.ttf',
+            };
+            this.fonts = { Cairo: arial, Roboto: arial };
+        } else {
+            throw new Error(`Font missing. Add Cairo-VariableFont_slnt,wght.ttf or Cairo-Regular.ttf to ${fontDir}`);
         }
     }
 
@@ -88,16 +108,10 @@ export class PdfService implements OnModuleInit {
         const isArabic = meta.language === 'ar';
 
         const content: any[] = [
-            // Spacer for header
-            { text: '', margin: [0, 10, 0, 0] },
+            // Spacer (subtitle/period moved to header)
+            { text: '', margin: [0, 5, 0, 0] },
 
-            // Optional Subtitle
-            (meta.subtitle || meta.subtitleAr) ? {
-                text: isArabic && meta.subtitleAr ? meta.subtitleAr : meta.subtitle,
-                style: 'subtitle'
-            } : { text: '' },
-
-            // Meta Info Table
+            // Meta Info (generatedBy, branchName) - only if present
             this.buildMetaInfoSection(meta, isArabic),
 
             // Main Content: Table OR Sections
@@ -117,14 +131,13 @@ export class PdfService implements OnModuleInit {
                 fontSize: PDF_DESIGN.fonts.sizes.body,
                 alignment: isArabic ? 'right' : 'left',
                 direction: isArabic ? 'rtl' : 'ltr',
-                // Note: pdfmake-rtl handles complex script shaping automatically
             } as any,
 
             pageSize: 'A4',
             pageOrientation: options.pageOrientation || 'portrait',
             pageMargins: PDF_DESIGN.margins.page,
 
-            header: (currentPage, pageCount) => buildHeader(meta),
+            header: (currentPage, pageCount) => buildHeader(meta, this.logoBase64),
             footer: buildFooter(meta, this.logoBase64),
 
             content: content,
@@ -191,10 +204,7 @@ export class PdfService implements OnModuleInit {
     private buildTableSection(columns: any[], rows: any[], isArabic: boolean) {
         if (!rows.length) return { text: '' };
 
-        // For Arabic, reverse columns for visual order if needed, 
-        // BUT pdfmake-rtl handles RTL tables better. 
-        // Let's rely on standard order but ensure text alignment is correct.
-        // Actually, often in PDF generators, visual column reversal is still safest for Arabic tables.
+        // RTL: reverse so after pdfmake-rtl's auto-reversal, Date ends up rightmost
         const displayColumns = isArabic ? [...columns].reverse() : columns;
 
         const paramHeaders = displayColumns.map((col) => ({
@@ -202,17 +212,23 @@ export class PdfService implements OnModuleInit {
             style: 'tableHeader',
         }));
 
-        const bodyRows = rows.map((row) => {
+        const bodyRows = rows.map((row, rowIndex) => {
+            const cellAlignment = (col: any) => {
+                if (col.alignment) return col.alignment;
+                if (col.format === 'currency' || col.format === 'number') return isArabic ? 'left' : 'right';
+                return isArabic ? 'right' : 'left';
+            };
+            const fillColor = rowIndex % 2 === 1 ? PDF_DESIGN.colors.altRowBg : undefined;
             return displayColumns.map((col) => {
                 let val = row[col.field];
                 if (col.format === 'currency') val = formatCurrency(val);
                 else if (col.format === 'weight') val = formatWeight(val);
-                else if (col.format === 'date') val = formatDate(val, isArabic ? 'ar' : 'en');
+                else if (col.format === 'date') val = formatDateForHeader(val);
 
                 return {
                     text: val?.toString() || '',
-                    alignment: col.alignment || 'center',
-                    // Force direction for mixed content cells
+                    alignment: cellAlignment(col),
+                    fillColor,
                     direction: isArabic ? 'rtl' : 'ltr',
                 };
             });
@@ -228,8 +244,8 @@ export class PdfService implements OnModuleInit {
                 hLineWidth: () => 0.5,
                 vLineWidth: () => 0,
                 hLineColor: () => PDF_DESIGN.colors.border,
-                paddingLeft: () => 8,
-                paddingRight: () => 8,
+                paddingLeft: () => 10,
+                paddingRight: () => 10,
                 paddingTop: () => 8,
                 paddingBottom: () => 8,
             },
@@ -272,7 +288,13 @@ export class PdfService implements OnModuleInit {
     }
 
     private buildSummarySection(items: any[], isArabic: boolean) {
-        // We put summary in a small table aligned to the right (or left for Arabic)
+        const formatValue = (item: any): string => {
+            if (item.format === 'currency') return formatCurrency(item.value);
+            if (item.format === 'weight') return formatWeight(item.value);
+            if (item.format === 'date') return formatDateForHeader(item.value);
+            if (item.format === 'number') return String(Number(item.value));
+            return String(item.value ?? '');
+        };
         const body = items.map((item) => [
             {
                 text: isArabic && item.labelAr ? item.labelAr : item.label,
@@ -280,7 +302,7 @@ export class PdfService implements OnModuleInit {
                 alignment: isArabic ? 'left' : 'right'
             },
             {
-                text: formatCurrency(item.value),
+                text: formatValue(item),
                 style: 'summaryValue',
                 bold: item.bold,
                 alignment: isArabic ? 'right' : 'left'
@@ -344,8 +366,15 @@ export class PdfService implements OnModuleInit {
     }
 
     async getStoreMeta(prisma: PrismaService, language: 'en' | 'ar'): Promise<Partial<PdfMeta>> {
+        const keys = [
+            'store_name', 'tax_number', 'receipt_header', 'receipt_footer',
+            'app.name', 'app.name_en', 'app.version',
+            'business_name', 'business_name_en',
+            'tax.registration_number',
+            'business_address', 'business_phone', 'business_email', 'business_website',
+        ];
         const settings = await prisma.systemSetting.findMany({
-            where: { key: { in: ['store_name', 'tax_number', 'receipt_header', 'receipt_footer'] } },
+            where: { key: { in: keys } },
         });
 
         const map = settings.reduce((acc, s) => {
@@ -353,11 +382,23 @@ export class PdfService implements OnModuleInit {
             return acc;
         }, {} as Record<string, string>);
 
+        const storeName = map['business_name'] || map['store_name'] || map['app.name'] || 'Store';
+        const storeNameEn = map['business_name_en'] || map['app.name_en'] || 'Store';
+        const taxNumber = map['tax.registration_number'] || map['tax_number'];
+
         return {
-            storeName: map['store_name'] || 'Store Name',
-            taxNumber: map['tax_number'],
+            storeName,
+            storeNameEn,
+            taxNumber: taxNumber || undefined,
             title: map['receipt_header'],
             footer: map['receipt_footer'],
+            appName: map['app.name'] || 'برنامج الإدارة المالية',
+            appNameEn: map['app.name_en'] || 'Financial Management Program',
+            appVersion: map['app.version'] || '1.0.0',
+            address: map['business_address'] || undefined,
+            phone: map['business_phone'] || undefined,
+            email: map['business_email'] || undefined,
+            website: map['business_website'] || undefined,
             language,
             generatedAt: new Date().toISOString().split('T')[0],
         };

@@ -1,19 +1,21 @@
-
 import { PdfGenerateOptions, PdfMeta } from '../pdf.types';
 import { StatementPdfData } from '../dto/statement.dto';
+import { formatDateForHeader } from '../pdf.helpers';
 
 export function buildStatementPdfOptions(meta: PdfMeta, data: StatementPdfData): PdfGenerateOptions {
+    const startFmt = formatDateForHeader(data.startDate);
+    const endFmt = formatDateForHeader(data.endDate);
     return {
         meta: {
             ...meta,
             title: 'Statement of Account',
             titleAr: 'كشف حساب',
-            subtitle: `${data.startDate} - ${data.endDate}`,
-            subtitleAr: `${data.startDate} - ${data.endDate}`,
+            subtitle: `${startFmt} — ${endFmt}`,
+            subtitleAr: `${startFmt} — ${endFmt}`,
         },
         pageOrientation: 'portrait',
         columns: [
-            { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto' },
+            { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto', format: 'date' },
             { header: 'Type', headerAr: 'النوع', field: 'type', width: 'auto' },
             { header: 'Ref', headerAr: 'المرجع', field: 'reference', width: 'auto' },
             // { header: 'Notes', headerAr: 'ملاحظات', field: 'notes', width: '*' }, // Optional

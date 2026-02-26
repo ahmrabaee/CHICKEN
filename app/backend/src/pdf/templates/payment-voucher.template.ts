@@ -26,7 +26,7 @@ export function buildPaymentVoucherPdfOptions(meta: PdfMeta, data: PaymentPdfDat
         pageOrientation: 'portrait',
         summaryItems: [
             { label: 'Payment No', labelAr: 'رقم السند', value: data.paymentNumber },
-            { label: 'Date', labelAr: 'التاريخ', value: data.date },
+            { label: 'Date', labelAr: 'التاريخ', value: data.date, format: 'date' },
             { label: 'Amount', labelAr: 'المبلغ', value: data.amount, format: 'currency', bold: true },
             { label: 'Method', labelAr: 'طريقة الدفع', value: data.method },
             { label: 'Party', labelAr: 'الطرف', value: data.partyName || '-' },

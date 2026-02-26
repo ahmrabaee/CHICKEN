@@ -9,6 +9,7 @@ import { PdfService } from '../pdf/pdf.service';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
 import { buildPurchaseOrderPdfOptions } from '../pdf/templates/purchase-order.template';
 import { buildReportPdfOptions } from '../pdf/templates/report.template';
+import { formatDateForHeader } from '../pdf/pdf.helpers';
 
 @Injectable()
 export class PurchasesService {
@@ -142,9 +143,10 @@ export class PurchasesService {
     const options = buildReportPdfOptions(meta as any, {
       title: 'Purchases Report',
       titleAr: 'تقرير المشتريات',
-      subtitle: `${start.toISOString().split('T')[0]} - ${end.toISOString().split('T')[0]}`,
+      subtitle: `${formatDateForHeader(start)} — ${formatDateForHeader(end)}`,
+      subtitleAr: `${formatDateForHeader(start)} — ${formatDateForHeader(end)}`,
       columns: [
-        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto' },
+        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto', format: 'date' },
         { header: 'PO No', headerAr: 'رقم الشراء', field: 'number', width: 'auto' },
         { header: 'Supplier', headerAr: 'المورد', field: 'supplier', width: '*' },
         { header: 'Total', headerAr: 'الإجمالي', field: 'total', width: 'auto', format: 'currency' },

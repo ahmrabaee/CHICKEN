@@ -4,7 +4,11 @@
   "sourceRoot": "src",
   "compilerOptions": {
     "deleteOutDir": false,
-    "assets": [],
-    "watchAssets": false
+    "assets": [
+      {
+        "include": "pdf/fonts/**/*.ttf"
+      }
+    ],
+    "watchAssets": true
   }
 }

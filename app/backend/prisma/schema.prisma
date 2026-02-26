@@ -55,8 +55,30 @@ model Branch {
   stockAccount      Account?            @relation(fields: [stockAccountId], references: [id], onDelete: SetNull)
   creditNotes       CreditNote[]
   stockTransfers    StockTransfer[] @relation("StockTransferBranch")
+  itemDailyPrices   ItemDailyPrice[]
 
   @@map("branches")
+}
+
+/// Daily pricing per item - prices can change each day
+/// branchId null = applies to all branches (phase 1)
+model ItemDailyPrice {
+  id           Int      @id @default(autoincrement())
+  itemId       Int      @map("item_id")
+  pricingDate  DateTime @map("pricing_date") // date only (YYYY-MM-DD)
+  pricePerKg   Int      @map("price_per_kg") // minor units per kg
+  branchId     Int?     @map("branch_id")    // null = all branches
+  createdAt    DateTime @default(now()) @map("created_at")
+  createdById  Int?     @map("created_by_id")
+
+  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  branch    Branch?  @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  createdBy User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([itemId, pricingDate])
+  @@index([pricingDate])
+  @@index([branchId])
+  @@map("item_daily_prices")
 }
 
 /// System roles (Admin and Accountant per PRD)
@@ -197,6 +219,7 @@ model User {
   auditLogs             AuditLog[]
   accountingPeriodsClosed AccountingPeriod[]
   creditNotesCreated    CreditNote[]
+  itemDailyPricesCreated ItemDailyPrice[]
 
   @@map("users")
 }
@@ -286,6 +309,7 @@ model Item {
   saleLines          SaleLine[]
   purchaseLines      PurchaseLine[]
   stockTransferLines StockTransferLine[]
+  dailyPrices        ItemDailyPrice[]
 
   @@index([categoryId])
   @@index([name])

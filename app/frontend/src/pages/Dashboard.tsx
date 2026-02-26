@@ -1,497 +1,388 @@
+import { useCallback, useMemo } from "react";
 import {
   AlertTriangle,
-  Calendar,
   CreditCard,
-  Loader2,
+  DollarSign,
   ShoppingCart,
   TrendingUp,
   Wallet,
 } from "lucide-react";
-import { Link } from "react-router-dom";
-import { StatCard } from "@/components/dashboard/StatCard";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import { KpiGrid } from "@/components/dashboard/KpiGrid";
+import { ChartCard } from "@/components/dashboard/ChartCard";
+import { DebtsTable } from "@/components/dashboard/DebtsTable";
+import { LowStockTable } from "@/components/dashboard/LowStockTable";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { PaymentStatusBadge, StockStatusBadge } from "@/components/ui/status-badge";
-import { useReceivables, usePayables } from "@/hooks/use-debts";
+  buildDashboardSearchParams,
+  buildSalesChartData,
+  getDefaultDashboardFilters,
+  getDelta,
+  getPreviousDateRange,
+  getRangeLabel,
+  isDateInsideRange,
+  mapDebtRow,
+  mapLowStockRow,
+  normalizeDashboardFilters,
+  parseDashboardFilters,
+} from "@/components/dashboard/dashboard-utils";
+import type { DashboardDebtRow, DashboardKpiItem, DashboardLowStockRow } from "@/components/dashboard/types";
+import { usePayables, useReceivables } from "@/hooks/use-debts";
+import { useBranches } from "@/hooks/use-branches";
 import { useLowStockItems } from "@/hooks/use-inventory";
-import { useDashboard } from "@/hooks/use-reports";
+import { useSalesReport } from "@/hooks/use-reports";
 import { useRole } from "@/hooks/useRole";
-import { useSales } from "@/hooks/use-sales";
 import { formatCurrency } from "@/lib/formatters";
 
-function formatMinor(amount: number): string {
-  return formatCurrency(amount);
+function sumOutstanding(rows: DashboardDebtRow[]): number {
+  return rows.reduce((sum, row) => sum + row.outstandingAmount, 0);
 }
 
-function formatDate(date?: string | null): string {
-  if (!date) return "-";
-  const parsed = new Date(date);
-  if (Number.isNaN(parsed.getTime())) return "-";
-  return parsed.toISOString().split("T")[0];
+function formatSignedAmount(value: number): string {
+  const absolute = formatCurrency(Math.abs(value));
+  if (value > 0) return `+ ${absolute}`;
+  if (value < 0) return `- ${absolute}`;
+  return absolute;
 }
 
-function formatGramsAsKg(grams: number): string {
-  return `${(grams / 1000).toFixed(2)} كغم`;
+function applyBranchFilter<T extends { branchId?: number }>(rows: T[], branchId?: number): T[] {
+  if (!branchId) return rows;
+  return rows.filter((row) => row.branchId === branchId);
 }
 
-function toPaymentBadgeStatus(
-  status?: string,
-): "Paid" | "PartiallyPaid" | "Unpaid" {
-  if (status === "paid") return "Paid";
-  if (status === "partial") return "PartiallyPaid";
-  return "Unpaid";
-}
-
-function getOutstandingAmount(debt: Record<string, unknown>): number {
-  if (typeof debt.remainingAmount === "number") return debt.remainingAmount;
-
-  const totalAmount =
-    typeof debt.totalAmount === "number"
-      ? debt.totalAmount
-      : typeof debt.originalAmount === "number"
-        ? debt.originalAmount
-        : 0;
-  const amountPaid =
-    typeof debt.amountPaid === "number"
-      ? debt.amountPaid
-      : typeof debt.paidAmount === "number"
-        ? debt.paidAmount
-        : 0;
-
-  return Math.max(0, totalAmount - amountPaid);
-}
-
-function getDebtPartyName(debt: Record<string, unknown>): string {
-  const raw =
-    (typeof debt.partyName === "string" && debt.partyName) ||
-    (typeof debt.customerName === "string" && debt.customerName) ||
-    (typeof debt.supplierName === "string" && debt.supplierName) ||
-    (typeof debt.name === "string" && debt.name) ||
-    "";
-
-  return raw || "-";
-}
-
-function getDebtPhone(debt: Record<string, unknown>): string {
-  return (
-    (typeof debt.customerPhone === "string" && debt.customerPhone) ||
-    (typeof debt.phone === "string" && debt.phone) ||
-    "-"
+function applySearchToDebts(rows: DashboardDebtRow[], search: string): DashboardDebtRow[] {
+  const term = search.trim().toLowerCase();
+  if (!term) return rows;
+  return rows.filter((row) =>
+    [row.partyName, row.partyPhone, row.debtNumber, row.saleNumber, row.purchaseNumber]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(term)),
   );
 }
 
-export default function Dashboard() {
-  const { isAdmin } = useRole();
-  const previewSize = 3;
+function applySearchToLowStock(rows: DashboardLowStockRow[], search: string): DashboardLowStockRow[] {
+  const term = search.trim().toLowerCase();
+  if (!term) return rows;
+  return rows.filter((row) =>
+    [row.itemName, row.itemCode, row.categoryName]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(term)),
+  );
+}
 
-  const { data: dashboard, isLoading: dashboardLoading } = useDashboard();
-  const { data: lowStockData, isLoading: lowStockLoading, isError: lowStockError } =
-    useLowStockItems();
-  const {
-    data: receivablesData,
-    isLoading: receivablesLoading,
-    isError: receivablesError,
-  } = useReceivables({ page: 1, pageSize: previewSize });
-  const {
-    data: payablesData,
-    isLoading: payablesLoading,
-    isError: payablesError,
-  } = usePayables({ page: 1, pageSize: previewSize });
-  const { data: salesData, isLoading: salesLoading, isError: salesError } = useSales({
-    page: 1,
-    pageSize: previewSize,
+function filterDebtsByRange(rows: DashboardDebtRow[], startDate: string, endDate: string): DashboardDebtRow[] {
+  return rows.filter((row) => {
+    if (!row.createdAt) return true;
+    return isDateInsideRange(row.createdAt, { startDate, endDate });
   });
+}
 
-  const lowStockItems = (lowStockData ?? []).slice(0, previewSize);
-  const customerDebts = (((receivablesData?.data as unknown[]) ?? []).slice(
-    0,
-    previewSize,
-  ) as Array<Record<string, unknown>>);
-  const supplierDebts = (((payablesData?.data as unknown[]) ?? []).slice(
-    0,
-    previewSize,
-  ) as Array<Record<string, unknown>>);
-  const recentSales = (((salesData?.data as unknown[]) ?? []).slice(
-    0,
-    previewSize,
-  ) as Array<Record<string, unknown>>);
+export default function DashboardPage() {
+  const { isAdmin } = useRole();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filters = useMemo(() => parseDashboardFilters(searchParams), [searchParams]);
+  const activeRange = useMemo(
+    () => ({ startDate: filters.startDate, endDate: filters.endDate }),
+    [filters.endDate, filters.startDate],
+  );
+  const previousRange = useMemo(() => getPreviousDateRange(activeRange), [activeRange]);
+
+  const branchesQuery = useBranches();
+  const salesCurrentQuery = useSalesReport(activeRange);
+  const salesPreviousQuery = useSalesReport(previousRange);
+  const receivablesQuery = useReceivables({ page: 1, pageSize: 500 });
+  const payablesQuery = usePayables({ page: 1, pageSize: 500 });
+  const lowStockQuery = useLowStockItems();
+
+  const updateFilters = useCallback(
+    (patch: Partial<typeof filters>) => {
+      const merged = normalizeDashboardFilters({ ...filters, ...patch });
+      setSearchParams(buildDashboardSearchParams(merged), { replace: true });
+    },
+    [filters, setSearchParams],
+  );
+
+  const resetFilters = useCallback(() => {
+    setSearchParams(buildDashboardSearchParams(getDefaultDashboardFilters()), { replace: true });
+  }, [setSearchParams]);
+
+  const retryAll = useCallback(() => {
+    void Promise.all([
+      salesCurrentQuery.refetch(),
+      salesPreviousQuery.refetch(),
+      receivablesQuery.refetch(),
+      payablesQuery.refetch(),
+      lowStockQuery.refetch(),
+    ]);
+  }, [lowStockQuery, payablesQuery, receivablesQuery, salesCurrentQuery, salesPreviousQuery]);
+
+  const receivableRows = useMemo(() => {
+    const source = (receivablesQuery.data?.data ?? []) as unknown[];
+    return source.map(mapDebtRow).filter((row): row is DashboardDebtRow => !!row);
+  }, [receivablesQuery.data?.data]);
+
+  const payableRows = useMemo(() => {
+    const source = (payablesQuery.data?.data ?? []) as unknown[];
+    return source.map(mapDebtRow).filter((row): row is DashboardDebtRow => !!row);
+  }, [payablesQuery.data?.data]);
+
+  const lowStockRows = useMemo(() => {
+    const source = (lowStockQuery.data ?? []) as unknown[];
+    return source.map(mapLowStockRow).filter((row): row is DashboardLowStockRow => !!row);
+  }, [lowStockQuery.data]);
+
+  const branchReceivables = useMemo(
+    () => applyBranchFilter(receivableRows, filters.branchId),
+    [filters.branchId, receivableRows],
+  );
+  const branchPayables = useMemo(
+    () => applyBranchFilter(payableRows, filters.branchId),
+    [filters.branchId, payableRows],
+  );
+  const branchLowStock = useMemo(
+    () => applyBranchFilter(lowStockRows, filters.branchId),
+    [filters.branchId, lowStockRows],
+  );
+
+  const currentReceivables = useMemo(
+    () => filterDebtsByRange(branchReceivables, activeRange.startDate, activeRange.endDate),
+    [activeRange.endDate, activeRange.startDate, branchReceivables],
+  );
+  const previousReceivables = useMemo(
+    () => filterDebtsByRange(branchReceivables, previousRange.startDate, previousRange.endDate),
+    [branchReceivables, previousRange.endDate, previousRange.startDate],
+  );
+
+  const currentPayables = useMemo(
+    () => filterDebtsByRange(branchPayables, activeRange.startDate, activeRange.endDate),
+    [activeRange.endDate, activeRange.startDate, branchPayables],
+  );
+  const previousPayables = useMemo(
+    () => filterDebtsByRange(branchPayables, previousRange.startDate, previousRange.endDate),
+    [branchPayables, previousRange.endDate, previousRange.startDate],
+  );
+
+  const tableDebtsRows = useMemo(
+    () => applySearchToDebts(currentReceivables, filters.search),
+    [currentReceivables, filters.search],
+  );
+  const tableLowStockRows = useMemo(
+    () => applySearchToLowStock(branchLowStock, filters.search),
+    [branchLowStock, filters.search],
+  );
+
+  const currentSummary = salesCurrentQuery.data?.summary;
+  const previousSummary = salesPreviousQuery.data?.summary;
+  const salesCount = currentSummary?.count ?? 0;
+  const salesRevenue = currentSummary?.netRevenue ?? 0;
+  const salesProfit = currentSummary?.profit ?? 0;
+  const previousSalesCount = previousSummary?.count ?? 0;
+  const previousSalesRevenue = previousSummary?.netRevenue ?? 0;
+  const previousSalesProfit = previousSummary?.profit ?? 0;
+
+  const receivablesAmount = sumOutstanding(currentReceivables);
+  const payablesAmount = sumOutstanding(currentPayables);
+  const previousReceivablesAmount = sumOutstanding(previousReceivables);
+  const previousPayablesAmount = sumOutstanding(previousPayables);
+  const lowStockCount = branchLowStock.length;
+
+  const salesCountDelta = getDelta(salesCount, previousSalesCount);
+  const salesRevenueDelta = getDelta(salesRevenue, previousSalesRevenue);
+  const salesProfitDelta = getDelta(salesProfit, previousSalesProfit);
+  const receivablesDelta = getDelta(receivablesAmount, previousReceivablesAmount);
+  const payablesDelta = getDelta(payablesAmount, previousPayablesAmount);
+  const lowStockDelta = getDelta(lowStockCount, lowStockCount);
+
+  const kpiItems: DashboardKpiItem[] = [
+    {
+      key: "sales-count",
+      title: "عدد المبيعات",
+      value: salesCount.toLocaleString("ar-SA"),
+      rawValue: salesCount,
+      icon: ShoppingCart,
+      tone: "default",
+      deltaPct: salesCountDelta.pct,
+      deltaDirection: salesCountDelta.direction,
+      subtitle: "مقارنة بالفترة السابقة",
+      details: [
+        { label: "الفترة الحالية", value: salesCount.toLocaleString("ar-SA") },
+        { label: "الفترة السابقة", value: previousSalesCount.toLocaleString("ar-SA") },
+        { label: "الفرق", value: formatSignedAmount(salesCount - previousSalesCount) },
+      ],
+      actionLabel: "عرض المبيعات",
+      actionTo: "/sales",
+    },
+    {
+      key: "sales-revenue",
+      title: "إجمالي الإيرادات",
+      value: formatCurrency(salesRevenue),
+      rawValue: salesRevenue,
+      icon: DollarSign,
+      tone: "success",
+      deltaPct: salesRevenueDelta.pct,
+      deltaDirection: salesRevenueDelta.direction,
+      subtitle: "صافي الإيراد للفترة",
+      details: [
+        { label: "إيراد الفترة الحالية", value: formatCurrency(salesRevenue) },
+        { label: "إيراد الفترة السابقة", value: formatCurrency(previousSalesRevenue) },
+        { label: "الفرق", value: formatSignedAmount(salesRevenue - previousSalesRevenue) },
+      ],
+      actionLabel: "فتح تقارير المبيعات",
+      actionTo: "/reports/sales",
+    },
+    {
+      key: "low-stock",
+      title: "قطع منخفضة المخزون",
+      value: lowStockCount.toLocaleString("ar-SA"),
+      rawValue: lowStockCount,
+      icon: AlertTriangle,
+      tone: "warning",
+      deltaPct: lowStockDelta.pct,
+      deltaDirection: lowStockDelta.direction,
+      subtitle: "لقطة حالية حسب الفلاتر",
+      details: [
+        { label: "عدد الأصناف المنخفضة", value: lowStockCount.toLocaleString("ar-SA") },
+        { label: "فلتر الفرع", value: filters.branchId ? `#${filters.branchId}` : "كل الفروع" },
+        { label: "ملاحظة", value: "هذا المؤشر لقطة لحظية من المخزون الحالي" },
+      ],
+      actionLabel: "فتح المخزون",
+      actionTo: "/inventory",
+    },
+    {
+      key: "customer-debts",
+      title: "ديون الزبائن",
+      value: formatCurrency(receivablesAmount),
+      rawValue: receivablesAmount,
+      icon: CreditCard,
+      tone: "danger",
+      deltaPct: receivablesDelta.pct,
+      deltaDirection: receivablesDelta.direction,
+      subtitle: "مستحقات غير محصلة",
+      size: "wide",
+      details: [
+        { label: "الرصيد الحالي", value: formatCurrency(receivablesAmount) },
+        { label: "الرصيد السابق", value: formatCurrency(previousReceivablesAmount) },
+        { label: "عدد السجلات", value: currentReceivables.length.toLocaleString("ar-SA") },
+      ],
+      actionLabel: "إدارة ديون الزبائن",
+      actionTo: "/debts",
+    },
+    {
+      key: "supplier-debts",
+      title: "ديون الموردين",
+      value: formatCurrency(payablesAmount),
+      rawValue: payablesAmount,
+      icon: Wallet,
+      tone: "warning",
+      deltaPct: payablesDelta.pct,
+      deltaDirection: payablesDelta.direction,
+      subtitle: "التزامات مالية مستحقة",
+      size: "wide",
+      details: [
+        { label: "الرصيد الحالي", value: formatCurrency(payablesAmount) },
+        { label: "الرصيد السابق", value: formatCurrency(previousPayablesAmount) },
+        { label: "عدد السجلات", value: currentPayables.length.toLocaleString("ar-SA") },
+      ],
+      actionLabel: "إدارة ديون الموردين",
+      actionTo: "/debts",
+    },
+  ];
+
+  if (isAdmin) {
+    kpiItems.splice(2, 0, {
+      key: "sales-profit",
+      title: "إجمالي الأرباح",
+      value: formatCurrency(salesProfit),
+      rawValue: salesProfit,
+      icon: TrendingUp,
+      tone: "info",
+      deltaPct: salesProfitDelta.pct,
+      deltaDirection: salesProfitDelta.direction,
+      subtitle: "إجمالي الربح للفترة",
+      details: [
+        { label: "ربح الفترة الحالية", value: formatCurrency(salesProfit) },
+        { label: "ربح الفترة السابقة", value: formatCurrency(previousSalesProfit) },
+        { label: "الفرق", value: formatSignedAmount(salesProfit - previousSalesProfit) },
+      ],
+      actionLabel: "تحليل الربحية",
+      actionTo: "/reports/profit-loss",
+    });
+  }
+
+  const chartData = useMemo(
+    () => buildSalesChartData(salesCurrentQuery.data?.sales),
+    [salesCurrentQuery.data?.sales],
+  );
+
+  const kpiLoading =
+    salesCurrentQuery.isLoading ||
+    salesPreviousQuery.isLoading ||
+    receivablesQuery.isLoading ||
+    payablesQuery.isLoading ||
+    lowStockQuery.isLoading;
+  const kpiError =
+    salesCurrentQuery.isError ||
+    salesPreviousQuery.isError ||
+    receivablesQuery.isError ||
+    payablesQuery.isError ||
+    lowStockQuery.isError;
 
   return (
     <div className="space-y-6" dir="rtl">
-      <div className="flex items-center justify-between">
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">لوحة التحكم</h1>
-          <p className="text-muted-foreground mt-1">نظرة عامة على أداء المحل</p>
+          <p className="mt-1 text-muted-foreground">متابعة الأداء المالي والتشغيلي بشكل تفاعلي</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2">
-            <Calendar className="w-4 h-4" />
-            اليوم
-          </Button>
-          <Link to="/sales/new">
-            <Button className="gap-2">
-              <ShoppingCart className="w-4 h-4" />
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild className="gap-2">
+            <Link to="/sales/new">
+              <ShoppingCart className="h-4 w-4" />
               بيع جديد
-            </Button>
-          </Link>
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/reports/sales">تقارير المبيعات</Link>
+          </Button>
+          {!isAdmin && (
+            <span className="text-xs text-muted-foreground">عرض الأرباح متاح حسب صلاحيات الدور</span>
+          )}
         </div>
-      </div>
+      </header>
 
-      {dashboardLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard
-              title="مبيعات اليوم (عدد)"
-              value={dashboard?.sales?.today?.count ?? 0}
-              icon={ShoppingCart}
-              variant="default"
-            />
-            <StatCard
-              title="إيرادات اليوم"
-              value={dashboard?.sales?.today ? formatMinor(dashboard.sales.today.totalAmount) : formatMinor(0)}
-              icon={TrendingUp}
-              variant="success"
-            />
-            {isAdmin && (
-              <StatCard
-                title="أرباح اليوم"
-                value={dashboard?.sales?.today ? formatMinor(dashboard.sales.today.totalProfit) : formatMinor(0)}
-                icon={TrendingUp}
-                variant="success"
-              />
-            )}
-            <StatCard
-              title="قطع منخفضة المخزون"
-              value={dashboard?.inventory?.lowStockCount ?? 0}
-              icon={AlertTriangle}
-              variant="warning"
-            />
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <StatCard
-              title="ديون الزبائن (مستحقات)"
-              value={dashboard != null ? formatMinor(dashboard.receivables) : formatMinor(0)}
-              icon={CreditCard}
-              variant="danger"
-            />
-            {isAdmin && (
-              <StatCard
-                title="ديون للتجار (ذمم دائنة)"
-                value={dashboard != null ? formatMinor(dashboard.payables) : formatMinor(0)}
-                icon={Wallet}
-                variant="warning"
-              />
-            )}
-          </div>
-        </>
-      )}
+      <KpiGrid items={kpiItems} isLoading={kpiLoading} isError={kpiError} onRetry={retryAll} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-warning" />
-              قطع قريبة من النفاذ
-            </CardTitle>
-            <Link to="/inventory">
-              <Button variant="ghost" size="sm">
-                عرض الكل
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow className="data-table-header">
-                  <TableHead className="text-right">الصنف</TableHead>
-                  <TableHead className="text-right">الفئة</TableHead>
-                  <TableHead className="text-center">الكمية</TableHead>
-                  <TableHead className="text-center">الحالة</TableHead>
-                  <TableHead className="text-center">إجراء</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {lowStockLoading && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-6">
-                      <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!lowStockLoading && lowStockError && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
-                      تعذر تحميل البيانات
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!lowStockLoading && !lowStockError && lowStockItems.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
-                      لا توجد أصناف منخفضة حالياً
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!lowStockLoading &&
-                  !lowStockError &&
-                  lowStockItems.map((item) => (
-                    <TableRow key={item.itemId} className="data-table-row">
-                      <TableCell className="font-medium">{item.itemName}</TableCell>
-                      <TableCell className="text-muted-foreground">{item.categoryName}</TableCell>
-                      <TableCell className="text-center">
-                        {formatGramsAsKg(item.currentQuantityGrams)} / {formatGramsAsKg(item.minStockLevel)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <StockStatusBadge
-                          current={item.currentQuantityGrams}
-                          min={item.minStockLevel}
-                        />
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Link to="/inventory">
-                          <Button size="sm" variant="outline">
-                            متابعة
-                          </Button>
-                        </Link>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+      <ChartCard
+        data={chartData}
+        rangeLabel={getRangeLabel(activeRange)}
+        isLoading={salesCurrentQuery.isLoading}
+        isError={salesCurrentQuery.isError}
+        onRetry={() => {
+          void salesCurrentQuery.refetch();
+        }}
+      />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-danger" />
-              ديون الزبائن
-            </CardTitle>
-            <Link to="/debts">
-              <Button variant="ghost" size="sm">
-                عرض الكل
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow className="data-table-header">
-                  <TableHead className="text-right">الزبون</TableHead>
-                  <TableHead className="text-right">الهاتف</TableHead>
-                  <TableHead className="text-center">المبلغ</TableHead>
-                  <TableHead className="text-center">تاريخ السداد</TableHead>
-                  <TableHead className="text-center">إجراء</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {receivablesLoading && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-6">
-                      <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!receivablesLoading && receivablesError && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
-                      تعذر تحميل البيانات
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!receivablesLoading && !receivablesError && customerDebts.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
-                      لا توجد ديون زبائن
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!receivablesLoading &&
-                  !receivablesError &&
-                  customerDebts.map((debt, index) => (
-                    <TableRow key={String(debt.id ?? `recv-${index}`)} className="data-table-row">
-                      <TableCell className="font-medium">{getDebtPartyName(debt)}</TableCell>
-                      <TableCell className="text-muted-foreground font-english" dir="ltr">
-                        {getDebtPhone(debt)}
-                      </TableCell>
-                      <TableCell className="text-center text-danger font-semibold">
-                        {formatMinor(getOutstandingAmount(debt))}
-                      </TableCell>
-                      <TableCell className="text-center text-muted-foreground">
-                        {formatDate(typeof debt.dueDate === "string" ? debt.dueDate : null)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Link to="/debts">
-                          <Button size="sm" variant="outline">
-                            تحصيل
-                          </Button>
-                        </Link>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <Wallet className="w-5 h-5 text-warning" />
-              ديون للتجار
-            </CardTitle>
-            <Link to="/debts">
-              <Button variant="ghost" size="sm">
-                عرض الكل
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow className="data-table-header">
-                  <TableHead className="text-right">التاجر</TableHead>
-                  <TableHead className="text-center">المبلغ</TableHead>
-                  <TableHead className="text-center">تاريخ السداد</TableHead>
-                  <TableHead className="text-center">إجراء</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {payablesLoading && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center py-6">
-                      <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!payablesLoading && payablesError && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
-                      تعذر تحميل البيانات
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!payablesLoading && !payablesError && supplierDebts.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
-                      لا توجد ديون موردين
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!payablesLoading &&
-                  !payablesError &&
-                  supplierDebts.map((debt, index) => (
-                    <TableRow key={String(debt.id ?? `pay-${index}`)} className="data-table-row">
-                      <TableCell className="font-medium">{getDebtPartyName(debt)}</TableCell>
-                      <TableCell className="text-center text-warning font-semibold">
-                        {formatMinor(getOutstandingAmount(debt))}
-                      </TableCell>
-                      <TableCell className="text-center text-muted-foreground">
-                        {formatDate(typeof debt.dueDate === "string" ? debt.dueDate : null)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Link to="/debts">
-                          <Button size="sm" variant="outline">
-                            دفع
-                          </Button>
-                        </Link>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <ShoppingCart className="w-5 h-5 text-primary" />
-              آخر المبيعات
-            </CardTitle>
-            <Link to="/sales">
-              <Button variant="ghost" size="sm">
-                عرض الكل
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow className="data-table-header">
-                  <TableHead className="text-right">رقم الفاتورة</TableHead>
-                  <TableHead className="text-right">الزبون</TableHead>
-                  <TableHead className="text-center">المبلغ</TableHead>
-                  <TableHead className="text-center">الحالة</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {salesLoading && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center py-6">
-                      <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!salesLoading && salesError && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
-                      تعذر تحميل البيانات
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!salesLoading && !salesError && recentSales.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
-                      لا توجد مبيعات حتى الآن
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!salesLoading &&
-                  !salesError &&
-                  recentSales.map((sale, index) => (
-                    <TableRow key={String(sale.id ?? `sale-${index}`)} className="data-table-row">
-                      <TableCell className="font-mono text-sm">
-                        {typeof sale.saleNumber === "string" ? sale.saleNumber : `SAL-${sale.id ?? "-"}`}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {(typeof sale.customerName === "string" && sale.customerName) || "عميل نقدي"}
-                      </TableCell>
-                      <TableCell className="text-center font-semibold">
-                        {formatMinor(typeof sale.totalAmount === "number" ? sale.totalAmount : 0)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <PaymentStatusBadge
-                          status={toPaymentBadgeStatus(
-                            typeof sale.paymentStatus === "string" ? sale.paymentStatus : undefined,
-                          )}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+      <div className="grid gap-6 2xl:grid-cols-2">
+        <DebtsTable
+          rows={tableDebtsRows}
+          range={activeRange}
+          isLoading={receivablesQuery.isLoading}
+          isError={receivablesQuery.isError}
+          onRetry={() => {
+            void receivablesQuery.refetch();
+          }}
+        />
+        <LowStockTable
+          rows={tableLowStockRows}
+          isLoading={lowStockQuery.isLoading}
+          isError={lowStockQuery.isError}
+          onRetry={() => {
+            void lowStockQuery.refetch();
+          }}
+        />
       </div>
     </div>
   );
 }
-
-
-

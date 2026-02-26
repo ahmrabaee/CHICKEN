@@ -28,6 +28,7 @@ export interface DebtQuery {
     customerId?: number;
     supplierId?: number;
     status?: string;
+    search?: string;
     page?: number;
     pageSize?: number;
 }

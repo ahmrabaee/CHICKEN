@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FiltersBar } from "@/components/dashboard/FiltersBar";
+
 import { KpiGrid } from "@/components/dashboard/KpiGrid";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { DebtsTable } from "@/components/dashboard/DebtsTable";
@@ -351,12 +351,6 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <FiltersBar
-        filters={filters}
-        branches={branchesQuery.data ?? []}
-        onChange={updateFilters}
-        onReset={resetFilters}
-      />
 
       <KpiGrid items={kpiItems} isLoading={kpiLoading} isError={kpiError} onRetry={retryAll} />
 

@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   AlertCircle,
   ArrowUpDown,
-  Download,
   Eye,
   MoreHorizontal,
   RefreshCw,
@@ -27,7 +26,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { StockStatusBadge } from "@/components/ui/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { downloadCsv, gramsToKg } from "@/components/dashboard/dashboard-utils";
+import { gramsToKg } from "@/components/dashboard/dashboard-utils";
 import type { DashboardLowStockRow } from "@/components/dashboard/types";
 import { cn } from "@/lib/utils";
 
@@ -80,45 +79,14 @@ export function LowStockTable({ rows, isLoading, isError, onRetry }: LowStockTab
     setSortDirection(key === "itemName" || key === "categoryName" ? "asc" : "desc");
   };
 
-  const exportRows = () => {
-    const csvRows = sortedRows.map((row) => {
-      const gap = Math.max(0, row.minStockLevelGrams - row.availableQuantityGrams);
-      return [
-        row.itemCode,
-        row.itemName,
-        row.categoryName,
-        gramsToKg(row.availableQuantityGrams),
-        gramsToKg(row.minStockLevelGrams),
-        gramsToKg(gap),
-        row.branchName ?? "—",
-      ];
-    });
-    downloadCsv(
-      "low-stock-items.csv",
-      ["كود الصنف", "الصنف", "الفئة", "المتوفر", "الحد الأدنى", "العجز", "الفرع"],
-      csvRows,
-    );
-  };
+
 
   return (
     <Card className="border-border/60">
       <CardHeader className="pb-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="space-y-1">
-            <CardTitle className="text-lg">قطع قريبة من النفاذ</CardTitle>
-            <p className="text-xs text-muted-foreground">{rows.length} صنف منخفض المخزون</p>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            onClick={exportRows}
-            disabled={sortedRows.length === 0 || isLoading || isError}
-          >
-            <Download className="h-4 w-4" />
-            تصدير CSV
-          </Button>
+        <div className="space-y-1">
+          <CardTitle className="text-lg">قطع قريبة من النفاذ</CardTitle>
+          <p className="text-xs text-muted-foreground">{rows.length} صنف منخفض المخزون</p>
         </div>
       </CardHeader>
 

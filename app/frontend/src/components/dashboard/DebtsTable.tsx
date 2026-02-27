@@ -4,7 +4,6 @@ import {
   AlertCircle,
   ArrowUpDown,
   CreditCard,
-  Download,
   Eye,
   MoreHorizontal,
   Pencil,
@@ -30,7 +29,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { downloadCsv, getRangeLabel } from "@/components/dashboard/dashboard-utils";
+import { getRangeLabel } from "@/components/dashboard/dashboard-utils";
 import type { DashboardDateRange, DashboardDebtRow } from "@/components/dashboard/types";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
@@ -117,40 +116,17 @@ export function DebtsTable({ rows, range, isLoading, isError, onRetry }: DebtsTa
     setSortDirection("desc");
   };
 
-  const exportRows = () => {
-    const csvRows = sortedRows.map((row) => [
-      row.partyName,
-      row.partyPhone ?? "",
-      row.saleNumber ?? row.purchaseNumber ?? row.debtNumber ?? `#${row.id}`,
-      formatCurrency(row.outstandingAmount),
-      formatSafeDate(row.dueDate),
-      getStatusMeta(row.status).label,
-    ]);
-    downloadCsv("customer-debts.csv", ["الزبون", "الهاتف", "المرجع", "المبلغ المتبقي", "تاريخ الاستحقاق", "الحالة"], csvRows);
-  };
+
 
   return (
     <>
       <Card className="border-border/60">
         <CardHeader className="pb-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="space-y-1">
-              <CardTitle className="text-lg">ديون الزبائن</CardTitle>
-              <p className="text-xs text-muted-foreground">
-                {getRangeLabel(range)} • {rows.length} سجل
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              onClick={exportRows}
-              disabled={sortedRows.length === 0 || isLoading || isError}
-            >
-              <Download className="h-4 w-4" />
-              تصدير CSV
-            </Button>
+          <div className="space-y-1">
+            <CardTitle className="text-lg">ديون الزبائن</CardTitle>
+            <p className="text-xs text-muted-foreground">
+              {getRangeLabel(range)} • {rows.length} سجل
+            </p>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">

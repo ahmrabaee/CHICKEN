@@ -17,8 +17,6 @@ import {
   History,
   FileText,
   CreditCard,
-  TrendingUp,
-  PieChart,
   Receipt,
   UserCircle,
   Loader2,
@@ -27,7 +25,7 @@ import {
   Shield,
   BookOpen,
   Trash2,
-  Scale,
+
   ArrowLeftRight,
   RefreshCw,
 } from "lucide-react";
@@ -147,13 +145,7 @@ const navigation: NavItem[] = [
     title: "Reports",
     titleAr: "التقارير",
     icon: BarChart3,
-    children: [
-      { title: "Sales Reports", titleAr: "تقارير المبيعات", href: "/reports/sales", icon: TrendingUp },
-      { title: "Inventory Reports", titleAr: "تقارير المخزون", href: "/reports/inventory", icon: Package },
-      { title: "Stock vs GL", titleAr: "المخزون مقابل الدفاتر", href: "/reports/stock-vs-gl", icon: Scale, adminOnly: true },
-      { title: "Financial Reports", titleAr: "التقارير المالية", href: "/reports/financial", icon: PieChart, adminOnly: true },
-      { title: "Tax Reports", titleAr: "تقارير الضرائب", href: "/reports/tax", icon: Receipt, adminOnly: true },
-    ],
+    href: "/reports",
   },
   {
     title: "Accounting",
@@ -226,8 +218,7 @@ export function AppSidebar() {
   };
 
   const isActive = (href: string) => {
-    if (href === "/") return location.pathname === "/";
-    return location.pathname.startsWith(href);
+    return location.pathname === href;
   };
 
   const isGroupActive = (item: NavItem) => {
@@ -279,9 +270,7 @@ export function AppSidebar() {
                     <button
                       className={cn(
                         "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
-                        isGroupActive(item)
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                          : "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                        "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                         collapsed && "justify-center"
                       )}
                     >

@@ -61,7 +61,7 @@ export function AccountLedgerDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto" dir="rtl">
+            <DialogContent className="max-w-3xl max-h-[85dvh] overflow-y-auto" dir="rtl">
                 <DialogHeader>
                     <DialogTitle>كشف حساب — {account.code} {account.name}</DialogTitle>
                 </DialogHeader>

@@ -126,7 +126,7 @@ function SaleDetailCard({ saleId, open, onClose }: { saleId: number; open: boole
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto" dir="rtl">
+      <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto" dir="rtl">
         <DialogHeader>
           <div className="flex items-center justify-between gap-4 flex-row-reverse">
             <DialogTitle className="text-xl font-bold flex items-center gap-3 flex-row-reverse">

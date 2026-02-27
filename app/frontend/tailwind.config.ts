@@ -13,6 +13,16 @@ export default {
       },
     },
     extend: {
+      height: {
+        view: "var(--view-height, 100dvh)",
+        "view-fallback": "var(--view-height-fallback, 100vh)",
+      },
+      minHeight: {
+        view: "var(--view-height, 100dvh)",
+        "view-fallback": "var(--view-height-fallback, 100vh)",
+        /* Override screen to use dvh for browser/WebView consistency */
+        screen: "100dvh",
+      },
       fontFamily: {
         sans: ["Tajawal", "Inter", "system-ui", "sans-serif"],
         arabic: ["Tajawal", "system-ui", "sans-serif"],

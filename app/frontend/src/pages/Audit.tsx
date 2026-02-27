@@ -31,7 +31,7 @@ const entityLabels: Record<string, string> = {
 function AuditDetailDialog({ log, open, onClose }: { log: AuditLog; open: boolean; onClose: () => void }) {
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto" dir="rtl">
+            <DialogContent className="max-w-lg max-h-[85dvh] overflow-y-auto" dir="rtl">
                 <DialogHeader><DialogTitle className="text-xl font-bold">تفاصيل سجل المراجعة</DialogTitle></DialogHeader>
                 <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">

@@ -60,7 +60,7 @@ function PaymentDetailCard({ paymentId, open, onClose }: { paymentId: number; op
     return (
         <>
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto" dir="rtl" style={{ textAlign: "right" }}>
+            <DialogContent className="max-w-lg max-h-[85dvh] overflow-y-auto" dir="rtl" style={{ textAlign: "right" }}>
                 <DialogHeader>
                     <div className="flex items-center justify-between gap-4 flex-row-reverse">
                         <DialogTitle className="text-xl font-bold flex items-center gap-3 flex-row-reverse">

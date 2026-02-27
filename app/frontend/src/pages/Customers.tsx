@@ -191,7 +191,7 @@ function CustomerDetailCard({ customer, onClose }: { customer: Customer; onClose
         </div>
 
         {/* Details Grid */}
-        <div className="p-6 pt-6 space-y-6 max-h-[50vh] overflow-y-auto custom-scrollbar">
+        <div className="p-6 pt-6 space-y-6 max-h-[50dvh] overflow-y-auto custom-scrollbar">
           {/* Contact Information */}
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 px-1">

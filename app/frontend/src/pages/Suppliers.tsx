@@ -156,7 +156,7 @@ function SupplierDetailCard({ supplier, onClose }: { supplier: Supplier; onClose
         </div>
 
         {/* Details Grid */}
-        <div className="p-6 pt-4 space-y-4 max-h-[55vh] overflow-y-auto">
+        <div className="p-6 pt-4 space-y-4 max-h-[55dvh] overflow-y-auto">
           {/* Contact Information */}
           <div>
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">

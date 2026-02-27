@@ -651,7 +651,7 @@ export default function ExpenseProfile() {
 
     if (isLoading && !isNew) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+            <div className="flex flex-col items-center justify-center min-h-[60dvh] gap-4">
                 <Loader2 className="w-12 h-12 animate-spin text-primary" />
                 <p className="text-slate-500 font-bold animate-pulse">جاري تحميل بيانات المصروف...</p>
             </div>
@@ -660,7 +660,7 @@ export default function ExpenseProfile() {
 
     if (error && !isNew) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center">
+            <div className="flex flex-col items-center justify-center min-h-[60dvh] gap-6 text-center">
                 <div className="p-4 bg-red-50 rounded-full">
                     <X className="w-12 h-12 text-red-500" />
                 </div>

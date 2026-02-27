@@ -527,7 +527,7 @@ export default function PaymentProfile() {
     // Loading state for view mode
     if (isEditing && isLoadingPayment) {
         return (
-            <div className="flex h-[80vh] items-center justify-center">
+            <div className="flex h-[80dvh] items-center justify-center">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
             </div>
         );

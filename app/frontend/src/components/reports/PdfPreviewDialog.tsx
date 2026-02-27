@@ -127,7 +127,7 @@ export function PdfPreviewDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-4xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden"
+        className="max-w-4xl max-h-[90dvh] flex flex-col gap-0 p-0 overflow-hidden"
         dir="rtl"
       >
         <DialogHeader className="px-6 pt-6 pb-4 border-b bg-muted/30">
@@ -245,7 +245,7 @@ export function PdfPreviewDialog({
               </div>
               <div
                 className="rounded-lg border bg-muted/10 shadow-inner overflow-auto"
-                style={{ minHeight: 450, maxHeight: '60vh' }}
+                style={{ minHeight: 450, maxHeight: '60dvh' }}
               >
                 <div
                   style={{

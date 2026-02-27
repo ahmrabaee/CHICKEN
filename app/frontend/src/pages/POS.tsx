@@ -205,8 +205,8 @@ function POS() {
     iframe.style.position = "fixed";
     iframe.style.right = "0";
     iframe.style.top = "0";
-    iframe.style.width = "302px";
-    iframe.style.height = "100%";
+    iframe.style.width = "302px"; /* 80mm thermal printer width */
+    iframe.style.height = "100dvh"; /* Consistent with CSS viewport in browser/WebView */
     iframe.style.border = "none";
     iframe.style.zIndex = "99999";
     document.body.appendChild(iframe);
@@ -317,7 +317,7 @@ function POS() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-3rem)] flex flex-col bg-gradient-to-br from-slate-50 via-background to-primary/5" dir="rtl">
+    <div className="min-h-[calc(100dvh-3rem)] flex flex-col bg-gradient-to-br from-slate-50 via-background to-primary/5" dir="rtl">
       {/* Top Bar - Full Width */}
       <div className="flex-shrink-0 px-6 py-4 bg-card/95 backdrop-blur border-b shadow-sm">
         <div className="flex items-center gap-6 max-w-[2000px] mx-auto">

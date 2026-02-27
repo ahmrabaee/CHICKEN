@@ -47,7 +47,7 @@ function TransferDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto" dir="rtl">
+      <DialogContent className="max-w-xl max-h-[85dvh] overflow-y-auto" dir="rtl">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">تفاصيل تحويل المخزون</DialogTitle>
         </DialogHeader>

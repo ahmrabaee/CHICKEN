@@ -14,7 +14,7 @@ export function AccessDenied() {
 
   return (
     <div
-      className="flex min-h-[calc(100vh-6rem)] flex-col items-center justify-center gap-6 rounded-lg border border-border bg-muted/30 p-8"
+      className="flex min-h-[calc(100dvh-6rem)] flex-col items-center justify-center gap-6 rounded-lg border border-border bg-muted/30 p-8"
       role="alert"
       aria-live="polite"
     >

@@ -31,7 +31,7 @@ function DebtDetailCard({ debtId, open, onClose }: { debtId: number; open: boole
     const { data: debt, isLoading } = useDebt(debtId);
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto" dir="rtl">
+            <DialogContent className="max-w-lg max-h-[85dvh] overflow-y-auto" dir="rtl">
                 <DialogHeader><DialogTitle className="text-xl font-bold">تفاصيل الدين</DialogTitle></DialogHeader>
                 {isLoading ? (
                     <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>

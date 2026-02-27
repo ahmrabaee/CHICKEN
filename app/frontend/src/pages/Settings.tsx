@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Save, Upload, User, Bell, Printer, Globe, Key, Check, X, Calculator, Receipt, Database, Shield } from "lucide-react";
+import { Save, Upload, User, Bell, Printer, Globe, Key, Check, X, Calculator, Receipt, Database, Shield, Barcode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +28,7 @@ import { AccountingSettingsTab } from "@/components/settings/AccountingSettingsT
 import { TaxTemplatesTab } from "@/components/settings/TaxTemplatesTab";
 import { BackupSettingsTab } from "@/features/backup/components/BackupSettingsTab";
 import { PageAccessSettingsTab } from "@/components/settings/PageAccessSettingsTab";
+import { BarcodeSettingsTab } from "@/components/settings/BarcodeSettingsTab";
 
 const changePasswordSchema = z.object({
   oldPassword: z.string().min(1, "كلمة المرور الحالية مطلوبة"),
@@ -112,7 +113,7 @@ export default function Settings() {
 
       {/* Tabs */}
       <Tabs defaultValue="shop" className="space-y-6" dir="rtl">
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-9">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-10">
           <TabsTrigger value="shop" className="w-full gap-2">
             <Globe className="w-4 h-4" />
             المحل
@@ -136,6 +137,10 @@ export default function Settings() {
           <TabsTrigger value="users" className="w-full gap-2">
             <User className="w-4 h-4" />
             المستخدمين
+          </TabsTrigger>
+          <TabsTrigger value="barcode" className="w-full gap-2">
+            <Barcode className="w-4 h-4" />
+            الباركود
           </TabsTrigger>
           <TabsTrigger value="printers" className="w-full gap-2">
             <Printer className="w-4 h-4" />
@@ -375,6 +380,11 @@ export default function Settings() {
         {/* Page Access - Dynamic accountant permissions */}
         <TabsContent value="page-access" className="space-y-6">
           <PageAccessSettingsTab />
+        </TabsContent>
+
+        {/* Barcode Settings */}
+        <TabsContent value="barcode" className="space-y-6">
+          <BarcodeSettingsTab />
         </TabsContent>
 
         {/* Users Settings */}

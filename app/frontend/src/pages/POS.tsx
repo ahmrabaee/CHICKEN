@@ -242,7 +242,8 @@ function POS() {
 
   const receiptData = useMemo(
     () => ({
-      storeName: "نظام إدارة المحل",
+      storeName: "ملحمة الفروج الذهبي",
+      logoUrl: "/logo.jpeg",
       items: cart.map((c) => ({
         name: c.name,
         quantityKg: c.quantityKg,

@@ -50,4 +50,13 @@ export const itemService = {
     async deleteItem(id: number): Promise<void> {
         await axiosInstance.delete(`/items/${id}`);
     },
+
+    /**
+     * Get item by barcode
+     * GET /v1/items/barcode/{barcode}
+     */
+    async findByBarcode(barcode: string): Promise<Item> {
+        const response = await axiosInstance.get<ApiResponse<Item>>(`/items/barcode/${encodeURIComponent(barcode)}`);
+        return response.data.data;
+    },
 };

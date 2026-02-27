@@ -90,14 +90,22 @@ export class PdfService implements OnModuleInit {
 
     private initializeLogo() {
         try {
-            const logoPath = path.join(process.cwd(), 'assets', 'logo.png');
-            if (fs.existsSync(logoPath)) {
-                const buffer = fs.readFileSync(logoPath);
-                this.logoBase64 = `data:image/png;base64,${buffer.toString('base64')}`;
-                this.logger.log('Logo loaded successfully');
-            } else {
-                this.logger.warn('Logo not found at assets/logo.png');
+            const assetsDir = path.join(process.cwd(), 'assets');
+            const candidates: { file: string; mime: string }[] = [
+                { file: 'logo.jpeg', mime: 'image/jpeg' },
+                { file: 'logo.jpg', mime: 'image/jpeg' },
+                { file: 'logo.png', mime: 'image/png' },
+            ];
+            for (const { file, mime } of candidates) {
+                const logoPath = path.join(assetsDir, file);
+                if (fs.existsSync(logoPath)) {
+                    const buffer = fs.readFileSync(logoPath);
+                    this.logoBase64 = `data:${mime};base64,${buffer.toString('base64')}`;
+                    this.logger.log(`Logo loaded successfully (${file})`);
+                    return;
+                }
             }
+            this.logger.warn('Logo not found in assets/ (logo.jpeg, logo.jpg, logo.png)');
         } catch (e: any) {
             this.logger.error(`Failed to load logo: ${e.message}`);
         }

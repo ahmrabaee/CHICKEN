@@ -16,6 +16,7 @@ export interface ThermalReceiptItem {
 
 export interface ThermalReceiptData {
   storeName?: string;
+  logoUrl?: string;
   taxNumber?: string;
   header?: string;
   footer?: string;
@@ -53,6 +54,9 @@ export function ThermalReceipt({ data, widthMm = 80, className = "" }: ThermalRe
       }}
     >
       <div className="text-center border-b border-black border-dashed pb-2 mb-2">
+        {data.logoUrl && (
+          <img src={data.logoUrl} alt="" className="mx-auto h-14 w-14 object-contain mb-1" />
+        )}
         {data.storeName && <div className="font-bold text-sm">{data.storeName}</div>}
         {data.header && <div className="text-[10px] mt-1">{data.header}</div>}
         {data.taxNumber && <div className="text-[10px]">{data.taxNumber}</div>}

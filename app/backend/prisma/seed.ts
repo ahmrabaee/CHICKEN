@@ -542,6 +542,18 @@ async function seedSystemSettings(options: { setupCompleted: boolean }): Promise
     { key: 'pos.print_receipt', value: 'true', description: 'Auto-print receipt after sale', dataType: 'boolean', settingGroup: 'pos' },
     { key: 'pos.receipt_copies', value: '1', description: 'Number of receipt copies', dataType: 'number', settingGroup: 'pos' },
 
+    // Custom Barcode (25 digits: 1 start + 6 item + 5 weight + 7 totalPrice + 5 price + 1 check)
+    { key: 'barcode.custom_enabled', value: 'true', description: 'تفعيل الباركود المخصص', dataType: 'boolean', settingGroup: 'barcode' },
+    { key: 'barcode.total_length', value: '25', description: 'طول الباركود بالرقم', dataType: 'number', settingGroup: 'barcode' },
+    { key: 'barcode.item_code_start', value: '1', description: 'موضع بداية كود الصنف (0-based)', dataType: 'number', settingGroup: 'barcode' },
+    { key: 'barcode.item_code_length', value: '6', description: 'طول كود الصنف', dataType: 'number', settingGroup: 'barcode' },
+    { key: 'barcode.weight_start', value: '7', description: 'موضع بداية الوزن بالغرام', dataType: 'number', settingGroup: 'barcode' },
+    { key: 'barcode.weight_length', value: '5', description: 'طول الوزن', dataType: 'number', settingGroup: 'barcode' },
+    { key: 'barcode.total_price_start', value: '12', description: 'موضع بداية السعر الإجمالي مع الضريبة', dataType: 'number', settingGroup: 'barcode' },
+    { key: 'barcode.total_price_length', value: '7', description: 'طول السعر الإجمالي', dataType: 'number', settingGroup: 'barcode' },
+    { key: 'barcode.price_start', value: '19', description: 'موضع بداية السعر', dataType: 'number', settingGroup: 'barcode' },
+    { key: 'barcode.price_length', value: '5', description: 'طول السعر', dataType: 'number', settingGroup: 'barcode' },
+
     // Backup
     { key: 'backup.auto_enabled', value: 'true', description: 'Enable automatic backups', dataType: 'boolean', settingGroup: 'backup' },
     { key: 'backup.frequency_hours', value: '24', description: 'Backup frequency in hours', dataType: 'number', settingGroup: 'backup' },

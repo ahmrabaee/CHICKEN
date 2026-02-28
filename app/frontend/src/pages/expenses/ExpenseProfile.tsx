@@ -53,6 +53,8 @@ import { Separator } from "@/components/ui/separator";
 import { useExpense, useCreateExpense, useExpenseCategories } from "@/hooks/use-expenses";
 import { useSuppliers } from "@/hooks/use-suppliers";
 import { useBranches } from "@/hooks/use-branches";
+import { useQuery } from "@tanstack/react-query";
+import { bankAccountsService } from "@/services/bank-accounts.service";
 import { toast } from "@/hooks/use-toast";
 import { CreateExpenseDto } from "@/types/expenses";
 
@@ -88,6 +90,7 @@ const expenseSchema = z.object({
     expenseType: z.string().default("operational"),
     supplierId: z.coerce.number().optional().or(z.literal(0)),
     paymentMethod: z.string().default("cash"),
+    bankAccountId: z.coerce.number().optional(),
     referenceNumber: z.string().optional(),
     branchId: z.coerce.number().optional().or(z.literal(0)),
     notes: z.string().optional(),
@@ -297,6 +300,15 @@ function ExpenseCreateMode({ isSubmitting, onSubmit }: { isSubmitting: boolean; 
 
     const watchAmount = form.watch("amount");
     const watchTax = form.watch("taxAmount");
+    const paymentMethod = form.watch("paymentMethod");
+    const { data: bankAccountsRes } = useQuery({
+        queryKey: ["bank-accounts"],
+        queryFn: async () => {
+            const res = await bankAccountsService.getAll(false);
+            return res.data?.data ?? res.data ?? [];
+        },
+    });
+    const bankAccounts = (Array.isArray(bankAccountsRes) ? bankAccountsRes : []) as { id: number; code: string; name: string }[];
     const total = (Number(watchAmount) || 0) + (Number(watchTax) || 0);
 
     return (
@@ -463,6 +475,36 @@ function ExpenseCreateMode({ isSubmitting, onSubmit }: { isSubmitting: boolean; 
                                         </FormItem>
                                     )}
                                 />
+
+                                {paymentMethod === "bank_transfer" && bankAccounts.length > 0 && (
+                                    <FormField
+                                        control={form.control}
+                                        name="bankAccountId"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>الحساب البنكي</FormLabel>
+                                                <Select
+                                                    onValueChange={(v) => field.onChange(v ? parseInt(v, 10) : undefined)}
+                                                    value={field.value ? String(field.value) : ""}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger className="bg-slate-50 border-slate-200">
+                                                            <SelectValue placeholder="اختر الحساب البنكي" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent dir="rtl">
+                                                        {bankAccounts.map((b) => (
+                                                            <SelectItem key={b.id} value={String(b.id)}>
+                                                                {b.code} - {b.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
                             </CardContent>
                         </Card>
 
@@ -636,6 +678,7 @@ export default function ExpenseProfile() {
             expenseDate: values.expenseDate,
             expenseType: values.expenseType,
             paymentMethod: values.paymentMethod,
+            bankAccountId: values.bankAccountId,
             referenceNumber: values.referenceNumber || undefined,
             supplierId: values.supplierId ? Number(values.supplierId) : undefined,
             branchId: values.branchId ? Number(values.branchId) : undefined,

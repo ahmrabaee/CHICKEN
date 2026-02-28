@@ -60,6 +60,7 @@ export const accountingService = {
     },
     async getAccountLedger(accountCode: string, params?: { startDate?: string; endDate?: string }): Promise<LedgerEntry[]> {
         const response = await axiosInstance.get<ApiResponse<LedgerEntry[]>>(`/accounting/ledger/${accountCode}`, { params });
-        return response.data.data;
+        const data = response.data?.data ?? response.data;
+        return Array.isArray(data) ? data : [];
     },
 };

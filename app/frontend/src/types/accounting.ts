@@ -102,6 +102,11 @@ export interface JournalEntry {
     sourceType?: string;
     /** ID of source document (payment, sale, or original entry for reversal) */
     sourceId?: number;
+    /** When sourceType=payment: party name (customer/supplier) */
+    sourcePartyName?: string | null;
+    sourcePartyType?: string | null;
+    /** When sourceType=expense: expense category name (e.g. إيجار) */
+    sourceExpenseCategoryName?: string | null;
 }
 
 export interface CreateJournalEntryLineDto {
@@ -136,4 +141,6 @@ export interface LedgerEntry {
     credit: number;
     balance: number;
     entryNumber?: string;
+    /** Bank name when transaction is from bank transfer (payment) */
+    bankName?: string | null;
 }

@@ -13,7 +13,9 @@ import {
   Clock,
   Loader2,
   TrendingDown,
-  Calendar
+  Calendar,
+  RefreshCw,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +42,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { StockStatusBadge } from "@/components/ui/status-badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CategoriesManagement } from "@/components/inventory/CategoriesManagement";
@@ -48,7 +60,8 @@ import {
   useInventory,
   useCategories,
   useLowStockItems,
-  useExpiringItems
+  useExpiringItems,
+  useDeleteItem
 } from "@/hooks/use-inventory";
 import { useRole } from "@/hooks/useRole";
 import { InventoryQuery, InventoryItem } from "@/types/inventory";
@@ -80,8 +93,10 @@ export default function Inventory() {
   const [adjustingItem, setAdjustingItem] = useState<InventoryItem | null>(null);
   const [viewingLotsItem, setViewingLotsItem] = useState<InventoryItem | null>(null);
   const [viewingHistoryItem, setViewingHistoryItem] = useState<InventoryItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<InventoryItem | null>(null);
 
-  const { data: response, isLoading } = useInventory(queryParams);
+  const { data: response, isLoading, refetch } = useInventory(queryParams);
+  const deleteItemMutation = useDeleteItem();
   const { data: categories } = useCategories();
   const { data: lowStockItems = [] } = useLowStockItems();
   const { data: expiringItems = [] } = useExpiringItems(30); // Check 30 days ahead
@@ -110,8 +125,14 @@ export default function Inventory() {
     }));
   };
 
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteItemMutation.mutateAsync(deleteTarget.itemId);
+    setDeleteTarget(null);
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -119,6 +140,10 @@ export default function Inventory() {
           <p className="text-muted-foreground mt-1">تتبع مستويات المخزون، الدفعات (FIFO)، وسجل الحركات</p>
         </div>
         <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => refetch()} disabled={isLoading}>
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            تحديث
+          </Button>
           <Button variant="outline" className="gap-2">
             <Download className="w-4 h-4" />
             تصدير البيانات
@@ -143,7 +168,7 @@ export default function Inventory() {
         <TabsContent value="items" className="space-y-6 mt-0">
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-l-4 border-l-blue-500">
+        <Card className="border-s-4 border-s-blue-500">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
@@ -157,7 +182,7 @@ export default function Inventory() {
           </CardContent>
         </Card>
 
-        <Card className={`border-l-4 ${lowStockItems.length > 0 ? "border-l-orange-500" : "border-l-emerald-500"}`}>
+        <Card className={`border-s-4 ${lowStockItems.length > 0 ? "border-s-orange-500" : "border-s-emerald-500"}`}>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
@@ -171,7 +196,7 @@ export default function Inventory() {
           </CardContent>
         </Card>
 
-        <Card className={`border-l-4 ${expiringItems.length > 0 ? "border-l-rose-500" : "border-l-emerald-500"}`}>
+        <Card className={`border-s-4 ${expiringItems.length > 0 ? "border-s-rose-500" : "border-s-emerald-500"}`}>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
@@ -186,8 +211,8 @@ export default function Inventory() {
         </Card>
       </div>
 
-      {/* Filters */}
-      <Card>
+      {/* Filters - RTL: بحث من أقصى اليمين، ثم التصنيفات، ثم الحالات */}
+      <Card dir="rtl">
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
@@ -232,8 +257,8 @@ export default function Inventory() {
         </CardContent>
       </Card>
 
-      {/* Data Table */}
-      <Card>
+      {/* Data Table - RTL: الصنف أولاً (يمين)، إجراءات آخراً (يسار) */}
+      <Card dir="rtl">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -243,7 +268,7 @@ export default function Inventory() {
                 <TableHead className="text-center">سعر الشراء (Avg)</TableHead>
                 <TableHead className="text-center">سعر البيع</TableHead>
                 <TableHead className="text-center">الحالة</TableHead>
-                <TableHead className="text-center w-12">خيارات</TableHead>
+                <TableHead className="text-center w-12">إجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -321,6 +346,15 @@ export default function Inventory() {
                               تعديل الكمية (تسوية يدوية)
                             </DropdownMenuItem>
                           )}
+                          {isAdmin && (
+                            <DropdownMenuItem
+                              className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                              onClick={() => setDeleteTarget(item)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              حذف صنف
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -377,6 +411,36 @@ export default function Inventory() {
         item={viewingHistoryItem}
         onClose={() => setViewingHistoryItem(null)}
       />
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>حذف صنف</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget && (
+                <>
+                  هل أنت متأكد من حذف الصنف &quot;{deleteTarget.itemName}&quot;؟
+                  {deleteTarget.totalQuantity > 0 && (
+                    <span className="block mt-2 text-amber-600 font-medium">
+                      تنبيه: الصنف يحتوي على كميات ({deleteTarget.totalQuantity / 1000} {deleteTarget.unitOfMeasure === 'جرام' ? 'كجم' : deleteTarget.unitOfMeasure}). يجب تسويتها أولاً قبل الحذف.
+                    </span>
+                  )}
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={deleteItemMutation.isPending || (!!deleteTarget && deleteTarget.totalQuantity > 0)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteItemMutation.isPending ? "جاري الحذف..." : "حذف"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
         </TabsContent>
 
         <TabsContent value="categories" className="mt-0">

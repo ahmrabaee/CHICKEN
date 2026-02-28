@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, Loader2, CheckCircle, Plus, Search, ChevronsUpDown, Download, FileText, RotateCcw } from "lucide-react";
+import { Eye, Loader2, CheckCircle, Plus, Search, ChevronsUpDown, Download, FileText, RotateCcw, ArrowDownToLine, ArrowUpFromLine, Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -50,6 +50,17 @@ const typeLabels: Record<string, string> = {
     asset: "أصول", liability: "خصوم", equity: "حقوق ملكية", revenue: "إيرادات", expense: "مصروفات",
 };
 
+/** Detect if journal entry is receipt (from customer), payment (to supplier), or expense */
+function getEntryDisplayType(entry: JournalEntry): "receipt" | "payment" | "expense" | null {
+    if (entry.sourceType === "expense") return "expense";
+    if (entry.sourceType !== "payment") return null;
+    if (entry.sourcePartyType === "customer") return "receipt";
+    if (entry.sourcePartyType === "supplier") return "payment";
+    if (entry.description?.includes("تحصيل")) return "receipt";
+    if (entry.description?.includes("دفع")) return "payment";
+    return null;
+}
+
 function JournalDetailCard({ entryId, open, onClose, onOpenEntry }: { entryId: number; open: boolean; onClose: () => void; onOpenEntry?: (id: number) => void }) {
     const { data: entry, isLoading } = useJournalEntry(entryId);
     const postEntry = usePostJournalEntry();
@@ -74,6 +85,45 @@ function JournalDetailCard({ entryId, open, onClose, onOpenEntry }: { entryId: n
                                 </div>
                             </div>
                         )}
+                        {(() => {
+                            const displayType = getEntryDisplayType(entry);
+                            const partyName = entry.sourcePartyName ?? entry.lines?.find((l) => l.partyName)?.partyName;
+                            const categoryName = entry.sourceExpenseCategoryName;
+                            if (displayType === "expense") {
+                                return (
+                                    <div className="rounded-xl p-4 flex items-center gap-3 border-r-4 bg-amber-50 dark:bg-amber-950/30 border-amber-500">
+                                        <Wallet className="w-8 h-8 text-amber-600 flex-shrink-0" />
+                                        <div className="flex-1">
+                                            <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">مصروفات</p>
+                                            <p className="text-lg font-bold text-foreground mt-0.5">{categoryName || "—"}</p>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                            if (displayType === "receipt" && partyName) {
+                                return (
+                                    <div className="rounded-xl p-4 flex items-center gap-3 border-r-4 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500">
+                                        <ArrowDownToLine className="w-8 h-8 text-emerald-600 flex-shrink-0" />
+                                        <div className="flex-1">
+                                            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">قبض من عميل</p>
+                                            <p className="text-lg font-bold text-foreground mt-0.5">{partyName}</p>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                            if (displayType === "payment" && partyName) {
+                                return (
+                                    <div className="rounded-xl p-4 flex items-center gap-3 border-r-4 bg-blue-50 dark:bg-blue-950/30 border-blue-500">
+                                        <ArrowUpFromLine className="w-8 h-8 text-blue-600 flex-shrink-0" />
+                                        <div className="flex-1">
+                                            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">دفع لمورد</p>
+                                            <p className="text-lg font-bold text-foreground mt-0.5">{partyName}</p>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                            return null;
+                        })()}
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             <Info label="رقم القيد" value={entry.entryNumber} />
                             <Info label="التاريخ" value={formatDate(entry.entryDate)} />
@@ -157,7 +207,11 @@ function JournalDetailCard({ entryId, open, onClose, onOpenEntry }: { entryId: n
 
                         <Info label="الوصف" value={entry.description} />
 
-                        <div className="border rounded-lg overflow-hidden">
+                        {(() => {
+                            const displayType = getEntryDisplayType(entry);
+                            const tableBorder = displayType === "receipt" ? "border-emerald-200 dark:border-emerald-800" : displayType === "payment" ? "border-blue-200 dark:border-blue-800" : displayType === "expense" ? "border-amber-200 dark:border-amber-800" : "";
+                            return (
+                        <div className={`border-2 rounded-lg overflow-hidden ${tableBorder}`}>
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-muted/50">
@@ -210,17 +264,34 @@ function JournalDetailCard({ entryId, open, onClose, onOpenEntry }: { entryId: n
                                                     ) : "-"}
                                                 </TableCell>
                                                 <TableCell className="text-sm">
-                                                    {line.partyName ? (
-                                                        <div className="flex flex-col">
-                                                            <span className="font-medium">{line.partyName}</span>
-                                                            <span className="text-[10px] text-muted-foreground uppercase">{line.partyType}</span>
-                                                        </div>
-                                                    ) : line.againstVoucherType ? (
-                                                        <div className="flex flex-col">
-                                                            <span className="text-xs text-amber-700 font-medium">ضد: {line.againstVoucherType}</span>
-                                                            <span className="text-[10px] text-muted-foreground">#{line.againstVoucherId}</span>
-                                                        </div>
-                                                    ) : "-"}
+                                                    {(() => {
+                                                        const partyName = line.partyName
+                                                            ?? (entry.sourceType === "payment" && entry.sourcePartyName ? entry.sourcePartyName : null)
+                                                            ?? (entry.sourceType === "expense" && entry.sourceExpenseCategoryName ? entry.sourceExpenseCategoryName : null);
+                                                        const partyType = line.partyType ?? (entry.sourceType === "payment" ? entry.sourcePartyType : null);
+                                                        if (partyName) {
+                                                            const typeLabel = partyType
+                                                                ? (partyType === "customer" ? "عميل" : partyType === "supplier" ? "مورد" : partyType)
+                                                                : (entry.sourceType === "expense" ? "تصنيف" : null);
+                                                            return (
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-medium">{partyName}</span>
+                                                                    {typeLabel && (
+                                                                        <span className="text-[10px] text-muted-foreground uppercase">{typeLabel}</span>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        }
+                                                        if (line.againstVoucherType) {
+                                                            return (
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-xs text-amber-700 font-medium">ضد: {line.againstVoucherType}</span>
+                                                                    <span className="text-[10px] text-muted-foreground">#{line.againstVoucherId}</span>
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return "-";
+                                                    })()}
                                                 </TableCell>
                                                 <TableCell className="text-sm text-muted-foreground">
                                                     {line.costCenter ? `${line.costCenter.code} - ${line.costCenter.name}` : "-"}
@@ -232,6 +303,8 @@ function JournalDetailCard({ entryId, open, onClose, onOpenEntry }: { entryId: n
                                 </TableBody>
                             </Table>
                         </div>
+                            );
+                        })()}
 
                         {entryStatus(entry) === "draft" && (
                             <Button className="gap-2 w-full" onClick={() => postEntry.mutate(entry.id)} disabled={postEntry.isPending}>
@@ -322,6 +395,18 @@ export default function Accounting() {
             ? accountsData
             : [];
     const accountTree = useMemo(() => buildAccountTree(rawAccounts), [rawAccounts]);
+
+    // Expand 1110 النقدية by default so 1115/1116 (شيكات) are visible
+    const hasExpandedCash = useRef(false);
+    useEffect(() => {
+        if (rawAccounts.length > 0 && !hasExpandedCash.current) {
+            hasExpandedCash.current = true;
+            const cash = rawAccounts.find((a: Account) => a.code === '1110');
+            if (cash) {
+                setExpandedIds((prev) => new Set([...prev, cash.id]));
+            }
+        }
+    }, [rawAccounts]);
 
     // Search filter: find matching accounts + expand their ancestor chains
     const filteredTree = useMemo(() => {
@@ -511,8 +596,8 @@ export default function Accounting() {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="data-table-header">
-                                        <TableHead className="text-right">الرمز</TableHead>
-                                        <TableHead className="text-right">اسم الحساب</TableHead>
+                                        <TableHead className="text-center">الرمز</TableHead>
+                                        <TableHead className="text-center">اسم الحساب</TableHead>
                                         <TableHead className="text-center">النوع</TableHead>
                                         <TableHead className="text-center">التقرير</TableHead>
                                         <TableHead className="text-center">النوع</TableHead>
@@ -560,6 +645,8 @@ export default function Accounting() {
                                     <TableHeader>
                                         <TableRow className="data-table-header">
                                             <TableHead className="text-right">رقم القيد</TableHead>
+                                            <TableHead className="text-right">النوع</TableHead>
+                                            <TableHead className="text-right">الطرف</TableHead>
                                             <TableHead className="text-right">الوصف</TableHead>
                                             <TableHead className="text-center">التاريخ</TableHead>
                                             <TableHead className="text-center">المدين</TableHead>
@@ -572,12 +659,38 @@ export default function Accounting() {
                                         {journals.map((j: JournalEntry) => {
                                             const isReversed = !!j.isReversed;
                                             const isReversal = j.sourceType === "reversal";
+                                            const displayType = getEntryDisplayType(j);
+                                            const partyName = j.sourcePartyName ?? j.lines?.find((l) => l.partyName)?.partyName;
+                                            const categoryName = j.sourceExpenseCategoryName;
+                                            const dimensionLabel = displayType === "expense" ? categoryName : partyName;
+                                            const rowReceipt = displayType === "receipt";
+                                            const rowPayment = displayType === "payment";
+                                            const rowExpense = displayType === "expense";
+                                            const rowBg = rowReceipt ? "bg-emerald-50/50 dark:bg-emerald-950/20 border-r-4 border-r-emerald-400" : rowPayment ? "bg-blue-50/50 dark:bg-blue-950/20 border-r-4 border-r-blue-400" : rowExpense ? "bg-amber-50/50 dark:bg-amber-950/20 border-r-4 border-r-amber-400" : "";
                                             return (
                                                 <TableRow
                                                     key={j.id}
-                                                    className={`data-table-row ${isReversed || isReversal ? "bg-amber-50/60 dark:bg-amber-950/20 border-r-2 border-r-amber-400" : ""}`}
+                                                    className={`data-table-row ${isReversed || isReversal ? "bg-amber-50/60 dark:bg-amber-950/20 border-r-2 border-r-amber-400" : rowBg}`}
                                                 >
                                                     <TableCell className="font-mono text-sm">{j.entryNumber}</TableCell>
+                                                    <TableCell>
+                                                        {rowReceipt && (
+                                                            <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-0 gap-1">
+                                                                <ArrowDownToLine className="w-3 h-3" /> قبض
+                                                            </Badge>
+                                                        )}
+                                                        {rowPayment && (
+                                                            <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 border-0 gap-1">
+                                                                <ArrowUpFromLine className="w-3 h-3" /> دفع
+                                                            </Badge>
+                                                        )}
+                                                        {rowExpense && (
+                                                            <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-0 gap-1">
+                                                                <Wallet className="w-3 h-3" /> مصروفات
+                                                            </Badge>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="font-medium">{dimensionLabel || "—"}</TableCell>
                                                     <TableCell className="max-w-[200px] truncate">{j.description}</TableCell>
                                                     <TableCell className="text-center text-muted-foreground">{formatDate(j.entryDate)}</TableCell>
                                                     <TableCell className="text-center">{formatCurrency(entryTotalDebit(j))}</TableCell>

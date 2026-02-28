@@ -1,7 +1,7 @@
 import { BookOpen, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-    Dialog, DialogContent, DialogHeader, DialogTitle,
+    Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -21,7 +21,7 @@ function Info({ label, value }: { label: string; value: React.ReactNode }) {
     return (
         <div>
             <p className="text-xs text-muted-foreground mb-0.5">{label}</p>
-            <p className="text-sm font-medium">{value}</p>
+            <div className="text-sm font-medium">{value}</div>
         </div>
     );
 }
@@ -43,6 +43,7 @@ export function AccountProfileDialog({
             <DialogContent className="max-w-lg" dir="rtl">
                 <DialogHeader>
                     <DialogTitle>تفاصيل الحساب</DialogTitle>
+                    <DialogDescription className="sr-only">عرض تفاصيل الحساب المحاسبي</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
@@ -80,7 +81,7 @@ export function AccountProfileDialog({
                     </div>
 
                     <div className="flex gap-2 pt-2 border-t flex-wrap">
-                        {onViewLedger && !account.isGroup && (
+                        {onViewLedger && (
                             <Button
                                 variant="outline"
                                 size="sm"

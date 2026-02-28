@@ -39,6 +39,7 @@ import {
 import { useLogout } from "@/hooks/use-auth";
 import { useAuth } from "@/context/AuthContext";
 import { useRole } from "@/hooks/useRole";
+import { toast } from "sonner";
 import { ROLE_LABELS, normalizeRole } from "@/constants/roles";
 
 interface NavItem {
@@ -199,8 +200,8 @@ function getVisibleChildren(item: NavItem, canAccessPath: (path: string) => bool
 }
 
 export function AppSidebar() {
-  const { user } = useAuth();
-  const { canAccessPath } = useRole();
+  const { user, refreshUser } = useAuth();
+  const { canAccessPath, isAdmin } = useRole();
   const [collapsed, setCollapsed] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const [openGroups, setOpenGroups] = useState<string[]>(["Sales", "Accounting"]);
@@ -355,6 +356,22 @@ export function AppSidebar() {
               <p className="text-xs text-sidebar-muted truncate">{effectiveRole === "admin" ? "Admin" : "Accountant"}</p>
             </div>
           </div>
+        )}
+        {!isAdmin && (
+          <Button
+            variant="ghost"
+            className={cn(
+              "w-full text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+              collapsed ? "justify-center px-0" : "justify-start"
+            )}
+            onClick={async () => {
+              await refreshUser();
+              toast.success("تم تحديث الصلاحيات");
+            }}
+          >
+            <RefreshCw className="w-5 h-5" />
+            {!collapsed && <span className="mr-3">تحديث الصلاحيات</span>}
+          </Button>
         )}
         <Button
           variant="ghost"

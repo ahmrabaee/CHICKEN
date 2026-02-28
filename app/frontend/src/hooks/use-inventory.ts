@@ -178,3 +178,22 @@ export const useAdjustStock = () => {
         },
     });
 };
+
+export const useDeleteItem = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: number) => itemService.deleteItem(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['inventory'] });
+            queryClient.invalidateQueries({ queryKey: ['items'] });
+            toast({ title: 'تم حذف الصنف بنجاح' });
+        },
+        onError: (error: any) => {
+            toast({
+                variant: 'destructive',
+                title: 'خطأ في حذف الصنف',
+                description: error.response?.data?.messageAr || 'حدث خطأ غير متوقع',
+            });
+        },
+    });
+};

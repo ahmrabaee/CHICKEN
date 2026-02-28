@@ -37,8 +37,8 @@ export function AccountTreeRow({
     return (
         <>
             <TableRow className="data-table-row hover:bg-muted/50">
-                <TableCell className="align-middle">
-                    <div className="flex items-center gap-1" style={{ paddingRight: depth * 20 }}>
+                <TableCell className="align-middle text-center">
+                    <div className="flex items-center justify-center gap-1" style={{ paddingRight: depth * 20 }}>
                         {hasChildren ? (
                             <button
                                 type="button"
@@ -60,7 +60,7 @@ export function AccountTreeRow({
                             <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
                         )}
                         {onView ? (
-                            <button type="button" onClick={() => onView(account)} className="font-mono text-sm hover:underline text-left min-w-0">
+                            <button type="button" onClick={() => onView(account)} className="font-mono text-sm hover:underline min-w-0">
                                 {account.code}
                             </button>
                         ) : (
@@ -68,40 +68,46 @@ export function AccountTreeRow({
                         )}
                     </div>
                 </TableCell>
-                <TableCell className="font-medium">
+                <TableCell className="font-medium text-center">
                     {onView ? (
-                        <button type="button" onClick={() => onView(account)} className="hover:underline text-left w-full">
+                        <button type="button" onClick={() => onView(account)} className="hover:underline w-full">
                             {account.name}
                         </button>
                     ) : (
                         <span>{account.name}</span>
                     )}
                 </TableCell>
-                <TableCell>
-                    <Badge variant="outline" className={`text-xs ${style.bg} ${style.text}`}>
-                        {style.label}
-                    </Badge>
+                <TableCell className="text-center">
+                    <div className="flex justify-center">
+                        <Badge variant="outline" className={`text-xs ${style.bg} ${style.text}`}>
+                            {style.label}
+                        </Badge>
+                    </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-center">
                     <span className="text-xs text-muted-foreground">
                         {REPORT_TYPE_LABELS[account.reportType] || account.reportType}
                     </span>
                 </TableCell>
-                <TableCell>
-                    {account.isGroup ? (
-                        <Badge variant="secondary">مجموعة</Badge>
-                    ) : (
-                        <Badge variant="outline">دفتر</Badge>
-                    )}
+                <TableCell className="text-center">
+                    <div className="flex justify-center">
+                        {account.isGroup ? (
+                            <Badge variant="secondary">مجموعة</Badge>
+                        ) : (
+                            <Badge variant="outline">دفتر</Badge>
+                        )}
+                    </div>
                 </TableCell>
-                <TableCell>
-                    {account.isActive ? (
-                        <StatusBadge status="success">نشط</StatusBadge>
-                    ) : (
-                        <StatusBadge status="default">غير نشط</StatusBadge>
-                    )}
+                <TableCell className="text-center">
+                    <div className="flex justify-center">
+                        {account.isActive ? (
+                            <StatusBadge status="success">نشط</StatusBadge>
+                        ) : (
+                            <StatusBadge status="default">غير نشط</StatusBadge>
+                        )}
+                    </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-center">
                     <div className="flex gap-1 justify-center">
                         {onView && (
                             <Button variant="ghost" size="icon" className="h-8 w-8" title="عرض" onClick={() => onView(account)}>

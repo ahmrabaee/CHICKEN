@@ -85,6 +85,7 @@ export interface CreateExpenseDto {
     paymentMethod?: string;
     referenceNumber?: string;
     branchId?: number;
+    bankAccountId?: number;
     attachmentUrl?: string;
     notes?: string;
 }

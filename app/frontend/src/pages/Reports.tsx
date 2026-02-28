@@ -45,6 +45,7 @@ import {
 import { useVATReport } from "@/hooks/use-tax";
 import type { DateRangeQuery } from "@/types/reports";
 import { PdfPreviewDialog } from "@/components/reports/PdfPreviewDialog";
+import { DatePicker } from "@/components/ui/date-picker";
 import { useRole } from "@/hooks/useRole";
 
 function formatMinor(amount: number): string {
@@ -245,11 +246,10 @@ export default function Reports() {
         </div>
         <div className="flex items-center gap-3">
           {currentPath === "/reports/stock-vs-gl" && (
-            <input
-              type="date"
+            <DatePicker
               value={stockVsGLDate}
-              onChange={(e) => setStockVsGLDate(e.target.value)}
-              className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              onChange={setStockVsGLDate}
+              placeholder="تاريخ الجرد"
             />
           )}
           {needsDateRange && (

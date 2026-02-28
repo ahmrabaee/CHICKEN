@@ -116,7 +116,7 @@ export function CategoriesManagement() {
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <Card>
+    <Card dir="rtl">
       <CardContent className="pt-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold flex items-center gap-2">

@@ -40,6 +40,7 @@ export const useCreateSale = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['sales'] });
             queryClient.invalidateQueries({ queryKey: ['inventory'] });
+            queryClient.invalidateQueries({ queryKey: ['items'] });
             toast({ title: 'تم إنشاء الفاتورة بنجاح' });
         },
         onError: (error: any) => {

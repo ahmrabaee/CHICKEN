@@ -5,6 +5,7 @@ import { Plus, Trash2, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -169,10 +170,10 @@ export default function StockTransferProfile() {
 
             <div>
               <label className="text-sm font-medium mb-2 block">تاريخ صلاحية الشحنة بعد التحويل</label>
-              <Input
-                type="date"
+              <DatePicker
                 value={expiryDate}
-                onChange={(e) => setExpiryDate(e.target.value)}
+                onChange={setExpiryDate}
+                placeholder="تاريخ الصلاحية"
               />
             </div>
           </div>

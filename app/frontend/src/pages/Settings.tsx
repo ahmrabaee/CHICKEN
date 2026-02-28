@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Save, Upload, User, Bell, Printer, Globe, Key, Check, X, Calculator, Receipt, Database, Shield, Barcode } from "lucide-react";
+import { Save, Upload, User, Bell, Printer, Globe, Key, Check, X, Calculator, Receipt, Database, Shield, Barcode, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +29,7 @@ import { TaxTemplatesTab } from "@/components/settings/TaxTemplatesTab";
 import { BackupSettingsTab } from "@/features/backup/components/BackupSettingsTab";
 import { PageAccessSettingsTab } from "@/components/settings/PageAccessSettingsTab";
 import { BarcodeSettingsTab } from "@/components/settings/BarcodeSettingsTab";
+import { BankAccountsSettingsTab } from "@/components/settings/BankAccountsSettingsTab";
 
 const changePasswordSchema = z.object({
   oldPassword: z.string().min(1, "كلمة المرور الحالية مطلوبة"),
@@ -125,6 +126,10 @@ export default function Settings() {
           <TabsTrigger value="accounting" className="w-full gap-2">
             <Calculator className="w-4 h-4" />
             المحاسبة
+          </TabsTrigger>
+          <TabsTrigger value="bank-accounts" className="w-full gap-2">
+            <Building2 className="w-4 h-4" />
+            الحسابات البنكية
           </TabsTrigger>
           <TabsTrigger value="tax-templates" className="w-full gap-2">
             <Receipt className="w-4 h-4" />
@@ -370,6 +375,11 @@ export default function Settings() {
         {/* Accounting Settings - Blueprint 02 GL Engine */}
         <TabsContent value="accounting" className="space-y-6">
           <AccountingSettingsTab />
+        </TabsContent>
+
+        {/* Bank Accounts - BANK_AND_CHECKS_PLAN */}
+        <TabsContent value="bank-accounts" className="space-y-6">
+          <BankAccountsSettingsTab />
         </TabsContent>
 
         {/* Tax Templates - Blueprint 05 */}

@@ -17,6 +17,7 @@ export interface Payment {
     partyName?: string;
     receiptNumber?: string;
     bankTransactionId?: string;
+    bankAccountId?: number;
     receivedById?: number;
     branchId?: number;
     isVoided: boolean;
@@ -60,9 +61,11 @@ export interface PaymentQuery {
 export interface RecordSalePaymentDto {
     saleId: number;
     amount: number;
-    paymentMethod: 'cash' | 'card' | 'bank_transfer' | 'mobile_payment';
+    paymentMethod: 'cash' | 'card' | 'bank_transfer' | 'mobile_payment' | 'check';
     referenceNumber?: string;
     notes?: string;
+    paymentDate?: string;
+    bankAccountId?: number;
 }
 
 export interface CancelPaymentDto {
@@ -77,6 +80,7 @@ export interface RecordPurchasePaymentDto {
     receiptNumber?: string;
     paymentDate?: string;
     notes?: string;
+    bankAccountId?: number;
 }
 
 /** Blueprint 04: Advance payment (no invoice — for reconciliation later) */
@@ -88,4 +92,5 @@ export interface CreateAdvancePaymentDto {
     receiptNumber?: string;
     notes?: string;
     paymentDate?: string;
+    bankAccountId?: number;
 }

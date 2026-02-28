@@ -6,7 +6,7 @@ import {
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useAccountLedger } from "@/hooks/use-accounting";
@@ -69,18 +69,18 @@ export function AccountLedgerDialog({
                     <div className="flex gap-4 items-end flex-wrap">
                         <div className="space-y-2">
                             <Label>من تاريخ</Label>
-                            <Input
-                                type="date"
+                            <DatePicker
                                 value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
+                                onChange={setStartDate}
+                                placeholder="من تاريخ"
                             />
                         </div>
                         <div className="space-y-2">
                             <Label>إلى تاريخ</Label>
-                            <Input
-                                type="date"
+                            <DatePicker
                                 value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
+                                onChange={setEndDate}
+                                placeholder="إلى تاريخ"
                             />
                         </div>
                         <Button
@@ -110,6 +110,7 @@ export function AccountLedgerDialog({
                                     <TableRow className="bg-muted/50">
                                         <TableHead className="text-right">التاريخ</TableHead>
                                         <TableHead className="text-right">رقم القيد</TableHead>
+                                        <TableHead className="text-right">البنك</TableHead>
                                         <TableHead className="text-right">الوصف</TableHead>
                                         <TableHead className="text-center">مدين</TableHead>
                                         <TableHead className="text-center">دائن</TableHead>
@@ -121,6 +122,7 @@ export function AccountLedgerDialog({
                                         <TableRow key={e.id ?? i}>
                                             <TableCell className="text-sm">{formatDate(e.entryDate ?? "")}</TableCell>
                                             <TableCell className="font-mono text-sm">{e.entryNumber || "-"}</TableCell>
+                                            <TableCell className="text-sm font-medium">{e.bankName || "—"}</TableCell>
                                             <TableCell className="max-w-[200px] truncate">{e.description || "-"}</TableCell>
                                             <TableCell className="text-center">
                                                 {e.debit > 0 ? formatCurrency(e.debit) : "-"}

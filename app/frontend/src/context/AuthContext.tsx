@@ -3,6 +3,14 @@ import { isAuthenticated as checkAuthenticated, getStoredUser, setTokens as save
 import { authService } from '@/services/auth.service';
 import type { AuthUserResponse } from '@/types/auth';
 
+/** Update stored user in localStorage (keeps tokens, only updates user object) */
+function updateStoredUser(user: AuthUserResponse) {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+        localStorage.setItem('user', JSON.stringify(user));
+    }
+}
+
 export type SetupStatus =
     | 'checking'
     | 'setup_complete'
@@ -18,6 +26,7 @@ interface AuthContextType {
     setupErrorMessage: string | null;
     isLoading: boolean;
     refreshSetupStatus: () => Promise<void>;
+    refreshUser: () => Promise<void>;
     login: (accessToken: string, refreshToken: string, user: AuthUserResponse) => void;
     logout: () => void;
 }
@@ -27,6 +36,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 interface AuthProviderProps {
     children: ReactNode;
 }
+
+const REFRESH_INTERVAL = 30000; // 30 seconds
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [user, setUser] = useState<AuthUserResponse | null>(null);
@@ -75,6 +86,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setIsLoading(false);
     }, []);
 
+    const refreshUser = useCallback(async () => {
+        if (!checkAuthenticated()) return;
+        try {
+            const freshUser = await authService.getMe();
+            setUser(freshUser);
+            updateStoredUser(freshUser);
+        } catch {
+            // Token might be expired, ignore
+        }
+    }, []);
+
     useEffect(() => {
         const loadInitialData = async () => {
             await checkSetup();
@@ -82,6 +104,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
         loadInitialData();
     }, [checkSetup, initAuth]);
+
+    // Initial refresh and proactive polling/focus-refresh
+    useEffect(() => {
+        if (!isAuthenticated || isLoading) return;
+
+        // 1. Initial refresh
+        refreshUser();
+
+        // 2. Periodic polling
+        const interval = setInterval(() => {
+            refreshUser();
+        }, REFRESH_INTERVAL);
+
+        // 3. Tab focus / Visibility refresh
+        const handleFocus = () => {
+            refreshUser();
+        };
+
+        window.addEventListener('focus', handleFocus);
+        window.addEventListener('visibilitychange', handleFocus);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', handleFocus);
+            window.removeEventListener('visibilitychange', handleFocus);
+        };
+    }, [isAuthenticated, isLoading, refreshUser]);
 
     const setupCompleted =
         setupStatus === 'setup_complete'
@@ -110,6 +159,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setupErrorMessage,
         isLoading,
         refreshSetupStatus: checkSetup,
+        refreshUser,
         login,
         logout,
     };

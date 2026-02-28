@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Download, Loader2, FileWarning, ZoomIn, ZoomOut, RotateCcw, RefreshCw } from 'lucide-react';
 import { usePdfDownload } from '@/hooks/use-pdf-download';
 
@@ -157,19 +157,19 @@ export function PdfPreviewDialog({
               <>
                 <div className="flex items-center gap-2">
                   <Label className="text-sm whitespace-nowrap">من تاريخ</Label>
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
+                    onChange={setStartDate}
+                    placeholder="من تاريخ"
                     className="w-36"
                   />
                 </div>
                 <div className="flex items-center gap-2">
                   <Label className="text-sm whitespace-nowrap">إلى تاريخ</Label>
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
+                    onChange={setEndDate}
+                    placeholder="إلى تاريخ"
                     className="w-36"
                   />
                 </div>
@@ -178,10 +178,10 @@ export function PdfPreviewDialog({
             {needsAsOfDate && !needsDateRange && (
               <div className="flex items-center gap-2">
                 <Label className="text-sm whitespace-nowrap">تاريخ الجرد</Label>
-                <Input
-                  type="date"
+                <DatePicker
                   value={asOfDate}
-                  onChange={(e) => setAsOfDate(e.target.value)}
+                  onChange={setAsOfDate}
+                  placeholder="تاريخ الجرد"
                   className="w-36"
                 />
               </div>

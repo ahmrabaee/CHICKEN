@@ -198,7 +198,7 @@ export default function ItemProfile() {
             <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="flex flex-col gap-6 font-tajawal rtl pb-20"
+                className="flex flex-col gap-6 font-tajawal rtl pb-20" dir="rtl"
             >
                 {/* Premium Header Bar */}
                 <div className="sticky top-0 z-20 flex items-center justify-between bg-white/80 backdrop-blur-md p-4 border-b shadow-sm -mx-6 px-10">
@@ -302,7 +302,7 @@ export default function ItemProfile() {
                                                 <FormLabel>التصنيف *</FormLabel>
                                                 <Select onValueChange={field.onChange} value={field.value?.toString()}>
                                                     <FormControl>
-                                                        <SelectTrigger>
+                                                        <SelectTrigger dir="rtl">
                                                             <SelectValue placeholder="اختر تصنيف المنتج" />
                                                         </SelectTrigger>
                                                     </FormControl>
@@ -414,83 +414,83 @@ export default function ItemProfile() {
                             {/* Inventory Initialization (Only for New Items) */}
                             {!isEditing && (
                                 <>
-                                <Card className="border-none shadow-premium overflow-hidden border-2 border-primary/20 bg-primary/5">
-                                    <div className="bg-primary/10 border-b p-4 flex items-center gap-3">
-                                        <div className="p-2 bg-primary text-primary-foreground rounded-lg shadow-sm">
-                                            <Package className="w-5 h-5" />
+                                    <Card className="border-none shadow-premium overflow-hidden border-2 border-primary/20 bg-primary/5">
+                                        <div className="bg-primary/10 border-b p-4 flex items-center gap-3">
+                                            <div className="p-2 bg-primary text-primary-foreground rounded-lg shadow-sm">
+                                                <Package className="w-5 h-5" />
+                                            </div>
+                                            <h2 className="font-bold text-primary">المخزون الافتتاحي (Opening Stock)</h2>
                                         </div>
-                                        <h2 className="font-bold text-primary">المخزون الافتتاحي (Opening Stock)</h2>
-                                    </div>
-                                    <CardContent className="p-6 space-y-6">
-                                    {/* بطاقة توضيح الخطأ عند فشل الحفظ */}
-                                    {createError && (
-                                        <Card className="border-2 border-destructive/50 bg-destructive/5 overflow-hidden">
-                                            <CardContent className="p-5 space-y-4">
-                                                <div className="flex items-start gap-3">
-                                                    <div className="p-2 rounded-lg bg-destructive/10">
-                                                        <AlertTriangle className="w-5 h-5 text-destructive" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <h3 className="font-bold text-destructive mb-1">حدث خطأ في حفظ الصنف</h3>
-                                                        <p className="text-sm text-muted-foreground mb-3">
-                                                            {createError.messageAr || createError.message}
-                                                        </p>
-                                                        <div className="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
-                                                            <p className="font-semibold text-foreground">ما الذي يمكنك فعله؟</p>
-                                                            <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                                                                <li><strong>الكمية المتوفرة = صفر:</strong> هذا مقبول. يُنشأ الصنف بدون رصيد ويمكنك إضافته لاحقاً عبر "تسوية المخزون".</li>
-                                                                <li><strong>إذا أدخلت كمية أكبر من صفر:</strong> يجب إدخال "سعر تكلفة الرصيد الافتتاحي" أيضاً.</li>
-                                                                <li><strong>مدة الصلاحية:</strong> إذا أدخلت صفر، اترك الحقل فارغاً أو أدخل 1 يوم أو أكثر.</li>
-                                                                <li><strong>مكان التخزين:</strong> اختر من: الثلاجة، المجمد، أو ثلاجة العرض فقط.</li>
-                                                                <li><strong>تأكد من:</strong> اختيار التصنيف، وإدخال سعر البيع بشكل صحيح.</li>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    )}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <FormField
-                                                control={form.control}
-                                                name="initialQuantity"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel className="flex items-center gap-2">
-                                                            الكمية المتوفرة حالياً (KG)
-                                                            <Badge variant="secondary" className="text-[10px]">اختياري</Badge>
-                                                        </FormLabel>
-                                                        <FormControl>
-                                                            <Input type="number" step="0.001" className="font-mono text-center text-lg bg-white" {...field} />
-                                                        </FormControl>
-                                                        <FormDescription>الوزن الافتتاحي المتوفر في المحل</FormDescription>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="initialCostPrice"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel className="flex items-center gap-2">
-                                                            سعر تكلفة الرصيد الافتتاحي (NIS/KG)
-                                                            <Badge variant="secondary" className="text-[10px]">اختياري</Badge>
-                                                        </FormLabel>
-                                                        <FormControl>
-                                                            <div className="relative">
-                                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">₪</span>
-                                                                <Input type="number" step="0.01" className="pl-8 font-mono text-center text-lg bg-white" {...field} />
+                                        <CardContent className="p-6 space-y-6">
+                                            {/* بطاقة توضيح الخطأ عند فشل الحفظ */}
+                                            {createError && (
+                                                <Card className="border-2 border-destructive/50 bg-destructive/5 overflow-hidden">
+                                                    <CardContent className="p-5 space-y-4">
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="p-2 rounded-lg bg-destructive/10">
+                                                                <AlertTriangle className="w-5 h-5 text-destructive" />
                                                             </div>
-                                                        </FormControl>
-                                                        <FormDescription>يُستخدم مرة واحدة لتهيئة قيمة الرصيد الافتتاحي فقط (لا يُخزن على بطاقة الصنف)</FormDescription>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                                                            <div className="flex-1">
+                                                                <h3 className="font-bold text-destructive mb-1">حدث خطأ في حفظ الصنف</h3>
+                                                                <p className="text-sm text-muted-foreground mb-3">
+                                                                    {createError.messageAr || createError.message}
+                                                                </p>
+                                                                <div className="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
+                                                                    <p className="font-semibold text-foreground">ما الذي يمكنك فعله؟</p>
+                                                                    <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                                                                        <li><strong>الكمية المتوفرة = صفر:</strong> هذا مقبول. يُنشأ الصنف بدون رصيد ويمكنك إضافته لاحقاً عبر "تسوية المخزون".</li>
+                                                                        <li><strong>إذا أدخلت كمية أكبر من صفر:</strong> يجب إدخال "سعر تكلفة الرصيد الافتتاحي" أيضاً.</li>
+                                                                        <li><strong>مدة الصلاحية:</strong> إذا أدخلت صفر، اترك الحقل فارغاً أو أدخل 1 يوم أو أكثر.</li>
+                                                                        <li><strong>مكان التخزين:</strong> اختر من: الثلاجة، المجمد، أو ثلاجة العرض فقط.</li>
+                                                                        <li><strong>تأكد من:</strong> اختيار التصنيف، وإدخال سعر البيع بشكل صحيح.</li>
+                                                                    </ul>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            )}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="initialQuantity"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="flex items-center gap-2">
+                                                                الكمية المتوفرة حالياً (KG)
+                                                                <Badge variant="secondary" className="text-[10px]">اختياري</Badge>
+                                                            </FormLabel>
+                                                            <FormControl>
+                                                                <Input type="number" step="0.001" className="font-mono text-center text-lg bg-white" {...field} />
+                                                            </FormControl>
+                                                            <FormDescription>الوزن الافتتاحي المتوفر في المحل</FormDescription>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="initialCostPrice"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="flex items-center gap-2">
+                                                                سعر تكلفة الرصيد الافتتاحي (NIS/KG)
+                                                                <Badge variant="secondary" className="text-[10px]">اختياري</Badge>
+                                                            </FormLabel>
+                                                            <FormControl>
+                                                                <div className="relative">
+                                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">₪</span>
+                                                                    <Input type="number" step="0.01" className="pl-8 font-mono text-center text-lg bg-white" {...field} />
+                                                                </div>
+                                                            </FormControl>
+                                                            <FormDescription>يُستخدم مرة واحدة لتهيئة قيمة الرصيد الافتتاحي فقط (لا يُخزن على بطاقة الصنف)</FormDescription>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                        </CardContent>
+                                    </Card>
                                 </>
                             )}
 
@@ -555,7 +555,7 @@ export default function ItemProfile() {
                                                     <FormLabel>مكان التخزين</FormLabel>
                                                     <Select onValueChange={field.onChange} value={field.value}>
                                                         <FormControl>
-                                                            <SelectTrigger>
+                                                            <SelectTrigger dir="rtl">
                                                                 <SelectValue placeholder="اختر مكان التخزين" />
                                                             </SelectTrigger>
                                                         </FormControl>
@@ -627,11 +627,11 @@ export default function ItemProfile() {
                                         <div className="flex flex-col gap-2 pt-2">
                                             <div className="flex justify-between text-[11px]">
                                                 <span className="text-slate-400">آخر توريد:</span>
-                                                <span className="text-slate-600">{existingItem?.inventory?.lastRestockedAt ? new Date(existingItem.inventory.lastRestockedAt).toLocaleDateString("ar-EG") : "---"}</span>
+                                                <span className="text-slate-600">{existingItem?.inventory?.lastRestockedAt ? new Date(existingItem.inventory.lastRestockedAt).toLocaleDateString("en-US") : "---"}</span>
                                             </div>
                                             <div className="flex justify-between text-[11px]">
                                                 <span className="text-slate-400">آخر بيع:</span>
-                                                <span className="text-slate-600">{existingItem?.inventory?.lastSoldAt ? new Date(existingItem.inventory.lastSoldAt).toLocaleDateString("ar-EG") : "---"}</span>
+                                                <span className="text-slate-600">{existingItem?.inventory?.lastSoldAt ? new Date(existingItem.inventory.lastSoldAt).toLocaleDateString("en-US") : "---"}</span>
                                             </div>
                                         </div>
                                     </CardContent>

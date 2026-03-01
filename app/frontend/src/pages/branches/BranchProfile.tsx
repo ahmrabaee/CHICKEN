@@ -501,14 +501,14 @@ export default function BranchProfile() {
                                         <div className="flex justify-between text-[11px]">
                                             <span className="text-slate-400">تاريخ الإنشاء:</span>
                                             <span className="text-slate-600">
-                                                {new Date(existingBranch.createdAt).toLocaleDateString("ar-EG")}
+                                                {new Date(existingBranch.createdAt).toLocaleDateString("en-US")}
                                             </span>
                                         </div>
                                         {existingBranch.updatedAt && (
                                             <div className="flex justify-between text-[11px]">
                                                 <span className="text-slate-400">آخر تحديث:</span>
                                                 <span className="text-slate-600">
-                                                    {new Date(existingBranch.updatedAt).toLocaleDateString("ar-EG")}
+                                                    {new Date(existingBranch.updatedAt).toLocaleDateString("en-US")}
                                                 </span>
                                             </div>
                                         )}

@@ -19,7 +19,7 @@ import { Expense } from "@/types/expenses";
 import { toast } from "@/hooks/use-toast";
 
 function formatCurrency(v: number) { return `₪ ${(v / 100).toFixed(2)}`; }
-function formatDate(d: string) { return new Date(d).toLocaleDateString("ar-SA", { year: "numeric", month: "short", day: "numeric" }); }
+function formatDate(d: string) { return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }); }
 
 const categoryLabels: Record<string, string> = {
     utilities: "خدمات", rent: "إيجار", salaries: "رواتب", maintenance: "صيانة",

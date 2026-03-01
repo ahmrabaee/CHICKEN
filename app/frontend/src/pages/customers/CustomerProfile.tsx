@@ -580,7 +580,7 @@ export default function CustomerProfile() {
                                         <div>
                                             <p className="text-slate-500">تاريخ الإنشاء:</p>
                                             <p className="font-medium mt-0.5">
-                                                {new Date(existingCustomer.createdAt).toLocaleString("ar-EG")}
+                                                {new Date(existingCustomer.createdAt).toLocaleString("en-US")}
                                             </p>
                                         </div>
                                     </div>
@@ -589,7 +589,7 @@ export default function CustomerProfile() {
                                         <div>
                                             <p className="text-slate-500">آخر تحديث:</p>
                                             <p className="font-medium mt-0.5">
-                                                {new Date(existingCustomer.updatedAt).toLocaleString("ar-EG")}
+                                                {new Date(existingCustomer.updatedAt).toLocaleString("en-US")}
                                             </p>
                                         </div>
                                     </div>

@@ -259,7 +259,7 @@ function POS() {
       customerName: customerId ? customerName : customerName || undefined,
       customerPhone: customerPhone || undefined,
       saleType,
-      date: new Date().toLocaleString("ar-EG"),
+      date: new Date().toLocaleString("en-US"),
     }),
     [
       cart,

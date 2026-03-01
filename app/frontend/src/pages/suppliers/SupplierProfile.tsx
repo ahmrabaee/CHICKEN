@@ -620,7 +620,7 @@ export default function SupplierProfile() {
                                         <div>
                                             <p className="text-slate-500">تم الإنشاء في:</p>
                                             <p className="font-medium mt-0.5">
-                                                {new Date(existingSupplier.createdAt).toLocaleString("ar-EG")}
+                                                {new Date(existingSupplier.createdAt).toLocaleString("en-US")}
                                             </p>
                                         </div>
                                     </div>
@@ -629,7 +629,7 @@ export default function SupplierProfile() {
                                         <div>
                                             <p className="text-slate-500">آخر تعديل:</p>
                                             <p className="font-medium mt-0.5">
-                                                {new Date(existingSupplier.updatedAt).toLocaleString("ar-EG")}
+                                                {new Date(existingSupplier.updatedAt).toLocaleString("en-US")}
                                             </p>
                                         </div>
                                     </div>

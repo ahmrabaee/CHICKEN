@@ -198,7 +198,7 @@ export default function DashboardPage() {
     {
       key: "sales-count",
       title: "عدد المبيعات",
-      value: salesCount.toLocaleString("ar-SA"),
+      value: salesCount.toLocaleString("en-US"),
       rawValue: salesCount,
       icon: ShoppingCart,
       tone: "default",
@@ -206,8 +206,8 @@ export default function DashboardPage() {
       deltaDirection: salesCountDelta.direction,
       subtitle: "مقارنة بالفترة السابقة",
       details: [
-        { label: "الفترة الحالية", value: salesCount.toLocaleString("ar-SA") },
-        { label: "الفترة السابقة", value: previousSalesCount.toLocaleString("ar-SA") },
+        { label: "الفترة الحالية", value: salesCount.toLocaleString("en-US") },
+        { label: "الفترة السابقة", value: previousSalesCount.toLocaleString("en-US") },
         { label: "الفرق", value: formatSignedAmount(salesCount - previousSalesCount) },
       ],
       actionLabel: "عرض المبيعات",
@@ -234,7 +234,7 @@ export default function DashboardPage() {
     {
       key: "low-stock",
       title: "قطع منخفضة المخزون",
-      value: lowStockCount.toLocaleString("ar-SA"),
+      value: lowStockCount.toLocaleString("en-US"),
       rawValue: lowStockCount,
       icon: AlertTriangle,
       tone: "warning",
@@ -242,7 +242,7 @@ export default function DashboardPage() {
       deltaDirection: lowStockDelta.direction,
       subtitle: "لقطة حالية حسب الفلاتر",
       details: [
-        { label: "عدد الأصناف المنخفضة", value: lowStockCount.toLocaleString("ar-SA") },
+        { label: "عدد الأصناف المنخفضة", value: lowStockCount.toLocaleString("en-US") },
         { label: "فلتر الفرع", value: filters.branchId ? `#${filters.branchId}` : "كل الفروع" },
         { label: "ملاحظة", value: "هذا المؤشر لقطة لحظية من المخزون الحالي" },
       ],
@@ -263,7 +263,7 @@ export default function DashboardPage() {
       details: [
         { label: "الرصيد الحالي", value: formatCurrency(receivablesAmount) },
         { label: "الرصيد السابق", value: formatCurrency(previousReceivablesAmount) },
-        { label: "عدد السجلات", value: currentReceivables.length.toLocaleString("ar-SA") },
+        { label: "عدد السجلات", value: currentReceivables.length.toLocaleString("en-US") },
       ],
       actionLabel: "إدارة ديون الزبائن",
       actionTo: "/debts",
@@ -282,7 +282,7 @@ export default function DashboardPage() {
       details: [
         { label: "الرصيد الحالي", value: formatCurrency(payablesAmount) },
         { label: "الرصيد السابق", value: formatCurrency(previousPayablesAmount) },
-        { label: "عدد السجلات", value: currentPayables.length.toLocaleString("ar-SA") },
+        { label: "عدد السجلات", value: currentPayables.length.toLocaleString("en-US") },
       ],
       actionLabel: "إدارة ديون الموردين",
       actionTo: "/debts",

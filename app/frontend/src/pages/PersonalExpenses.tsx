@@ -76,7 +76,7 @@ export default function PersonalExpenses() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">إجمالي المصاريف</p>
-              <p className="text-3xl font-bold text-primary">₪ {totalExpenses.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-primary">₪ {totalExpenses.toLocaleString("en-US")}</p>
             </div>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-48">

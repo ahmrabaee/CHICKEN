@@ -14,7 +14,7 @@ import { Debt } from "@/types/debts";
 import { PdfPreviewDialog } from "@/components/reports/PdfPreviewDialog";
 
 function formatCurrency(v: number) { return `₪ ${(v / 100).toFixed(2)}`; }
-function formatDate(d: string) { return new Date(d).toLocaleDateString("ar-SA", { year: "numeric", month: "short", day: "numeric" }); }
+function formatDate(d: string) { return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }); }
 
 function getStatusBadge(status: string) {
     const map: Record<string, { type: "success" | "warning" | "danger" | "default"; label: string }> = {

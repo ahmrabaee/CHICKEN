@@ -65,14 +65,14 @@ function formatCurrency(v: number) {
     return `₪ ${(v / 100).toFixed(2)}`;
 }
 function formatDate(d: string) {
-    return new Date(d).toLocaleDateString("ar-SA", {
+    return new Date(d).toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
         day: "numeric",
     });
 }
 function formatDateTime(d: string) {
-    return new Date(d).toLocaleString("ar-EG");
+    return new Date(d).toLocaleString("en-US");
 }
 
 const methodLabels: Record<string, string> = {

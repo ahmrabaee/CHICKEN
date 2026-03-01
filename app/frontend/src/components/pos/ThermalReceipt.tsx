@@ -63,7 +63,7 @@ export function ThermalReceipt({ data, widthMm = 80, className = "" }: ThermalRe
       </div>
 
       <div className="border-b border-black border-dashed pb-2 mb-2 space-y-0.5">
-        <div>التاريخ: {data.date ?? new Date().toLocaleString("ar-EG")}</div>
+        <div>التاريخ: {data.date ?? new Date().toLocaleString("en-US")}</div>
         {data.customerName && <div>الزبون: {data.customerName}</div>}
         {data.customerPhone && <div>الهاتف: {data.customerPhone}</div>}
       </div>

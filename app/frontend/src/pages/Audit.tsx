@@ -16,7 +16,7 @@ import { useAuditLogs } from "@/hooks/use-audit";
 import { AuditLog } from "@/types/audit";
 
 function formatDate(d: string) {
-    return new Date(d).toLocaleDateString("ar-SA", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 const actionLabels: Record<string, string> = {

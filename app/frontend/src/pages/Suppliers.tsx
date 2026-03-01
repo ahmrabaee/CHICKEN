@@ -86,198 +86,198 @@ function SupplierDetailCard({ supplier, onClose }: { supplier: Supplier; onClose
   };
   return (
     <>
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent
-        className="max-w-2xl p-0 overflow-hidden border-0 rounded-2xl shadow-2xl"
-        dir="rtl"
-      >
-        {/* Header with gradient */}
-        <div className="relative bg-gradient-to-l from-emerald-600 via-teal-600 to-cyan-700 p-6 pb-8">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cdefs%3E%3Cpattern%20id%3D%22a%22%20patternUnits%3D%22userSpaceOnUse%22%20width%3D%2220%22%20height%3D%2220%22%3E%3Ccircle%20cx%3D%2210%22%20cy%3D%2210%22%20r%3D%221%22%20fill%3D%22rgba(255%2C255%2C255%2C0.08)%22%2F%3E%3C%2Fpattern%3E%3C%2Fdefs%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20fill%3D%22url(%23a)%22%2F%3E%3C%2Fsvg%3E')] opacity-50" />
-          <div className="relative flex items-start justify-between">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="bg-white/20 hover:bg-white/30 text-white border border-white/30 gap-2 shrink-0"
-              onClick={() => setShowStatementPdf(true)}
-            >
-              <Download className="w-4 h-4" />
-              كشف حساب PDF
-            </Button>
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-white/15 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
-                <Building2 className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-white">{supplier.name}</h2>
-                {supplier.nameEn && (
-                  <p className="text-emerald-100 text-sm mt-0.5">{supplier.nameEn}</p>
-                )}
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 font-mono text-xs backdrop-blur-sm">
-                    {supplier.supplierNumber}
-                  </Badge>
-                  <Badge className={`border-0 text-xs backdrop-blur-sm ${supplier.isActive
-                    ? "bg-emerald-400/20 text-emerald-100"
-                    : "bg-red-400/20 text-red-100"
-                    }`}>
-                    {supplier.isActive ? (
-                      <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> نشط</span>
-                    ) : (
-                      <span className="flex items-center gap-1"><XCircle className="w-3 h-3" /> غير نشط</span>
-                    )}
-                  </Badge>
-                  {supplier.rating && (
-                    <div className="flex items-center gap-0.5 bg-amber-400/20 px-2 py-0.5 rounded-full backdrop-blur-sm">
-                      <Star className="w-3 h-3 text-amber-300 fill-amber-300" />
-                      <span className="text-xs font-bold text-amber-100">{supplier.rating}</span>
-                    </div>
+      <Dialog open={true} onOpenChange={onClose}>
+        <DialogContent
+          className="max-w-2xl p-0 overflow-hidden border-0 rounded-2xl shadow-2xl"
+          dir="rtl"
+        >
+          {/* Header with gradient */}
+          <div className="relative bg-gradient-to-l from-emerald-600 via-teal-600 to-cyan-700 p-6 pb-8">
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cdefs%3E%3Cpattern%20id%3D%22a%22%20patternUnits%3D%22userSpaceOnUse%22%20width%3D%2220%22%20height%3D%2220%22%3E%3Ccircle%20cx%3D%2210%22%20cy%3D%2210%22%20r%3D%221%22%20fill%3D%22rgba(255%2C255%2C255%2C0.08)%22%2F%3E%3C%2Fpattern%3E%3C%2Fdefs%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20fill%3D%22url(%23a)%22%2F%3E%3C%2Fsvg%3E')] opacity-50" />
+            <div className="relative flex items-start justify-between">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="bg-white/20 hover:bg-white/30 text-white border border-white/30 gap-2 shrink-0"
+                onClick={() => setShowStatementPdf(true)}
+              >
+                <Download className="w-4 h-4" />
+                كشف حساب PDF
+              </Button>
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-white/15 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
+                  <Building2 className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white">{supplier.name}</h2>
+                  {supplier.nameEn && (
+                    <p className="text-emerald-100 text-sm mt-0.5">{supplier.nameEn}</p>
                   )}
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 font-mono text-xs backdrop-blur-sm">
+                      {supplier.supplierNumber}
+                    </Badge>
+                    <Badge className={`border-0 text-xs backdrop-blur-sm ${supplier.isActive
+                      ? "bg-emerald-400/20 text-emerald-100"
+                      : "bg-red-400/20 text-red-100"
+                      }`}>
+                      {supplier.isActive ? (
+                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> نشط</span>
+                      ) : (
+                        <span className="flex items-center gap-1"><XCircle className="w-3 h-3" /> غير نشط</span>
+                      )}
+                    </Badge>
+                    {supplier.rating && (
+                      <div className="flex items-center gap-0.5 bg-amber-400/20 px-2 py-0.5 rounded-full backdrop-blur-sm">
+                        <Star className="w-3 h-3 text-amber-300 fill-amber-300" />
+                        <span className="text-xs font-bold text-amber-100">{supplier.rating}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Financial Summary Strip */}
-        <div className="grid grid-cols-2 -mt-4 mx-4 gap-4">
-          <div className="bg-white rounded-xl shadow-md border border-slate-100 p-3 text-center">
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">المستحقات الحالية</p>
-            <p className={`text-lg font-bold ${supplier.currentBalance > 0 ? "text-amber-600" : "text-green-600"}`}>
-              {supplier.currentBalance > 0 ? formatAmount(supplier.currentBalance) : "0.000"}
-            </p>
-          </div>
-          <div className="bg-white rounded-xl shadow-md border border-slate-100 p-3 text-center">
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">شروط الدفع</p>
-            <p className="text-sm font-bold text-slate-700 truncate px-2">
-              {supplier.paymentTerms || "غير محدد"}
-            </p>
-          </div>
-        </div>
-
-        {/* Details Grid */}
-        <div className="p-6 pt-4 space-y-4 max-h-[55dvh] overflow-y-auto">
-          {/* Contact Information */}
-          <div>
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-              <Phone className="w-3.5 h-3.5" />
-              معلومات الاتصال
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <DetailItem
-                icon={<Briefcase className="w-4 h-4 text-emerald-500" />}
-                label="الشخص المسؤول"
-                value={supplier.contactPerson}
-              />
-              <DetailItem
-                icon={<Phone className="w-4 h-4 text-teal-500" />}
-                label="الهاتف"
-                value={supplier.phone}
-                dir="ltr"
-              />
-              <DetailItem
-                icon={<Mail className="w-4 h-4 text-cyan-500" />}
-                label="البريد الإلكتروني"
-                value={supplier.email}
-                dir="ltr"
-              />
-              <DetailItem
-                icon={<MapPin className="w-4 h-4 text-rose-500" />}
-                label="العنوان"
-                value={supplier.address}
-              />
+          {/* Financial Summary Strip */}
+          <div className="grid grid-cols-2 -mt-4 mx-4 gap-4">
+            <div className="bg-white rounded-xl shadow-md border border-slate-100 p-3 text-center">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">المستحقات الحالية</p>
+              <p className={`text-lg font-bold ${supplier.currentBalance > 0 ? "text-amber-600" : "text-green-600"}`}>
+                {supplier.currentBalance > 0 ? formatAmount(supplier.currentBalance) : "0.000"}
+              </p>
+            </div>
+            <div className="bg-white rounded-xl shadow-md border border-slate-100 p-3 text-center">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">شروط الدفع</p>
+              <p className="text-sm font-bold text-slate-700 truncate px-2">
+                {supplier.paymentTerms || "غير محدد"}
+              </p>
             </div>
           </div>
 
-          <Separator />
-
-          {/* Financial & Bank Details */}
-          <div>
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-              <CreditCard className="w-3.5 h-3.5" />
-              المعلومات البنكية والمالية
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <DetailItem
-                icon={<Hash className="w-4 h-4 text-emerald-500" />}
-                label="الرقم الضريبي"
-                value={supplier.taxNumber}
-                mono
-              />
-              <DetailItem
-                icon={<CreditCard className="w-4 h-4 text-blue-500" />}
-                label="الحد الائتماني"
-                value={supplier.creditLimit ? formatAmount(supplier.creditLimit) : "غير محدد"}
-              />
-              <DetailItem
-                icon={<Building2 className="w-4 h-4 text-indigo-500" />}
-                label="اسم البنك"
-                value={supplier.bankName}
-              />
-              <DetailItem
-                icon={<Hash className="w-4 h-4 text-slate-500" />}
-                label="رقم الحساب البنكي"
-                value={supplier.bankAccountNumber}
-                mono
-              />
-            </div>
-          </div>
-
-          {/* Notes */}
-          {supplier.notes && (
-            <>
-              <Separator />
-              <div>
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <FileText className="w-3.5 h-3.5" />
-                  ملاحظات
-                </h3>
-                <p className="text-sm text-slate-600 bg-slate-50 rounded-xl p-4 border border-slate-100 leading-relaxed">
-                  {supplier.notes}
-                </p>
+          {/* Details Grid */}
+          <div className="p-6 pt-4 space-y-4 max-h-[55dvh] overflow-y-auto">
+            {/* Contact Information */}
+            <div>
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <Phone className="w-3.5 h-3.5" />
+                معلومات الاتصال
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <DetailItem
+                  icon={<Briefcase className="w-4 h-4 text-emerald-500" />}
+                  label="الشخص المسؤول"
+                  value={supplier.contactPerson}
+                />
+                <DetailItem
+                  icon={<Phone className="w-4 h-4 text-teal-500" />}
+                  label="الهاتف"
+                  value={supplier.phone}
+                  dir="ltr"
+                />
+                <DetailItem
+                  icon={<Mail className="w-4 h-4 text-cyan-500" />}
+                  label="البريد الإلكتروني"
+                  value={supplier.email}
+                  dir="ltr"
+                />
+                <DetailItem
+                  icon={<MapPin className="w-4 h-4 text-rose-500" />}
+                  label="العنوان"
+                  value={supplier.address}
+                />
               </div>
-            </>
-          )}
+            </div>
 
-          <Separator />
+            <Separator />
 
-          {/* System Info */}
-          <div>
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-              <Calendar className="w-3.5 h-3.5" />
-              معلومات النظام
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <DetailItem
-                icon={<Calendar className="w-4 h-4 text-slate-400" />}
-                label="تاريخ الإنشاء"
-                value={new Date(supplier.createdAt).toLocaleString("ar-EG", {
-                  year: "numeric", month: "long", day: "numeric",
-                  hour: "2-digit", minute: "2-digit",
-                })}
-              />
-              <DetailItem
-                icon={<Calendar className="w-4 h-4 text-slate-400" />}
-                label="آخر تحديث"
-                value={new Date(supplier.updatedAt).toLocaleString("ar-EG", {
-                  year: "numeric", month: "long", day: "numeric",
-                  hour: "2-digit", minute: "2-digit",
-                })}
-              />
+            {/* Financial & Bank Details */}
+            <div>
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <CreditCard className="w-3.5 h-3.5" />
+                المعلومات البنكية والمالية
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <DetailItem
+                  icon={<Hash className="w-4 h-4 text-emerald-500" />}
+                  label="الرقم الضريبي"
+                  value={supplier.taxNumber}
+                  mono
+                />
+                <DetailItem
+                  icon={<CreditCard className="w-4 h-4 text-blue-500" />}
+                  label="الحد الائتماني"
+                  value={supplier.creditLimit ? formatAmount(supplier.creditLimit) : "غير محدد"}
+                />
+                <DetailItem
+                  icon={<Building2 className="w-4 h-4 text-indigo-500" />}
+                  label="اسم البنك"
+                  value={supplier.bankName}
+                />
+                <DetailItem
+                  icon={<Hash className="w-4 h-4 text-slate-500" />}
+                  label="رقم الحساب البنكي"
+                  value={supplier.bankAccountNumber}
+                  mono
+                />
+              </div>
+            </div>
+
+            {/* Notes */}
+            {supplier.notes && (
+              <>
+                <Separator />
+                <div>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <FileText className="w-3.5 h-3.5" />
+                    ملاحظات
+                  </h3>
+                  <p className="text-sm text-slate-600 bg-slate-50 rounded-xl p-4 border border-slate-100 leading-relaxed">
+                    {supplier.notes}
+                  </p>
+                </div>
+              </>
+            )}
+
+            <Separator />
+
+            {/* System Info */}
+            <div>
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <Calendar className="w-3.5 h-3.5" />
+                معلومات النظام
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <DetailItem
+                  icon={<Calendar className="w-4 h-4 text-slate-400" />}
+                  label="تاريخ الإنشاء"
+                  value={new Date(supplier.createdAt).toLocaleString("en-US", {
+                    year: "numeric", month: "long", day: "numeric",
+                    hour: "2-digit", minute: "2-digit",
+                  })}
+                />
+                <DetailItem
+                  icon={<Calendar className="w-4 h-4 text-slate-400" />}
+                  label="آخر تحديث"
+                  value={new Date(supplier.updatedAt).toLocaleString("en-US", {
+                    year: "numeric", month: "long", day: "numeric",
+                    hour: "2-digit", minute: "2-digit",
+                  })}
+                />
+              </div>
             </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-    {showStatementPdf && (
-      <PdfPreviewDialog
-        open={showStatementPdf}
-        onOpenChange={setShowStatementPdf}
-        reportType="supplier-statement"
-        params={pdfParams}
-        title={`كشف حساب المورد — ${supplier.name}`}
-      />
-    )}
+        </DialogContent>
+      </Dialog>
+      {showStatementPdf && (
+        <PdfPreviewDialog
+          open={showStatementPdf}
+          onOpenChange={setShowStatementPdf}
+          reportType="supplier-statement"
+          params={pdfParams}
+          title={`كشف حساب المورد — ${supplier.name}`}
+        />
+      )}
     </>
   );
 }

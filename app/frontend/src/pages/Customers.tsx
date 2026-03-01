@@ -110,190 +110,190 @@ function CustomerDetailCard({ customer, onClose }: { customer: Customer; onClose
   };
   return (
     <>
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent
-        className="max-w-2xl p-0 overflow-hidden border-0 rounded-2xl shadow-2xl"
-        dir="rtl"
-      >
-        {/* Header with gradient */}
-        <div className="relative bg-gradient-to-l from-emerald-600 via-teal-600 to-cyan-700 p-6 pb-8">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cdefs%3E%3Cpattern%20id%3D%22a%22%20patternUnits%3D%22userSpaceOnUse%22%20width%3D%2220%22%20height%3D%2220%22%3E%3Ccircle%20cx%3D%2210%22%20cy%3D%2210%22%20r%3D%221%22%20fill%3D%22rgba(255%2C255%2C255%2C0.08)%22%2F%3E%3C%2Fpattern%3E%3C%2Fdefs%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20fill%3D%22url(%23a)%22%2F%3E%3C%2Fsvg%3E')] opacity-50" />
-          <div className="relative flex items-start justify-between">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="bg-white/20 hover:bg-white/30 text-white border border-white/30 gap-2 shrink-0"
-              onClick={() => setShowStatementPdf(true)}
-            >
-              <Download className="w-4 h-4" />
-              كشف حساب PDF
-            </Button>
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-white/15 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
-                <Users className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-white">{customer.name}</h2>
-                {customer.nameEn && (
-                  <p className="text-emerald-100/80 text-sm mt-0.5 font-english">{customer.nameEn}</p>
-                )}
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 font-mono text-xs backdrop-blur-sm">
-                    {customer.customerNumber}
-                  </Badge>
-                  <Badge className={`border-0 text-xs backdrop-blur-sm ${customer.isActive
-                    ? "bg-emerald-400/20 text-emerald-100"
-                    : "bg-rose-400/20 text-rose-100"
-                    }`}>
-                    {customer.isActive ? (
-                      <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> نشط</span>
-                    ) : (
-                      <span className="flex items-center gap-1"><XCircle className="w-3 h-3" /> غير نشط</span>
-                    )}
-                  </Badge>
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium backdrop-blur-sm ${customer.priceLevel === "vip"
-                    ? "bg-amber-400/20 text-amber-100"
-                    : customer.priceLevel === "wholesale"
-                      ? "bg-sky-400/20 text-sky-100"
-                      : "bg-white/15 text-white"
-                    }`}>
-                    {customer.priceLevel === "vip" && <Crown className="w-3 h-3" />}
-                    {customer.priceLevel === "wholesale" && <ShoppingBag className="w-3 h-3" />}
-                    {priceLevelLabels[customer.priceLevel]}
-                  </span>
+      <Dialog open={true} onOpenChange={onClose}>
+        <DialogContent
+          className="max-w-2xl p-0 overflow-hidden border-0 rounded-2xl shadow-2xl"
+          dir="rtl"
+        >
+          {/* Header with gradient */}
+          <div className="relative bg-gradient-to-l from-emerald-600 via-teal-600 to-cyan-700 p-6 pb-8">
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cdefs%3E%3Cpattern%20id%3D%22a%22%20patternUnits%3D%22userSpaceOnUse%22%20width%3D%2220%22%20height%3D%2220%22%3E%3Ccircle%20cx%3D%2210%22%20cy%3D%2210%22%20r%3D%221%22%20fill%3D%22rgba(255%2C255%2C255%2C0.08)%22%2F%3E%3C%2Fpattern%3E%3C%2Fdefs%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20fill%3D%22url(%23a)%22%2F%3E%3C%2Fsvg%3E')] opacity-50" />
+            <div className="relative flex items-start justify-between">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="bg-white/20 hover:bg-white/30 text-white border border-white/30 gap-2 shrink-0"
+                onClick={() => setShowStatementPdf(true)}
+              >
+                <Download className="w-4 h-4" />
+                كشف حساب PDF
+              </Button>
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-white/15 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
+                  <Users className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white">{customer.name}</h2>
+                  {customer.nameEn && (
+                    <p className="text-emerald-100/80 text-sm mt-0.5 font-english">{customer.nameEn}</p>
+                  )}
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 font-mono text-xs backdrop-blur-sm">
+                      {customer.customerNumber}
+                    </Badge>
+                    <Badge className={`border-0 text-xs backdrop-blur-sm ${customer.isActive
+                      ? "bg-emerald-400/20 text-emerald-100"
+                      : "bg-rose-400/20 text-rose-100"
+                      }`}>
+                      {customer.isActive ? (
+                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> نشط</span>
+                      ) : (
+                        <span className="flex items-center gap-1"><XCircle className="w-3 h-3" /> غير نشط</span>
+                      )}
+                    </Badge>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium backdrop-blur-sm ${customer.priceLevel === "vip"
+                      ? "bg-amber-400/20 text-amber-100"
+                      : customer.priceLevel === "wholesale"
+                        ? "bg-sky-400/20 text-sky-100"
+                        : "bg-white/15 text-white"
+                      }`}>
+                      {customer.priceLevel === "vip" && <Crown className="w-3 h-3" />}
+                      {customer.priceLevel === "wholesale" && <ShoppingBag className="w-3 h-3" />}
+                      {priceLevelLabels[customer.priceLevel]}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Financial Summary Strip */}
-        <div className="grid grid-cols-3 -mt-4 mx-4 gap-3">
-          <div className="bg-white rounded-xl shadow-lg border border-slate-100 p-3 text-center">
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">الرصيد المستحق</p>
-            <p className={`text-lg font-bold ${customer.currentBalance > 0 ? "text-rose-600" : "text-emerald-600"}`}>
-              {formatAmount(customer.currentBalance)}
-              {customer.currentBalance === 0 && <span className="text-xs mr-1 opacity-60">✓</span>}
-            </p>
-          </div>
-          <div className="bg-white rounded-xl shadow-lg border border-slate-100 p-3 text-center">
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">الحد الائتماني</p>
-            <p className="text-lg font-bold text-slate-700">
-              {customer.creditLimit > 0 ? formatAmount(customer.creditLimit) : <span className="text-slate-300 text-sm">غير محدد</span>}
-            </p>
-          </div>
-          <div className="bg-white rounded-xl shadow-lg border border-slate-100 p-3 text-center">
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">الخصم الافتراضي</p>
-            <p className="text-lg font-bold text-slate-700">
-              {customer.defaultDiscountPct > 0 ? `${(customer.defaultDiscountPct / 100).toFixed(1)}%` : "0%"}
-            </p>
-          </div>
-        </div>
-
-        {/* Details Grid */}
-        <div className="p-6 pt-6 space-y-6 max-h-[50dvh] overflow-y-auto custom-scrollbar">
-          {/* Contact Information */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 px-1">
-              <Phone className="w-3.5 h-3.5" />
-              معلومات الاتصال
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <DetailItem
-                icon={<Phone className="w-4 h-4 text-emerald-500" />}
-                label="الهاتف الأساسي"
-                value={customer.phone}
-                dir="ltr"
-              />
-              <DetailItem
-                icon={<Phone className="w-4 h-4 text-teal-500" />}
-                label="الهاتف الثانوي"
-                value={customer.phone2}
-                dir="ltr"
-              />
-              <DetailItem
-                icon={<Mail className="w-4 h-4 text-cyan-500" />}
-                label="البريد الإلكتروني"
-                value={customer.email}
-                dir="ltr"
-              />
-              <DetailItem
-                icon={<MapPin className="w-4 h-4 text-rose-500" />}
-                label="العنوان"
-                value={customer.address}
-              />
-            </div>
-          </div>
-
-          <Separator className="opacity-50" />
-
-          {/* Financial & ID Details */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 px-1">
-              <CreditCard className="w-3.5 h-3.5" />
-              المعلومات المالية والضريبية
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <DetailItem
-                icon={<Hash className="w-4 h-4 text-amber-500" />}
-                label="الرقم الضريبي / الهوية"
-                value={customer.taxNumber}
-                mono
-              />
-              <DetailItem
-                icon={<Percent className="w-4 h-4 text-blue-500" />}
-                label="نقاط الخصم"
-                value={customer.defaultDiscountPct > 0 ? `${customer.defaultDiscountPct} نقطة` : null}
-              />
-            </div>
-          </div>
-
-          {/* Notes */}
-          {customer.notes && (
-            <div className="space-y-3">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 px-1">
-                <FileText className="w-3.5 h-3.5" />
-                ملاحظات إضافية
-              </h3>
-              <p className="text-sm text-slate-600 bg-slate-50/50 rounded-xl p-4 border border-teal-100/50 leading-relaxed italic">
-                "{customer.notes}"
+          {/* Financial Summary Strip */}
+          <div className="grid grid-cols-3 -mt-4 mx-4 gap-3">
+            <div className="bg-white rounded-xl shadow-lg border border-slate-100 p-3 text-center">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">الرصيد المستحق</p>
+              <p className={`text-lg font-bold ${customer.currentBalance > 0 ? "text-rose-600" : "text-emerald-600"}`}>
+                {formatAmount(customer.currentBalance)}
+                {customer.currentBalance === 0 && <span className="text-xs mr-1 opacity-60">✓</span>}
               </p>
             </div>
-          )}
-
-          <Separator className="opacity-50" />
-
-          {/* System Info */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 px-1">
-              <Calendar className="w-3.5 h-3.5" />
-              سجل النظام
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <DetailItem
-                icon={<Calendar className="w-4 h-4 text-slate-400" />}
-                label="تاريخ الإنشاء"
-                value={new Date(customer.createdAt).toLocaleString("ar-EG")}
-              />
-              <DetailItem
-                icon={<Calendar className="w-4 h-4 text-slate-400" />}
-                label="آخر تحديث"
-                value={new Date(customer.updatedAt).toLocaleString("ar-EG")}
-              />
+            <div className="bg-white rounded-xl shadow-lg border border-slate-100 p-3 text-center">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">الحد الائتماني</p>
+              <p className="text-lg font-bold text-slate-700">
+                {customer.creditLimit > 0 ? formatAmount(customer.creditLimit) : <span className="text-slate-300 text-sm">غير محدد</span>}
+              </p>
+            </div>
+            <div className="bg-white rounded-xl shadow-lg border border-slate-100 p-3 text-center">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">الخصم الافتراضي</p>
+              <p className="text-lg font-bold text-slate-700">
+                {customer.defaultDiscountPct > 0 ? `${(customer.defaultDiscountPct / 100).toFixed(1)}%` : "0%"}
+              </p>
             </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-    {showStatementPdf && (
-      <PdfPreviewDialog
-        open={showStatementPdf}
-        onOpenChange={setShowStatementPdf}
-        reportType="customer-statement"
-        params={pdfParams}
-        title={`كشف حساب الزبون — ${customer.name}`}
-      />
-    )}
+
+          {/* Details Grid */}
+          <div className="p-6 pt-6 space-y-6 max-h-[50dvh] overflow-y-auto custom-scrollbar">
+            {/* Contact Information */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 px-1">
+                <Phone className="w-3.5 h-3.5" />
+                معلومات الاتصال
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <DetailItem
+                  icon={<Phone className="w-4 h-4 text-emerald-500" />}
+                  label="الهاتف الأساسي"
+                  value={customer.phone}
+                  dir="ltr"
+                />
+                <DetailItem
+                  icon={<Phone className="w-4 h-4 text-teal-500" />}
+                  label="الهاتف الثانوي"
+                  value={customer.phone2}
+                  dir="ltr"
+                />
+                <DetailItem
+                  icon={<Mail className="w-4 h-4 text-cyan-500" />}
+                  label="البريد الإلكتروني"
+                  value={customer.email}
+                  dir="ltr"
+                />
+                <DetailItem
+                  icon={<MapPin className="w-4 h-4 text-rose-500" />}
+                  label="العنوان"
+                  value={customer.address}
+                />
+              </div>
+            </div>
+
+            <Separator className="opacity-50" />
+
+            {/* Financial & ID Details */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 px-1">
+                <CreditCard className="w-3.5 h-3.5" />
+                المعلومات المالية والضريبية
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <DetailItem
+                  icon={<Hash className="w-4 h-4 text-amber-500" />}
+                  label="الرقم الضريبي / الهوية"
+                  value={customer.taxNumber}
+                  mono
+                />
+                <DetailItem
+                  icon={<Percent className="w-4 h-4 text-blue-500" />}
+                  label="نقاط الخصم"
+                  value={customer.defaultDiscountPct > 0 ? `${customer.defaultDiscountPct} نقطة` : null}
+                />
+              </div>
+            </div>
+
+            {/* Notes */}
+            {customer.notes && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 px-1">
+                  <FileText className="w-3.5 h-3.5" />
+                  ملاحظات إضافية
+                </h3>
+                <p className="text-sm text-slate-600 bg-slate-50/50 rounded-xl p-4 border border-teal-100/50 leading-relaxed italic">
+                  "{customer.notes}"
+                </p>
+              </div>
+            )}
+
+            <Separator className="opacity-50" />
+
+            {/* System Info */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 px-1">
+                <Calendar className="w-3.5 h-3.5" />
+                سجل النظام
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <DetailItem
+                  icon={<Calendar className="w-4 h-4 text-slate-400" />}
+                  label="تاريخ الإنشاء"
+                  value={new Date(customer.createdAt).toLocaleString("en-US")}
+                />
+                <DetailItem
+                  icon={<Calendar className="w-4 h-4 text-slate-400" />}
+                  label="آخر تحديث"
+                  value={new Date(customer.updatedAt).toLocaleString("en-US")}
+                />
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {showStatementPdf && (
+        <PdfPreviewDialog
+          open={showStatementPdf}
+          onOpenChange={setShowStatementPdf}
+          reportType="customer-statement"
+          params={pdfParams}
+          title={`كشف حساب الزبون — ${customer.name}`}
+        />
+      )}
     </>
   );
 }

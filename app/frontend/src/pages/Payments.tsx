@@ -21,7 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { downloadReportPdf } from "@/services/pdf.service";
 
 function formatCurrency(v: number) { return `₪ ${(v / 100).toFixed(2)}`; }
-function formatDate(d: string) { return new Date(d).toLocaleDateString("ar-SA", { year: "numeric", month: "short", day: "numeric" }); }
+function formatDate(d: string) { return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }); }
 
 
 const methodLabels: Record<string, string> = {

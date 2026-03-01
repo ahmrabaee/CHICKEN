@@ -343,13 +343,17 @@ export default function Suppliers() {
     try {
       await deleteMutation.mutateAsync(selectedSupplier.id);
       toast.success("تم حذف المورد بنجاح");
-      setIsDeleteDialogOpen(false);
     } catch (error: any) {
+      const data = error?.response?.data;
       const errorMsg =
-        error.response?.data?.messageAr ||
-        error.response?.data?.message ||
+        data?.error?.messageAr ||
+        data?.messageAr ||
+        data?.error?.message ||
         "حدث خطأ أثناء حذف المورد";
-      toast.error(errorMsg);
+      toast.error(errorMsg, { duration: 5000 });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setSelectedSupplier(null);
     }
   };
 

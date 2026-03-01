@@ -28,12 +28,18 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAdjustStock } from "@/hooks/use-inventory";
-import { Loader2, Settings2 } from "lucide-react";
+import { Loader2, Settings2, AlertTriangle } from "lucide-react";
 import { InventoryItem } from "@/types/inventory";
+import { toast } from "sonner";
 
 const adjustSchema = z.object({
     adjustmentType: z.enum(["increase", "decrease"]),
-    quantity: z.string().min(1, "الكمية مطلوبة"),
+    quantity: z.string()
+        .min(1, "الكمية مطلوبة")
+        .refine(
+            (v) => !isNaN(parseFloat(v)) && parseFloat(v) > 0,
+            "الكمية يجب أن تكون رقماً أكبر من صفر"
+        ),
     reason: z.string().min(5, "يجب إدخال سبب التعديل (5 أحرف على الأقل)"),
     costPerUnit: z.string().optional(),
     expiryDate: z.string().optional(),
@@ -68,11 +74,31 @@ export default function AdjustStockDialog({ item, onClose }: AdjustStockDialogPr
         if (!item) return;
 
         const quantityKg = parseFloat(data.quantity);
+        const quantityGrams = Math.round(quantityKg * 1000);
+
+        // Guard: decrease > available stock
+        if (data.adjustmentType === "decrease") {
+            const availableKg = (item.availableQuantity ?? 0) / 1000;
+            if (quantityKg > availableKg) {
+                toast.error(`الكمية المطلوبة (${quantityKg} كجم) أكبر من المتاح (${availableKg.toFixed(3)} كجم). لا يمكن خصم هذه الكمية.`);
+                return;
+            }
+        }
+
+        // Guard: increase from zero stock requires cost
+        if (data.adjustmentType === "increase" && (item.availableQuantity ?? 0) === 0) {
+            const cost = parseFloat(data.costPerUnit || "0");
+            if (!cost || cost <= 0) {
+                toast.error("سعر التكلفة مطلوب عند إضافة كمية لصنف رصيده صفر. أدخل السعر في حقل \"سعر التكلفة للإضافة\".");
+                return;
+            }
+        }
+
         adjustMutation.mutate({
             itemId: item.itemId,
-            branchId: item.branchId,
+            ...(item.branchId ? { branchId: item.branchId } : {}),
             adjustmentType: data.adjustmentType,
-            quantityGrams: Math.round(quantityKg * 1000),
+            quantityGrams,
             reason: data.reason,
             unitCost: data.costPerUnit ? Math.round(parseFloat(data.costPerUnit) * 1000) : undefined,
             expiryDate: data.expiryDate || undefined,
@@ -97,6 +123,22 @@ export default function AdjustStockDialog({ item, onClose }: AdjustStockDialogPr
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
+
+                        {/* Current stock display */}
+                        <div className="flex items-center justify-between rounded-lg bg-muted/50 border px-3 py-2 text-sm">
+                            <span className="text-muted-foreground">المخزون الحالي</span>
+                            <span className={`font-mono font-semibold ${(item?.availableQuantity ?? 0) === 0 ? "text-red-500" : "text-foreground"}`}>
+                                {((item?.availableQuantity ?? 0) / 1000).toFixed(3)} كجم
+                            </span>
+                        </div>
+
+                        {/* Warning: zero stock + increase needs cost */}
+                        {adjustmentType === "increase" && (item?.availableQuantity ?? 0) === 0 && (
+                            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+                                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                                <span>الرصيد صفر — يجب إدخال <strong>سعر التكلفة</strong> لحساب قيمة المخزون بشكل صحيح.</span>
+                            </div>
+                        )}
                         <div className="grid grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}

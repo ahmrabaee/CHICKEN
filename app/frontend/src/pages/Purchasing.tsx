@@ -33,7 +33,7 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function getStatusBadge(status: string) {
+function getStatusBadge(status: string | null | undefined) {
   const map: Record<string, { type: "success" | "warning" | "danger" | "info" | "default"; label: string }> = {
     received: { type: "success", label: "تم الاستلام" },
     partial: { type: "warning", label: "استلام جزئي" },
@@ -41,17 +41,19 @@ function getStatusBadge(status: string) {
     draft: { type: "default", label: "مسودة" },
     cancelled: { type: "danger", label: "ملغي" },
   };
-  const entry = map[status] || { type: "default" as const, label: status };
+  const key = status || "draft";
+  const entry = map[key] || { type: "default" as const, label: key };
   return <StatusBadge status={entry.type}>{entry.label}</StatusBadge>;
 }
 
-function getPaymentBadge(status: string) {
+function getPaymentBadge(status: string | null | undefined) {
   const map: Record<string, { type: "success" | "warning" | "danger"; label: string }> = {
     paid: { type: "success", label: "مدفوع" },
     partial: { type: "warning", label: "جزئي" },
     unpaid: { type: "danger", label: "غير مدفوع" },
   };
-  const entry = map[status] || { type: "danger" as const, label: status };
+  const key = status || "unpaid";
+  const entry = map[key] || { type: "danger" as const, label: key };
   return <StatusBadge status={entry.type}>{entry.label}</StatusBadge>;
 }
 
@@ -104,7 +106,7 @@ function PurchaseDetailCard({ purchaseId, open, onClose }: { purchaseId: number;
   return (
     <Dialog open={open} onOpenChange={onClose}>
       {/* pr-8 reserves physical-right space for the absolute close-X (right-4 top-4) */}
-      <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto pr-8" dir="rtl">
+      <DialogContent className="max-w-4xl max-h-[90dvh] overflow-y-auto pr-8" dir="rtl">
         <DialogHeader>
           {/*
             flex row: title on the right (RTL start), PDF button on the left (RTL end).
@@ -251,7 +253,7 @@ function PurchaseDetailCard({ purchaseId, open, onClose }: { purchaseId: number;
                             {line.isLiveBird && <span className="text-xs bg-orange-100 dark:bg-orange-950 text-orange-600 px-1 rounded mr-1">حي</span>}
                           </TableCell>
                           <TableCell className="text-center font-english" dir="ltr">{(line.weightGrams / 1000).toFixed(2)}</TableCell>
-                          <TableCell className="text-center font-english" dir="ltr">{(line.receivedWeightGrams / 1000).toFixed(2)}</TableCell>
+                          <TableCell className="text-center font-english" dir="ltr">{((line.receivedWeightGrams ?? 0) / 1000).toFixed(2)}</TableCell>
                           <TableCell className="text-center">{formatCurrency(line.pricePerKg)}</TableCell>
                           <TableCell className="text-center font-semibold">{formatCurrency(line.lineTotalAmount)}</TableCell>
                         </TableRow>

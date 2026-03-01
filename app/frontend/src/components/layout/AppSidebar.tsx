@@ -102,7 +102,6 @@ const navigation: NavItem[] = [
     adminOnly: true,
     children: [
       { title: "Supplier List", titleAr: "قائمة التجار", href: "/traders", icon: Store },
-      { title: "Payables", titleAr: "المستحقات", href: "/traders/payables", icon: Wallet },
     ],
   },
   {

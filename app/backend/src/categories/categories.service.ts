@@ -190,24 +190,58 @@ export class CategoriesService {
       throw new NotFoundException({
         code: 'NOT_FOUND',
         message: 'Category not found',
-        messageAr: 'الصنف غير موجود',
+        messageAr: 'الفئة غير موجودة',
       });
     }
 
-    // Check if category has items
-    const itemCount = await this.prisma.item.count({
+    // Collect ALL items linked to this category
+    const allItems = await this.prisma.item.findMany({
       where: { categoryId: id },
+      select: { id: true },
     });
-    if (itemCount > 0) {
-      // Soft delete - deactivate instead
-      await this.prisma.category.update({
-        where: { id },
-        data: { isActive: false },
+
+    if (allItems.length > 0) {
+      const allIds = allItems.map((i) => i.id);
+
+      // Block only if any item has real transaction history (onDelete: Restrict tables)
+      const [saleLinesCount, purchaseLinesCount, stockMovementsCount, wastageCount, transferLinesCount, ledgerCount] =
+        await Promise.all([
+          this.prisma.saleLine.count({ where: { itemId: { in: allIds } } }),
+          this.prisma.purchaseLine.count({ where: { itemId: { in: allIds } } }),
+          this.prisma.stockMovement.count({ where: { itemId: { in: allIds } } }),
+          this.prisma.wastageRecord.count({ where: { itemId: { in: allIds } } }),
+          this.prisma.stockTransferLine.count({ where: { itemId: { in: allIds } } }),
+          this.prisma.stockLedgerEntry.count({ where: { itemId: { in: allIds } } }),
+        ]);
+
+      const totalDeps =
+        saleLinesCount + purchaseLinesCount + stockMovementsCount + wastageCount + transferLinesCount + ledgerCount;
+
+      if (totalDeps > 0) {
+        throw new ConflictException({
+          code: 'CATEGORY_HAS_HISTORY',
+          message: `Cannot delete category: its items have transaction history (${totalDeps} record(s))`,
+          messageAr: `لا يمكن حذف الفئة لأن أصنافها تحتوي على سجلات معاملات (${totalDeps} سجل). لا يمكن حذف بيانات لها تاريخ محاسبي.`,
+        });
+      }
+
+      // No transaction history — cascade delete items then category in one transaction
+      await this.prisma.$transaction(async (tx) => {
+        // Nullify any category.purchaseItemId pointing at these items
+        await tx.category.updateMany({
+          where: { purchaseItemId: { in: allIds } },
+          data: { purchaseItemId: null },
+        });
+        // Hard-delete items (Inventory + InventoryLots cascade via onDelete: Cascade)
+        await tx.item.deleteMany({ where: { id: { in: allIds } } });
+        // Delete the category itself
+        await tx.category.delete({ where: { id } });
       });
-    } else {
-      // Hard delete if no items
-      await this.prisma.category.delete({ where: { id } });
+      return;
     }
+
+    // No items at all — direct delete
+    await this.prisma.category.delete({ where: { id } });
   }
 
   private toResponseDto(category: any): CategoryResponseDto {

@@ -127,7 +127,7 @@ export interface ItemQuery {
 }
 
 export interface AdjustStockDto {
-    branchId: number;
+    branchId?: number;
     itemId: number;
     adjustmentType: 'increase' | 'decrease';
     /** Quantity in grams (backend expects quantityGrams) */

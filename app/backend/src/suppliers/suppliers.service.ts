@@ -14,17 +14,28 @@ export class SuppliersService {
     private pdfService: PdfService,
   ) { }
 
-  async findAll(pagination: PaginationQueryDto) {
-    const { page = 1, pageSize = 20 } = pagination;
+  async findAll(pagination: PaginationQueryDto & { search?: string }) {
+    const { page = 1, pageSize = 20, search } = pagination;
     const skip = (page - 1) * pageSize;
+
+    const where: any = { isActive: true };
+    if (search) {
+      where.OR = [
+        { name: { contains: search } },
+        { nameEn: { contains: search } },
+        { phone: { contains: search } },
+        { supplierNumber: { contains: search } },
+      ];
+    }
 
     const [suppliers, totalItems] = await Promise.all([
       this.prisma.supplier.findMany({
+        where,
         skip,
         take: pageSize,
         orderBy: { name: 'asc' },
       }),
-      this.prisma.supplier.count(),
+      this.prisma.supplier.count({ where }),
     ]);
 
     return createPaginatedResult(suppliers, page, pageSize, totalItems);
@@ -85,21 +96,24 @@ export class SuppliersService {
     });
   }
 
-  async delete(id: number) {
+  async delete(id: number): Promise<void> {
     await this.findById(id);
 
-    const hasPurchases = await this.prisma.purchase.findFirst({
-      where: { supplierId: id },
-    });
+    const [purchaseCount, expenseCount] = await Promise.all([
+      this.prisma.purchase.count({ where: { supplierId: id } }),
+      this.prisma.expense.count({ where: { supplierId: id } }),
+    ]);
 
-    if (hasPurchases) {
-      return this.prisma.supplier.update({
-        where: { id },
-        data: { isActive: false },
+    const total = purchaseCount + expenseCount;
+    if (total > 0) {
+      throw new ConflictException({
+        code: 'SUPPLIER_HAS_TRANSACTIONS',
+        message: `Cannot delete supplier: it has ${total} linked transaction(s)`,
+        messageAr: `لا يمكن حذف المورد لوجود ${total} عملية مرتبطة به (مشتريات أو مصروفات).`,
       });
     }
 
-    return this.prisma.supplier.delete({ where: { id } });
+    await this.prisma.supplier.delete({ where: { id } });
   }
 
   async getStatementPdf(id: number, query: PdfQueryDto) {

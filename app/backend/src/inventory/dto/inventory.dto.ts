@@ -80,6 +80,13 @@ export class CreateAdjustmentDto {
   @IsInt()
   @IsOptional()
   unitCost?: number;
+
+  @ApiPropertyOptional({ description: 'Branch ID (optional)' })
+  @Type(() => Number)
+  @IsInt()
+  @IsPositive()
+  @IsOptional()
+  branchId?: number;
 }
 
 import { PaginationQueryDto } from '../../common/dto/pagination.dto';

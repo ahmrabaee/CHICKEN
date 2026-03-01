@@ -14,10 +14,15 @@ import {
 import { Response } from 'express';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
 import { getPdfContentDisposition } from '../pdf/pdf.helpers';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString } from 'class-validator';
 import { SuppliersService } from './suppliers.service';
 import { CreateSupplierDto, UpdateSupplierDto } from './dto/supplier.dto';
 import { PaginationQueryDto, Roles, RolesGuard } from '../common';
+
+export class SuppliersQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional() @IsOptional() @IsString() search?: string;
+}
 
 @ApiTags('suppliers')
 @ApiBearerAuth('JWT-auth')
@@ -29,8 +34,8 @@ export class SuppliersController {
 
   @Get()
   @ApiOperation({ summary: 'List all suppliers' })
-  findAll(@Query() pagination: PaginationQueryDto) {
-    return this.suppliersService.findAll(pagination);
+  findAll(@Query() query: SuppliersQueryDto) {
+    return this.suppliersService.findAll(query);
   }
 
   @Get(':id')

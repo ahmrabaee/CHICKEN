@@ -82,7 +82,11 @@ export class AccountingService {
     const result: Record<string, number> = {};
     for (const code of codes) {
       const id = await this.chartOfAccountsService.getAccountIdByCode(code);
-      if (!id) throw new BadRequestException(`Account not found for code: ${code}`);
+      if (!id) throw new BadRequestException({
+        code: 'ACCOUNT_NOT_FOUND',
+        message: `Account not found for code: ${code}`,
+        messageAr: `الحساب المحاسبي غير موجود: كود ${code} — تحقق من دليل الحسابات`,
+      });
       result[code] = id;
     }
     return result;
@@ -944,10 +948,18 @@ export class AccountingService {
       let accountId = line.accountId;
       if (!accountId && line.accountCode) {
         const id = await this.chartOfAccountsService.getAccountIdByCode(line.accountCode);
-        if (!id) throw new BadRequestException(`Account not found for code: ${line.accountCode}`);
+        if (!id) throw new BadRequestException({
+          code: 'ACCOUNT_NOT_FOUND',
+          message: `Account not found for code: ${line.accountCode}`,
+          messageAr: `الحساب المحاسبي غير موجود: كود ${line.accountCode} — تحقق من دليل الحسابات`,
+        });
         accountId = id;
       }
-      if (!accountId) throw new BadRequestException('Each line must have accountId or accountCode');
+      if (!accountId) throw new BadRequestException({
+        code: 'ACCOUNT_MISSING',
+        message: 'Each line must have accountId or accountCode',
+        messageAr: 'كل سطر في القيد يجب أن يحتوي على حساب محاسبي',
+      });
       result.push({
         accountId,
         debitAmount: line.debitAmount,

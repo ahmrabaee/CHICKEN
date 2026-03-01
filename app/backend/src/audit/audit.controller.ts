@@ -1,7 +1,18 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString, IsNumberString } from 'class-validator';
+import { Type } from 'class-transformer';
 import { AuditService } from './audit.service';
 import { PaginationQueryDto, Roles, RolesGuard } from '../common';
+
+export class AuditQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional() @IsOptional() @IsNumberString() userId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() action?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() entityType?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() startDate?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() endDate?: string;
+}
 
 @ApiTags('audit')
 @ApiBearerAuth('JWT-auth')
@@ -13,19 +24,8 @@ export class AuditController {
 
   @Get()
   @ApiOperation({ summary: 'List audit logs' })
-  @ApiQuery({ name: 'userId', required: false, type: Number })
-  @ApiQuery({ name: 'action', required: false })
-  @ApiQuery({ name: 'entityType', required: false })
-  @ApiQuery({ name: 'startDate', required: false })
-  @ApiQuery({ name: 'endDate', required: false })
-  getLogs(
-    @Query() pagination: PaginationQueryDto,
-    @Query('userId') userId?: string,
-    @Query('action') action?: string,
-    @Query('entityType') entityType?: string,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
-  ) {
+  getLogs(@Query() query: AuditQueryDto) {
+    const { userId, action, entityType, startDate, endDate, ...pagination } = query;
     return this.auditService.getLogs(pagination, {
       userId: userId ? parseInt(userId) : undefined,
       action,

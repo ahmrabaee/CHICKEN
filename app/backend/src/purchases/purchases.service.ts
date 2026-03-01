@@ -22,6 +22,14 @@ export class PurchasesService {
     private pdfService: PdfService,
   ) { }
 
+  /** Derive a logical status string from the DB fields */
+  private computeStatus(p: { docstatus: number; isApproved: boolean; receivedAt: Date | null }): string {
+    if (p.docstatus === 2) return 'cancelled';
+    if (p.receivedAt || p.isApproved) return 'received';
+    if (p.docstatus === 1) return 'ordered';
+    return 'draft';
+  }
+
   async findAll(pagination: PaginationQueryDto) {
     const { page = 1, pageSize = 20 } = pagination;
     const skip = (page - 1) * pageSize;
@@ -36,7 +44,12 @@ export class PurchasesService {
       this.prisma.purchase.count(),
     ]);
 
-    return createPaginatedResult(purchases, page, pageSize, totalItems);
+    const mapped = purchases.map((p) => ({
+      ...p,
+      status: this.computeStatus(p),
+    }));
+
+    return createPaginatedResult(mapped, page, pageSize, totalItems);
   }
 
   async findById(id: number) {
@@ -62,7 +75,7 @@ export class PurchasesService {
       where: { referenceType: 'purchase', referenceId: id },
     });
 
-    return { ...purchase, payments };
+    return { ...purchase, payments, status: this.computeStatus(purchase) };
   }
 
   async getPurchaseOrderPdf(id: number, query: PdfQueryDto) {

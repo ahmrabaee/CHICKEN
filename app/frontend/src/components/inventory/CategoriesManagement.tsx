@@ -107,9 +107,10 @@ export function CategoriesManagement() {
     if (!deleteTarget) return;
     try {
       await deleteMutation.mutateAsync(deleteTarget.id);
-      setDeleteTarget(null);
     } catch {
       // Toast handled in mutation
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
@@ -245,7 +246,7 @@ export function CategoriesManagement() {
             <AlertDialogHeader>
               <AlertDialogTitle>حذف الفئة</AlertDialogTitle>
               <AlertDialogDescription>
-                هل أنت متأكد من حذف الفئة «{deleteTarget?.name}»؟ إن كانت تحتوي على أصناف، سيتم تعطيلها فقط.
+                هل أنت متأكد من حذف الفئة «{deleteTarget?.name}»؟ لا يمكن التراجع عن هذا الإجراء. إن كانت الفئة مرتبطة بأصناف سيظهر خطأ بدلاً من الحذف.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="flex-row-reverse gap-2">

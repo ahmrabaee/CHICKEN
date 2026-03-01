@@ -35,6 +35,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -765,8 +766,8 @@ export default function PaymentProfile() {
                                                     <FormControl>
                                                         <div className="relative">
                                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">₪</span>
-                                                            <Input
-                                                                type="number"
+                                                            <NumericInput
+                                                                
                                                                 step="0.01"
                                                                 className="pl-8 font-mono text-center text-lg font-bold"
                                                                 {...field}

@@ -11,6 +11,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
 import {
@@ -168,7 +169,7 @@ export default function AdjustStockDialog({ item, onClose }: AdjustStockDialogPr
                                     <FormItem>
                                         <FormLabel>الكمية ({item?.unitOfMeasure})</FormLabel>
                                         <FormControl>
-                                            <Input type="number" step="0.001" placeholder="0.000" {...field} className="text-right font-mono" />
+                                            <NumericInput  step="0.001" placeholder="0.000" {...field} className="text-right font-mono" />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -185,7 +186,7 @@ export default function AdjustStockDialog({ item, onClose }: AdjustStockDialogPr
                                         <FormItem>
                                             <FormLabel className="text-xs">سعر التكلفة للإضافة (NIS/KG) — اختياري</FormLabel>
                                             <FormControl>
-                                                <Input type="number" step="0.01" placeholder="0.00" {...field} className="text-right h-8 text-sm" />
+                                                <NumericInput  step="0.01" placeholder="0.00" {...field} className="text-right h-8 text-sm" />
                                             </FormControl>
                                             <p className="text-[11px] text-muted-foreground">يحدد قيمة الكمية المضافة ويُنشئ دفعة للمحاسبة (FIFO)</p>
                                         </FormItem>

@@ -53,12 +53,10 @@ export const useUpdateCategory = () => {
             toast({ title: 'تم تحديث التصنيف بنجاح' });
         },
         onError: (error: any) => {
-            const data = error?.response?.data;
-            const msgAr = data?.error?.messageAr || data?.messageAr || 'حدث خطأ غير متوقع';
             toast({
                 variant: 'destructive',
                 title: 'خطأ في تحديث التصنيف',
-                description: msgAr,
+                description: error.response?.data?.messageAr || 'حدث خطأ غير متوقع',
             });
         },
     });
@@ -68,24 +66,17 @@ export const useDeleteCategory = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (id: number) => categoryService.deleteCategory(id),
-        onSuccess: () => {
+        onSuccess: (_data: any) => {
             queryClient.invalidateQueries({ queryKey: ['categories'] });
             queryClient.invalidateQueries({ queryKey: ['inventory'] });
             queryClient.invalidateQueries({ queryKey: ['items'] });
-            toast({ title: 'تم حذف الفئة بنجاح' });
+            toast({ title: _data?.messageAr || 'تم حذف التصنيف بنجاح' });
         },
         onError: (error: any) => {
-            const data = error?.response?.data;
-            const messageAr =
-                data?.error?.messageAr ||
-                data?.messageAr ||
-                data?.message?.messageAr ||
-                (typeof data?.message === 'string' ? data.message : null) ||
-                'حدث خطأ غير متوقع';
             toast({
                 variant: 'destructive',
-                title: 'تعذّر حذف الفئة',
-                description: messageAr,
+                title: 'خطأ في حذف التصنيف',
+                description: error.response?.data?.messageAr || 'حدث خطأ غير متوقع',
             });
         },
     });
@@ -179,17 +170,10 @@ export const useAdjustStock = () => {
             toast({ title: 'تم تعديل المخزون بنجاح' });
         },
         onError: (error: any) => {
-            const data = error?.response?.data;
-            const messageAr =
-                data?.error?.messageAr ||
-                data?.messageAr ||
-                data?.message?.messageAr ||
-                (typeof data?.message === 'string' ? data.message : null) ||
-                'حدث خطأ غير متوقع';
             toast({
                 variant: 'destructive',
                 title: 'خطأ في تعديل المخزون',
-                description: messageAr,
+                description: error.response?.data?.messageAr || 'حدث خطأ غير متوقع',
             });
         },
     });
@@ -199,18 +183,16 @@ export const useDeleteItem = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (id: number) => itemService.deleteItem(id),
-        onSuccess: () => {
+        onSuccess: (_data: any) => {
             queryClient.invalidateQueries({ queryKey: ['inventory'] });
             queryClient.invalidateQueries({ queryKey: ['items'] });
-            toast({ title: 'تم حذف الصنف بنجاح' });
+            toast({ title: _data?.messageAr || 'تم حذف الصنف بنجاح' });
         },
         onError: (error: any) => {
-            const data = error?.response?.data;
-            const msgAr = data?.error?.messageAr || data?.messageAr || 'حدث خطأ غير متوقع';
             toast({
                 variant: 'destructive',
                 title: 'خطأ في حذف الصنف',
-                description: msgAr,
+                description: error.response?.data?.messageAr || 'حدث خطأ غير متوقع',
             });
         },
     });

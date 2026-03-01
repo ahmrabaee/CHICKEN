@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Save, User, Bell, Printer, Globe, Key, Check, X, Calculator, Receipt, Database, Shield, Barcode, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
@@ -207,7 +208,7 @@ export default function Settings() {
                 </div>
                 <div className="space-y-2">
                   <Label>نسبة الضريبة الافتراضية (%)</Label>
-                  <Input type="number" defaultValue="17" />
+                  <NumericInput  defaultValue="17" />
                 </div>
                 <div className="space-y-2">
                   <Label>بداية السنة المالية</Label>
@@ -441,16 +442,8 @@ export default function Settings() {
                 <Switch defaultChecked />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>فتح الدرج تلقائياً</Label>
-                  <p className="text-sm text-muted-foreground">فتح درج النقود عند البيع</p>
-                </div>
-                <Switch defaultChecked />
-              </div>
 
-              <div className="flex gap-3">
-                <Button variant="outline">اختبار الطباعة</Button>
+              <div className="flex justify-end">
                 <Button className="gap-2">
                   <Save className="w-4 h-4" />
                   حفظ التغييرات

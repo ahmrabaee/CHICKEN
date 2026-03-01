@@ -5,6 +5,7 @@ import { Plus, Trash2, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -217,8 +218,8 @@ export default function StockTransferProfile() {
                       </Select>
                     </TableCell>
                     <TableCell>
-                      <Input
-                        type="number"
+                      <NumericInput
+                        
                         step="0.001"
                         min="0"
                         value={line.weightGrams ? line.weightGrams / 1000 : ""}
@@ -230,8 +231,8 @@ export default function StockTransferProfile() {
                       />
                     </TableCell>
                     <TableCell>
-                      <Input
-                        type="number"
+                      <NumericInput
+                        
                         min="0"
                         value={line.unitCost ? line.unitCost / 100 : ""}
                         onChange={(e) => {

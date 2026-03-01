@@ -4,7 +4,7 @@ import { CreateCategoryDto, UpdateCategoryDto, CategoryResponseDto } from './dto
 
 @Injectable()
 export class CategoriesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async findPurchaseable(): Promise<CategoryResponseDto[]> {
     await this.ensureCategoriesHavePurchaseItem();
@@ -184,64 +184,70 @@ export class CategoriesService {
     return this.toResponseDto(category);
   }
 
-  async delete(id: number): Promise<void> {
+  async delete(id: number): Promise<{ action: string; messageAr: string }> {
     const category = await this.prisma.category.findUnique({ where: { id } });
     if (!category) {
       throw new NotFoundException({
         code: 'NOT_FOUND',
         message: 'Category not found',
-        messageAr: 'الفئة غير موجودة',
+        messageAr: 'التصنيف غير موجود',
       });
     }
 
-    // Collect ALL items linked to this category
-    const allItems = await this.prisma.item.findMany({
-      where: { categoryId: id },
-      select: { id: true },
+    // Count real user items (exclude the auto-linked purchaseItem)
+    const realItemCount = await this.prisma.item.count({
+      where: {
+        categoryId: id,
+        id: category.purchaseItemId ? { not: category.purchaseItemId } : undefined,
+      },
     });
 
-    if (allItems.length > 0) {
-      const allIds = allItems.map((i) => i.id);
-
-      // Block only if any item has real transaction history (onDelete: Restrict tables)
-      const [saleLinesCount, purchaseLinesCount, stockMovementsCount, wastageCount, transferLinesCount, ledgerCount] =
-        await Promise.all([
-          this.prisma.saleLine.count({ where: { itemId: { in: allIds } } }),
-          this.prisma.purchaseLine.count({ where: { itemId: { in: allIds } } }),
-          this.prisma.stockMovement.count({ where: { itemId: { in: allIds } } }),
-          this.prisma.wastageRecord.count({ where: { itemId: { in: allIds } } }),
-          this.prisma.stockTransferLine.count({ where: { itemId: { in: allIds } } }),
-          this.prisma.stockLedgerEntry.count({ where: { itemId: { in: allIds } } }),
-        ]);
-
-      const totalDeps =
-        saleLinesCount + purchaseLinesCount + stockMovementsCount + wastageCount + transferLinesCount + ledgerCount;
-
-      if (totalDeps > 0) {
-        throw new ConflictException({
-          code: 'CATEGORY_HAS_HISTORY',
-          message: `Cannot delete category: its items have transaction history (${totalDeps} record(s))`,
-          messageAr: `لا يمكن حذف الفئة لأن أصنافها تحتوي على سجلات معاملات (${totalDeps} سجل). لا يمكن حذف بيانات لها تاريخ محاسبي.`,
-        });
-      }
-
-      // No transaction history — cascade delete items then category in one transaction
+    if (realItemCount > 0) {
+      // Soft delete - deactivate category and its purchaseItem
       await this.prisma.$transaction(async (tx) => {
-        // Nullify any category.purchaseItemId pointing at these items
-        await tx.category.updateMany({
-          where: { purchaseItemId: { in: allIds } },
-          data: { purchaseItemId: null },
+        await tx.category.update({
+          where: { id },
+          data: { isActive: false },
         });
-        // Hard-delete items (Inventory + InventoryLots cascade via onDelete: Cascade)
-        await tx.item.deleteMany({ where: { id: { in: allIds } } });
-        // Delete the category itself
+        if (category.purchaseItemId) {
+          await tx.item.update({
+            where: { id: category.purchaseItemId },
+            data: { isActive: false },
+          });
+        }
+      });
+      return {
+        action: 'deactivated',
+        messageAr: `تم تعطيل التصنيف "${category.name}" لأنه يحتوي على ${realItemCount} صنف مرتبط`,
+      };
+    } else {
+      // Hard delete - remove purchaseItem link first, then delete
+      await this.prisma.$transaction(async (tx) => {
+        // Null out the purchaseItemId FK first
+        if (category.purchaseItemId) {
+          await tx.category.update({
+            where: { id },
+            data: { purchaseItemId: null },
+          });
+          // Delete the auto-created purchase item
+          await tx.item.delete({
+            where: { id: category.purchaseItemId },
+          }).catch(() => {
+            // If purchaseItem has related records, just deactivate it
+            return tx.item.update({
+              where: { id: category.purchaseItemId! },
+              data: { isActive: false },
+            });
+          });
+        }
+        // Now delete the category itself
         await tx.category.delete({ where: { id } });
       });
-      return;
+      return {
+        action: 'deleted',
+        messageAr: `تم حذف التصنيف "${category.name}" نهائياً`,
+      };
     }
-
-    // No items at all — direct delete
-    await this.prisma.category.delete({ where: { id } });
   }
 
   private toResponseDto(category: any): CategoryResponseDto {

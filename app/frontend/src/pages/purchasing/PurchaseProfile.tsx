@@ -8,6 +8,7 @@ import { Plus, Save, Trash2, X, Loader2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
@@ -156,7 +157,6 @@ export default function PurchaseProfile() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">أمر شراء جديد</h1>
-          <p className="text-muted-foreground mt-1">إنشاء أمر شراء بالتفاصيل كاملة (RTL + عربي) مثل نمط المخزون</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -353,7 +353,7 @@ export default function PurchaseProfile() {
                           <FormItem className="md:col-span-2">
                             <FormLabel>الوزن (كجم)</FormLabel>
                             <FormControl>
-                              <Input type="number" inputMode="decimal" step="0.01" min="0" {...field} />
+                              <NumericInput inputMode="decimal" step="0.01" min="0" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -367,7 +367,7 @@ export default function PurchaseProfile() {
                           <FormItem className="md:col-span-2">
                             <FormLabel>السعر/كجم (₪)</FormLabel>
                             <FormControl>
-                              <Input type="number" inputMode="decimal" step="0.01" min="0" {...field} />
+                              <NumericInput inputMode="decimal" step="0.01" min="0" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -433,8 +433,8 @@ export default function PurchaseProfile() {
                     name="taxAmount"
                     render={({ field }) => (
                       <FormControl>
-                        <Input
-                          type="number"
+                        <NumericInput
+
                           step="0.01"
                           className="h-8 text-left font-english w-28 mr-auto py-0"
                           {...field}
@@ -465,8 +465,8 @@ export default function PurchaseProfile() {
                     name="amountPaid"
                     render={({ field }) => (
                       <FormControl>
-                        <Input
-                          type="number"
+                        <NumericInput
+
                           step="0.01"
                           className="h-9 text-left font-english font-bold text-green-700 w-32 mr-auto py-0"
                           {...field}

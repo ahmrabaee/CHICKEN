@@ -12,7 +12,7 @@ import { Roles, RolesGuard, CurrentUser, CurrentUserData, PaginatedResult } from
 @UseGuards(RolesGuard)
 @Controller('items')
 export class ItemsController {
-  constructor(private readonly itemsService: ItemsService) {}
+  constructor(private readonly itemsService: ItemsService) { }
 
   @Get()
   @Roles('admin', 'accountant')
@@ -75,10 +75,9 @@ export class ItemsController {
 
   @Delete(':id')
   @Roles('admin')
-  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Deactivate item' })
   @ApiParam({ name: 'id', description: 'Item ID' })
-  async delete(@Param('id', ParseIntPipe) id: number): Promise<void> {
+  async delete(@Param('id', ParseIntPipe) id: number) {
     return this.itemsService.delete(id);
   }
 }

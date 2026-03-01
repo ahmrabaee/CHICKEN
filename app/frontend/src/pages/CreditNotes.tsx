@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -203,8 +204,8 @@ export default function CreditNotes() {
             </div>
             <div>
               <Label>رقم الفاتورة (ID)</Label>
-              <Input
-                type="number"
+              <NumericInput
+                
                 value={form.originalInvoiceId || ""}
                 onChange={(e) => setForm((p) => ({ ...p, originalInvoiceId: parseInt(e.target.value || "0", 10) }))}
                 placeholder="مثال: 5"
@@ -212,8 +213,8 @@ export default function CreditNotes() {
             </div>
             <div>
               <Label>المبلغ (شيكل)</Label>
-              <Input
-                type="number"
+              <NumericInput
+                
                 step="0.01"
                 value={form.amount ? form.amount / 100 : ""}
                 onChange={(e) => setForm((p) => ({ ...p, amount: Math.round(parseFloat(e.target.value || "0") * 100) }))}

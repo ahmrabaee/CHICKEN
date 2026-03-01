@@ -33,6 +33,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { Textarea } from "@/components/ui/textarea";
 import {
     Card,
@@ -418,7 +419,7 @@ export default function SupplierProfile() {
                                                     <FormControl>
                                                         <div className="relative">
                                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs font-bold font-mono">₪</span>
-                                                            <Input type="number" placeholder="0.000" className="pl-8 text-left font-mono" {...field} />
+                                                            <NumericInput  placeholder="0.000" className="pl-8 text-left font-mono" {...field} />
                                                         </div>
                                                     </FormControl>
                                                     <FormDescription className="text-xs">سيتم ضرب القيمة في 1000 داخلياً لعرضها بالمليم</FormDescription>

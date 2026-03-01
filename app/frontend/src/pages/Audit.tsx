@@ -14,19 +14,20 @@ import {
 } from "@/components/ui/dialog";
 import { useAuditLogs } from "@/hooks/use-audit";
 import { AuditLog } from "@/types/audit";
+import {
+    actionLabels, entityLabels, getActionLabel, getEntityLabel, isEnglishString
+} from "@/constants/auditLogLabels";
 
 function formatDate(d: string) {
     return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-const actionLabels: Record<string, string> = {
-    create: "إنشاء", update: "تعديل", delete: "حذف", void: "إلغاء", login: "تسجيل دخول", logout: "تسجيل خروج",
-};
-
-const entityLabels: Record<string, string> = {
-    sale: "فاتورة بيع", purchase: "أمر شراء", payment: "دفعة", expense: "مصروف", customer: "زبون",
-    supplier: "تاجر", item: "صنف", user: "مستخدم", branch: "فرع", inventory: "مخزون",
-};
+function renderMappedValue(raw: string, mapped: string) {
+    if (raw === mapped && isEnglishString(raw)) {
+        return <span dir="ltr" className="inline-block text-right">{raw}</span>;
+    }
+    return mapped;
+}
 
 function AuditDetailDialog({ log, open, onClose }: { log: AuditLog; open: boolean; onClose: () => void }) {
     return (
@@ -36,8 +37,8 @@ function AuditDetailDialog({ log, open, onClose }: { log: AuditLog; open: boolea
                 <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <Info label="المستخدم" value={log.userName || `#${log.userId}`} />
-                        <Info label="الإجراء" value={actionLabels[log.action] || log.action} />
-                        <Info label="الكيان" value={entityLabels[log.entityType] || log.entityType} />
+                        <Info label="الإجراء" value={renderMappedValue(log.action, getActionLabel(log.action))} />
+                        <Info label="الكيان" value={renderMappedValue(log.entityType, getEntityLabel(log.entityType))} />
                         {log.entityId && <Info label="رقم الكيان" value={`#${log.entityId}`} />}
                         <Info label="التوقيت" value={formatDate(log.createdAt)} />
                         {log.ipAddress && <Info label="العنوان IP" value={log.ipAddress} />}
@@ -147,15 +148,15 @@ export default function Audit() {
                                     <TableRow key={l.id} className="data-table-row">
                                         <TableCell className="font-medium">{l.userName || `#${l.userId}`}</TableCell>
                                         <TableCell className="text-center">
-                                            <span className={`text-xs px-2 py-0.5 rounded-full ${l.action === "create" ? "bg-green-100 dark:bg-green-950 text-green-600" :
-                                                l.action === "update" ? "bg-blue-100 dark:bg-blue-950 text-blue-600" :
-                                                    l.action === "delete" ? "bg-red-100 dark:bg-red-950 text-red-600" :
-                                                        "bg-muted text-muted-foreground"
-                                                }`}>
-                                                {actionLabels[l.action] || l.action}
+                                            <span className="text-sm px-2 py-1 rounded-md bg-muted/50 text-foreground">
+                                                {renderMappedValue(l.action, getActionLabel(l.action))}
                                             </span>
                                         </TableCell>
-                                        <TableCell className="text-center text-sm">{entityLabels[l.entityType] || l.entityType}</TableCell>
+                                        <TableCell className="text-center">
+                                            <span className="text-sm px-2 py-1 rounded-md bg-muted/50 text-foreground">
+                                                {renderMappedValue(l.entityType, getEntityLabel(l.entityType))}
+                                            </span>
+                                        </TableCell>
                                         <TableCell className="text-center text-sm text-muted-foreground font-mono">{l.entityId || "-"}</TableCell>
                                         <TableCell className="text-center text-sm text-muted-foreground">{formatDate(l.createdAt)}</TableCell>
                                         <TableCell className="text-center">

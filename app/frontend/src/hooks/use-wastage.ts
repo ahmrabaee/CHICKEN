@@ -29,9 +29,15 @@ export const useCreateWastage = () => {
             toast({ title: 'تم تسجيل الهدر بنجاح' });
         },
         onError: (error: any) => {
-            const err = error.response?.data?.error;
-            const details = err?.details;
-            const desc = err?.messageAr || err?.message || (Array.isArray(details) ? details[0] : undefined) || error.message || 'حدث خطأ';
+            const errData = error.response?.data;
+            const errObj = errData?.error ?? errData;
+            const details = errObj?.details;
+            const rawMsg = errObj?.messageAr || errObj?.message || (Array.isArray(details) ? details.join(', ') : undefined) || error.message || 'حدث خطأ';
+            // Map common backend validation messages to user-friendly Arabic
+            let desc = rawMsg;
+            if (typeof rawMsg === 'string' && rawMsg.toLowerCase().includes('branchid')) {
+                desc = 'اختر الفرع أولاً';
+            }
             toast({ variant: 'destructive', title: 'خطأ في تسجيل الهدر', description: desc });
         },
     });

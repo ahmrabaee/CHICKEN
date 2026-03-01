@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, InternalServerErrorException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, InternalServerErrorException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateItemDto, UpdateItemDto, ItemResponseDto, ItemListQueryDto } from './dto';
 import { createPaginatedResult, PaginatedResult } from '../common';
@@ -353,7 +353,7 @@ export class ItemsService {
     return this.toResponseDto(item);
   }
 
-  async delete(id: number): Promise<void> {
+  async delete(id: number): Promise<{ action: string; messageAr: string }> {
     const item = await this.prisma.item.findUnique({ where: { id } });
     if (!item) {
       throw new NotFoundException({
@@ -363,11 +363,23 @@ export class ItemsService {
       });
     }
 
-    // Soft delete - deactivate
-    await this.prisma.item.update({
-      where: { id },
-      data: { isActive: false },
-    });
+    try {
+      // Soft delete - deactivate
+      await this.prisma.item.update({
+        where: { id },
+        data: { isActive: false },
+      });
+      return {
+        action: 'deactivated',
+        messageAr: `تم تعطيل الصنف "${item.name}" بنجاح`,
+      };
+    } catch (error: any) {
+      throw new BadRequestException({
+        code: 'DELETE_FAILED',
+        message: `Failed to deactivate item: ${error.message}`,
+        messageAr: `فشل في تعطيل الصنف "${item.name}"`,
+      });
+    }
   }
 
   private toResponseDto(item: any): ItemResponseDto {

@@ -8,6 +8,7 @@ import { Save, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
@@ -185,8 +186,8 @@ export default function WastageProfile() {
                   <FormItem>
                     <FormLabel>الكمية (كجم)</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
+                      <NumericInput
+                        
                         step="0.001"
                         min={0}
                         placeholder="0.000"

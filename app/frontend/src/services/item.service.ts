@@ -47,8 +47,9 @@ export const itemService = {
      * Deactivate item (soft delete)
      * DELETE /v1/items/{id}
      */
-    async deleteItem(id: number): Promise<void> {
-        await axiosInstance.delete(`/items/${id}`);
+    async deleteItem(id: number): Promise<any> {
+        const response = await axiosInstance.delete(`/items/${id}`);
+        return response.data?.data ?? response.data;
     },
 
     /**

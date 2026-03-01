@@ -35,6 +35,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -413,8 +414,8 @@ function ExpenseCreateMode({ isSubmitting, onSubmit }: { isSubmitting: boolean; 
                                                 <FormControl>
                                                     <div className="relative group">
                                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-600 font-bold text-sm">₪</span>
-                                                        <Input
-                                                            type="number"
+                                                        <NumericInput
+                                                            
                                                             step="0.01"
                                                             {...field}
                                                             className="pr-8 bg-white border-emerald-200 h-12 text-lg font-bold text-emerald-700 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono"
@@ -436,8 +437,8 @@ function ExpenseCreateMode({ isSubmitting, onSubmit }: { isSubmitting: boolean; 
                                                 <FormControl>
                                                     <div className="relative group">
                                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₪</span>
-                                                        <Input
-                                                            type="number"
+                                                        <NumericInput
+                                                            
                                                             step="0.01"
                                                             {...field}
                                                             className="pr-8 bg-slate-50 border-slate-200 h-12 font-mono"

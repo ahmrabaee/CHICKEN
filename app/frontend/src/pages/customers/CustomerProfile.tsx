@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -426,7 +427,7 @@ export default function CustomerProfile() {
                                                     <FormControl>
                                                         <div className="relative">
                                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs font-bold font-mono">₪</span>
-                                                            <Input type="number" placeholder="0.000" className="pl-8 text-left font-mono" {...field} />
+                                                            <NumericInput  placeholder="0.000" className="pl-8 text-left font-mono" {...field} />
                                                         </div>
                                                     </FormControl>
                                                     <FormMessage />
@@ -442,7 +443,7 @@ export default function CustomerProfile() {
                                                     <FormControl>
                                                         <div className="relative">
                                                             <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                                            <Input type="number" placeholder="0" className="pl-10 text-left font-mono" {...field} />
+                                                            <NumericInput  placeholder="0" className="pl-10 text-left font-mono" {...field} />
                                                         </div>
                                                     </FormControl>
                                                     <FormMessage />

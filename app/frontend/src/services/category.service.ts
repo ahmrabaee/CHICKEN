@@ -64,7 +64,8 @@ export const categoryService = {
      * Delete category
      * DELETE /v1/categories/{id}
      */
-    async deleteCategory(id: number): Promise<void> {
-        await axiosInstance.delete(`/categories/${id}`);
+    async deleteCategory(id: number): Promise<any> {
+        const response = await axiosInstance.delete(`/categories/${id}`);
+        return response.data?.data ?? response.data;
     },
 };

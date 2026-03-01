@@ -24,6 +24,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
     Select,
@@ -293,8 +294,8 @@ export default function JournalEntryProfile() {
                                                     <FormItem className="w-28">
                                                         <FormLabel className="text-xs">مدين</FormLabel>
                                                         <FormControl>
-                                                            <Input
-                                                                type="number"
+                                                            <NumericInput
+                                                                
                                                                 step="0.01"
                                                                 min={0}
                                                                 placeholder="0.00"
@@ -316,8 +317,8 @@ export default function JournalEntryProfile() {
                                                     <FormItem className="w-28">
                                                         <FormLabel className="text-xs">دائن</FormLabel>
                                                         <FormControl>
-                                                            <Input
-                                                                type="number"
+                                                            <NumericInput
+                                                                
                                                                 step="0.01"
                                                                 min={0}
                                                                 placeholder="0.00"

@@ -33,6 +33,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { Textarea } from "@/components/ui/textarea";
 import {
     Select,
@@ -358,7 +359,7 @@ export default function ItemProfile() {
                                                     <FormControl>
                                                         <div className="relative">
                                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">₪</span>
-                                                            <Input type="number" step="0.01" className="pl-8 font-mono text-center" {...field} />
+                                                            <NumericInput  step="0.01" className="pl-8 font-mono text-center" {...field} />
                                                         </div>
                                                     </FormControl>
                                                     <FormMessage />
@@ -374,7 +375,7 @@ export default function ItemProfile() {
                                                     <FormControl>
                                                         <div className="relative">
                                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">₪</span>
-                                                            <Input type="number" step="0.01" className="pl-8 font-mono text-center" {...field} />
+                                                            <NumericInput  step="0.01" className="pl-8 font-mono text-center" {...field} />
                                                         </div>
                                                     </FormControl>
                                                     <FormDescription>للمرجع والمشتريات. إن لم يكن هناك رصيد، يُستخدم كقيمة معروضة لسعر التكلفة.</FormDescription>
@@ -401,7 +402,7 @@ export default function ItemProfile() {
                                                 <FormControl>
                                                     <div className="relative max-w-[200px]">
                                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">%</span>
-                                                        <Input type="number" step="0.1" className="pl-8 font-mono text-center" {...field} />
+                                                        <NumericInput  step="0.1" className="pl-8 font-mono text-center" {...field} />
                                                     </div>
                                                 </FormControl>
                                                 <FormMessage />
@@ -461,7 +462,7 @@ export default function ItemProfile() {
                                                                 <Badge variant="secondary" className="text-[10px]">اختياري</Badge>
                                                             </FormLabel>
                                                             <FormControl>
-                                                                <Input type="number" step="0.001" className="font-mono text-center text-lg bg-white" {...field} />
+                                                                <NumericInput  step="0.001" className="font-mono text-center text-lg bg-white" {...field} />
                                                             </FormControl>
                                                             <FormDescription>الوزن الافتتاحي المتوفر في المحل</FormDescription>
                                                             <FormMessage />
@@ -480,7 +481,7 @@ export default function ItemProfile() {
                                                             <FormControl>
                                                                 <div className="relative">
                                                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">₪</span>
-                                                                    <Input type="number" step="0.01" className="pl-8 font-mono text-center text-lg bg-white" {...field} />
+                                                                    <NumericInput  step="0.01" className="pl-8 font-mono text-center text-lg bg-white" {...field} />
                                                                 </div>
                                                             </FormControl>
                                                             <FormDescription>يُستخدم مرة واحدة لتهيئة قيمة الرصيد الافتتاحي فقط (لا يُخزن على بطاقة الصنف)</FormDescription>
@@ -511,7 +512,7 @@ export default function ItemProfile() {
                                                 <FormItem>
                                                     <FormLabel>حد الطلب (الحد الأدنى) - KG</FormLabel>
                                                     <FormControl>
-                                                        <Input type="number" step="0.1" className="font-mono text-right" {...field} />
+                                                        <NumericInput  step="0.1" className="font-mono text-right" {...field} />
                                                     </FormControl>
                                                     <FormDescription>سيظهر تنبيه عند وصول المخزون لهذه الكمية</FormDescription>
                                                     <FormMessage />
@@ -525,7 +526,7 @@ export default function ItemProfile() {
                                                 <FormItem>
                                                     <FormLabel>الحد الأقصى - KG</FormLabel>
                                                     <FormControl>
-                                                        <Input type="number" step="0.1" className="font-mono text-right" {...field} />
+                                                        <NumericInput  step="0.1" className="font-mono text-right" {...field} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -541,7 +542,7 @@ export default function ItemProfile() {
                                                 <FormItem>
                                                     <FormLabel>مدة الصلاحية (بالأيام)</FormLabel>
                                                     <FormControl>
-                                                        <Input type="number" {...field} />
+                                                        <NumericInput  {...field} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>

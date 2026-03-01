@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
@@ -559,8 +560,8 @@ function POS() {
 
             <div className="flex items-center gap-4">
               <span className="text-base text-muted-foreground flex-1">الخصم %</span>
-              <Input
-                type="number"
+              <NumericInput
+                
                 value={discount || ""}
                 onChange={(e) => setDiscount(Number(e.target.value))}
                 className="w-24 h-10 text-center text-base"
@@ -615,8 +616,8 @@ function POS() {
 
                 <div className="flex items-center gap-4">
                   <span className="text-base text-muted-foreground flex-1">المبلغ المدفوع</span>
-                  <Input
-                    type="number"
+                  <NumericInput
+                    
                     value={paidAmount}
                     onChange={(e) => setPaidAmount(e.target.value)}
                     className="w-32 h-11 text-lg"

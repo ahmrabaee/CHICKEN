@@ -3,6 +3,7 @@ import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import {
   Search,
   Plus,
+  Download,
   MoreHorizontal,
   Eye,
   Edit,
@@ -13,7 +14,6 @@ import {
   Loader2,
   TrendingDown,
   Calendar,
-  RefreshCw,
   Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -94,7 +94,7 @@ export default function Inventory() {
   const [viewingHistoryItem, setViewingHistoryItem] = useState<InventoryItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<InventoryItem | null>(null);
 
-  const { data: response, isLoading, refetch } = useInventory(queryParams);
+  const { data: response, isLoading } = useInventory(queryParams);
   const deleteItemMutation = useDeleteItem();
   const { data: categories } = useCategories();
   const { data: lowStockItems = [] } = useLowStockItems();
@@ -124,10 +124,37 @@ export default function Inventory() {
     }));
   };
 
+  const handleExportCSV = () => {
+    if (!items || items.length === 0) return;
+    const headers = ["الكود", "الاسم", "التصنيف", "الكمية (كجم)", "الوحدة", "سعر البيع", "متوسط التكلفة"];
+    const rows = items.map(item => [
+      item.itemCode || "",
+      item.itemName || "",
+      item.categoryName || "",
+      ((item.totalQuantity || 0) / 1000).toFixed(2),
+      item.unitOfMeasure || "كجم",
+      ((item.sellingPrice || 0) / 1000).toFixed(3),
+      item.avgCostPrice ? ((item.avgCostPrice) / 1000).toFixed(3) : "-",
+    ]);
+    const BOM = "\uFEFF";
+    const csv = BOM + [headers.join(","), ...rows.map(r => r.map(c => `"${c}"`).join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `inventory_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
-    await deleteItemMutation.mutateAsync(deleteTarget.itemId);
-    setDeleteTarget(null);
+    try {
+      await deleteItemMutation.mutateAsync(deleteTarget.itemId);
+      setDeleteTarget(null);
+    } catch {
+      // Toast handled in mutation onError
+    }
   };
 
   return (
@@ -136,12 +163,12 @@ export default function Inventory() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">المخزون وإدارة الأصناف</h1>
-          <p className="text-muted-foreground mt-1">إدارة المخزون ومتابعة الحركات والكميات المتاحة.</p>
+          <p className="text-muted-foreground mt-1">تتبع مستويات المخزون، الدفعات (FIFO)، وسجل الحركات</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => refetch()} disabled={isLoading}>
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-            تحديث
+          <Button variant="outline" className="gap-2" onClick={handleExportCSV} disabled={!items || items.length === 0}>
+            <Download className="w-4 h-4" />
+            تصدير البيانات
           </Button>
           {isAdmin && (
             <Link to="/inventory/new">

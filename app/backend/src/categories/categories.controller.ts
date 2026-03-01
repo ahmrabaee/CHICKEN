@@ -12,7 +12,7 @@ import { Roles, RolesGuard } from '../common';
 @UseGuards(RolesGuard)
 @Controller('categories')
 export class CategoriesController {
-  constructor(private readonly categoriesService: CategoriesService) {}
+  constructor(private readonly categoriesService: CategoriesService) { }
 
   @Get('purchaseable')
   @Roles('admin', 'accountant')
@@ -73,10 +73,9 @@ export class CategoriesController {
 
   @Delete(':id')
   @Roles('admin')
-  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete or deactivate category' })
   @ApiParam({ name: 'id', description: 'Category ID' })
-  async delete(@Param('id', ParseIntPipe) id: number): Promise<void> {
+  async delete(@Param('id', ParseIntPipe) id: number) {
     return this.categoriesService.delete(id);
   }
 }

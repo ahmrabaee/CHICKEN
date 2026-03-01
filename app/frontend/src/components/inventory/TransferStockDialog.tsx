@@ -11,6 +11,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -151,7 +152,7 @@ export default function TransferStockDialog({ item, onClose }: TransferStockDial
                                 <FormItem>
                                     <FormLabel>الكمية المراد سحبها ({item?.unitOfMeasure})</FormLabel>
                                     <FormControl>
-                                        <Input type="number" step="0.001" placeholder="0.000" {...field} className="text-right font-mono" />
+                                        <NumericInput  step="0.001" placeholder="0.000" {...field} className="text-right font-mono" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

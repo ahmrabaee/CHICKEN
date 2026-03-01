@@ -19,6 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { reconciliationService, type OpenInvoice, type UnallocatedPayment, type SuggestMatch } from "@/services/reconciliation.service";
 import { customerService } from "@/services/customer.service";
 import { supplierService } from "@/services/supplier.service";
@@ -276,8 +277,8 @@ export default function Reconciliation() {
                         <TableCell>#{a.paymentId}</TableCell>
                         <TableCell>{a.invoiceType === "sale" ? "SAL" : "PUR"}-{a.invoiceId}</TableCell>
                         <TableCell>
-                          <Input
-                            type="number"
+                          <NumericInput
+                            
                             value={a.amount / 100}
                             onChange={(e) => updateAllocAmount(idx, Math.round(parseFloat(e.target.value || "0") * 100))}
                             className="w-24"

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Save, Loader2, Barcode, TestTube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -95,7 +96,7 @@ export function BarcodeSettingsTab() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Barcode className="w-5 h-5" />
-          الباركود المخصص (25 رقم)
+          الباركود المخصص
         </CardTitle>
         <CardDescription>
           تكوين تنسيق الباركود للمنتجات متغيرة الوزن
@@ -119,8 +120,8 @@ export function BarcodeSettingsTab() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>طول الباركود</Label>
-                <Input
-                  type="number"
+                <NumericInput
+                  
                   value={totalLength}
                   onChange={(e) => setTotalLength(parseInt(e.target.value) || 25)}
                   min={1}
@@ -129,14 +130,14 @@ export function BarcodeSettingsTab() {
               <div className="space-y-2">
                 <Label>كود الصنف</Label>
                 <div className="flex gap-2">
-                  <Input
-                    type="number"
+                  <NumericInput
+                    
                     placeholder="موضع البداية"
                     value={itemCodeStart}
                     onChange={(e) => setItemCodeStart(parseInt(e.target.value) || 0)}
                   />
-                  <Input
-                    type="number"
+                  <NumericInput
+                    
                     placeholder="الطول"
                     value={itemCodeLength}
                     onChange={(e) => setItemCodeLength(parseInt(e.target.value) || 6)}
@@ -146,14 +147,14 @@ export function BarcodeSettingsTab() {
               <div className="space-y-2">
                 <Label>الوزن (غرام)</Label>
                 <div className="flex gap-2">
-                  <Input
-                    type="number"
+                  <NumericInput
+                    
                     placeholder="موضع البداية"
                     value={weightStart}
                     onChange={(e) => setWeightStart(parseInt(e.target.value) || 0)}
                   />
-                  <Input
-                    type="number"
+                  <NumericInput
+                    
                     placeholder="الطول"
                     value={weightLength}
                     onChange={(e) => setWeightLength(parseInt(e.target.value) || 5)}
@@ -163,14 +164,14 @@ export function BarcodeSettingsTab() {
               <div className="space-y-2">
                 <Label>السعر الإجمالي مع الضريبة</Label>
                 <div className="flex gap-2">
-                  <Input
-                    type="number"
+                  <NumericInput
+                    
                     placeholder="موضع البداية"
                     value={totalPriceStart}
                     onChange={(e) => setTotalPriceStart(parseInt(e.target.value) || 0)}
                   />
-                  <Input
-                    type="number"
+                  <NumericInput
+                    
                     placeholder="الطول"
                     value={totalPriceLength}
                     onChange={(e) => setTotalPriceLength(parseInt(e.target.value) || 7)}
@@ -180,14 +181,14 @@ export function BarcodeSettingsTab() {
               <div className="space-y-2">
                 <Label>السعر</Label>
                 <div className="flex gap-2">
-                  <Input
-                    type="number"
+                  <NumericInput
+                    
                     placeholder="موضع البداية"
                     value={priceStart}
                     onChange={(e) => setPriceStart(parseInt(e.target.value) || 0)}
                   />
-                  <Input
-                    type="number"
+                  <NumericInput
+                    
                     placeholder="الطول"
                     value={priceLength}
                     onChange={(e) => setPriceLength(parseInt(e.target.value) || 5)}

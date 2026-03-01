@@ -1,0 +1,196 @@
+﻿diff --cc app/backend/src/categories/categories.service.ts
+index 41f2c16,cbca0a9..0000000
+--- a/app/backend/src/categories/categories.service.ts
++++ b/app/backend/src/categories/categories.service.ts
+@@@ -190,58 -190,64 +190,118 @@@ export class CategoriesService 
+        throw new NotFoundException({
+          code: 'NOT_FOUND',
+          message: 'Category not found',
+++<<<<<<< HEAD
+ +        messageAr: 'الفئة غير موجودة',
+ +      });
+ +    }
+ +
+ +    // Collect ALL items linked to this category
+ +    const allItems = await this.prisma.item.findMany({
+ +      where: { categoryId: id },
+ +      select: { id: true },
+ +    });
+ +
+ +    if (allItems.length > 0) {
+ +      const allIds = allItems.map((i) => i.id);
+ +
+ +      // Block only if any item has real transaction history (onDelete: Restrict tables)
+ +      const [saleLinesCount, purchaseLinesCount, stockMovementsCount, wastageCount, transferLinesCount, ledgerCount] =
+ +        await Promise.all([
+ +          this.prisma.saleLine.count({ where: { itemId: { in: allIds } } }),
+ +          this.prisma.purchaseLine.count({ where: { itemId: { in: allIds } } }),
+ +          this.prisma.stockMovement.count({ where: { itemId: { in: allIds } } }),
+ +          this.prisma.wastageRecord.count({ where: { itemId: { in: allIds } } }),
+ +          this.prisma.stockTransferLine.count({ where: { itemId: { in: allIds } } }),
+ +          this.prisma.stockLedgerEntry.count({ where: { itemId: { in: allIds } } }),
+ +        ]);
+ +
+ +      const totalDeps =
+ +        saleLinesCount + purchaseLinesCount + stockMovementsCount + wastageCount + transferLinesCount + ledgerCount;
+ +
+ +      if (totalDeps > 0) {
+ +        throw new ConflictException({
+ +          code: 'CATEGORY_HAS_HISTORY',
+ +          message: `Cannot delete category: its items have transaction history (${totalDeps} record(s))`,
+ +          messageAr: `لا يمكن حذف الفئة لأن أصنافها تحتوي على سجلات معاملات (${totalDeps} سجل). لا يمكن حذف بيانات لها تاريخ محاسبي.`,
+ +        });
+ +      }
+ +
+ +      // No transaction history — cascade delete items then category in one transaction
+ +      await this.prisma.$transaction(async (tx) => {
+ +        // Nullify any category.purchaseItemId pointing at these items
+ +        await tx.category.updateMany({
+ +          where: { purchaseItemId: { in: allIds } },
+ +          data: { purchaseItemId: null },
+ +        });
+ +        // Hard-delete items (Inventory + InventoryLots cascade via onDelete: Cascade)
+ +        await tx.item.deleteMany({ where: { id: { in: allIds } } });
+ +        // Delete the category itself
+ +        await tx.category.delete({ where: { id } });
+ +      });
+ +      return;
+++=======
++         messageAr: 'التصنيف غير موجود',
++       });
++     }
++ 
++     // Count real user items (exclude the auto-linked purchaseItem)
++     const realItemCount = await this.prisma.item.count({
++       where: {
++         categoryId: id,
++         id: category.purchaseItemId ? { not: category.purchaseItemId } : undefined,
++       },
++     });
++ 
++     if (realItemCount > 0) {
++       // Soft delete - deactivate category and its purchaseItem
++       await this.prisma.$transaction(async (tx) => {
++         await tx.category.update({
++           where: { id },
++           data: { isActive: false },
++         });
++         if (category.purchaseItemId) {
++           await tx.item.update({
++             where: { id: category.purchaseItemId },
++             data: { isActive: false },
++           });
++         }
++       });
++       return {
++         action: 'deactivated',
++         messageAr: `تم تعطيل التصنيف "${category.name}" لأنه يحتوي على ${realItemCount} صنف مرتبط`,
++       };
++     } else {
++       // Hard delete - remove purchaseItem link first, then delete
++       await this.prisma.$transaction(async (tx) => {
++         // Null out the purchaseItemId FK first
++         if (category.purchaseItemId) {
++           await tx.category.update({
++             where: { id },
++             data: { purchaseItemId: null },
++           });
++           // Delete the auto-created purchase item
++           await tx.item.delete({
++             where: { id: category.purchaseItemId },
++           }).catch(() => {
++             // If purchaseItem has related records, just deactivate it
++             return tx.item.update({
++               where: { id: category.purchaseItemId! },
++               data: { isActive: false },
++             });
++           });
++         }
++         // Now delete the category itself
++         await tx.category.delete({ where: { id } });
++       });
++       return {
++         action: 'deleted',
++         messageAr: `تم حذف التصنيف "${category.name}" نهائياً`,
++       };
+++>>>>>>> 13f4600 (تعديلات اخر الليل)
+      }
+ +
+ +    // No items at all — direct delete
+ +    await this.prisma.category.delete({ where: { id } });
+    }
+  
+    private toResponseDto(category: any): CategoryResponseDto {
+diff --cc app/frontend/src/hooks/use-inventory.ts
+index d623111,0a61ab9..0000000
+--- a/app/frontend/src/hooks/use-inventory.ts
++++ b/app/frontend/src/hooks/use-inventory.ts
+@@@ -72,20 -70,13 +72,24 @@@ export const useDeleteCategory = () => 
+              queryClient.invalidateQueries({ queryKey: ['categories'] });
+              queryClient.invalidateQueries({ queryKey: ['inventory'] });
+              queryClient.invalidateQueries({ queryKey: ['items'] });
+++<<<<<<< HEAD
+ +            toast({ title: 'تم حذف الفئة بنجاح' });
+++=======
++             toast({ title: _data?.messageAr || 'تم حذف التصنيف بنجاح' });
+++>>>>>>> 13f4600 (تعديلات اخر الليل)
+          },
+          onError: (error: any) => {
+ +            const data = error?.response?.data;
+ +            const messageAr =
+ +                data?.error?.messageAr ||
+ +                data?.messageAr ||
+ +                data?.message?.messageAr ||
+ +                (typeof data?.message === 'string' ? data.message : null) ||
+ +                'حدث خطأ غير متوقع';
+              toast({
+                  variant: 'destructive',
+ -                title: 'خطأ في حذف التصنيف',
+ -                description: error.response?.data?.messageAr || 'حدث خطأ غير متوقع',
+ +                title: 'تعذّر حذف الفئة',
+ +                description: messageAr,
+              });
+          },
+      });
+@@@ -199,14 -183,12 +203,14 @@@ export const useDeleteItem = () => 
+      const queryClient = useQueryClient();
+      return useMutation({
+          mutationFn: (id: number) => itemService.deleteItem(id),
+-         onSuccess: () => {
++         onSuccess: (_data: any) => {
+              queryClient.invalidateQueries({ queryKey: ['inventory'] });
+              queryClient.invalidateQueries({ queryKey: ['items'] });
+-             toast({ title: 'تم حذف الصنف بنجاح' });
++             toast({ title: _data?.messageAr || 'تم حذف الصنف بنجاح' });
+          },
+          onError: (error: any) => {
+ +            const data = error?.response?.data;
+ +            const msgAr = data?.error?.messageAr || data?.messageAr || 'حدث خطأ غير متوقع';
+              toast({
+                  variant: 'destructive',
+                  title: 'خطأ في حذف الصنف',
+diff --cc app/frontend/src/pages/Inventory.tsx
+index ef5811a,58a36f6..0000000
+--- a/app/frontend/src/pages/Inventory.tsx
++++ b/app/frontend/src/pages/Inventory.tsx
+@@@ -136,12 -163,12 +162,18 @@@ export default function Inventory() 
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">المخزون وإدارة الأصناف</h1>
+ -          <p className="text-muted-foreground mt-1">تتبع مستويات المخزون، الدفعات (FIFO)، وسجل الحركات</p>
+ +          <p className="text-muted-foreground mt-1">إدارة المخزون ومتابعة الحركات والكميات المتاحة.</p>
+          </div>
+          <div className="flex items-center gap-3">
+++<<<<<<< HEAD
+ +          <Button variant="outline" size="sm" className="gap-2" onClick={() => refetch()} disabled={isLoading}>
+ +            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+ +            تحديث
+++=======
++           <Button variant="outline" className="gap-2" onClick={handleExportCSV} disabled={!items || items.length === 0}>
++             <Download className="w-4 h-4" />
++             تصدير البيانات
+++>>>>>>> 13f4600 (تعديلات اخر الليل)
+            </Button>
+            {isAdmin && (
+              <Link to="/inventory/new">
+

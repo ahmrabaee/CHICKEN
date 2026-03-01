@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { Label } from "@/components/ui/label";
 import { creditNoteService } from "@/services/credit-note.service";
 import { reconciliationService } from "@/services/reconciliation.service";
@@ -119,8 +120,8 @@ export function CreditNoteCreateDialog({
           )}
           <div>
             <Label>المبلغ (شيكل) *</Label>
-            <Input
-              type="number"
+            <NumericInput
+              
               step="0.01"
               value={amount || ""}
               onChange={(e) => setAmount(parseFloat(e.target.value || "0"))}

@@ -1,0 +1,55 @@
+﻿interactive rebase in progress; onto e9c3afd
+Last command done (1 command done):
+   pick 13f4600 # تعديلات اخر الليل
+No commands remaining.
+You are currently rebasing branch 'main' on 'e9c3afd'.
+  (fix conflicts and then run "git rebase --continue")
+  (use "git rebase --skip" to skip this patch)
+  (use "git rebase --abort" to check out the original branch)
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	modified:   app/backend/src/categories/categories.controller.ts
+	modified:   app/backend/src/items/items.controller.ts
+	modified:   app/backend/src/items/items.service.ts
+	modified:   app/backend/src/wastage/dto/wastage.dto.ts
+	modified:   app/backend/src/wastage/wastage.service.ts
+	new file:   app/frontend/replace_inputs.py
+	modified:   app/frontend/src/components/credit-note/CreditNoteCreateDialog.tsx
+	modified:   app/frontend/src/components/inventory/AdjustStockDialog.tsx
+	modified:   app/frontend/src/components/inventory/TransferStockDialog.tsx
+	modified:   app/frontend/src/components/settings/BarcodeSettingsTab.tsx
+	new file:   app/frontend/src/components/ui/numeric-input.tsx
+	new file:   app/frontend/src/constants/auditLogLabels.ts
+	modified:   app/frontend/src/hooks/use-wastage.ts
+	new file:   app/frontend/src/lib/numbers.ts
+	modified:   app/frontend/src/pages/Audit.tsx
+	modified:   app/frontend/src/pages/CreditNotes.tsx
+	modified:   app/frontend/src/pages/POS.tsx
+	modified:   app/frontend/src/pages/Reconciliation.tsx
+	modified:   app/frontend/src/pages/Settings.tsx
+	modified:   app/frontend/src/pages/accounting/JournalEntryProfile.tsx
+	modified:   app/frontend/src/pages/customers/CustomerProfile.tsx
+	modified:   app/frontend/src/pages/expenses/ExpenseProfile.tsx
+	modified:   app/frontend/src/pages/inventory/ItemProfile.tsx
+	modified:   app/frontend/src/pages/payments/PaymentProfile.tsx
+	modified:   app/frontend/src/pages/purchasing/PurchaseProfile.tsx
+	modified:   app/frontend/src/pages/stock-transfer/StockTransferProfile.tsx
+	modified:   app/frontend/src/pages/suppliers/SupplierProfile.tsx
+	modified:   app/frontend/src/pages/wastage/WastageProfile.tsx
+	modified:   app/frontend/src/services/category.service.ts
+	modified:   app/frontend/src/services/item.service.ts
+
+Unmerged paths:
+  (use "git restore --staged <file>..." to unstage)
+  (use "git add <file>..." to mark resolution)
+	both modified:   app/backend/src/categories/categories.service.ts
+	both modified:   app/frontend/src/hooks/use-inventory.ts
+	both modified:   app/frontend/src/pages/Inventory.tsx
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	diff.txt
+	status.txt
+
+

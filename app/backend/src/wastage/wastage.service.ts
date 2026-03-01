@@ -8,7 +8,7 @@ export class WastageService {
   constructor(
     private prisma: PrismaService,
     private accountingService: AccountingService,
-  ) {}
+  ) { }
 
   async findAll(pagination: PaginationQueryDto) {
     const { page = 1, pageSize = 20 } = pagination;
@@ -54,13 +54,15 @@ export class WastageService {
       });
     }
 
-    const branchId = dto.branchId != null ? Number(dto.branchId) : null;
-    if (!branchId) {
-        throw new BadRequestException({
-            code: 'VALIDATION_ERROR',
-            message: 'branchId is required',
-            messageAr: 'الفرع مطلوب',
-        });
+    // branchId: use from payload, or derive from lot's inventory
+    let branchId = dto.branchId != null ? Number(dto.branchId) : null;
+    if (!branchId || Number.isNaN(branchId)) {
+      // Auto-derive from the lot's item inventory
+      const lot = await this.prisma.inventoryLot.findUnique({
+        where: { id: lotId },
+        include: { item: { include: { inventory: true } } },
+      });
+      branchId = lot?.item?.inventory?.branchId ?? 1;
     }
 
     const weightGrams = Math.round(Number(dto.quantityGrams ?? dto.weightGrams ?? 0));

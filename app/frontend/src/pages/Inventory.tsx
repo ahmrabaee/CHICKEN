@@ -3,7 +3,6 @@ import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import {
   Search,
   Plus,
-  Download,
   MoreHorizontal,
   Eye,
   Edit,
@@ -137,16 +136,12 @@ export default function Inventory() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">المخزون وإدارة الأصناف</h1>
-          <p className="text-muted-foreground mt-1">تتبع مستويات المخزون، الدفعات (FIFO)، وسجل الحركات</p>
+          <p className="text-muted-foreground mt-1">إدارة المخزون ومتابعة الحركات والكميات المتاحة.</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" className="gap-2" onClick={() => refetch()} disabled={isLoading}>
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
             تحديث
-          </Button>
-          <Button variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
-            تصدير البيانات
           </Button>
           {isAdmin && (
             <Link to="/inventory/new">

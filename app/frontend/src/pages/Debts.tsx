@@ -12,8 +12,8 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { useReceivables, usePayables, useDebtSummary, useDebt } from "@/hooks/use-debts";
 import { Debt } from "@/types/debts";
 import { PdfPreviewDialog } from "@/components/reports/PdfPreviewDialog";
+import { formatCurrency, computeDebtNumbers } from "@/lib/formatters";
 
-function formatCurrency(v: number) { return `₪ ${(v / 100).toFixed(2)}`; }
 function formatDate(d: string) { return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }); }
 
 function getStatusBadge(status: string) {
@@ -44,8 +44,15 @@ function DebtDetailCard({ debtId, open, onClose }: { debtId: number; open: boole
                             {debt.supplierName && <Info label="التاجر" value={debt.supplierName} />}
                             {debt.saleNumber && <Info label="رقم الفاتورة" value={debt.saleNumber} />}
                             {debt.purchaseNumber && <Info label="رقم الطلب" value={debt.purchaseNumber} />}
-                            <Info label="المبلغ الأصلي" value={formatCurrency(debt.originalAmount)} />
-                            <Info label="المتبقي" value={formatCurrency(debt.remainingAmount)} highlight />
+                            {(() => {
+                                const { original, remaining } = computeDebtNumbers(debt as unknown as Record<string, unknown>);
+                                return (
+                                    <>
+                                        <Info label="المبلغ الأصلي" value={formatCurrency(original)} />
+                                        <Info label="المتبقي" value={formatCurrency(remaining)} highlight />
+                                    </>
+                                );
+                            })()}
                             {debt.dueDate && <Info label="تاريخ الاستحقاق" value={formatDate(debt.dueDate)} />}
                             {debt.isOverdue && <Info label="متأخر" value={<StatusBadge status="danger">متأخر</StatusBadge>} />}
                             <Info label="تاريخ الإنشاء" value={formatDate(debt.createdAt)} />
@@ -67,7 +74,7 @@ function Info({ label, value, highlight }: { label: string; value: React.ReactNo
 }
 
 function DebtTable({ debts, isLoading, error, isReceivable }: {
-    debts: Debt[]; isLoading: boolean; error: any; isReceivable: boolean;
+    debts: Debt[]; isLoading: boolean; error: unknown; isReceivable: boolean;
 }) {
     const [detailId, setDetailId] = useState<number | null>(null);
 
@@ -97,10 +104,16 @@ function DebtTable({ debts, isLoading, error, isReceivable }: {
                             <TableBody>
                                 {debts.map((d) => (
                                     <TableRow key={d.id} className="data-table-row">
-                                        <TableCell className="font-medium">{isReceivable ? d.customerName : d.supplierName}</TableCell>
-                                        <TableCell className="text-center text-sm text-muted-foreground font-mono">{d.saleNumber || d.purchaseNumber || "-"}</TableCell>
-                                        <TableCell className="text-center">{formatCurrency(d.originalAmount)}</TableCell>
-                                        <TableCell className="text-center font-semibold text-red-600 dark:text-red-400">{formatCurrency(d.remainingAmount)}</TableCell>
+                                        <TableCell className="font-medium">
+                                            {isReceivable
+                                                ? (d.customerName ?? d.partyName ?? "—")
+                                                : (d.supplierName ?? d.partyName ?? "—")}
+                                        </TableCell>
+                                        <TableCell className="text-center text-sm text-muted-foreground font-mono">
+                                            {d.saleNumber || d.purchaseNumber || d.debtNumber || "—"}
+                                        </TableCell>
+                                        <TableCell className="text-center">{formatCurrency(computeDebtNumbers(d as unknown as Record<string, unknown>).original)}</TableCell>
+                                        <TableCell className="text-center font-semibold text-red-600 dark:text-red-400">{formatCurrency(computeDebtNumbers(d as unknown as Record<string, unknown>).remaining)}</TableCell>
                                         <TableCell className="text-center text-muted-foreground">{d.dueDate ? formatDate(d.dueDate) : "-"}</TableCell>
                                         <TableCell className="text-center">{getStatusBadge(d.status)}</TableCell>
                                         <TableCell className="text-center">

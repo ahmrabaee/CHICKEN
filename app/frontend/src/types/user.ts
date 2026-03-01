@@ -12,7 +12,6 @@ export interface User {
     username: string;
     fullName: string;
     fullNameEn?: string;
-    email?: string;
     phone?: string;
     preferredLanguage: string;
     defaultBranchId?: number;
@@ -27,7 +26,6 @@ export interface CreateUserDto {
     password?: string; // Optional if we generate it or set it later, though backend expects it
     fullName: string;
     fullNameEn?: string;
-    email?: string;
     phone?: string;
     roleId: number;
     defaultBranchId?: number;

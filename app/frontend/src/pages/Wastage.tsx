@@ -135,7 +135,7 @@ export default function Wastage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">الهدر والتالف</h1>
-          <p className="text-muted-foreground mt-1">سجل الهدر والتلف — قائمة وزر عرض التفاصيل الكاملة</p>
+          <p className="text-muted-foreground mt-1">تسجيل ومتابعة حالات الهدر والتلف في النظام.</p>
         </div>
         <Link to="/wastage/new">
           <Button className="gap-2">

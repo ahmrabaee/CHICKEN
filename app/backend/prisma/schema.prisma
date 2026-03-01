@@ -22,7 +22,7 @@ datasource db {
 
 /// Shop locations/branches for multi-branch support
 /// PRD Section: 2.1 - Branch/Outlet Configuration
-/// Blueprint 06: stockAccountId for Warehouse→Account mapping
+/// stockAccountId maps each branch to its inventory GL account
 model Branch {
   id              Int      @id @default(autoincrement())
   code            String   @unique
@@ -34,7 +34,7 @@ model Branch {
   scaleComPort    String?  @map("scale_com_port")
   isMainBranch    Boolean  @default(false) @map("is_main_branch")
   isActive        Boolean  @default(true) @map("is_active")
-  stockAccountId  Int?     @map("stock_account_id") // Blueprint 06: per-branch stock account
+  stockAccountId  Int?     @map("stock_account_id") // per-branch inventory GL account
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
@@ -523,7 +523,6 @@ model Customer {
   nameEn             String?  @map("name_en")
   phone              String?
   phone2             String?
-  email              String?
   address            String?
   creditLimit        Int      @default(0) @map("credit_limit") // Minor units
   currentBalance     Int      @default(0) @map("current_balance") // Computed
@@ -556,7 +555,6 @@ model Supplier {
   name              String // Arabic name (primary)
   nameEn            String?  @map("name_en")
   phone             String?
-  email             String?
   address           String?
   contactPerson     String?  @map("contact_person")
   taxNumber         String?  @map("tax_number")

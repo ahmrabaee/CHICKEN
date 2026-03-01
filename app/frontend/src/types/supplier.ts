@@ -8,7 +8,6 @@ export interface Supplier {
     name: string;
     nameEn?: string | null;
     phone?: string | null;
-    email?: string | null;
     address?: string | null;
     contactPerson?: string | null;
     taxNumber?: string | null;
@@ -35,7 +34,6 @@ export interface CreateSupplierDto {
     nameEn?: string;
     contactPerson?: string;
     phone?: string;
-    email?: string;
     address?: string;
     paymentTerms?: string;
     taxNumber?: string;

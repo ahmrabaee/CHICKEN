@@ -61,25 +61,20 @@ export default function Branches() {
     const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
 
     // Queries and mutations
-    const { data: branches = [], isLoading, error } = useBranches();
+    const { data: branches = [], isLoading, error } = useBranches(showInactive);
     const deleteMutation = useDeleteBranch();
     const activateMutation = useActivateBranch();
 
-    // Filter branches
-    const filteredBranches = branches.filter((branch) => {
-        const matchesSearch =
-            branch.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            branch.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            branch.nameEn?.toLowerCase().includes(searchQuery.toLowerCase());
+    // Filter branches (search only – status is handled server-side via includeInactive)
+    const filteredBranches = branches.filter((branch) =>
+        branch.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        branch.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        branch.nameEn?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
-        const matchesStatus = showInactive ? true : branch.isActive;
-
-        return matchesSearch && matchesStatus;
-    });
-
-    // Navigate to create page
+    // Create branch – coming soon
     const handleCreate = () => {
-        navigate("/branches/new");
+        toast.info("ميزة إضافة الفروع غير متوفرة حالياً وسيتم إطلاقها قريباً.");
     };
 
     // Navigate to edit page
@@ -153,9 +148,10 @@ export default function Branches() {
                         إنشاء وإدارة فروع المتجر
                     </p>
                 </div>
-                <Button onClick={handleCreate} className="gap-2">
+                <Button onClick={handleCreate} variant="outline" className="gap-2">
                     <Plus className="w-4 h-4" />
                     إضافة فرع جديد
+                    <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 px-1.5 py-0.5 rounded-full">قريباً</span>
                 </Button>
             </div>
 
@@ -211,7 +207,6 @@ export default function Branches() {
                                     <TableHead className="text-right">اسم الفرع</TableHead>
                                     <TableHead className="text-right">العنوان</TableHead>
                                     <TableHead className="text-right">الهاتف</TableHead>
-                                    <TableHead className="text-right">الميزان</TableHead>
                                     <TableHead className="text-right">المستخدمين</TableHead>
                                     <TableHead className="text-right">الحالة</TableHead>
                                     <TableHead className="text-right">الإجراءات</TableHead>
@@ -260,18 +255,6 @@ export default function Branches() {
                                                 </div>
                                             ) : (
                                                 <span className="text-muted-foreground">-</span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            {branch.hasScale ? (
-                                                <div className="flex items-center gap-1">
-                                                    <Scale className={`w-4 h-4 ${branch.scaleComPort ? "text-green-500" : "text-yellow-500"}`} />
-                                                    <span className="text-sm font-mono" dir="ltr">
-                                                        {branch.scaleComPort || <span className="text-yellow-600 text-xs">غير محدد</span>}
-                                                    </span>
-                                                </div>
-                                            ) : (
-                                                <span className="text-muted-foreground text-sm">لا يوجد</span>
                                             )}
                                         </TableCell>
                                         <TableCell>

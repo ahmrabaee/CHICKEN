@@ -62,15 +62,13 @@ import { PdfPreviewDialog } from "@/components/reports/PdfPreviewDialog";
 
 /**
  * Build API payload: only send optional fields when they have values.
- * Backend ValidationPipe + @IsEmail() fail on empty string for email;
- * omit empty strings so optional validators are skipped.
+ * Omit empty strings so optional validators are skipped.
  */
 function toCreateSupplierDto(values: SupplierFormValues): CreateSupplierDto {
     const dto: CreateSupplierDto = { name: values.name.trim() };
     if (values.nameEn?.trim()) dto.nameEn = values.nameEn.trim();
     if (values.contactPerson?.trim()) dto.contactPerson = values.contactPerson.trim();
     if (values.phone?.trim()) dto.phone = values.phone.trim();
-    if (values.email?.trim()) dto.email = values.email.trim();
     if (values.address?.trim()) dto.address = values.address.trim();
     if (values.paymentTerms?.trim()) dto.paymentTerms = values.paymentTerms.trim();
     if (values.taxNumber?.trim()) dto.taxNumber = values.taxNumber.trim();
@@ -89,7 +87,6 @@ const supplierSchema = z.object({
     nameEn: z.string().optional().or(z.literal("")),
     contactPerson: z.string().optional().or(z.literal("")),
     phone: z.string().optional().or(z.literal("")),
-    email: z.string().email("البريد الإلكتروني غير صحيح").optional().or(z.literal("")),
     address: z.string().optional().or(z.literal("")),
     paymentTerms: z.string().optional().or(z.literal("")),
     taxNumber: z.string().optional().or(z.literal("")),
@@ -133,7 +130,6 @@ export default function SupplierProfile() {
             nameEn: "",
             contactPerson: "",
             phone: "",
-            email: "",
             address: "",
             paymentTerms: "",
             taxNumber: "",
@@ -153,7 +149,6 @@ export default function SupplierProfile() {
                 nameEn: existingSupplier.nameEn || "",
                 contactPerson: existingSupplier.contactPerson || "",
                 phone: existingSupplier.phone || "",
-                email: existingSupplier.email || "",
                 address: existingSupplier.address || "",
                 paymentTerms: existingSupplier.paymentTerms || "",
                 taxNumber: existingSupplier.taxNumber || "",
@@ -360,27 +355,6 @@ export default function SupplierProfile() {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="email"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>البريد الإلكتروني</FormLabel>
-                                                    <FormControl>
-                                                        <div className="relative">
-                                                            <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                                            <Input
-                                                                placeholder="supplier@example.com"
-                                                                className="pr-10 font-english"
-                                                                dir="ltr"
-                                                                {...field}
-                                                            />
-                                                        </div>
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
                                         <FormField
                                             control={form.control}
                                             name="address"

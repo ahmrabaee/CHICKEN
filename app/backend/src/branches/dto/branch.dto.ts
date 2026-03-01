@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, PartialType, OmitType } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsInt, Matches, ValidateIf } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsInt, Matches } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateBranchDto {
@@ -31,22 +31,7 @@ export class CreateBranchDto {
   @IsOptional()
   phone?: string;
 
-  @ApiPropertyOptional({ description: 'Branch has a weight scale', default: true })
-  @Type(() => Boolean)
-  @IsBoolean()
-  @IsOptional()
-  hasScale?: boolean;
-
-  @ApiPropertyOptional({ description: 'Scale COM port (required if hasScale is true)', example: 'COM3' })
-  @IsString()
-  @IsOptional()
-  @Matches(/^COM[1-9][0-9]?$/, {
-    message: 'Scale COM port must be in format COM1 to COM99',
-  })
-  @ValidateIf((o) => o.hasScale === true)
-  scaleComPort?: string;
-
-  @ApiPropertyOptional({ description: 'Stock account ID (Blueprint 06)', example: 1 })
+  @ApiPropertyOptional({ description: 'Stock account ID for inventory GL posting', example: 1 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -78,18 +63,12 @@ export class BranchResponseDto {
   phone?: string;
 
   @ApiProperty({ example: true })
-  hasScale: boolean;
-
-  @ApiPropertyOptional({ example: 'COM3' })
-  scaleComPort?: string;
-
-  @ApiProperty({ example: true })
   isMainBranch: boolean;
 
   @ApiProperty({ example: true })
   isActive: boolean;
 
-  @ApiPropertyOptional({ example: 1, description: 'Stock account ID (Blueprint 06)' })
+  @ApiPropertyOptional({ example: 1, description: 'Stock account ID for inventory GL posting' })
   stockAccountId?: number | null;
 
   @ApiPropertyOptional({ description: 'Stock account details' })

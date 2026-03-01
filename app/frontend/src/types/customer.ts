@@ -14,7 +14,6 @@ export interface Customer {
     nameEn?: string;
     phone?: string;
     phone2?: string;
-    email?: string;
     address?: string;
     creditLimit: number;
     currentBalance: number;
@@ -35,7 +34,6 @@ export interface CreateCustomerDto {
     nameEn?: string;
     phone?: string;
     phone2?: string;
-    email?: string;
     address?: string;
     creditLimit?: number;
     priceLevel?: PriceLevel;
@@ -53,7 +51,6 @@ export interface UpdateCustomerDto {
     nameEn?: string;
     phone?: string;
     phone2?: string;
-    email?: string;
     address?: string;
     creditLimit?: number;
     priceLevel?: PriceLevel;

@@ -176,12 +176,6 @@ function SupplierDetailCard({ supplier, onClose }: { supplier: Supplier; onClose
                   dir="ltr"
                 />
                 <DetailItem
-                  icon={<Mail className="w-4 h-4 text-cyan-500" />}
-                  label="البريد الإلكتروني"
-                  value={supplier.email}
-                  dir="ltr"
-                />
-                <DetailItem
                   icon={<MapPin className="w-4 h-4 text-rose-500" />}
                   label="العنوان"
                   value={supplier.address}
@@ -384,15 +378,9 @@ export default function Suppliers() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">التجار والموردون</h1>
-          <p className="text-muted-foreground mt-1">
-            إدارة بيانات الموردين، مزارع الدواجن، وتتبع المستحقات المالية
-          </p>
+          <p className="text-muted-foreground mt-1">إدارة بيانات الموردين ومتابعة الحسابات المرتبطة.</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
-            تصدير
-          </Button>
           <Button onClick={handleCreate} className="gap-2">
             <Plus className="w-4 h-4" />
             تاجر جديد

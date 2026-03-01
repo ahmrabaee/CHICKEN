@@ -477,10 +477,6 @@ export default function Sales() {
           <p className="text-muted-foreground mt-1">سجل جميع عمليات البيع</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
-            تصدير
-          </Button>
           <Link to="/sales/new">
             <Button className="gap-2">
               <Plus className="w-4 h-4" />

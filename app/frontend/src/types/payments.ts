@@ -38,7 +38,6 @@ export interface Payment {
         fullName: string;
         fullNameEn?: string;
         phone?: string;
-        email?: string;
         employeeNumber?: string;
     };
     branch?: {

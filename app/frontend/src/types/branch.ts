@@ -9,8 +9,6 @@ export interface Branch {
     nameEn?: string;
     address?: string;
     phone?: string;
-    hasScale: boolean;
-    scaleComPort?: string;
     isMainBranch: boolean;
     isActive: boolean;
     stockAccountId?: number | null;
@@ -36,8 +34,6 @@ export interface CreateBranchDto {
     nameEn?: string;
     address?: string;
     phone?: string;
-    hasScale?: boolean;
-    scaleComPort?: string;
     stockAccountId?: number;
 }
 
@@ -49,8 +45,6 @@ export interface UpdateBranchDto {
     nameEn?: string;
     address?: string;
     phone?: string;
-    hasScale?: boolean;
-    scaleComPort?: string;
     stockAccountId?: number | null;
 }
 

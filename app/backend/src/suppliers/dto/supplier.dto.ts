@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEmail, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsBoolean } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 
 export class CreateSupplierDto {
@@ -20,11 +20,6 @@ export class CreateSupplierDto {
   @IsString()
   @IsOptional()
   phone?: string;
-
-  @ApiPropertyOptional()
-  @IsEmail()
-  @IsOptional()
-  email?: string;
 
   @ApiPropertyOptional()
   @IsString()

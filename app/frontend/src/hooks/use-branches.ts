@@ -5,11 +5,12 @@ import { CreateBranchDto, UpdateBranchDto } from '@/types/branch';
 
 /**
  * Hook to fetch all branches
+ * @param includeInactive  When true, includes inactive branches (default: false – active only)
  */
-export const useBranches = () => {
+export const useBranches = (includeInactive = false) => {
     return useQuery({
-        queryKey: ['branches'],
-        queryFn: () => branchService.getBranches(),
+        queryKey: ['branches', { includeInactive }],
+        queryFn: () => branchService.getBranches(includeInactive),
     });
 };
 

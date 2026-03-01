@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Save, Upload, User, Bell, Printer, Globe, Key, Check, X, Calculator, Receipt, Database, Shield, Barcode, Building2 } from "lucide-react";
+import { Save, User, Bell, Printer, Globe, Key, Check, X, Calculator, Receipt, Database, Shield, Barcode, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -186,31 +185,11 @@ export default function Settings() {
                   <Input defaultValue="0599123456" dir="ltr" />
                 </div>
                 <div className="space-y-2">
-                  <Label>البريد الإلكتروني</Label>
-                  <Input type="email" defaultValue="shop@example.com" dir="ltr" />
-                </div>
-                <div className="space-y-2 md:col-span-2">
                   <Label>العنوان</Label>
                   <Input defaultValue="شارع الرئيسي، رام الله" />
                 </div>
               </div>
 
-              <Separator />
-
-              <div className="space-y-4">
-                <h3 className="font-semibold">الشعار</h3>
-                <div className="flex items-center gap-4">
-                  <div className="w-24 h-24 bg-muted rounded-lg flex items-center justify-center border-2 border-dashed border-border">
-                    <Upload className="w-8 h-8 text-muted-foreground" />
-                  </div>
-                  <Button variant="outline" className="gap-2">
-                    <Upload className="w-4 h-4" />
-                    رفع شعار
-                  </Button>
-                </div>
-              </div>
-
-              <Separator />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">

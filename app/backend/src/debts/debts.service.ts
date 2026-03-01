@@ -8,12 +8,68 @@ import { formatDateForHeader } from '../pdf/pdf.helpers';
 import { DebtQueryDto } from './dto/debt.dto';
 import { Prisma } from '@prisma/client';
 
+// Status mapping from DB values to frontend-expected values
+const STATUS_MAP: Record<string, string> = {
+  open: 'outstanding',
+  paid: 'settled',
+  partial: 'partial',
+  overdue: 'outstanding',
+  written_off: 'written_off',
+};
+
 @Injectable()
 export class DebtsService {
   constructor(
     private prisma: PrismaService,
     private pdfService: PdfService,
   ) { }
+
+  /**
+   * Transform a raw Prisma Debt row into the DTO shape expected by the frontend.
+   *
+   * Field mapping:
+   *  DB `totalAmount`  → DTO `originalAmount`
+   *  DB `amountPaid`   → DTO `amountPaid`  (+ computed `remainingAmount`)
+   *  DB `direction`    → DTO `debtType`
+   *  DB `partyName`    → DTO `partyName` AND `customerName` / `supplierName`
+   *  DB `debtNumber`   → DTO `debtNumber` AND `saleNumber` / `purchaseNumber` (by sourceType)
+   *  DB `status`       → mapped via STATUS_MAP to frontend enum
+   */
+  private toDebtDto(debt: any) {
+    const originalAmount: number =
+      typeof debt.totalAmount === 'number' ? debt.totalAmount : 0;
+    const amountPaid: number =
+      typeof debt.amountPaid === 'number' ? debt.amountPaid : 0;
+    const remainingAmount = Math.max(0, originalAmount - amountPaid);
+
+    const isOverdue = debt.dueDate
+      ? new Date(debt.dueDate) < new Date()
+      : false;
+
+    const customerName =
+      debt.partyType === 'customer' ? (debt.partyName ?? undefined) : undefined;
+    const supplierName =
+      debt.partyType === 'supplier' ? (debt.partyName ?? undefined) : undefined;
+
+    const saleNumber =
+      debt.sourceType === 'sale' ? debt.debtNumber ?? String(debt.sourceId) : undefined;
+    const purchaseNumber =
+      debt.sourceType === 'purchase' ? debt.debtNumber ?? String(debt.sourceId) : undefined;
+
+    return {
+      ...debt,
+      debtType: debt.direction,
+      originalAmount,
+      amountPaid,
+      remainingAmount,
+      customerName,
+      supplierName,
+      saleNumber,
+      purchaseNumber,
+      isOverdue,
+      status: STATUS_MAP[debt.status] ?? debt.status,
+    };
+  }
 
   private buildWhere(direction: 'receivable' | 'payable', query: DebtQueryDto): Prisma.DebtWhereInput {
     const where: Prisma.DebtWhereInput = { direction };
@@ -57,7 +113,7 @@ export class DebtsService {
       this.prisma.debt.count({ where }),
     ]);
 
-    return createPaginatedResult(debts, page, pageSize, totalItems);
+    return createPaginatedResult(debts.map((d) => this.toDebtDto(d)), page, pageSize, totalItems);
   }
 
   async findPayables(query: DebtQueryDto) {
@@ -75,7 +131,7 @@ export class DebtsService {
       this.prisma.debt.count({ where }),
     ]);
 
-    return createPaginatedResult(debts, page, pageSize, totalItems);
+    return createPaginatedResult(debts.map((d) => this.toDebtDto(d)), page, pageSize, totalItems);
   }
 
   async findById(id: number) {
@@ -97,7 +153,7 @@ export class DebtsService {
       where: { referenceType: 'debt', referenceId: id },
     });
 
-    return { ...debt, payments };
+    return { ...this.toDebtDto(debt), payments };
   }
 
   async getSummary() {
@@ -213,12 +269,12 @@ export class DebtsService {
       receivables: {
         count: receivables.length,
         amount: receivables.reduce((sum, d) => sum + (d.totalAmount - d.amountPaid), 0),
-        items: receivables,
+        items: receivables.map((d) => this.toDebtDto(d)),
       },
       payables: {
         count: payables.length,
         amount: payables.reduce((sum, d) => sum + (d.totalAmount - d.amountPaid), 0),
-        items: payables,
+        items: payables.map((d) => this.toDebtDto(d)),
       },
     };
   }

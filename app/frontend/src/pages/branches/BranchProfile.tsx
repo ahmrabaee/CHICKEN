@@ -10,7 +10,6 @@ import {
     Building2,
     Phone,
     MapPin,
-    Scale,
     Settings,
     Loader2,
     Trash2,
@@ -32,7 +31,6 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -61,8 +59,6 @@ const branchSchema = z.object({
     nameEn: z.string().optional(),
     address: z.string().optional(),
     phone: z.string().optional(),
-    hasScale: z.boolean().default(false),
-    scaleComPort: z.string().optional(),
     stockAccountId: z.string().optional(),
 });
 
@@ -94,8 +90,6 @@ export default function BranchProfile() {
             nameEn: "",
             address: "",
             phone: "",
-            hasScale: false,
-            scaleComPort: "",
             stockAccountId: "__none",
         },
     });
@@ -108,31 +102,19 @@ export default function BranchProfile() {
                 nameEn: existingBranch.nameEn || "",
                 address: existingBranch.address || "",
                 phone: existingBranch.phone || "",
-                hasScale: existingBranch.hasScale,
-                scaleComPort: existingBranch.scaleComPort || "",
                 stockAccountId: existingBranch.stockAccountId != null ? String(existingBranch.stockAccountId) : "__none",
             });
         }
     }, [existingBranch, form]);
 
-    const hasScale = form.watch("hasScale");
-
     const onSubmit = async (values: BranchFormValues) => {
         try {
-            // Validate scale COM port if hasScale is true
-            if (values.hasScale && !values.scaleComPort) {
-                toast.error("منفذ الميزان مطلوب عند تفعيل الميزان");
-                return;
-            }
-
             if (isEditing) {
                 const updateData: UpdateBranchDto = {
                     name: values.name,
                     nameEn: values.nameEn || undefined,
                     address: values.address || undefined,
                     phone: values.phone || undefined,
-                    hasScale: values.hasScale,
-                    scaleComPort: values.scaleComPort || undefined,
                     stockAccountId: values.stockAccountId && values.stockAccountId !== "__none" ? parseInt(values.stockAccountId, 10) : null,
                 };
                 await updateMutation.mutateAsync({ id: parseInt(id!), data: updateData });
@@ -144,8 +126,6 @@ export default function BranchProfile() {
                     nameEn: values.nameEn?.trim() || undefined,
                     address: values.address?.trim() || undefined,
                     phone: values.phone?.trim() || undefined,
-                    hasScale: values.hasScale,
-                    ...(values.hasScale && values.scaleComPort && { scaleComPort: values.scaleComPort.trim() }),
                     ...(values.stockAccountId && values.stockAccountId !== "__none" && {
                         stockAccountId: parseInt(values.stockAccountId, 10),
                     }),
@@ -374,7 +354,7 @@ export default function BranchProfile() {
                                     name="stockAccountId"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>حساب المخزون (Blueprint 06)</FormLabel>
+                                            <FormLabel>حساب المخزون</FormLabel>
                                             <Select
                                                 onValueChange={field.onChange}
                                                 value={field.value || "__none"}
@@ -393,68 +373,11 @@ export default function BranchProfile() {
                                                     ))}
                                                 </SelectContent>
                                             </Select>
-                                            <FormDescription>حساب المخزون في الدفاتر لهذا الفرع (مثل 1130، 1131)</FormDescription>
+                                            <FormDescription>يُستخدم للقيود المحاسبية الخاصة بالمخزون.</FormDescription>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
-                            </CardContent>
-                        </Card>
-
-                        {/* Scale Configuration Section */}
-                        <Card className="border-none shadow-premium overflow-hidden">
-                            <div className="bg-slate-50 border-b p-4 flex items-center gap-3">
-                                <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
-                                    <Scale className="w-5 h-5" />
-                                </div>
-                                <h2 className="font-bold text-slate-700">إعدادات الميزان الإلكتروني</h2>
-                            </div>
-                            <CardContent className="p-6 space-y-6">
-                                <FormField
-                                    control={form.control}
-                                    name="hasScale"
-                                    render={({ field }) => (
-                                        <FormItem className="flex items-center justify-between rounded-lg border p-4 bg-white shadow-sm">
-                                            <div className="space-y-0.5">
-                                                <FormLabel className="text-base">ميزان إلكتروني متصل</FormLabel>
-                                                <FormDescription>
-                                                    هل يحتوي هذا الفرع على ميزان إلكتروني متصل بالنظام؟
-                                                </FormDescription>
-                                            </div>
-                                            <FormControl>
-                                                <Switch
-                                                    checked={field.value}
-                                                    onCheckedChange={field.onChange}
-                                                />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
-                                />
-
-                                {hasScale && (
-                                    <FormField
-                                        control={form.control}
-                                        name="scaleComPort"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>منفذ الميزان (COM Port) *</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        placeholder="COM3"
-                                                        {...field}
-                                                        onChange={(e) => field.onChange(e.target.value.toUpperCase())}
-                                                        className="font-mono text-left max-w-[200px]"
-                                                        dir="ltr"
-                                                    />
-                                                </FormControl>
-                                                <FormDescription>
-                                                    منفذ الاتصال التسلسلي للميزان (مثال: COM1, COM3, COM10)
-                                                </FormDescription>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                )}
                             </CardContent>
                         </Card>
                     </div>

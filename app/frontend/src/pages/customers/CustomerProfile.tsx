@@ -62,7 +62,6 @@ const customerSchema = z.object({
     nameEn: z.string().optional().or(z.literal("")),
     phone: z.string().optional().or(z.literal("")),
     phone2: z.string().optional().or(z.literal("")),
-    email: z.string().email("البريد الإلكتروني غير صحيح").optional().or(z.literal("")),
     address: z.string().optional().or(z.literal("")),
     creditLimit: z.coerce.number().min(0, "الحد الائتماني يجب أن يكون 0 أو أكثر").optional(),
     priceLevel: z.enum(["standard", "wholesale", "vip"]).optional(),
@@ -112,7 +111,6 @@ export default function CustomerProfile() {
             nameEn: "",
             phone: "",
             phone2: "",
-            email: "",
             address: "",
             creditLimit: 0,
             priceLevel: "standard",
@@ -130,7 +128,6 @@ export default function CustomerProfile() {
                 nameEn: existingCustomer.nameEn || "",
                 phone: existingCustomer.phone || "",
                 phone2: existingCustomer.phone2 || "",
-                email: existingCustomer.email || "",
                 address: existingCustomer.address || "",
                 creditLimit: existingCustomer.creditLimit || 0,
                 priceLevel: (existingCustomer.priceLevel as PriceLevel) || "standard",
@@ -150,7 +147,6 @@ export default function CustomerProfile() {
                 nameEn: data.nameEn || undefined,
                 phone: data.phone || undefined,
                 phone2: data.phone2 || undefined,
-                email: data.email || undefined,
                 address: data.address || undefined,
                 creditLimit: data.creditLimit || 0,
                 priceLevel: data.priceLevel as PriceLevel,
@@ -361,27 +357,6 @@ export default function CustomerProfile() {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="email"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>البريد الإلكتروني</FormLabel>
-                                                    <FormControl>
-                                                        <div className="relative">
-                                                            <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                                            <Input
-                                                                placeholder="customer@example.com"
-                                                                className="pr-10 font-english text-right"
-                                                                dir="ltr"
-                                                                {...field}
-                                                            />
-                                                        </div>
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
                                         <FormField
                                             control={form.control}
                                             name="address"

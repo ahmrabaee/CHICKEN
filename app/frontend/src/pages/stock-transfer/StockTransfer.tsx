@@ -136,7 +136,7 @@ export default function StockTransfer() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">تحويل المخزون</h1>
-          <p className="text-muted-foreground mt-1">تحويل دجاج خام إلى منتجات (أجنحة، صدور، إلخ)</p>
+          <p className="text-muted-foreground mt-1">تحويل المنتجات الخام إلى منتجات نهائية وإدارة العمليات المرتبطة.</p>
         </div>
         <Link to="/stock-transfer/new">
           <Button className="gap-2">

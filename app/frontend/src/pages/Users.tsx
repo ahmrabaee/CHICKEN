@@ -1,16 +1,13 @@
 import { useState } from "react";
 import {
-    Mail,
     Phone,
     MapPin,
     Search,
     Plus,
-    Download,
     MoreHorizontal,
     Edit,
     UserX,
     UserCheck,
-    Filter,
     KeyRound,
     Users as UsersIcon,
     ShieldCheck
@@ -103,10 +100,6 @@ export default function Users() {
                     <p className="text-muted-foreground mt-1">عرض وإدارة حسابات الموظفين وصلاحياتهم</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Button variant="outline" className="gap-2">
-                        <Download className="w-4 h-4" />
-                        تصدير
-                    </Button>
                     <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                         <DialogTrigger asChild>
                             <Button className="gap-2">
@@ -188,20 +181,14 @@ export default function Users() {
             {/* Filters */}
             <Card>
                 <CardContent className="pt-6">
-                    <div className="flex flex-col md:flex-row gap-4">
-                        <div className="flex-1 relative">
-                            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                            <Input
-                                placeholder="بحث باسم المستخدم أو الاسم الكامل..."
-                                value={queryParams.search}
-                                onChange={handleSearch}
-                                className="pr-10 text-right"
-                            />
-                        </div>
-                        <Button variant="outline" className="gap-2">
-                            <Filter className="w-4 h-4" />
-                            تصفية
-                        </Button>
+                    <div className="relative">
+                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                            placeholder="بحث باسم المستخدم أو الاسم الكامل..."
+                            value={queryParams.search}
+                            onChange={handleSearch}
+                            className="pr-10 text-right"
+                        />
                     </div>
                 </CardContent>
             </Card>
@@ -250,18 +237,6 @@ export default function Users() {
                                         <TableCell>
                                             <div className="flex items-center gap-2">
                                                 <TooltipProvider>
-                                                    {user.email && (
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <div className="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 hover:bg-blue-100 transition-colors">
-                                                                    <Mail className="w-3.5 h-3.5" />
-                                                                </div>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent side="top">
-                                                                {user.email}
-                                                            </TooltipContent>
-                                                        </Tooltip>
-                                                    )}
                                                     {user.phone && (
                                                         <Tooltip>
                                                             <TooltipTrigger asChild>
@@ -275,7 +250,7 @@ export default function Users() {
                                                         </Tooltip>
                                                     )}
                                                 </TooltipProvider>
-                                                {!user.email && !user.phone && (
+                                                {!user.phone && (
                                                     <span className="text-xs text-muted-foreground">—</span>
                                                 )}
                                             </div>

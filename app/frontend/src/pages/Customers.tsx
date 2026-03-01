@@ -212,12 +212,6 @@ function CustomerDetailCard({ customer, onClose }: { customer: Customer; onClose
                   dir="ltr"
                 />
                 <DetailItem
-                  icon={<Mail className="w-4 h-4 text-cyan-500" />}
-                  label="البريد الإلكتروني"
-                  value={customer.email}
-                  dir="ltr"
-                />
-                <DetailItem
                   icon={<MapPin className="w-4 h-4 text-rose-500" />}
                   label="العنوان"
                   value={customer.address}
@@ -336,7 +330,7 @@ export default function Customers() {
   // Query with filters
   const { data: customersResponse, isLoading, error } = useCustomers({
     search: searchQuery || undefined,
-    isActive: showInactive ? undefined : true,
+    isActive: showInactive ? false : undefined,
     priceLevel: priceLevelFilter !== "all" ? (priceLevelFilter as PriceLevel) : undefined,
     hasBalance: showWithBalance || undefined,
   });

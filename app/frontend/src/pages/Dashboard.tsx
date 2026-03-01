@@ -333,7 +333,7 @@ export default function DashboardPage() {
       <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">لوحة التحكم</h1>
-          <p className="mt-1 text-muted-foreground">متابعة الأداء المالي والتشغيلي بشكل تفاعلي</p>
+          <p className="mt-1 text-muted-foreground">لوحة تحكم لمتابعة المؤشرات المالية والتشغيلية.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button asChild className="gap-2">

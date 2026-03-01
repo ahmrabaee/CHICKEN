@@ -29,7 +29,6 @@ const userSchema = z.object({
     password: z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل").optional().or(z.literal("")),
     fullName: z.string().min(1, "الاسم الكامل مطلوب"),
     fullNameEn: z.string().optional(),
-    email: z.string().email("البريد الإلكتروني غير صحيح").optional().or(z.literal("")),
     phone: z.string().optional(),
     roleId: z.string().min(1, "يجب تحديد دور المستخدم"),
     defaultBranchId: z.string().optional(),
@@ -56,7 +55,6 @@ export default function UserForm({ user, onSuccess }: UserFormProps) {
             password: "",
             fullName: user?.fullName || "",
             fullNameEn: user?.fullNameEn || "",
-            email: user?.email || "",
             phone: user?.phone || "",
             roleId: user?.roles?.[0] === 'admin' ? "1" : "2", // 1=admin, 2=accountant
             defaultBranchId: user?.defaultBranchId?.toString() || "",
@@ -70,7 +68,6 @@ export default function UserForm({ user, onSuccess }: UserFormProps) {
             username: data.username,
             fullName: data.fullName,
             fullNameEn: data.fullNameEn || undefined,
-            email: data.email || undefined,
             phone: data.phone || undefined,
             roleId: parseInt(data.roleId),
             defaultBranchId: data.defaultBranchId ? parseInt(data.defaultBranchId) : undefined,

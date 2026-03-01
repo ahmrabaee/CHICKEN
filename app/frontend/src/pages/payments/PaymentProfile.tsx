@@ -295,12 +295,6 @@ function PaymentViewMode({ payment }: { payment: Payment }) {
                                         <span className="font-mono">{payment.receivedBy.employeeNumber}</span>
                                     </div>
                                 )}
-                                {payment.receivedBy.email && (
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-slate-500">البريد:</span>
-                                        <span className="font-mono text-xs" dir="ltr">{payment.receivedBy.email}</span>
-                                    </div>
-                                )}
                             </CardContent>
                         </Card>
                     )}

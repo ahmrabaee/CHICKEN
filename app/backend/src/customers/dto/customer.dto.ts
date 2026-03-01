@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsInt, IsEmail, Min, Max, IsEnum } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsInt, Min, Max, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PaginationQueryDto } from '../../common';
 
@@ -29,11 +29,6 @@ export class CreateCustomerDto {
   @IsString()
   @IsOptional()
   phone2?: string;
-
-  @ApiPropertyOptional({ description: 'Email address', example: 'ahmed@example.com' })
-  @IsEmail()
-  @IsOptional()
-  email?: string;
 
   @ApiPropertyOptional({ description: 'Address' })
   @IsString()
@@ -127,9 +122,6 @@ export class CustomerResponseDto {
 
   @ApiPropertyOptional({ example: '+966507654321' })
   phone2?: string;
-
-  @ApiPropertyOptional({ example: 'ahmed@example.com' })
-  email?: string;
 
   @ApiPropertyOptional()
   address?: string;

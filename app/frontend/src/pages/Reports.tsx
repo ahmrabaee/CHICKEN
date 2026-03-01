@@ -217,7 +217,7 @@ export default function Reports() {
       case "/reports/vat":
         return { title: "تقرير ضريبة القيمة المضافة", description: "Output VAT، Input VAT، صافي المستحق", icon: Receipt };
       default:
-        return { title: "التقارير", description: "اختر نوع التقرير", icon: BarChart3 };
+        return { title: "التقارير", description: "اختيار نوع التقرير واستعراض البيانات التحليلية.", icon: BarChart3 };
     }
   }, [currentPath]);
 

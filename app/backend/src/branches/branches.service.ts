@@ -64,18 +64,6 @@ export class BranchesService {
       });
     }
 
-    // Validate scale COM port if hasScale is true
-    if (dto.hasScale !== false && !dto.scaleComPort) {
-      // hasScale defaults to true, so if not explicitly false and no COM port, that's an error
-      if (dto.hasScale === true) {
-        throw new BadRequestException({
-          code: 'VALIDATION_ERROR',
-          message: 'Scale COM port is required when hasScale is true',
-          messageAr: 'منفذ الميزان مطلوب عند تفعيل الميزان',
-        });
-      }
-    }
-
     // New branches cannot be main branch - main branch is set during setup only
     const branch = await this.prisma.branch.create({
       data: {
@@ -84,8 +72,7 @@ export class BranchesService {
         nameEn: dto.nameEn,
         address: dto.address,
         phone: dto.phone,
-        hasScale: dto.hasScale ?? true,
-        scaleComPort: dto.scaleComPort,
+        hasScale: false,
         stockAccountId: dto.stockAccountId,
         isMainBranch: false,
         isActive: true,
@@ -113,17 +100,6 @@ export class BranchesService {
       });
     }
 
-    // Validate scale COM port if enabling scale
-    const willHaveScale = dto.hasScale ?? existing.hasScale;
-    const comPort = dto.scaleComPort ?? existing.scaleComPort;
-    if (willHaveScale && !comPort) {
-      throw new BadRequestException({
-        code: 'VALIDATION_ERROR',
-        message: 'Scale COM port is required when hasScale is true',
-        messageAr: 'منفذ الميزان مطلوب عند تفعيل الميزان',
-      });
-    }
-
     const branch = await this.prisma.branch.update({
       where: { id },
       data: {
@@ -131,8 +107,6 @@ export class BranchesService {
         nameEn: dto.nameEn,
         address: dto.address,
         phone: dto.phone,
-        hasScale: dto.hasScale,
-        scaleComPort: dto.scaleComPort,
         stockAccountId: dto.stockAccountId,
       },
     });
@@ -221,8 +195,6 @@ export class BranchesService {
       nameEn: branch.nameEn,
       address: branch.address,
       phone: branch.phone,
-      hasScale: branch.hasScale,
-      scaleComPort: branch.scaleComPort,
       isMainBranch: branch.isMainBranch,
       isActive: branch.isActive,
       stockAccountId: branch.stockAccountId,

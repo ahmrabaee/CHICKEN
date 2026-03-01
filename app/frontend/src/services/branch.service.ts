@@ -16,9 +16,12 @@ export const branchService = {
     /**
      * List all branches
      * GET /v1/branches
+     * @param includeInactive  When true, includes inactive branches (default: false)
      */
-    async getBranches(): Promise<Branch[]> {
-        const response = await axiosInstance.get<ApiResponse<BranchListResponse>>('/branches');
+    async getBranches(includeInactive = false): Promise<Branch[]> {
+        const response = await axiosInstance.get<ApiResponse<BranchListResponse>>('/branches', {
+            params: includeInactive ? { includeInactive: 'true' } : undefined,
+        });
         return response.data.data.branches;
     },
 

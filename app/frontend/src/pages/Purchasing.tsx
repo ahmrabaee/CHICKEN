@@ -23,11 +23,9 @@ import { downloadReportPdf } from "@/services/pdf.service";
 import { reconciliationService } from "@/services/reconciliation.service";
 import { creditNoteService } from "@/services/credit-note.service";
 import { CreditNoteCreateDialog } from "@/components/credit-note/CreditNoteCreateDialog";
+import { toNumber, formatCurrency, safeRemaining } from "@/lib/currency";
 
 
-function formatCurrency(minorUnits: number): string {
-  return `₪ ${(minorUnits / 100).toFixed(2)}`;
-}
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -105,29 +103,44 @@ function PurchaseDetailCard({ purchaseId, open, onClose }: { purchaseId: number;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto" dir="rtl">
+      {/* pr-8 reserves physical-right space for the absolute close-X (right-4 top-4) */}
+      <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto pr-8" dir="rtl">
         <DialogHeader>
-          <div className="flex items-center justify-between gap-4 flex-row-reverse">
-            <DialogTitle className="text-xl font-bold flex items-center gap-3 flex-row-reverse">
-              تفاصيل أمر الشراء {purchase?.purchaseNumber || ""}
+          {/*
+            flex row: title on the right (RTL start), PDF button on the left (RTL end).
+            justify-between + gap-3 guarantee a clear hit-area between the button and
+            the absolute close-X that sits just outside the pe-8 safe zone.
+          */}
+          <div className="flex items-center justify-between gap-3">
+            <DialogTitle className="text-xl font-bold flex items-center gap-2 flex-wrap">
               <DocumentStatusBadge
                 docstatus={purchase?.docstatus}
                 isVoided={purchase?.status === "cancelled"}
                 isApproved={purchase?.status === "received" || purchase?.status === "partial" || purchase?.status === "ordered"}
               />
+              تفاصيل أمر الشراء {purchase?.purchaseNumber || ""}
             </DialogTitle>
-            {purchase && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 shrink-0"
-                onClick={handleDownloadOrderPdf}
-                disabled={pdfLoading}
-              >
-                {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                تحميل PDF
-              </Button>
-            )}
+
+            {/* Actions area – min-w-10 keeps it from collapsing; shrink-0 prevents squishing */}
+            <div className="flex items-center gap-2 shrink-0">
+              {purchase && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-1.5 px-3"
+                  onClick={handleDownloadOrderPdf}
+                  disabled={pdfLoading}
+                  title="تحميل PDF"
+                >
+                  {pdfLoading
+                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                    : <Download className="w-4 h-4" />
+                  }
+                  {/* Hide text on very small screens so button doesn't crowd the close X */}
+                  <span className="hidden sm:inline">تحميل PDF</span>
+                </Button>
+              )}
+            </div>
           </div>
         </DialogHeader>
 
@@ -160,7 +173,10 @@ function PurchaseDetailCard({ purchaseId, open, onClose }: { purchaseId: number;
                 <InfoItem label="الضريبة" value={formatCurrency(purchase.taxAmount)} />
                 <InfoItem label="الإجمالي الكلي" value={formatCurrency(purchase.grandTotal)} highlight />
                 <InfoItem label="المدفوع" value={formatCurrency(purchase.amountPaid)} success />
-                <InfoItem label="المتبقي" value={formatCurrency(purchase.amountDue)} danger={purchase.amountDue > 0} />
+                {(() => {
+                  const remaining = safeRemaining(purchase.amountDue, purchase.grandTotal, purchase.amountPaid);
+                  return <InfoItem label="المتبقي" value={formatCurrency(remaining)} danger={remaining > 0} />;
+                })()}
                 <InfoItem label="المستحق (من PLE)" value={formatCurrency(outstanding)} highlight />
               </div>
               {canCreateCreditNote && (
@@ -315,10 +331,6 @@ export default function Purchasing() {
           <p className="text-muted-foreground mt-1">سجل جميع عمليات الشراء</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
-            تصدير
-          </Button>
           <Link to="/purchasing/new">
             <Button className="gap-2">
               <Plus className="w-4 h-4" />

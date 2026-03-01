@@ -118,7 +118,7 @@ export default function CreditNotes() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">الإشعارات الدائنة</h1>
-          <p className="text-muted-foreground mt-1">إدارة إشعارات الخصم والإرجاع (Blueprint 04)</p>
+          <p className="text-muted-foreground mt-1">إدارة إشعارات الخصم والإرجاع المرتبطة بالعمليات المالية.</p>
         </div>
         <Button onClick={() => setShowCreate(true)}>
           <Plus className="w-4 h-4 ml-2" /> إنشاء إشعار دائن

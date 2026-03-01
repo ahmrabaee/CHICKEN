@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Download, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { Plus, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -59,10 +59,6 @@ export default function PersonalExpenses() {
           <p className="text-muted-foreground mt-1">إدارة مصاريف المحل والنفقات</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
-            تصدير
-          </Button>
           <Button className="gap-2">
             <Plus className="w-4 h-4" />
             مصروف جديد

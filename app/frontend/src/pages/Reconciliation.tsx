@@ -137,9 +137,7 @@ export default function Reconciliation() {
     <div className="space-y-6" dir="rtl">
       <div>
         <h1 className="text-2xl font-bold">مطابقة الدفعات</h1>
-        <p className="text-muted-foreground mt-1">
-          ربط الدفعات غير المخصصة بالفواتير المفتوحة (Blueprint 04)
-        </p>
+        <p className="text-muted-foreground mt-1">عرض وربط الدفعات غير المخصصة بالفواتير المستحقة.</p>
       </div>
 
       <Card>

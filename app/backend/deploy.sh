@@ -62,7 +62,6 @@ if $INIT; then
   log "   PM2 status:     pm2 status"
   log "   Logs:           pm2 logs $PM2_APP"
   log ""
-  warn "Remember: point your domain DNS A record to this server IP, then reload Caddy."
   exit 0
 fi
 

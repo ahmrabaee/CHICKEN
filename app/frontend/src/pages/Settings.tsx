@@ -114,52 +114,55 @@ export default function Settings() {
 
       {/* Tabs */}
       <Tabs defaultValue="shop" className="space-y-6" dir="rtl">
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-10">
-          <TabsTrigger value="shop" className="w-full gap-2">
-            <Globe className="w-4 h-4" />
-            المحل
-          </TabsTrigger>
-          <TabsTrigger value="account" className="w-full gap-2">
-            <Key className="w-4 h-4" />
-            الحساب
-          </TabsTrigger>
-          <TabsTrigger value="accounting" className="w-full gap-2">
-            <Calculator className="w-4 h-4" />
-            المحاسبة
-          </TabsTrigger>
-          <TabsTrigger value="bank-accounts" className="w-full gap-2">
-            <Building2 className="w-4 h-4" />
-            الحسابات البنكية
-          </TabsTrigger>
-          <TabsTrigger value="tax-templates" className="w-full gap-2">
-            <Receipt className="w-4 h-4" />
-            قوالب الضرائب
-          </TabsTrigger>
-          <TabsTrigger value="page-access" className="w-full gap-2">
-            <Shield className="w-4 h-4" />
-            صلاحيات الصفحات
-          </TabsTrigger>
-          <TabsTrigger value="users" className="w-full gap-2">
-            <User className="w-4 h-4" />
-            المستخدمين
-          </TabsTrigger>
-          <TabsTrigger value="barcode" className="w-full gap-2">
-            <Barcode className="w-4 h-4" />
-            الباركود
-          </TabsTrigger>
-          <TabsTrigger value="printers" className="w-full gap-2">
-            <Printer className="w-4 h-4" />
-            الطابعات
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="w-full gap-2">
-            <Bell className="w-4 h-4" />
-            الإشعارات
-          </TabsTrigger>
-          <TabsTrigger value="backup" className="w-full gap-2">
-            <Database className="w-4 h-4" />
-            النسخ الاحتياطي
-          </TabsTrigger>
-        </TabsList>
+        {/* Tab bar: tabs + any action button share the same flex row */}
+        <div className="flex items-center gap-3 flex-nowrap w-full min-w-0">
+          <TabsList className="flex h-auto flex-nowrap overflow-x-auto flex-1 min-w-0 gap-1 p-1">
+            <TabsTrigger value="shop" className="shrink-0 gap-2">
+              <Globe className="w-4 h-4" />
+              المحل
+            </TabsTrigger>
+            <TabsTrigger value="account" className="shrink-0 gap-2">
+              <Key className="w-4 h-4" />
+              الحساب
+            </TabsTrigger>
+            <TabsTrigger value="accounting" className="shrink-0 gap-2">
+              <Calculator className="w-4 h-4" />
+              المحاسبة
+            </TabsTrigger>
+            <TabsTrigger value="bank-accounts" className="shrink-0 gap-2">
+              <Building2 className="w-4 h-4" />
+              الحسابات البنكية
+            </TabsTrigger>
+            <TabsTrigger value="tax-templates" className="shrink-0 gap-2">
+              <Receipt className="w-4 h-4" />
+              قوالب الضرائب
+            </TabsTrigger>
+            <TabsTrigger value="page-access" className="shrink-0 gap-2">
+              <Shield className="w-4 h-4" />
+              صلاحيات الصفحات
+            </TabsTrigger>
+            <TabsTrigger value="users" className="shrink-0 gap-2">
+              <User className="w-4 h-4" />
+              المستخدمين
+            </TabsTrigger>
+            <TabsTrigger value="barcode" className="shrink-0 gap-2">
+              <Barcode className="w-4 h-4" />
+              الباركود
+            </TabsTrigger>
+            <TabsTrigger value="printers" className="shrink-0 gap-2">
+              <Printer className="w-4 h-4" />
+              الطابعات
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="shrink-0 gap-2">
+              <Bell className="w-4 h-4" />
+              الإشعارات
+            </TabsTrigger>
+            <TabsTrigger value="backup" className="shrink-0 gap-2 whitespace-nowrap">
+              <Database className="w-4 h-4" />
+              النسخ الاحتياطي
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Shop Settings */}
         <TabsContent value="shop" className="space-y-6">

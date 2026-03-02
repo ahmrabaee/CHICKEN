@@ -7,44 +7,12 @@ export class CategoriesService {
   constructor(private prisma: PrismaService) { }
 
   async findPurchaseable(): Promise<CategoryResponseDto[]> {
-    await this.ensureCategoriesHavePurchaseItem();
     const categories = await this.prisma.category.findMany({
-      where: { isActive: true, purchaseItemId: { not: null } },
+      where: { isActive: true },
       include: { purchaseItem: true },
       orderBy: { displayOrder: 'asc' },
     });
     return categories.map((c) => this.toResponseDto(c));
-  }
-
-  /**
-   * Ensures all active categories have a linked purchase item (for purchase dropdown).
-   * Creates items for categories that were added before we had auto-linking.
-   */
-  private async ensureCategoriesHavePurchaseItem(): Promise<void> {
-    const categoriesWithoutItem = await this.prisma.category.findMany({
-      where: { isActive: true, purchaseItemId: null },
-    });
-    for (const cat of categoriesWithoutItem) {
-      await this.prisma.$transaction(async (tx) => {
-        const itemCode = await this.generateUniqueItemCode(tx, cat.code);
-        const purchaseItem = await tx.item.create({
-          data: {
-            code: itemCode,
-            name: cat.name,
-            nameEn: cat.nameEn,
-            categoryId: cat.id,
-            defaultSalePrice: 0,
-            defaultPurchasePrice: 0,
-            requiresScale: true,
-            allowNegativeStock: false,
-          },
-        });
-        await tx.category.update({
-          where: { id: cat.id },
-          data: { purchaseItemId: purchaseItem.id },
-        });
-      });
-    }
   }
 
   async findAll(includeInactive = false): Promise<CategoryResponseDto[]> {
@@ -97,56 +65,20 @@ export class CategoriesService {
     });
     const displayOrder = dto.displayOrder ?? (maxOrder._max.displayOrder ?? 0) + 1;
 
-    return this.prisma.$transaction(async (tx) => {
-      const category = await tx.category.create({
-        data: {
-          code,
-          name: dto.name.trim(),
-          nameEn: dto.nameEn?.trim() || null,
-          displayOrder,
-          icon: dto.icon,
-          defaultShelfLifeDays: dto.defaultShelfLifeDays,
-          storageType: dto.storageType,
-          isActive: dto.isActive ?? true,
-        },
-      });
-
-      const itemCode = await this.generateUniqueItemCode(tx, code);
-      const purchaseItem = await tx.item.create({
-        data: {
-          code: itemCode,
-          name: dto.name.trim(),
-          nameEn: dto.nameEn?.trim() || null,
-          categoryId: category.id,
-          defaultSalePrice: 0,
-          defaultPurchasePrice: 0,
-          requiresScale: true,
-          allowNegativeStock: false,
-        },
-      });
-
-      await tx.category.update({
-        where: { id: category.id },
-        data: { purchaseItemId: purchaseItem.id },
-      });
-
-      const updated = await tx.category.findUnique({
-        where: { id: category.id },
-        include: { purchaseItem: true },
-      });
-      return this.toResponseDto(updated);
+    const category = await this.prisma.category.create({
+      data: {
+        code,
+        name: dto.name.trim(),
+        nameEn: dto.nameEn?.trim() || null,
+        displayOrder,
+        icon: dto.icon,
+        defaultShelfLifeDays: dto.defaultShelfLifeDays,
+        storageType: dto.storageType,
+        isActive: dto.isActive ?? true,
+      },
     });
-  }
 
-  private async generateUniqueItemCode(tx: any, baseCode: string): Promise<string> {
-    const sanitized = baseCode.replace(/[^A-Za-z0-9]/g, '_').toUpperCase().slice(0, 20);
-    let candidate = `ITEM_${sanitized}`;
-    let n = 1;
-    while (await (tx ?? this.prisma).item.findUnique({ where: { code: candidate } })) {
-      candidate = `ITEM_${sanitized}_${n}`;
-      n++;
-    }
-    return candidate;
+    return this.toResponseDto(category);
   }
 
   private async generateCategoryCode(): Promise<string> {

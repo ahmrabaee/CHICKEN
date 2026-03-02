@@ -4,7 +4,6 @@ import {
   Plus,
   Minus,
   Trash2,
-  Scale,
   Barcode,
   User,
   Calculator,
@@ -18,8 +17,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { NumericInput } from "@/components/ui/numeric-input";
-import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -63,7 +60,7 @@ function POS() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [discount, setDiscount] = useState(0);
   const [paidAmount, setPaidAmount] = useState("");
-  const [saleType, setSaleType] = useState<"cash" | "credit" | "mixed">("cash");
+  const [saleType, setSaleType] = useState<"cash" | "credit">("cash");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card">("cash");
   const [taxTemplateId, setTaxTemplateId] = useState<number | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -240,7 +237,20 @@ function POS() {
   const grandTotalMinor = netTotalMinor + estimatedTaxMinor;
   const totalMinor = grandTotalMinor;
   const paidMinor = toMinor(paidAmount);
-  const remainingMinor = Math.max(0, totalMinor - paidMinor);
+  const remainingMinor = saleType === "credit" ? totalMinor : Math.max(0, totalMinor - paidMinor);
+  const overpayment = saleType === "cash" && paidMinor > 0 && paidMinor > totalMinor + 1;
+
+  // Customer is required when: remaining > 0 (partial cash) OR deferred (credit)
+  const needsCustomer = saleType === "credit" || (saleType === "cash" && paidMinor > 0 && paidMinor < totalMinor - 1);
+  const hasCustomerInfo = !!customerId || (customerName.trim().length >= 2 && customerPhone.trim().length >= 7);
+  const customerValid = !needsCustomer || hasCustomerInfo;
+
+  // "Complete sale" button disabled conditions
+  const canCompleteSale =
+    cart.length > 0 &&
+    !createSale.isPending &&
+    !overpayment &&
+    customerValid;
 
   const receiptData = useMemo(
     () => ({
@@ -279,7 +289,7 @@ function POS() {
   );
 
   const handleCompleteSale = async () => {
-    if (cart.length === 0) return;
+    if (!canCompleteSale) return;
 
     const dto: CreateSaleDto = {
       saleType,
@@ -295,7 +305,7 @@ function POS() {
       })),
     };
 
-    if (saleType === "cash" || saleType === "mixed") {
+    if (saleType === "cash") {
       // Use entered amount (supports partial payment); default to full total when empty
       const amount = Math.round(
         paidMinor > 0 ? Math.min(paidMinor, totalMinor) : totalMinor
@@ -309,6 +319,7 @@ function POS() {
         ];
       }
     }
+    // credit (deferred): no payments array sent — entire amount becomes receivable
 
     try {
       await createSale.mutateAsync(dto);
@@ -343,9 +354,6 @@ function POS() {
         <div className="mr-auto flex gap-2">
           <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" disabled>
             <Barcode className="w-3.5 h-3.5" /> باركود
-          </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" disabled>
-            <Scale className="w-3.5 h-3.5" /> ميزان
           </Button>
         </div>
       </div>
@@ -431,8 +439,19 @@ function POS() {
           <div className="flex-1 flex flex-col overflow-hidden min-h-0">
 
             {/* ── Customer + Sale Type ── */}
-            <div className="flex-shrink-0 px-4 py-3 space-y-2.5 border-b">
-              {/* Customer row */}
+            <div className={`flex-shrink-0 px-4 py-3 space-y-2.5 border-b ${
+              needsCustomer && !hasCustomerInfo ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800" : ""
+            }`}>
+              {/* Inline warning when customer is required */}
+              {needsCustomer && !hasCustomerInfo && (
+                <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                  <User className="w-4 h-4 shrink-0" />
+                  <span className="text-xs font-semibold">
+                    {saleType === "credit" ? "البيع الآجل يتطلب بيانات الزبون — اختر زبون مسجل أو أدخل الاسم والهاتف" : "الدفع الجزئي يتطلب بيانات الزبون — اختر زبون مسجل أو أدخل الاسم والهاتف"}
+                  </span>
+                </div>
+              )}
+              {/* Customer search/select */}
               <div className="flex items-center gap-2">
                 <User className="w-4 h-4 text-muted-foreground shrink-0" />
                 <div className="flex-1">
@@ -440,25 +459,34 @@ function POS() {
                     customers={customers}
                     value={selectedCustomer}
                     onSelect={handleCustomerSelect}
-                    placeholder="اختر زبون (اختياري)"
+                    placeholder={needsCustomer ? "ابحث واختر زبون..." : "اختر زبون (اختياري)"}
                   />
                 </div>
               </div>
 
+              {/* Manual name + phone: visible when no registered customer selected */}
               {!customerId && (
                 <div className="grid grid-cols-2 gap-2">
                   <Input
-                    placeholder="اسم الزبون"
+                    placeholder={needsCustomer ? "اسم الزبون (حرفان على الأقل)" : "اسم الزبون"}
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    className="h-8 text-sm"
+                    className={`h-8 text-sm ${
+                      needsCustomer && customerName.trim().length > 0 && customerName.trim().length < 2
+                        ? "border-destructive"
+                        : ""
+                    }`}
                   />
                   <Input
-                    placeholder="الهاتف"
+                    placeholder={needsCustomer ? "رقم الهاتف (7 أرقام على الأقل)" : "الهاتف"}
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
                     dir="ltr"
-                    className="h-8 text-sm text-left"
+                    className={`h-8 text-sm text-left ${
+                      needsCustomer && customerPhone.trim().length > 0 && customerPhone.trim().length < 7
+                        ? "border-destructive"
+                        : ""
+                    }`}
                   />
                 </div>
               )}
@@ -474,17 +502,20 @@ function POS() {
                   />
                 </div>
                 <div className="flex gap-1 shrink-0">
-                  {(["cash", "credit", "mixed"] as const).map((t) => (
+                  {(["cash", "credit"] as const).map((t) => (
                     <button
                       key={t}
-                      onClick={() => setSaleType(t)}
+                      onClick={() => {
+                        setSaleType(t);
+                        if (t === "credit") setPaidAmount("");
+                      }}
                       className={`h-8 px-3 rounded-lg text-xs font-semibold border transition-colors ${
                         saleType === t
                           ? "bg-primary text-primary-foreground border-primary"
                           : "bg-background border-input text-muted-foreground hover:border-primary"
                       }`}
                     >
-                      {t === "cash" ? "نقدي" : t === "credit" ? "آجل" : "مختلط"}
+                      {t === "cash" ? "نقدي" : "آجل"}
                     </button>
                   ))}
                 </div>
@@ -615,8 +646,8 @@ function POS() {
                 <span className="text-3xl font-extrabold text-primary tracking-tight">₪{toMajor(totalMinor)}</span>
               </div>
 
-              {/* Payment method + paid amount */}
-              {(saleType === "cash" || saleType === "mixed") && (
+              {/* Payment method + paid amount (cash only) */}
+              {saleType === "cash" && (
                 <div className="px-5 py-3 space-y-2 border-b">
                   <div className="flex gap-2">
                     {(["cash", "card"] as const).map((m) => (
@@ -640,14 +671,30 @@ function POS() {
                       type="number"
                       value={paidAmount}
                       onChange={(e) => setPaidAmount(e.target.value)}
-                      className="flex-1 h-9 text-base font-bold text-center"
+                      className={`flex-1 h-9 text-base font-bold text-center ${
+                        overpayment ? "border-destructive" : ""
+                      }`}
                       placeholder="0.00"
                     />
-                    {remainingMinor > 0 && (
+                    {overpayment ? (
+                      <span className="text-destructive font-bold text-xs shrink-0">
+                        المبلغ المدفوع أكبر من الإجمالي
+                      </span>
+                    ) : remainingMinor > 0 && paidMinor > 0 ? (
                       <span className="text-destructive font-bold text-sm shrink-0">
                         متبقي: ₪{toMajor(remainingMinor)}
                       </span>
-                    )}
+                    ) : null}
+                  </div>
+                </div>
+              )}
+
+              {/* Deferred (credit) info banner */}
+              {saleType === "credit" && (
+                <div className="px-5 py-3 border-b bg-blue-50 dark:bg-blue-950/30">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-blue-700 dark:text-blue-400">بيع آجل — المبلغ الكامل مستحق</span>
+                    <span className="text-lg font-extrabold text-blue-700 dark:text-blue-300">₪{toMajor(totalMinor)}</span>
                   </div>
                 </div>
               )}
@@ -664,7 +711,7 @@ function POS() {
                 </Button>
                 <Button
                   className="flex-1 gap-2 h-9 text-sm font-bold"
-                  disabled={cart.length === 0 || createSale.isPending}
+                  disabled={!canCompleteSale}
                   onClick={handleCompleteSale}
                 >
                   {createSale.isPending

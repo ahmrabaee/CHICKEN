@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import {
   Search,
   Plus,
@@ -29,9 +29,12 @@ import { useCreateSale } from "@/hooks/use-sales";
 import { TaxTemplateSelector } from "@/components/tax/TaxTemplateSelector";
 import { ThermalReceipt } from "@/components/pos/ThermalReceipt";
 import { CustomerSearchCombobox } from "@/components/pos/CustomerSearchCombobox";
+import { WeightEntryDialog } from "@/components/pos/WeightEntryDialog";
 import type { Item } from "@/types/inventory";
 import type { Customer } from "@/types/customer";
 import type { CreateSaleDto } from "@/types/sales";
+import { barcodeService } from "@/services/barcode.service";
+import { toast } from "sonner";
 
 /** Format minor units (e.g. 2200) as major (22.00) */
 function toMajor(units: number): string {
@@ -50,6 +53,7 @@ interface CartItem {
   pricePerKg: number; // minor units per kg
   quantityKg: number;
   total: number; // minor units
+  fromBarcode?: boolean; // tagged when added via barcode scan
 }
 
 function POS() {
@@ -65,6 +69,14 @@ function POS() {
   const [taxTemplateId, setTaxTemplateId] = useState<number | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [weightDialogItem, setWeightDialogItem] = useState<Item | null>(null);
+  const [weightDialogInitialKg, setWeightDialogInitialKg] = useState<number | undefined>(undefined);
+
+  // ── Barcode Mode ──
+  const [inputMode, setInputMode] = useState<"manual" | "barcode">("manual");
+  const [barcodeInput, setBarcodeInput] = useState("");
+  const [barcodeProcessing, setBarcodeProcessing] = useState(false);
+  const barcodeInputRef = useRef<HTMLInputElement>(null);
 
   const { data: itemsResp, isLoading: itemsLoading } = useItems({
     isActive: true,
@@ -88,37 +100,80 @@ function POS() {
     );
   }, [items, searchQuery]);
 
-  /** Add item with quantity in kg (supports float: 0.5, 1.5, 2.25...) */
-  const addToCart = (item: Item, quantityKg: number = 1) => {
-    const qty = Math.max(0.1, quantityKg); // min 0.1 kg
+  /**
+   * Add item with quantity in kg.
+   * barcodeTotal: when provided (barcode mode), uses exact price from barcode
+   *               instead of recalculating from defaultSalePrice.
+   */
+  const addToCart = (item: Item, quantityKg: number = 1, barcodeTotal?: number, fromBarcode = false) => {
+    const qty = Math.max(0.001, Math.round(quantityKg * 1000) / 1000);
     const pricePerKg = item.defaultSalePrice ?? 0;
-    const total = Math.round(qty * pricePerKg);
+    // In barcode mode: use exact barcode total; otherwise calculate
+    const total = barcodeTotal !== undefined ? barcodeTotal : Math.round(qty * pricePerKg);
     const existing = cart.find((c) => c.itemId === item.id);
-    if (existing) {
+    if (existing && !fromBarcode) {
+      // Manual mode: accumulate
       setCart(
         cart.map((c) =>
           c.itemId === item.id
             ? {
                 ...c,
-                quantityKg: Math.round((c.quantityKg + qty) * 100) / 100,
+                quantityKg: Math.round((c.quantityKg + qty) * 1000) / 1000,
                 total: Math.round((c.quantityKg + qty) * c.pricePerKg),
               }
             : c
         )
       );
-    } else {
-      setCart([
-        ...cart,
+    } else if (existing && fromBarcode) {
+      // Barcode mode: add a separate line for each distinct scan
+      setCart((prev) => [
+        ...prev,
         {
           itemId: item.id,
           name: item.name,
           pricePerKg,
-          quantityKg: Math.round(qty * 100) / 100,
+          quantityKg: qty,
           total,
+          fromBarcode: true,
+        },
+      ]);
+    } else {
+      setCart((prev) => [
+        ...prev,
+        {
+          itemId: item.id,
+          name: item.name,
+          pricePerKg,
+          quantityKg: Math.round(qty * 1000) / 1000,
+          total,
+          fromBarcode,
         },
       ]);
     }
   };
+
+  /** Handle a raw barcode string from scanner or manual entry */
+  const handleBarcodeScan = useCallback(async (raw: string) => {
+    const cleaned = raw.trim();
+    if (!cleaned) return;
+    setBarcodeProcessing(true);
+    try {
+      const { item, weightKg, price } = await barcodeService.lookup(cleaned);
+      addToCart(item, weightKg ?? 1, price, true);
+      setBarcodeInput("");
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.messageAr ??
+        err?.response?.data?.message ??
+        "باركود غير معروف";
+      toast.error(msg);
+      setBarcodeInput("");
+    } finally {
+      setBarcodeProcessing(false);
+      setTimeout(() => barcodeInputRef.current?.focus(), 30);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart]);
 
   const updateQuantity = (itemId: number, delta: number) => {
     setCart(
@@ -162,6 +217,7 @@ function POS() {
     setDiscount(0);
     setPaidAmount("");
     setTaxTemplateId(null);
+    setBarcodeInput("");
   };
 
   const handleCustomerSelect = (c: Customer | null) => {
@@ -230,7 +286,7 @@ function POS() {
   };
 
   const subtotalMinor = cart.reduce((sum, c) => sum + c.total, 0);
-  const discountAmountMinor = Math.round((subtotalMinor * discount) / 100);
+  const discountAmountMinor = Math.min(toMinor(discount), subtotalMinor);
   const netTotalMinor = subtotalMinor - discountAmountMinor;
   // Blueprint 05: estimated tax (15% for default template)
   const estimatedTaxMinor = taxTemplateId ? Math.round(netTotalMinor * 1500 / 10000) : 0;
@@ -240,17 +296,24 @@ function POS() {
   const remainingMinor = saleType === "credit" ? totalMinor : Math.max(0, totalMinor - paidMinor);
   const overpayment = saleType === "cash" && paidMinor > 0 && paidMinor > totalMinor + 1;
 
-  // Customer is required when: remaining > 0 (partial cash) OR deferred (credit)
-  const needsCustomer = saleType === "credit" || (saleType === "cash" && paidMinor > 0 && paidMinor < totalMinor - 1);
+  // Customer is required when:
+  //   - saleType === "credit" (always)
+  //   - saleType === "cash" AND paid amount is less than total (partial pay / zero)
+  const isExplicitUnderPayment = paidAmount !== "" && paidMinor < totalMinor - 1;
+  const needsCustomer = saleType === "credit" || (saleType === "cash" && isExplicitUnderPayment);
   const hasCustomerInfo = !!customerId || (customerName.trim().length >= 2 && customerPhone.trim().length >= 7);
   const customerValid = !needsCustomer || hasCustomerInfo;
+
+  // Cash sales: paid amount must be entered AND must be > 0 (partial payment allowed, zero is not)
+  const cashMissingPaidAmount = saleType === "cash" && (paidAmount === "" || Number(paidAmount) <= 0);
 
   // "Complete sale" button disabled conditions
   const canCompleteSale =
     cart.length > 0 &&
     !createSale.isPending &&
     !overpayment &&
-    customerValid;
+    customerValid &&
+    !cashMissingPaidAmount;
 
   const receiptData = useMemo(
     () => ({
@@ -290,6 +353,8 @@ function POS() {
 
   const handleCompleteSale = async () => {
     if (!canCompleteSale) return;
+    // Safety guard: block if customer info is still missing
+    if (needsCustomer && !hasCustomerInfo) return;
 
     const dto: CreateSaleDto = {
       saleType,
@@ -306,9 +371,10 @@ function POS() {
     };
 
     if (saleType === "cash") {
-      // Use entered amount (supports partial payment); default to full total when empty
+      // Empty field → auto-complete with full total (clean cash)
+      // Explicit value (including "0") → use exactly what was entered
       const amount = Math.round(
-        paidMinor > 0 ? Math.min(paidMinor, totalMinor) : totalMinor
+        paidAmount === "" ? totalMinor : Math.min(Math.max(0, paidMinor), totalMinor)
       );
       if (amount > 0) {
         dto.payments = [
@@ -341,20 +407,65 @@ function POS() {
           <span className="text-base font-bold text-foreground">نقطة البيع</span>
         </div>
 
-        <div className="flex-1 max-w-xl relative">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-          <Input
-            placeholder="ابحث عن منتج بالاسم أو الكود..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pr-10 h-9 text-sm bg-slate-50 dark:bg-slate-800"
-          />
-        </div>
+        {/* Search — hidden in barcode mode */}
+        {inputMode === "manual" && (
+          <div className="flex-1 max-w-xl relative">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="ابحث عن منتج بالاسم أو الكود..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pr-10 h-9 text-sm bg-slate-50 dark:bg-slate-800"
+            />
+          </div>
+        )}
 
-        <div className="mr-auto flex gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" disabled>
-            <Barcode className="w-3.5 h-3.5" /> باركود
-          </Button>
+        {/* Barcode strip — shown inline in barcode mode */}
+        {inputMode === "barcode" && (
+          <div className="flex-1 max-w-xl flex items-center gap-2">
+            <Barcode className="w-4 h-4 text-amber-500 shrink-0" />
+            <Input
+              ref={barcodeInputRef}
+              placeholder="امسح الباركود أو اكتبه ثم اضغط Enter..."
+              value={barcodeInput}
+              onChange={(e) => setBarcodeInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleBarcodeScan(barcodeInput);
+                }
+              }}
+              dir="ltr"
+              className="flex-1 h-9 text-sm font-mono bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700 focus-visible:ring-amber-400"
+              disabled={barcodeProcessing}
+              autoComplete="off"
+            />
+            {barcodeProcessing
+              ? <Loader2 className="w-4 h-4 animate-spin text-amber-500 shrink-0" />
+              : <span className="text-[11px] text-amber-600 dark:text-amber-400 shrink-0 font-medium">Enter للإضافة</span>
+            }
+          </div>
+        )}
+
+        <div className="mr-auto flex gap-2 shrink-0">
+          <button
+            onClick={() => {
+              const next = inputMode === "manual" ? "barcode" : "manual";
+              setInputMode(next);
+              setBarcodeInput("");
+              if (next === "barcode") {
+                setTimeout(() => barcodeInputRef.current?.focus(), 50);
+              }
+            }}
+            className={`flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold border transition-all ${
+              inputMode === "barcode"
+                ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                : "bg-white dark:bg-slate-800 border-input text-muted-foreground hover:border-amber-400 hover:text-amber-600"
+            }`}
+          >
+            <Barcode className="w-3.5 h-3.5" />
+            {inputMode === "barcode" ? "وضع الباركود ✓" : "باركود"}
+          </button>
         </div>
       </div>
 
@@ -386,7 +497,11 @@ function POS() {
                 return (
                   <button
                     key={item.id}
-                    onClick={() => addToCart(item)}
+                    onClick={() => {
+                      const inCart = cart.find((c) => c.itemId === item.id);
+                      setWeightDialogInitialKg(inCart?.quantityKg ?? undefined);
+                      setWeightDialogItem(item);
+                    }}
                     className="group relative flex flex-col rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-primary hover:shadow-md transition-all duration-150 text-right overflow-hidden"
                   >
                     {/* colour accent strip */}
@@ -404,8 +519,8 @@ function POS() {
                       </div>
                     </div>
                     {inCart && (
-                      <div className="absolute top-2 left-2 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shadow">
-                        {inCart.quantityKg}
+                      <div className="absolute top-2 left-2 min-w-[22px] h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shadow px-1">
+                        {inCart.quantityKg.toFixed(2)}
                       </div>
                     )}
                   </button>
@@ -447,7 +562,11 @@ function POS() {
                 <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
                   <User className="w-4 h-4 shrink-0" />
                   <span className="text-xs font-semibold">
-                    {saleType === "credit" ? "البيع الآجل يتطلب بيانات الزبون — اختر زبون مسجل أو أدخل الاسم والهاتف" : "الدفع الجزئي يتطلب بيانات الزبون — اختر زبون مسجل أو أدخل الاسم والهاتف"}
+                    {saleType === "credit"
+                      ? "البيع الآجل يتطلب بيانات الزبون — اختر زبون مسجل أو أدخل الاسم والهاتف"
+                      : paidAmount === "0" || paidMinor === 0
+                        ? "المبلغ المدفوع صفر = دين كامل — أدخل بيانات الزبون أو اختر زبون مسجل"
+                        : "الدفع الجزئي يتطلب بيانات الزبون — اختر زبون مسجل أو أدخل الاسم والهاتف"}
                   </span>
                 </div>
               )}
@@ -546,32 +665,56 @@ function POS() {
                     {cart.map((item) => (
                       <tr key={item.itemId} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                         <td className="py-2.5 px-4">
-                          <span className="font-semibold text-sm leading-tight line-clamp-2">{item.name}</span>
+                          <div className="flex items-center gap-1.5">
+                            {item.fromBarcode && (
+                              <Barcode className="w-3 h-3 text-amber-500 shrink-0" title="أُضيف بالباركود" />
+                            )}
+                            <span className="font-semibold text-sm leading-tight line-clamp-2">{item.name}</span>
+                          </div>
                         </td>
                         <td className="py-2.5 px-2 text-center">
-                          <div className="flex items-center justify-center gap-1">
+                          <div className="flex items-center justify-center gap-0.5">
                             <button
+                              title="−¼ كجم"
+                              onClick={() => updateQuantity(item.itemId, -0.25)}
+                              className="w-6 h-6 rounded border border-input flex items-center justify-center hover:bg-muted hover:border-primary transition-colors text-[10px] font-bold text-muted-foreground hover:text-primary"
+                            >
+                              −¼
+                            </button>
+                            <button
+                              title="−½ كجم"
                               onClick={() => updateQuantity(item.itemId, -0.5)}
                               className="w-6 h-6 rounded border border-input flex items-center justify-center hover:bg-muted hover:border-primary transition-colors"
                             >
                               <Minus className="w-3 h-3" />
                             </button>
-                            <input
-                              type="number"
-                              step="0.1"
-                              min="0.1"
-                              value={item.quantityKg}
-                              onChange={(e) => {
-                                const v = parseFloat(e.target.value);
-                                if (!isNaN(v) && v >= 0.1) setCartItemQuantity(item.itemId, v);
-                              }}
-                              className="w-14 h-6 px-1 rounded border border-input bg-background text-center text-xs font-bold"
-                            />
                             <button
+                              title="انقر لتعديل الوزن"
+                              onClick={() => {
+                                const cartItem = cart.find((c) => c.itemId === item.itemId);
+                                const srcItem = items.find((i) => i.id === item.itemId);
+                                if (srcItem) {
+                                  setWeightDialogInitialKg(cartItem?.quantityKg);
+                                  setWeightDialogItem(srcItem);
+                                }
+                              }}
+                              className="w-16 h-6 px-1 rounded border border-input bg-primary/5 hover:border-primary text-center text-xs font-bold text-primary transition-colors"
+                            >
+                              {item.quantityKg.toFixed(2)}
+                            </button>
+                            <button
+                              title="+½ كجم"
                               onClick={() => updateQuantity(item.itemId, 0.5)}
                               className="w-6 h-6 rounded border border-input flex items-center justify-center hover:bg-muted hover:border-primary transition-colors"
                             >
                               <Plus className="w-3 h-3" />
+                            </button>
+                            <button
+                              title="+¼ كجم"
+                              onClick={() => updateQuantity(item.itemId, 0.25)}
+                              className="w-6 h-6 rounded border border-input flex items-center justify-center hover:bg-muted hover:border-primary transition-colors text-[10px] font-bold text-muted-foreground hover:text-primary"
+                            >
+                              +¼
                             </button>
                           </div>
                         </td>
@@ -607,14 +750,15 @@ function POS() {
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-muted-foreground shrink-0">خصم %</span>
+                  <span className="text-muted-foreground shrink-0">خصم ₪</span>
                   <div className="flex items-center gap-2 mr-auto">
                     <Input
                       type="number"
                       value={discount || ""}
                       onChange={(e) => setDiscount(Number(e.target.value))}
                       className="w-20 h-7 text-center text-sm"
-                      min={0} max={100}
+                      min={0} max={subtotalMinor / 100}
+                      step={0.01}
                     />
                     {discountAmountMinor > 0 && (
                       <span className="text-destructive font-semibold text-xs shrink-0">
@@ -648,7 +792,14 @@ function POS() {
 
               {/* Payment method + paid amount (cash only) */}
               {saleType === "cash" && (
-                <div className="px-5 py-3 space-y-2 border-b">
+                <div className={`px-5 py-3 space-y-2 border-b ${
+                  cashMissingPaidAmount ? "bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800" : ""
+                }`}>
+                  {cashMissingPaidAmount && (
+                    <p className="text-xs font-semibold text-rose-600 dark:text-rose-400">
+                      ⚠️ أدخل المبلغ المدفوع — يُسمح بالدفع الجزئي لكن لا يجوز أن يكون صفراً
+                    </p>
+                  )}
                   <div className="flex gap-2">
                     {(["cash", "card"] as const).map((m) => (
                       <button
@@ -672,9 +823,13 @@ function POS() {
                       value={paidAmount}
                       onChange={(e) => setPaidAmount(e.target.value)}
                       className={`flex-1 h-9 text-base font-bold text-center ${
-                        overpayment ? "border-destructive" : ""
+                        overpayment
+                          ? "border-destructive"
+                          : cashMissingPaidAmount
+                          ? "border-rose-400 ring-1 ring-rose-300"
+                          : ""
                       }`}
-                      placeholder="0.00"
+                      placeholder="أدخل المبلغ المدفوع..."
                     />
                     {overpayment ? (
                       <span className="text-destructive font-bold text-xs shrink-0">
@@ -725,6 +880,23 @@ function POS() {
           </div>
         </div>
       </div>
+
+      {/* ── Weight Entry Dialog ──────────────────────────────────── */}
+      <WeightEntryDialog
+        item={weightDialogItem}
+        initialKg={weightDialogInitialKg}
+        onConfirm={(itm, qty) => {
+          // Replace quantity if item already in cart, otherwise add fresh
+          const existing = cart.find((c) => c.itemId === itm.id);
+          if (existing) {
+            setCartItemQuantity(itm.id, qty);
+          } else {
+            addToCart(itm, qty);
+          }
+          setWeightDialogItem(null);
+        }}
+        onClose={() => setWeightDialogItem(null)}
+      />
 
       {/* ── Receipt Preview Dialog ─────────────────────────────── */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>

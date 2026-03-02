@@ -92,9 +92,9 @@ const priceLevelColors: Record<PriceLevel, string> = {
  * Format amount from minor units (e.g. 100000) to display (e.g. "1,000.000")
  */
 function formatAmount(amount: number): string {
-  return (amount / 1000).toLocaleString("en-US", {
-    minimumFractionDigits: 3,
-    maximumFractionDigits: 3,
+  return (amount / 100).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   });
 }
 
@@ -182,7 +182,7 @@ function CustomerDetailCard({ customer, onClose }: { customer: Customer; onClose
             <div className="bg-white rounded-xl shadow-lg border border-slate-100 p-3 text-center">
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">الخصم الافتراضي</p>
               <p className="text-lg font-bold text-slate-700">
-                {customer.defaultDiscountPct > 0 ? `${(customer.defaultDiscountPct / 100).toFixed(1)}%` : "0%"}
+                {customer.defaultDiscountPct > 0 ? `₪${(customer.defaultDiscountPct / 100).toFixed(2)}` : "₪0.00"}
               </p>
             </div>
           </div>
@@ -233,8 +233,8 @@ function CustomerDetailCard({ customer, onClose }: { customer: Customer; onClose
                 />
                 <DetailItem
                   icon={<Percent className="w-4 h-4 text-blue-500" />}
-                  label="نقاط الخصم"
-                  value={customer.defaultDiscountPct > 0 ? `${customer.defaultDiscountPct} نقطة` : null}
+                  label="خصم افتراضي"
+                  value={customer.defaultDiscountPct > 0 ? `₪${(customer.defaultDiscountPct / 100).toFixed(2)}` : null}
                 />
               </div>
             </div>
@@ -396,57 +396,63 @@ export default function Customers() {
     <div className="space-y-5" dir="rtl">
 
       {/* ── Page Header ── */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center shrink-0">
-            <Users className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-teal-600 via-cyan-600 to-emerald-600 p-6">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2230%22%20height%3D%2230%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cdefs%3E%3Cpattern%20id%3D%22g%22%20patternUnits%3D%22userSpaceOnUse%22%20width%3D%2230%22%20height%3D%2230%22%3E%3Ccircle%20cx%3D%2215%22%20cy%3D%2215%22%20r%3D%221.2%22%20fill%3D%22rgba(255%2C255%2C255%2C0.1)%22%2F%3E%3C%2Fpattern%3E%3C%2Fdefs%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20fill%3D%22url(%23g)%22%2F%3E%3C%2Fsvg%3E')] opacity-60" />
+        <div className="relative flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-white/15 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/25 shadow-lg">
+              <Users className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white tracking-tight">إدارة الزبائن</h1>
+              <p className="text-sm text-white/70 mt-0.5">إدارة بيانات الزبائن وحساباتهم المالية</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold">إدارة العملاء</h1>
-            <p className="text-sm text-muted-foreground">إدارة بيانات العملاء وحساباتهم المالية</p>
-          </div>
+          <Button
+            onClick={handleCreate}
+            className="gap-2 bg-white text-teal-700 hover:bg-white/90 font-bold shadow-md"
+          >
+            <Plus className="w-4 h-4" /> زبون جديد
+          </Button>
         </div>
-        <Button onClick={handleCreate} className="gap-2 shrink-0">
-          <Plus className="w-4 h-4" /> عميل جديد
-        </Button>
       </div>
 
       {/* ── Stats ── */}
       {!isLoading && (
         <div className="grid grid-cols-4 gap-3">
-          <div className="bg-white dark:bg-card rounded-xl border px-4 py-3 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
-              <Users className="w-4 h-4 text-slate-500" />
+          <div className="bg-white dark:bg-card rounded-2xl border border-slate-100 dark:border-slate-700 p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center shrink-0">
+              <Users className="w-5 h-5 text-teal-600" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">إجمالي العملاء</p>
+              <p className="text-xs text-muted-foreground font-medium">إجمالي الزبائن</p>
               <p className="text-2xl font-bold leading-tight">{customers.length}</p>
             </div>
           </div>
-          <div className="bg-white dark:bg-card rounded-xl border px-4 py-3 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
-              <Crown className="w-4 h-4 text-amber-500" />
+          <div className="bg-white dark:bg-card rounded-2xl border border-slate-100 dark:border-slate-700 p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+              <Crown className="w-5 h-5 text-amber-500" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">VIP</p>
+              <p className="text-xs text-muted-foreground font-medium">VIP</p>
               <p className="text-2xl font-bold leading-tight text-amber-600">{customers.filter(c => c.priceLevel === 'vip').length}</p>
             </div>
           </div>
-          <div className="bg-white dark:bg-card rounded-xl border px-4 py-3 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
-              <ShoppingBag className="w-4 h-4 text-blue-500" />
+          <div className="bg-white dark:bg-card rounded-2xl border border-slate-100 dark:border-slate-700 p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+              <ShoppingBag className="w-5 h-5 text-blue-500" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">جملة</p>
+              <p className="text-xs text-muted-foreground font-medium">جملة</p>
               <p className="text-2xl font-bold leading-tight text-blue-600">{customers.filter(c => c.priceLevel === 'wholesale').length}</p>
             </div>
           </div>
-          <div className="bg-white dark:bg-card rounded-xl border px-4 py-3 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center shrink-0">
-              <AlertTriangle className="w-4 h-4 text-rose-500" />
+          <div className="bg-white dark:bg-card rounded-2xl border border-slate-100 dark:border-slate-700 p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center shrink-0">
+              <AlertTriangle className="w-5 h-5 text-rose-500" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">لديهم رصيد</p>
+              <p className="text-xs text-muted-foreground font-medium">لديهم رصيد</p>
               <p className="text-2xl font-bold leading-tight text-rose-600">{customers.filter(c => c.currentBalance > 0).length}</p>
             </div>
           </div>
@@ -454,18 +460,19 @@ export default function Customers() {
       )}
 
       {/* ── Filters ── */}
-      <div className="flex flex-wrap gap-3 items-center">
+      <div className="flex flex-wrap gap-2 items-center bg-white dark:bg-card rounded-2xl border border-slate-100 dark:border-slate-700 p-3 shadow-sm">
         <div className="relative flex-1 min-w-[220px]">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           <Input
-            placeholder="بحث بالاسم، الهاتف، أو رقم العميل..."
+            placeholder="بحث بالاسم، الهاتف، أو رقم الزبون..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pr-10 bg-white dark:bg-card h-10"
+            className="pr-10 h-9 border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-700 transition-colors"
           />
         </div>
+        <div className="w-px h-7 bg-slate-200 dark:bg-slate-600 shrink-0" />
         <Select value={priceLevelFilter} onValueChange={setPriceLevelFilter}>
-          <SelectTrigger className="w-[150px] h-10 bg-white dark:bg-card">
+          <SelectTrigger className="w-[145px] h-9 border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800">
             <SelectValue placeholder="مستوى السعر" />
           </SelectTrigger>
           <SelectContent dir="rtl">
@@ -477,20 +484,20 @@ export default function Customers() {
         </Select>
         <button
           onClick={() => setShowInactive(!showInactive)}
-          className={`h-10 px-4 rounded-lg border text-sm font-medium transition-colors ${
+          className={`h-9 px-3 rounded-lg border text-sm font-medium transition-all ${
             showInactive
               ? "bg-slate-700 text-white border-slate-700"
-              : "bg-white dark:bg-card border-input text-muted-foreground hover:border-slate-400"
+              : "border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-muted-foreground hover:border-slate-400 hover:bg-white dark:hover:bg-slate-700"
           }`}
         >
           غير النشطين
         </button>
         <button
           onClick={() => setShowWithBalance(!showWithBalance)}
-          className={`h-10 px-4 rounded-lg border text-sm font-medium transition-colors ${
+          className={`h-9 px-3 rounded-lg border text-sm font-medium transition-all ${
             showWithBalance
               ? "bg-rose-600 text-white border-rose-600"
-              : "bg-white dark:bg-card border-input text-muted-foreground hover:border-slate-400"
+              : "border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-muted-foreground hover:border-slate-400 hover:bg-white dark:hover:bg-slate-700"
           }`}
         >
           لديهم رصيد
@@ -498,97 +505,100 @@ export default function Customers() {
       </div>
 
       {/* ── Table ── */}
-      <div className="rounded-xl border bg-white dark:bg-card overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-3 border-b bg-slate-50/60 dark:bg-slate-800/30">
+      <div className="rounded-2xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-card overflow-hidden shadow-sm">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/40">
           <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-            {customers.length} عميل مسجّل
+            {customers.length} زبون مسجّل
           </span>
           {customersResponse?.meta && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-2.5 py-1 rounded-full">
               عرض {customers.length} من {customersResponse.meta.totalItems}
             </span>
           )}
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center h-48 gap-3 text-muted-foreground">
-            <Loader2 className="w-5 h-5 animate-spin" />
+          <div className="flex items-center justify-center h-52 gap-3 text-muted-foreground">
+            <Loader2 className="w-5 h-5 animate-spin text-teal-500" />
             <span className="text-sm">جاري تحميل البيانات...</span>
           </div>
         ) : customers.length === 0 ? (
-          <div className="text-center py-16 text-muted-foreground">
-            <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p className="text-sm font-medium">لا يوجد عملاء مطابقون للبحث</p>
+          <div className="text-center py-20 text-muted-foreground">
+            <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
+              <Users className="w-8 h-8 opacity-30" />
+            </div>
+            <p className="text-sm font-semibold">لا يوجد زبائن مطابقون للبحث</p>
+            <p className="text-xs mt-1 opacity-60">جرّب تغيير معايير البحث</p>
           </div>
         ) : (
           <Table>
             <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="text-right text-xs font-bold text-slate-500 uppercase tracking-wide w-[110px]">رقم العميل</TableHead>
-                <TableHead className="text-right text-xs font-bold text-slate-500 uppercase tracking-wide">الاسم</TableHead>
-                <TableHead className="text-right text-xs font-bold text-slate-500 uppercase tracking-wide">الهاتف</TableHead>
-                <TableHead className="text-right text-xs font-bold text-slate-500 uppercase tracking-wide">العنوان</TableHead>
-                <TableHead className="text-center text-xs font-bold text-slate-500 uppercase tracking-wide">مستوى السعر</TableHead>
-                <TableHead className="text-center text-xs font-bold text-slate-500 uppercase tracking-wide">الحد الائتماني</TableHead>
-                <TableHead className="text-center text-xs font-bold text-slate-500 uppercase tracking-wide">الرصيد</TableHead>
-                <TableHead className="text-center text-xs font-bold text-slate-500 uppercase tracking-wide w-[90px]">الحالة</TableHead>
-                <TableHead className="text-center text-xs font-bold text-slate-500 uppercase tracking-wide w-[100px]">الإجراءات</TableHead>
+              <TableRow className="hover:bg-transparent border-slate-100 dark:border-slate-700">
+                <TableHead className="text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider w-[110px] pr-5">رقم الزبون</TableHead>
+                <TableHead className="text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">الاسم</TableHead>
+                <TableHead className="text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">الهاتف</TableHead>
+                <TableHead className="text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">العنوان</TableHead>
+                <TableHead className="text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">المستوى</TableHead>
+                <TableHead className="text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">الحد الائتماني</TableHead>
+                <TableHead className="text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">الرصيد</TableHead>
+                <TableHead className="text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider w-[80px]">الحالة</TableHead>
+                <TableHead className="text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider w-[100px]">الإجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {customers.map((customer) => (
                 <TableRow
                   key={customer.id}
-                  className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 group"
+                  className="cursor-pointer hover:bg-teal-50/40 dark:hover:bg-teal-900/10 group border-slate-50 dark:border-slate-700/50 transition-colors"
                   onClick={() => handleEdit(customer)}
                 >
-                  <TableCell className="font-mono text-xs text-slate-400 py-3">
+                  <TableCell className="font-mono text-xs text-slate-400 py-3.5 pr-5">
                     {customer.customerNumber}
                   </TableCell>
-                  <TableCell className="py-3">
+                  <TableCell className="py-3.5">
                     <div className="flex items-center gap-2.5">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 font-bold text-sm ${
                         customer.priceLevel === 'vip'
-                          ? "bg-amber-50 dark:bg-amber-900/20 border border-amber-100 text-amber-700"
+                          ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
                           : customer.priceLevel === 'wholesale'
-                          ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-100 text-blue-700"
-                          : "bg-teal-50 dark:bg-teal-900/20 border border-teal-100 text-teal-700"
+                          ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                          : "bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400"
                       }`}>
                         {customer.name.charAt(0)}
                       </div>
                       <span className="font-semibold text-sm">{customer.name}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="py-3">
+                  <TableCell className="py-3.5 text-center">
                     {customer.phone ? (
-                      <div className="flex items-center gap-1.5 text-sm text-slate-600" dir="ltr">
-                        <Phone className="w-3 h-3 text-slate-400" />
-                        {customer.phone}
+                      <div className="inline-flex items-center justify-center gap-1.5 text-sm text-slate-600 dark:text-slate-300">
+                        <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span dir="ltr">{customer.phone}</span>
                       </div>
                     ) : (
                       <span className="text-muted-foreground text-xs">—</span>
                     )}
                   </TableCell>
-                  <TableCell className="py-3">
+                  <TableCell className="py-3.5">
                     {customer.address ? (
-                      <div className="flex items-center gap-1 text-sm text-slate-600">
+                      <div className="flex items-center gap-1 text-sm text-slate-600 dark:text-slate-300">
                         <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                        <span className="truncate max-w-[130px]">{customer.address}</span>
+                        <span className="truncate max-w-[120px]">{customer.address}</span>
                       </div>
                     ) : (
                       <span className="text-muted-foreground text-xs">—</span>
                     )}
                   </TableCell>
-                  <TableCell className="py-3 text-center">
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${priceLevelColors[customer.priceLevel]}`}>
+                  <TableCell className="py-3.5 text-center">
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${priceLevelColors[customer.priceLevel]}`}>
                       {customer.priceLevel === "vip" && <Crown className="w-3 h-3" />}
                       {customer.priceLevel === "wholesale" && <ShoppingBag className="w-3 h-3" />}
                       {priceLevelLabels[customer.priceLevel]}
                     </span>
                   </TableCell>
-                  <TableCell className="py-3 text-center">
+                  <TableCell className="py-3.5 text-center">
                     {customer.creditLimit > 0 ? (
-                      <div className="flex items-center justify-center gap-1 text-sm text-slate-600">
+                      <div className="flex items-center justify-center gap-1 text-sm text-slate-600 dark:text-slate-300">
                         <CreditCard className="w-3 h-3 text-slate-400" />
                         {formatAmount(customer.creditLimit)}
                       </div>
@@ -596,34 +606,34 @@ export default function Customers() {
                       <span className="text-muted-foreground text-xs">—</span>
                     )}
                   </TableCell>
-                  <TableCell className="py-3 text-center">
+                  <TableCell className="py-3.5 text-center">
                     {customer.currentBalance > 0 ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-100">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 border border-rose-100 dark:border-rose-800">
                         <AlertTriangle className="w-3 h-3" />
                         {formatAmount(customer.currentBalance)}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-600 border border-emerald-100">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800">
                         <CheckCircle2 className="w-3 h-3" /> مسدّد
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="py-3 text-center">
+                  <TableCell className="py-3.5 text-center">
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                       customer.isActive
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                        : "bg-slate-100 text-slate-500 border border-slate-200"
+                        ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800"
+                        : "bg-slate-100 dark:bg-slate-700 text-slate-500 border border-slate-200 dark:border-slate-600"
                     }`}>
                       {customer.isActive ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                      {customer.isActive ? "نشط" : "غير نشط"}
+                      {customer.isActive ? "نشط" : "موقوف"}
                     </span>
                   </TableCell>
-                  <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
+                  <TableCell className="py-3.5" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-slate-400 hover:text-blue-600 hover:bg-blue-50"
+                        className="h-7 w-7 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
                         onClick={() => handleView(customer)}
                         title="عرض التفاصيل"
                       >
@@ -632,7 +642,7 @@ export default function Customers() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                        className="h-7 w-7 text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30"
                         onClick={() => handleEdit(customer)}
                         title="تعديل"
                       >
@@ -641,7 +651,7 @@ export default function Customers() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                        className="h-7 w-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30"
                         onClick={() => handleDeleteClick(customer)}
                         title="حذف"
                       >

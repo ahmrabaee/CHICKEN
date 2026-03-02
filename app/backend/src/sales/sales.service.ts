@@ -281,10 +281,17 @@ export class SalesService {
       }
     }
 
-    // Generate sale number
-    const saleNumber = await this.generateSaleNumber();
-
-    return this.prisma.$transaction(async (tx) => {
+    // Retry up to 5 times on duplicate sale_number (race-condition guard).
+    // Two concurrent requests can both read the same max/count before either
+    // commits; retrying with jittered backoff resolves the collision.
+    let lastTxError: any;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+    return await this.prisma.$transaction(async (tx) => {
+      // Generate sale number inside the transaction so the read is
+      // part of the same atomic write — reduces but does not eliminate
+      // the race window; the retry loop above handles the rare collision.
+      const saleNumber = await this.generateSaleNumber(tx);
       let grossTotal = 0;
       let totalCost = 0;
       const saleLineData: any[] = [];
@@ -646,6 +653,18 @@ export class SalesService {
 
       return this.findById(sale.id, tx);
     });
+      } catch (err: any) {
+        // P2002 = Prisma unique constraint violation
+        if (err?.code === 'P2002' && JSON.stringify(err?.meta?.target ?? '').includes('sale_number')) {
+          lastTxError = err;
+          // Small random backoff so concurrent requests don't collide again
+          await new Promise(r => setTimeout(r, 10 + Math.random() * 30));
+          continue;
+        }
+        throw err;
+      }
+    }
+    throw lastTxError;
   }
 
   async voidSale(id: number, dto: VoidSaleDto, userId: number) {
@@ -923,17 +942,24 @@ export class SalesService {
     });
   }
 
-  private async generateSaleNumber(): Promise<string> {
+  private async generateSaleNumber(prismaOrTx: any = this.prisma): Promise<string> {
     const today = new Date();
     const datePrefix = today.toISOString().slice(0, 10).replace(/-/g, '');
-    const count = await this.prisma.sale.count({
-      where: {
-        saleDate: {
-          gte: new Date(today.setHours(0, 0, 0, 0)),
-        },
-      },
+    const prefix = `SAL-${datePrefix}-`;
+    // Use findFirst+orderBy instead of count so the sequence continues
+    // correctly even after voids, and the number is derived from the
+    // actual last-used value rather than a potentially stale row count.
+    const lastSale = await prismaOrTx.sale.findFirst({
+      where: { saleNumber: { startsWith: prefix } },
+      orderBy: { saleNumber: 'desc' },
+      select: { saleNumber: true },
     });
-    return `SAL-${datePrefix}-${(count + 1).toString().padStart(4, '0')}`;
+    let nextNum = 1;
+    if (lastSale) {
+      const seq = parseInt(lastSale.saleNumber.slice(prefix.length), 10);
+      if (!isNaN(seq)) nextNum = seq + 1;
+    }
+    return `${prefix}${nextNum.toString().padStart(4, '0')}`;
   }
 
   private async generatePaymentNumber(tx: any): Promise<string> {

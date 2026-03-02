@@ -7,12 +7,51 @@ export class CategoriesService {
   constructor(private prisma: PrismaService) { }
 
   async findPurchaseable(): Promise<CategoryResponseDto[]> {
+    // Fetch all active categories (with or without a purchaseItem)
     const categories = await this.prisma.category.findMany({
       where: { isActive: true },
       include: { purchaseItem: true },
       orderBy: { displayOrder: 'asc' },
     });
-    return categories.map((c) => this.toResponseDto(c));
+
+    // Auto-bootstrap: for each category that lacks a purchaseItem, create one now.
+    // This is idempotent — it only runs once per category and never creates duplicates.
+    const results: typeof categories = [];
+    for (const cat of categories) {
+      if (cat.purchaseItemId) {
+        results.push(cat);
+        continue;
+      }
+
+      // Derive a unique item code from the category code
+      const itemCode = `${cat.code}_RAW`;
+      let item = await this.prisma.item.findUnique({ where: { code: itemCode } });
+
+      if (!item) {
+        item = await this.prisma.item.create({
+          data: {
+            code: itemCode,
+            name: cat.name,
+            nameEn: cat.nameEn ?? null,
+            categoryId: cat.id,
+            defaultSalePrice: 0,
+            defaultPurchasePrice: 0,
+            requiresScale: true,
+            isActive: true,
+          },
+        });
+      }
+
+      // Link the item to the category
+      const updated = await this.prisma.category.update({
+        where: { id: cat.id },
+        data: { purchaseItemId: item.id },
+        include: { purchaseItem: true },
+      });
+      results.push(updated);
+    }
+
+    return results.map((c) => this.toResponseDto(c));
   }
 
   async findAll(includeInactive = false): Promise<CategoryResponseDto[]> {

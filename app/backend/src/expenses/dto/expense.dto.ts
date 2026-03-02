@@ -1,11 +1,11 @@
-import { IsNumber, IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IsNumber, IsString, IsOptional } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { PaginationQueryDto } from '../../common';
 
 export class CreateExpenseDto {
-  @ApiProperty({ enum: ['utilities', 'rent', 'salaries', 'maintenance', 'supplies', 'transport', 'marketing', 'other'] })
-  @IsString()
-  category: string;
+  @ApiProperty({ description: 'ID of the expense category (from /expenses/categories)' })
+  @IsNumber()
+  categoryId: number;
 
   @ApiProperty()
   @IsString()
@@ -15,25 +15,50 @@ export class CreateExpenseDto {
   @IsNumber()
   amount: number;
 
-  @ApiPropertyOptional({ description: 'ISO date string' })
+  @ApiPropertyOptional({ description: 'Tax amount in minor units (cents)' })
+  @IsNumber()
+  @IsOptional()
+  taxAmount?: number;
+
+  @ApiPropertyOptional({ description: 'ISO date string (YYYY-MM-DD)' })
   @IsString()
   @IsOptional()
   expenseDate?: string;
 
-  @ApiPropertyOptional({ enum: ['cash', 'card', 'bank_transfer'] })
+  @ApiPropertyOptional({ enum: ['operational', 'personal', 'payroll', 'utilities', 'rent', 'maintenance', 'other'] })
+  @IsString()
+  @IsOptional()
+  expenseType?: string;
+
+  @ApiPropertyOptional({ enum: ['cash', 'card', 'bank_transfer', 'check', 'credit'] })
   @IsString()
   @IsOptional()
   paymentMethod?: string;
 
-  @ApiPropertyOptional({ description: 'True for personal/owner expenses' })
-  @IsBoolean()
+  @ApiPropertyOptional({ description: 'Supplier ID (optional)' })
+  @IsNumber()
   @IsOptional()
-  isPersonal?: boolean;
+  supplierId?: number;
+
+  @ApiPropertyOptional({ description: 'Branch ID (optional)' })
+  @IsNumber()
+  @IsOptional()
+  branchId?: number;
+
+  @ApiPropertyOptional({ description: 'Bank account ID (for bank_transfer)' })
+  @IsNumber()
+  @IsOptional()
+  bankAccountId?: number;
+
+  @ApiPropertyOptional({ description: 'Receipt / reference number' })
+  @IsString()
+  @IsOptional()
+  referenceNumber?: string;
 
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
-  receiptNumber?: string;
+  attachmentUrl?: string;
 
   @ApiPropertyOptional()
   @IsString()
@@ -48,4 +73,14 @@ export class ExpenseQueryDto extends PaginationQueryDto {
   @IsString()
   @IsOptional()
   expenseType?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  startDate?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  endDate?: string;
 }

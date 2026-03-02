@@ -87,7 +87,10 @@ const supplierSchema = z.object({
     name: z.string().min(2, "اسم التاجر يجب أن يكون حرفين على الأقل"),
     nameEn: z.string().optional().or(z.literal("")),
     contactPerson: z.string().optional().or(z.literal("")),
-    phone: z.string().optional().or(z.literal("")),
+    phone: z.string().optional().or(z.literal("")).refine(
+        (val) => !val || /^[+]?[0-9][\d\s\-()]{6,19}$/.test(val),
+        { message: "رقم الهاتف غير صحيح" }
+    ),
     address: z.string().optional().or(z.literal("")),
     paymentTerms: z.string().optional().or(z.literal("")),
     taxNumber: z.string().optional().or(z.literal("")),

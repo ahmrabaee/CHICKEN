@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Plus, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,23 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { NumericInput } from "@/components/ui/numeric-input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { creditNoteService, type CreditNote, type CreateCreditNoteDto } from "@/services/credit-note.service";
+import { creditNoteService, type CreditNote } from "@/services/credit-note.service";
 import { toast } from "@/hooks/use-toast";
 
 function formatCurrency(v: number) {
@@ -48,37 +32,14 @@ const statusLabels: Record<number, string> = {
 };
 
 export default function CreditNotes() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState<CreateCreditNoteDto>({
-    originalInvoiceType: "sale",
-    originalInvoiceId: 0,
-    amount: 0,
-    reason: "",
-  });
 
   const { data, isLoading } = useQuery({
     queryKey: ["credit-notes"],
     queryFn: async () => {
       const r = await creditNoteService.getAll({ page: 1, pageSize: 50 });
       return r.data.data;
-    },
-  });
-
-  const createMutation = useMutation({
-    mutationFn: (dto: CreateCreditNoteDto) => creditNoteService.create(dto),
-    onSuccess: () => {
-      toast({ title: "تم إنشاء الإشعار الدائن" });
-      setShowCreate(false);
-      setForm({ originalInvoiceType: "sale", originalInvoiceId: 0, amount: 0, reason: "" });
-      queryClient.invalidateQueries({ queryKey: ["credit-notes"] });
-    },
-    onError: (e: Error) => {
-      toast({
-        title: "خطأ",
-        description: (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? e.message,
-        variant: "destructive",
-      });
     },
   });
 
@@ -97,20 +58,6 @@ export default function CreditNotes() {
     },
   });
 
-  const handleCreate = () => {
-    // form.amount is already in minor units (set in Input onChange)
-    if (!form.originalInvoiceId || form.amount <= 0) {
-      toast({ title: "أدخل البيانات المطلوبة", variant: "destructive" });
-      return;
-    }
-    createMutation.mutate({
-      originalInvoiceType: form.originalInvoiceType,
-      originalInvoiceId: form.originalInvoiceId,
-      amount: form.amount,
-      reason: form.reason || undefined,
-    });
-  };
-
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
 
@@ -121,8 +68,10 @@ export default function CreditNotes() {
           <h1 className="text-2xl font-bold">الإشعارات الدائنة</h1>
           <p className="text-muted-foreground mt-1">إدارة إشعارات الخصم والإرجاع المرتبطة بالعمليات المالية.</p>
         </div>
-        <Button onClick={() => setShowCreate(true)}>
-          <Plus className="w-4 h-4 ml-2" /> إنشاء إشعار دائن
+        <Button asChild>
+          <Link to="/credit-notes/new">
+            <Plus className="w-4 h-4 ml-2" /> إنشاء إشعار دائن
+          </Link>
         </Button>
       </div>
 
@@ -143,26 +92,31 @@ export default function CreditNotes() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>الرقم</TableHead>
-                  <TableHead>التاريخ</TableHead>
-                  <TableHead>الفاتورة</TableHead>
-                  <TableHead>المبلغ</TableHead>
-                  <TableHead>الحالة</TableHead>
-                  <TableHead></TableHead>
+                  <TableHead className="text-center">الرقم</TableHead>
+                  <TableHead className="text-center">التاريخ</TableHead>
+                  <TableHead className="text-center">الفاتورة</TableHead>
+                  <TableHead className="text-center">المبلغ</TableHead>
+                  <TableHead className="text-center">الحالة</TableHead>
+                  <TableHead className="text-center w-[100px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {items.map((cn: CreditNote) => (
-                  <TableRow key={cn.id}>
-                    <TableCell>{cn.creditNoteNumber}</TableCell>
-                    <TableCell>{formatDate(cn.creditNoteDate)}</TableCell>
-                    <TableCell>
+                  <TableRow
+                    key={cn.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => navigate(`/credit-notes/${cn.id}`)}
+                  >
+                    <TableCell className="text-center font-medium">{cn.creditNoteNumber}</TableCell>
+                    <TableCell className="text-center">{formatDate(cn.creditNoteDate)}</TableCell>
+                    <TableCell className="text-center">
                       {cn.originalInvoiceType === "sale" ? "بيع" : "شراء"} #{cn.originalInvoiceId}
                     </TableCell>
-                    <TableCell>{formatCurrency(cn.amount)}</TableCell>
-                    <TableCell>{statusLabels[cn.docstatus] ?? cn.docstatus}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">{formatCurrency(cn.amount)}</TableCell>
+                    <TableCell className="text-center">{statusLabels[cn.docstatus] ?? cn.docstatus}</TableCell>
+                    <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                       {cn.docstatus === 0 && (
+                        <div className="flex justify-center">
                         <Button
                           size="sm"
                           variant="outline"
@@ -171,6 +125,7 @@ export default function CreditNotes() {
                         >
                           ترحيل
                         </Button>
+                        </div>
                       )}
                     </TableCell>
                   </TableRow>
@@ -180,67 +135,6 @@ export default function CreditNotes() {
           )}
         </CardContent>
       </Card>
-
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="max-w-md" dir="rtl">
-          <DialogHeader>
-            <DialogTitle>إنشاء إشعار دائن</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div>
-              <Label>نوع الفاتورة</Label>
-              <Select
-                value={form.originalInvoiceType}
-                onValueChange={(v) => setForm((p) => ({ ...p, originalInvoiceType: v as "sale" | "purchase" }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sale">فاتورة بيع</SelectItem>
-                  <SelectItem value="purchase">فاتورة شراء</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>رقم الفاتورة (ID)</Label>
-              <NumericInput
-                
-                value={form.originalInvoiceId || ""}
-                onChange={(e) => setForm((p) => ({ ...p, originalInvoiceId: parseInt(e.target.value || "0", 10) }))}
-                placeholder="مثال: 5"
-              />
-            </div>
-            <div>
-              <Label>المبلغ (شيكل)</Label>
-              <NumericInput
-                
-                step="0.01"
-                value={form.amount ? form.amount / 100 : ""}
-                onChange={(e) => setForm((p) => ({ ...p, amount: Math.round(parseFloat(e.target.value || "0") * 100) }))}
-                placeholder="مثال: 50.00"
-              />
-            </div>
-            <div>
-              <Label>السبب (اختياري)</Label>
-              <Input
-                value={form.reason ?? ""}
-                onChange={(e) => setForm((p) => ({ ...p, reason: e.target.value }))}
-                placeholder="إرجاع، خصم..."
-              />
-            </div>
-            <div className="flex gap-2 pt-4">
-              <Button onClick={handleCreate} disabled={createMutation.isPending}>
-                {createMutation.isPending && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-                إنشاء
-              </Button>
-              <Button variant="outline" onClick={() => setShowCreate(false)}>
-                إلغاء
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

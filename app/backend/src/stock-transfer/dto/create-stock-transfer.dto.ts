@@ -29,15 +29,16 @@ export class StockTransferLineDto {
 }
 
 export class CreateStockTransferDto {
-  @ApiProperty({ description: 'Source lot ID (raw chicken lot)' })
+  @ApiProperty({ description: 'Source lot ID' })
   @Type(() => Number)
   @IsInt()
   @IsPositive()
   sourceLotId: number;
 
-  @ApiProperty({ description: 'Expiry date for the converted products (ISO date)' })
+  @ApiPropertyOptional({ description: 'Expiry date for the converted products (ISO date). Uses source lot expiry if omitted.' })
   @IsDateString()
-  expiryDate: string;
+  @IsOptional()
+  expiryDate?: string;
 
   @ApiPropertyOptional({ description: 'Branch ID' })
   @Type(() => Number)

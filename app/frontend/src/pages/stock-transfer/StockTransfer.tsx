@@ -64,7 +64,7 @@ function TransferDetailDialog({
               <Info label="الوزن الإجمالي" value={formatWeight(transfer.totalWeightGrams)} />
               <Info label="التكلفة الإجمالية" value={formatCurrency(transfer.totalCostValue)} highlight />
               <Info label="الحالة" value={transfer.status} />
-              <Info label="المصدر" value={transfer.sourceLot?.lotNumber ?? "—"} />
+              <Info label="المصدر" value={transfer.sourceLot ? (transfer.sourceLot.item?.name ? `${transfer.sourceLot.item.name} — ${transfer.sourceLot.lotNumber}` : transfer.sourceLot.lotNumber) : "—"} />
               <Info label="أمر الشراء" value={transfer.sourceLot?.purchase?.purchaseNumber ?? "—"} />
             </div>
             {transfer.lines && transfer.lines.length > 0 && (
@@ -136,7 +136,7 @@ export default function StockTransfer() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">تحويل المخزون</h1>
-          <p className="text-muted-foreground mt-1">تحويل المنتجات الخام إلى منتجات نهائية وإدارة العمليات المرتبطة.</p>
+          <p className="text-muted-foreground mt-1">تحويل كيلوهات من منتج إلى منتج آخر وإدارة العمليات المرتبطة.</p>
         </div>
         <Link to="/stock-transfer/new">
           <Button className="gap-2">
@@ -159,13 +159,14 @@ export default function StockTransfer() {
           ) : items.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
               <p className="text-lg">لا يوجد تحويلات مسجلة</p>
-              <p className="text-sm mt-1">استخدم «تحويل جديد» لتحويل مخزون الدجاج الخام إلى منتجات</p>
+              <p className="text-sm mt-1">استخدم «تحويل جديد» لتحويل مخزون من منتج إلى منتج آخر</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow className="data-table-header">
                   <TableHead className="text-right">رقم التحويل</TableHead>
+                  <TableHead className="text-center">المنتج المصدر</TableHead>
                   <TableHead className="text-center">التاريخ</TableHead>
                   <TableHead className="text-center">الوزن</TableHead>
                   <TableHead className="text-center">التكلفة</TableHead>
@@ -178,6 +179,9 @@ export default function StockTransfer() {
                   <TableRow key={t.id} className="data-table-row">
                     <TableCell>
                       <span className="font-medium">{t.transferNumber}</span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {t.sourceLot?.item?.name ?? t.sourceLot?.lotNumber ?? "—"}
                     </TableCell>
                     <TableCell className="text-center">{formatDate(t.transferDate)}</TableCell>
                     <TableCell className="text-center">{formatWeight(t.totalWeightGrams)}</TableCell>

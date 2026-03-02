@@ -75,7 +75,7 @@ export default function StockTransferProfile() {
   };
 
   const onSubmit = () => {
-    if (!sourceLotId || !expiryDate || lines.length === 0) return;
+    if (!sourceLotId || lines.length === 0) return;
     if (exceedsMax) return;
 
     const validLines = lines.filter((l) => l.itemId > 0 && l.weightGrams > 0);
@@ -83,7 +83,7 @@ export default function StockTransferProfile() {
 
     const payload: CreateStockTransferDto = {
       sourceLotId,
-      expiryDate,
+      expiryDate: expiryDate.trim() || undefined,
       notes: notes.trim() || undefined,
       lines: validLines.map((l, i) => ({
         itemId: l.itemId,
@@ -100,7 +100,6 @@ export default function StockTransferProfile() {
 
   const canSubmit =
     sourceLotId &&
-    expiryDate &&
     lines.some((l) => l.weightGrams > 0) &&
     !exceedsMax &&
     !createTransfer.isPending;
@@ -113,7 +112,7 @@ export default function StockTransferProfile() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-foreground">تحويل المخزون</h1>
-          <p className="text-muted-foreground mt-1">تحويل دجاج خام إلى منتجات مع تحديد تاريخ الصلاحية</p>
+          <p className="text-muted-foreground mt-1">تحويل كيلوهات من منتج إلى منتج آخر</p>
         </div>
       </div>
 
@@ -121,27 +120,27 @@ export default function StockTransferProfile() {
         <CardContent className="pt-6 space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="text-sm font-medium mb-2 block">الشحنة المصدر (دجاج خام)</label>
+              <label className="text-sm font-medium mb-2 block">المنتج المصدر والدفعة</label>
               <Select
                 value={sourceLotId ? String(sourceLotId) : ""}
                 onValueChange={(v) => (v && v !== "_none" ? setSourceLotId(Number(v)) : setSourceLotId(null))}
                 disabled={lotsLoading}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={lotsLoading ? "جاري التحميل..." : sourceLots.length === 0 ? "لا توجد دفعات متاحة" : "اختر الدفعة"} />
+                  <SelectValue placeholder={lotsLoading ? "جاري التحميل..." : sourceLots.length === 0 ? "لا توجد دفعات متاحة" : "اختر المنتج والدفعة"} />
                 </SelectTrigger>
                 <SelectContent sideOffset={4} className="max-h-[280px]">
                   {sourceLots.length === 0 ? (
                     <SelectItem value="_none" disabled className="text-center cursor-default">
-                      <span className="text-muted-foreground">لا توجد دفعات دجاج خام متاحة.</span>
-                      <Link to="/purchasing" className="text-primary underline text-xs mt-1" onClick={(e) => e.stopPropagation()}>
-                        قم بشراء دجاج خام من المشتريات أولاً
+                      <span className="text-muted-foreground">لا توجد دفعات متاحة.</span>
+                      <Link to="/purchasing" className="text-primary underline text-xs mt-1 block" onClick={(e) => e.stopPropagation()}>
+                        قم بإضافة مخزون من المشتريات أو التحويلات
                       </Link>
                     </SelectItem>
                   ) : (
                     sourceLots.map((lot) => (
                       <SelectItem key={lot.id} value={String(lot.id)}>
-                        {lot.lotNumber} — {lot.remainingKg} كجم متاح
+                        {lot.itemName} — {lot.lotNumber} — {lot.remainingKg} كجم متاح
                         {lot.purchaseNumber ? ` (${lot.purchaseNumber})` : ""}
                       </SelectItem>
                     ))
@@ -156,10 +155,7 @@ export default function StockTransferProfile() {
               )}
               {!lotsLoading && !lotsError && sourceLots.length === 0 && (
                 <p className="text-xs text-amber-600 dark:text-amber-500 mt-1">
-                  لا توجد دفعات دجاج خام.{" "}
-                  <Link to="/purchasing" className="underline">
-                    قم بشراء دجاج خام أولاً
-                  </Link>
+                  لا توجد دفعات متاحة. قم بإضافة مخزون من المشتريات أو التحويلات.
                 </p>
               )}
               {selectedLot && (
@@ -170,11 +166,11 @@ export default function StockTransferProfile() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">تاريخ صلاحية الشحنة بعد التحويل</label>
+              <label className="text-sm font-medium mb-2 block">تاريخ الصلاحية (اختياري)</label>
               <DatePicker
                 value={expiryDate}
                 onChange={setExpiryDate}
-                placeholder="تاريخ الصلاحية"
+                placeholder="يُستخدم صلاحية الدفعة إن لم يُحدد"
               />
             </div>
           </div>

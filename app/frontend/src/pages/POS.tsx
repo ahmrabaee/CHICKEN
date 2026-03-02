@@ -14,6 +14,7 @@ import {
   X,
   Loader2,
   FileText,
+  Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,7 +77,7 @@ function POS() {
   const { data: customersResp } = useCustomers({ isActive: true, pageSize: 500 });
   const createSale = useCreateSale();
 
-  const items: Item[] = itemsResp?.data ?? [];
+  const items: Item[] = (itemsResp?.data ?? []).filter(i => (i.defaultSalePrice ?? 0) > 0);
   const customers: Customer[] = customersResp?.data ?? [];
 
   const filteredItems = useMemo(() => {
@@ -318,363 +319,367 @@ function POS() {
   };
 
   return (
-    <div className="min-h-[calc(100dvh-3rem)] flex flex-col bg-gradient-to-br from-slate-50 via-background to-primary/5" dir="rtl">
-      {/* Top Bar - Full Width */}
-      <div className="flex-shrink-0 px-6 py-4 bg-card/95 backdrop-blur border-b shadow-sm">
-        <div className="flex items-center gap-6 max-w-[2000px] mx-auto">
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">نقطة البيع</h1>
-          <div className="flex-1 max-w-2xl">
-            <div className="relative">
-              <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                placeholder="ابحث عن منتج بالاسم أو الكود..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-12 pr-12 text-base rounded-xl border-2 focus-visible:ring-2"
-              />
-            </div>
+    <div className="-m-6 h-dvh overflow-hidden flex flex-col bg-slate-100 dark:bg-slate-950" dir="rtl">
+
+      {/* ── Top Bar ─────────────────────────────────────────────── */}
+      <div className="flex-shrink-0 h-14 px-5 flex items-center gap-4 bg-white dark:bg-slate-900 border-b shadow-sm">
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+            <Calculator className="w-4 h-4 text-primary-foreground" />
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="lg" className="gap-2 rounded-xl" disabled>
-              <Barcode className="w-5 h-5" />
-              مسح باركود
-            </Button>
-            <Button variant="outline" size="lg" className="gap-2 rounded-xl" disabled>
-              <Scale className="w-5 h-5" />
-              ميزان
-            </Button>
-          </div>
+          <span className="text-base font-bold text-foreground">نقطة البيع</span>
+        </div>
+
+        <div className="flex-1 max-w-xl relative">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <Input
+            placeholder="ابحث عن منتج بالاسم أو الكود..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pr-10 h-9 text-sm bg-slate-50 dark:bg-slate-800"
+          />
+        </div>
+
+        <div className="mr-auto flex gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" disabled>
+            <Barcode className="w-3.5 h-3.5" /> باركود
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" disabled>
+            <Scale className="w-3.5 h-3.5" /> ميزان
+          </Button>
         </div>
       </div>
 
-      {/* Main Content - Flex Row (stacked on mobile) */}
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0 gap-0 overflow-hidden">
-        {/* Left: Products Grid - Takes ~55% */}
-        <div className="flex-1 min-w-0 overflow-y-auto p-6">
+      {/* ── Body ────────────────────────────────────────────────── */}
+      <div className="flex-1 flex min-h-0 overflow-hidden">
+
+        {/* ═══ LEFT: Product Grid ══════════════════════════════════ */}
+        <div className="flex-1 min-w-0 overflow-y-auto p-4">
           {itemsLoading ? (
-            <div className="flex items-center justify-center h-64 gap-3 text-muted-foreground">
-              <Loader2 className="w-8 h-8 animate-spin" />
-              <span className="text-lg">جاري تحميل المنتجات...</span>
+            <div className="flex items-center justify-center h-48 gap-3 text-muted-foreground">
+              <Loader2 className="w-6 h-6 animate-spin" />
+              <span>جاري تحميل المنتجات...</span>
+            </div>
+          ) : items.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-48 gap-3 text-muted-foreground">
+              <Package className="w-10 h-10 opacity-30" />
+              <span>لا توجد أصناف بعد</span>
+              <span className="text-xs">أضف أصنافاً في صفحة المخزون أولاً</span>
             </div>
           ) : filteredItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 gap-4 text-muted-foreground">
-              <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center">
-                <Search className="w-10 h-10" />
-              </div>
-              <span className="text-lg">لا توجد منتجات تطابق البحث</span>
+            <div className="flex flex-col items-center justify-center h-48 gap-3 text-muted-foreground">
+              <Search className="w-10 h-10 opacity-30" />
+              <span>لا توجد منتجات تطابق البحث</span>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-5">
-              {filteredItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => addToCart(item)}
-                  className="group relative flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-card border-2 border-border hover:border-primary hover:bg-primary/5 hover:shadow-lg transition-all duration-200 min-h-[140px] text-center"
-                >
-                  <span className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">{item.name}</span>
-                  <span className="text-xl font-extrabold text-primary">
-                    ₪ {toMajor(item.defaultSalePrice ?? 0)}
-                  </span>
-                  <span className="text-sm text-muted-foreground">/ كجم</span>
-                </button>
-              ))}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+              {filteredItems.map((item) => {
+                const inCart = cart.find((c) => c.itemId === item.id);
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => addToCart(item)}
+                    className="group relative flex flex-col rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-primary hover:shadow-md transition-all duration-150 text-right overflow-hidden"
+                  >
+                    {/* colour accent strip */}
+                    <div className="h-1.5 w-full bg-primary/20 group-hover:bg-primary transition-colors" />
+                    <div className="p-3 flex flex-col gap-1">
+                      <span className="font-bold text-sm leading-tight text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                        {item.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground font-mono">{item.code}</span>
+                      <div className="mt-1.5 flex items-baseline justify-between">
+                        <span className="text-base font-extrabold text-primary">
+                          ₪{toMajor(item.defaultSalePrice ?? 0)}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">/ كجم</span>
+                      </div>
+                    </div>
+                    {inCart && (
+                      <div className="absolute top-2 left-2 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shadow">
+                        {inCart.quantityKg}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
 
-        {/* Right: Cart Panel - Takes ~45% on desktop, full width on mobile */}
-        <div className="w-full lg:w-[45%] xl:min-w-[520px] min-h-[400px] lg:min-h-0 flex flex-col bg-card border-l shadow-2xl">
-          <div className="flex-shrink-0 px-8 py-6 border-b bg-muted/30">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-foreground">الفاتورة</h2>
+        {/* ═══ RIGHT: Invoice Panel ════════════════════════════════ */}
+        <div className="w-[500px] flex-shrink-0 flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 shadow-xl">
+
+          {/* ── Invoice Header ── */}
+          <div className="flex-shrink-0 flex items-center justify-between px-5 py-3 border-b bg-slate-50 dark:bg-slate-800/50">
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-primary" />
+              <span className="font-bold text-base">الفاتورة</span>
               {cart.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  onClick={clearCart}
-                  className="text-destructive gap-2 hover:bg-destructive/10"
-                >
-                  <X className="w-5 h-5" />
-                  مسح الكل
-                </Button>
+                <span className="text-xs bg-primary text-primary-foreground rounded-full px-2 py-0.5 font-bold">
+                  {cart.length} صنف
+                </span>
               )}
             </div>
+            {cart.length > 0 && (
+              <Button variant="ghost" size="sm" onClick={clearCart} className="text-destructive gap-1 h-7 text-xs hover:bg-destructive/10">
+                <X className="w-3.5 h-3.5" /> مسح الكل
+              </Button>
+            )}
           </div>
 
           <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-          {/* Customer & Sale Type */}
-          <div className="flex-shrink-0 px-8 py-6 space-y-4">
-            <div className="space-y-2">
-              <span className="text-base font-medium text-foreground">الزبون</span>
-              <CustomerSearchCombobox
-                customers={customers}
-                value={selectedCustomer}
-                onSelect={handleCustomerSelect}
-                placeholder="ابحث أو اختر زبون"
-              />
-            </div>
-            {!customerId && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="relative">
-                  <User className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+
+            {/* ── Customer + Sale Type ── */}
+            <div className="flex-shrink-0 px-4 py-3 space-y-2.5 border-b">
+              {/* Customer row */}
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4 text-muted-foreground shrink-0" />
+                <div className="flex-1">
+                  <CustomerSearchCombobox
+                    customers={customers}
+                    value={selectedCustomer}
+                    onSelect={handleCustomerSelect}
+                    placeholder="اختر زبون (اختياري)"
+                  />
+                </div>
+              </div>
+
+              {!customerId && (
+                <div className="grid grid-cols-2 gap-2">
                   <Input
                     placeholder="اسم الزبون"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    className="pr-11 h-11"
+                    className="h-8 text-sm"
+                  />
+                  <Input
+                    placeholder="الهاتف"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    dir="ltr"
+                    className="h-8 text-sm text-left"
                   />
                 </div>
-                <Input
-                  placeholder="رقم الهاتف"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  dir="ltr"
-                  className="h-11 text-left"
-                />
-              </div>
-            )}
+              )}
 
-            <div className="space-y-2">
-              <span className="text-base font-medium text-foreground">الضريبة</span>
-              <TaxTemplateSelector
-                value={taxTemplateId}
-                onChange={setTaxTemplateId}
-                type="sales"
-                placeholder="بدون ضريبة"
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <Button
-                variant={saleType === "cash" ? "default" : "outline"}
-                size="lg"
-                className="flex-1 h-12 text-base rounded-xl"
-                onClick={() => setSaleType("cash")}
-              >
-                نقدي
-              </Button>
-              <Button
-                variant={saleType === "credit" ? "default" : "outline"}
-                size="lg"
-                className="flex-1 h-12 text-base rounded-xl"
-                onClick={() => setSaleType("credit")}
-              >
-                آجل
-              </Button>
-              <Button
-                variant={saleType === "mixed" ? "default" : "outline"}
-                size="lg"
-                className="flex-1 h-12 text-base rounded-xl"
-                onClick={() => setSaleType("mixed")}
-              >
-                مختلط
-              </Button>
-            </div>
-          </div>
-
-          <Separator className="my-0" />
-
-          {/* Cart Items - Scrollable */}
-          <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
-            {cart.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center gap-4 text-muted-foreground py-12">
-                <div className="w-24 h-24 rounded-2xl bg-muted flex items-center justify-center">
-                  <Calculator className="w-12 h-12" />
+              {/* Tax + Sale type in one row */}
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <TaxTemplateSelector
+                    value={taxTemplateId}
+                    onChange={setTaxTemplateId}
+                    type="sales"
+                    placeholder="بدون ضريبة"
+                  />
                 </div>
-                <span className="text-lg">السلة فارغة</span>
-                <span className="text-sm">انقر على المنتجات لإضافتها</span>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {cart.map((item) => (
-                  <div
-                    key={item.itemId}
-                    className="flex items-center gap-4 p-4 bg-muted/40 rounded-xl border border-border/50"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-base truncate">{item.name}</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        ₪ {toMajor(item.pricePerKg)} ×{" "}
-                        <input
-                          type="number"
-                          step="0.1"
-                          min="0.1"
-                          value={item.quantityKg}
-                          onChange={(e) => {
-                            const v = parseFloat(e.target.value);
-                            if (!isNaN(v) && v >= 0.1) setCartItemQuantity(item.itemId, v);
-                          }}
-                          className="w-16 h-8 px-2 rounded-lg border border-input bg-background text-center text-sm font-bold inline-block"
-                        />{" "}
-                        كجم
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-10 w-10 rounded-xl"
-                        onClick={() => updateQuantity(item.itemId, -0.5)}
-                        title="ناقص 0.5 كجم"
-                      >
-                        <Minus className="w-5 h-5" />
-                      </Button>
-                      <span className="w-14 text-center font-bold text-base">
-                        {Number(item.quantityKg).toFixed(2)}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-10 w-10 rounded-xl"
-                        onClick={() => updateQuantity(item.itemId, 0.5)}
-                        title="زائد 0.5 كجم"
-                      >
-                        <Plus className="w-5 h-5" />
-                      </Button>
-                    </div>
-                    <div className="w-24 text-left font-bold text-lg text-primary">
-                      ₪ {toMajor(item.total)}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-10 w-10 rounded-xl text-destructive hover:bg-destructive/10"
-                      onClick={() => removeFromCart(item.itemId)}
+                <div className="flex gap-1 shrink-0">
+                  {(["cash", "credit", "mixed"] as const).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setSaleType(t)}
+                      className={`h-8 px-3 rounded-lg text-xs font-semibold border transition-colors ${
+                        saleType === t
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background border-input text-muted-foreground hover:border-primary"
+                      }`}
                     >
-                      <Trash2 className="w-5 h-5" />
-                    </Button>
-                  </div>
-                ))}
+                      {t === "cash" ? "نقدي" : t === "credit" ? "آجل" : "مختلط"}
+                    </button>
+                  ))}
+                </div>
               </div>
-            )}
-          </div>
-
-          <Separator className="my-0" />
-
-          {/* Totals & Payment - Fixed at bottom */}
-          <div className="flex-shrink-0 p-6 space-y-4 bg-gradient-to-t from-muted/50 to-transparent">
-            <div className="flex justify-between text-base">
-              <span className="text-muted-foreground">المجموع الفرعي</span>
-              <span className="font-semibold">₪ {toMajor(subtotalMinor)}</span>
             </div>
 
-            <div className="flex items-center gap-4">
-              <span className="text-base text-muted-foreground flex-1">الخصم %</span>
-              <NumericInput
-                
-                value={discount || ""}
-                onChange={(e) => setDiscount(Number(e.target.value))}
-                className="w-24 h-10 text-center text-base"
-                min={0}
-                max={100}
-              />
-              <span className="w-24 text-left text-destructive font-semibold">-₪ {toMajor(discountAmountMinor)}</span>
-            </div>
-
-            {taxTemplateId && (
-              <>
-                <div className="flex justify-between text-base">
-                  <span className="text-muted-foreground">صافي (قبل الضريبة)</span>
-                  <span className="font-semibold">₪ {toMajor(netTotalMinor)}</span>
-                </div>
-                {estimatedTaxMinor > 0 && (
-                  <div className="flex justify-between text-base">
-                    <span className="text-muted-foreground">الضريبة</span>
-                    <span className="font-semibold">₪ {toMajor(estimatedTaxMinor)}</span>
+            {/* ── Cart Items (scrollable) ── */}
+            <div className="flex-1 overflow-y-auto min-h-0">
+              {cart.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center gap-3 text-muted-foreground">
+                  <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                    <Calculator className="w-8 h-8 opacity-40" />
                   </div>
-                )}
-              </>
-            )}
-
-            <Separator className="my-2" />
-
-            <div className="flex justify-between items-center py-2">
-              <span className="text-xl font-bold">الإجمالي</span>
-              <span className="text-3xl font-extrabold text-primary">₪ {toMajor(totalMinor)}</span>
+                  <span className="text-sm">السلة فارغة — انقر على منتج لإضافته</span>
+                </div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-slate-50 dark:bg-slate-800 border-b z-10">
+                    <tr className="text-xs text-muted-foreground">
+                      <th className="text-right py-2 px-4 font-medium w-[35%]">الصنف</th>
+                      <th className="text-center py-2 px-2 font-medium">الكمية (كجم)</th>
+                      <th className="text-center py-2 px-2 font-medium">السعر/كجم</th>
+                      <th className="text-left py-2 px-4 font-medium">الإجمالي</th>
+                      <th className="w-8"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {cart.map((item) => (
+                      <tr key={item.itemId} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <td className="py-2.5 px-4">
+                          <span className="font-semibold text-sm leading-tight line-clamp-2">{item.name}</span>
+                        </td>
+                        <td className="py-2.5 px-2 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => updateQuantity(item.itemId, -0.5)}
+                              className="w-6 h-6 rounded border border-input flex items-center justify-center hover:bg-muted hover:border-primary transition-colors"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <input
+                              type="number"
+                              step="0.1"
+                              min="0.1"
+                              value={item.quantityKg}
+                              onChange={(e) => {
+                                const v = parseFloat(e.target.value);
+                                if (!isNaN(v) && v >= 0.1) setCartItemQuantity(item.itemId, v);
+                              }}
+                              className="w-14 h-6 px-1 rounded border border-input bg-background text-center text-xs font-bold"
+                            />
+                            <button
+                              onClick={() => updateQuantity(item.itemId, 0.5)}
+                              className="w-6 h-6 rounded border border-input flex items-center justify-center hover:bg-muted hover:border-primary transition-colors"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-2 text-center text-muted-foreground text-xs">
+                          {toMajor(item.pricePerKg)}
+                        </td>
+                        <td className="py-2.5 px-4 font-bold text-primary text-sm">
+                          ₪{toMajor(item.total)}
+                        </td>
+                        <td className="py-2.5 pr-2">
+                          <button
+                            onClick={() => removeFromCart(item.itemId)}
+                            className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
 
-            {(saleType === "cash" || saleType === "mixed") && (
-              <>
-                <div className="flex gap-3">
-                  <Button
-                    variant={paymentMethod === "cash" ? "default" : "outline"}
-                    className="flex-1 gap-2 h-12 text-base rounded-xl"
-                    onClick={() => setPaymentMethod("cash")}
-                  >
-                    <Banknote className="w-5 h-5" />
-                    نقداً
-                  </Button>
-                  <Button
-                    variant={paymentMethod === "card" ? "default" : "outline"}
-                    className="flex-1 gap-2 h-12 text-base rounded-xl"
-                    onClick={() => setPaymentMethod("card")}
-                  >
-                    <CreditCard className="w-5 h-5" />
-                    بطاقة
-                  </Button>
+            {/* ── Totals & Payment ── */}
+            <div className="flex-shrink-0 border-t bg-slate-50 dark:bg-slate-800/40">
+
+              {/* Summary rows */}
+              <div className="px-5 py-3 space-y-1.5 text-sm border-b">
+                <div className="flex justify-between text-muted-foreground">
+                  <span>المجموع الفرعي</span>
+                  <span className="font-medium text-foreground">₪{toMajor(subtotalMinor)}</span>
                 </div>
 
-                <div className="flex items-center gap-4">
-                  <span className="text-base text-muted-foreground flex-1">المبلغ المدفوع</span>
-                  <NumericInput
-                    
-                    value={paidAmount}
-                    onChange={(e) => setPaidAmount(e.target.value)}
-                    className="w-32 h-11 text-lg"
-                    placeholder="0.00"
-                  />
-                </div>
-
-                {remainingMinor > 0 && (
-                  <div className="flex justify-between text-base">
-                    <span className="text-muted-foreground">المتبقي</span>
-                    <span className="text-destructive font-bold">₪ {toMajor(remainingMinor)}</span>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-muted-foreground shrink-0">خصم %</span>
+                  <div className="flex items-center gap-2 mr-auto">
+                    <Input
+                      type="number"
+                      value={discount || ""}
+                      onChange={(e) => setDiscount(Number(e.target.value))}
+                      className="w-20 h-7 text-center text-sm"
+                      min={0} max={100}
+                    />
+                    {discountAmountMinor > 0 && (
+                      <span className="text-destructive font-semibold text-xs shrink-0">
+                        -₪{toMajor(discountAmountMinor)}
+                      </span>
+                    )}
                   </div>
-                )}
-              </>
-            )}
+                </div>
 
-            <div className="flex flex-col gap-3 pt-2">
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  className="gap-2 flex-1 h-12 text-base rounded-xl"
-                  disabled={cart.length === 0}
-                  onClick={() => setPreviewOpen(true)}
-                >
-                  <FileText className="w-5 h-5" />
-                  معاينة
+                {taxTemplateId && (
+                  <>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>صافي قبل الضريبة</span>
+                      <span className="font-medium text-foreground">₪{toMajor(netTotalMinor)}</span>
+                    </div>
+                    {estimatedTaxMinor > 0 && (
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>الضريبة</span>
+                        <span className="font-medium text-foreground">₪{toMajor(estimatedTaxMinor)}</span>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Grand total */}
+              <div className="px-5 py-3 flex items-center justify-between bg-primary/5 border-b border-primary/10">
+                <span className="font-bold text-base">الإجمالي</span>
+                <span className="text-3xl font-extrabold text-primary tracking-tight">₪{toMajor(totalMinor)}</span>
+              </div>
+
+              {/* Payment method + paid amount */}
+              {(saleType === "cash" || saleType === "mixed") && (
+                <div className="px-5 py-3 space-y-2 border-b">
+                  <div className="flex gap-2">
+                    {(["cash", "card"] as const).map((m) => (
+                      <button
+                        key={m}
+                        onClick={() => setPaymentMethod(m)}
+                        className={`flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg text-sm font-semibold border transition-colors ${
+                          paymentMethod === m
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background border-input text-muted-foreground hover:border-primary"
+                        }`}
+                      >
+                        {m === "cash" ? <Banknote className="w-4 h-4" /> : <CreditCard className="w-4 h-4" />}
+                        {m === "cash" ? "نقداً" : "بطاقة"}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-muted-foreground shrink-0">المبلغ المدفوع</span>
+                    <Input
+                      type="number"
+                      value={paidAmount}
+                      onChange={(e) => setPaidAmount(e.target.value)}
+                      className="flex-1 h-9 text-base font-bold text-center"
+                      placeholder="0.00"
+                    />
+                    {remainingMinor > 0 && (
+                      <span className="text-destructive font-bold text-sm shrink-0">
+                        متبقي: ₪{toMajor(remainingMinor)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="px-4 py-3 flex gap-2">
+                <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs px-3"
+                  disabled={cart.length === 0} onClick={() => setPreviewOpen(true)}>
+                  <FileText className="w-3.5 h-3.5" /> معاينة
+                </Button>
+                <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs px-3"
+                  disabled={cart.length === 0} onClick={handlePrintReceipt}>
+                  <Printer className="w-3.5 h-3.5" /> طباعة
                 </Button>
                 <Button
-                  variant="outline"
-                  className="gap-2 flex-1 h-12 text-base rounded-xl"
-                  disabled={cart.length === 0}
-                  onClick={handlePrintReceipt}
+                  className="flex-1 gap-2 h-9 text-sm font-bold"
+                  disabled={cart.length === 0 || createSale.isPending}
+                  onClick={handleCompleteSale}
                 >
-                  <Printer className="w-5 h-5" />
-                  طباعة
+                  {createSale.isPending
+                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                    : <Calculator className="w-4 h-4" />}
+                  إتمام البيع
                 </Button>
               </div>
-              <Button
-                className="w-full gap-2 h-14 text-lg font-bold rounded-xl shadow-lg"
-                size="lg"
-                disabled={cart.length === 0 || createSale.isPending}
-                onClick={handleCompleteSale}
-              >
-                {createSale.isPending ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                ) : (
-                  <Calculator className="w-6 h-6" />
-                )}
-                إتمام البيع
-              </Button>
             </div>
+
           </div>
         </div>
       </div>
-      </div>
 
-      {/* Preview Invoice Dialog */}
+      {/* ── Receipt Preview Dialog ─────────────────────────────── */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-[400px] p-0 overflow-hidden" dir="rtl">
           <DialogHeader className="p-4 pb-2">
@@ -684,18 +689,10 @@ function POS() {
             <ThermalReceipt data={receiptData} widthMm={80} className="shadow-lg" />
           </div>
           <div className="flex gap-2 p-4 pt-2">
-            <Button
-              variant="outline"
-              className="flex-1 gap-2"
-              onClick={handlePrintReceipt}
-              disabled={cart.length === 0}
-            >
-              <Printer className="w-4 h-4" />
-              طباعة
+            <Button variant="outline" className="flex-1 gap-2" onClick={handlePrintReceipt} disabled={cart.length === 0}>
+              <Printer className="w-4 h-4" /> طباعة
             </Button>
-            <Button className="flex-1" onClick={() => setPreviewOpen(false)}>
-              إغلاق
-            </Button>
+            <Button className="flex-1" onClick={() => setPreviewOpen(false)}>إغلاق</Button>
           </div>
         </DialogContent>
       </Dialog>

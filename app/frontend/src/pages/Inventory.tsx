@@ -151,9 +151,10 @@ export default function Inventory() {
     if (!deleteTarget) return;
     try {
       await deleteItemMutation.mutateAsync(deleteTarget.itemId);
-      setDeleteTarget(null);
     } catch {
-      // Toast handled in mutation onError
+      // Error already handled by mutation onError callback
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
@@ -332,11 +333,11 @@ export default function Inventory() {
                           </div>
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className="font-mono text-slate-500">₪{(item.avgCostPrice ? item.avgCostPrice / 1000 : 0).toFixed(2)}</span>
+                          <span className="font-mono text-slate-500">₪{(item.avgCostPrice ? item.avgCostPrice / 100 : 0).toFixed(2)}</span>
                         </TableCell>
                         <TableCell className="text-center">
                           <span className="font-bold text-primary font-mono text-lg">
-                            ₪{(item.sellingPrice / 1000).toFixed(2)}
+                            ₪{(item.sellingPrice / 100).toFixed(2)}
                           </span>
                         </TableCell>
                         <TableCell className="text-center">

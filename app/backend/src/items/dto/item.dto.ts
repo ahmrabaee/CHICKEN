@@ -72,7 +72,7 @@ export class CreateItemDto {
   @ApiPropertyOptional({ description: 'Shelf life in days', example: 3 })
   @Type(() => Number)
   @IsInt()
-  @Min(1)
+  @Min(0)
   @IsOptional()
   shelfLifeDays?: number;
 

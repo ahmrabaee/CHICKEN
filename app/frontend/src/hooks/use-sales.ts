@@ -50,12 +50,11 @@ export const useCreateSale = () => {
                 return;
             }
             const errData = error.response?.data;
-            const errMsg = errData?.error?.message ?? errData?.message;
-            const desc = typeof errMsg === 'string' ? errMsg : Array.isArray(errMsg) ? errMsg.join('\n') : (errData?.error?.messageAr ?? 'حدث خطأ غير متوقع');
+            const msgAr = errData?.error?.messageAr ?? errData?.messageAr;
             toast({
                 variant: 'destructive',
-                title: errData?.error?.messageAr ?? 'خطأ في إنشاء الفاتورة',
-                description: desc,
+                title: 'خطأ في إنشاء الفاتورة',
+                description: msgAr ?? 'حدث خطأ غير متوقع',
             });
         },
     });
@@ -77,10 +76,12 @@ export const useVoidSale = () => {
                 toast(postingToast);
                 return;
             }
+            const errData = error.response?.data;
+            const msgAr = errData?.error?.messageAr ?? errData?.messageAr;
             toast({
                 variant: 'destructive',
                 title: 'خطأ في إلغاء الفاتورة',
-                description: error.response?.data?.messageAr || error.response?.data?.message || 'حدث خطأ غير متوقع',
+                description: msgAr ?? 'حدث خطأ غير متوقع',
             });
         },
     });
@@ -98,10 +99,12 @@ export const useAddSalePayment = () => {
             toast({ title: 'تم تسجيل الدفعة بنجاح' });
         },
         onError: (error: any) => {
+            const errData = error.response?.data;
+            const msgAr = errData?.error?.messageAr ?? errData?.messageAr;
             toast({
                 variant: 'destructive',
                 title: 'خطأ في تسجيل الدفعة',
-                description: error.response?.data?.message || 'حدث خطأ غير متوقع',
+                description: msgAr ?? 'حدث خطأ غير متوقع',
             });
         },
     });

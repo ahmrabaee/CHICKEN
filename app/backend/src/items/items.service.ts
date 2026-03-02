@@ -201,7 +201,7 @@ export class ItemsService {
             taxRatePct: dto.taxRatePct,
             minStockLevelGrams: dto.minStockLevelGrams,
             maxStockLevelGrams: dto.maxStockLevelGrams,
-            shelfLifeDays: dto.shelfLifeDays,
+            shelfLifeDays: dto.shelfLifeDays || null,
             storageLocation: dto.storageLocation,
             requiresScale: dto.requiresScale ?? true,
             allowNegativeStock: dto.allowNegativeStock ?? false,
@@ -340,6 +340,7 @@ export class ItemsService {
       where: { id },
       data: {
         ...dto,
+        shelfLifeDays: dto.shelfLifeDays || null,
         updatedById: userId,
       },
       include: {
@@ -353,8 +354,24 @@ export class ItemsService {
     return this.toResponseDto(item);
   }
 
-  async delete(id: number): Promise<{ action: string; messageAr: string }> {
-    const item = await this.prisma.item.findUnique({ where: { id } });
+  async delete(id: number): Promise<void> {
+    const item = await this.prisma.item.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            saleLines: true,
+            purchaseLines: true,
+            wastageRecords: true,
+            stockMovements: true,
+            stockLedgerEntries: true,
+            stockTransferLines: true,
+            inventoryLots: true,
+          },
+        },
+      },
+    });
+
     if (!item) {
       throw new NotFoundException({
         code: 'NOT_FOUND',
@@ -363,23 +380,30 @@ export class ItemsService {
       });
     }
 
-    try {
-      // Soft delete - deactivate
+    const hasHistory =
+      item._count.saleLines > 0 ||
+      item._count.purchaseLines > 0 ||
+      item._count.wastageRecords > 0 ||
+      item._count.stockMovements > 0 ||
+      item._count.stockLedgerEntries > 0 ||
+      item._count.stockTransferLines > 0;
+
+    if (hasHistory) {
+      // Soft delete — cannot hard-delete due to transactional history
       await this.prisma.item.update({
         where: { id },
         data: { isActive: false },
       });
-      return {
-        action: 'deactivated',
-        messageAr: `تم تعطيل الصنف "${item.name}" بنجاح`,
-      };
-    } catch (error: any) {
-      throw new BadRequestException({
-        code: 'DELETE_FAILED',
-        message: `Failed to deactivate item: ${error.message}`,
-        messageAr: `فشل في تعطيل الصنف "${item.name}"`,
-      });
+      return;
     }
+
+    // Hard delete — no transactional history, safe to remove permanently
+    // Delete inventory lots first (onDelete: Restrict)
+    if (item._count.inventoryLots > 0) {
+      await this.prisma.inventoryLot.deleteMany({ where: { itemId: id } });
+    }
+    // Inventory record cascades automatically (onDelete: Cascade)
+    await this.prisma.item.delete({ where: { id } });
   }
 
   private toResponseDto(item: any): ItemResponseDto {

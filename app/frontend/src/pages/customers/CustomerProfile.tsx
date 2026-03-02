@@ -278,39 +278,19 @@ export default function CustomerProfile() {
                                     </div>
                                 </div>
                                 <CardContent className="p-6 space-y-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="name"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>اسم العميل (عربي) *</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="مثال: أحمد محمد" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="nameEn"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>اسم العميل (English)</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            placeholder="Example: Ahmed Mohammed"
-                                                            className="font-english"
-                                                            dir="ltr"
-                                                            {...field}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                                    <FormField
+                                        control={form.control}
+                                        name="name"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>اسم العميل *</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="مثال: أحمد محمد" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <FormField
@@ -357,24 +337,22 @@ export default function CustomerProfile() {
                                         />
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="address"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>العنوان</FormLabel>
-                                                    <FormControl>
-                                                        <div className="relative">
-                                                            <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                                            <Input placeholder="المدينة، الحي، الشارع" className="pr-10" {...field} />
-                                                        </div>
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                                    <FormField
+                                        control={form.control}
+                                        name="address"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>العنوان</FormLabel>
+                                                <FormControl>
+                                                    <div className="relative">
+                                                        <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                                        <Input placeholder="المدينة، الحي، الشارع" className="pr-10" {...field} />
+                                                    </div>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
                                 </CardContent>
                             </Card>
 

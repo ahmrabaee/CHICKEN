@@ -110,9 +110,6 @@ function SupplierDetailCard({ supplier, onClose }: { supplier: Supplier; onClose
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-white">{supplier.name}</h2>
-                  {supplier.nameEn && (
-                    <p className="text-emerald-100 text-sm mt-0.5">{supplier.nameEn}</p>
-                  )}
                   <div className="flex items-center gap-2 mt-2">
                     <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 font-mono text-xs backdrop-blur-sm">
                       {supplier.supplierNumber}
@@ -377,166 +374,197 @@ export default function Suppliers() {
   }
 
   return (
-    <div className="space-y-6" dir="rtl">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">التجار والموردون</h1>
-          <p className="text-muted-foreground mt-1">إدارة بيانات الموردين ومتابعة الحسابات المرتبطة.</p>
-        </div>
+    <div className="space-y-5" dir="rtl">
+
+      {/* ── Page Header ── */}
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button onClick={handleCreate} className="gap-2">
-            <Plus className="w-4 h-4" />
-            تاجر جديد
-          </Button>
+          <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
+            <Briefcase className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">التجار والموردون</h1>
+            <p className="text-sm text-muted-foreground">إدارة بيانات الموردين ومتابعة الحسابات المرتبطة</p>
+          </div>
         </div>
+        <Button onClick={handleCreate} className="gap-2 shrink-0">
+          <Plus className="w-4 h-4" /> تاجر جديد
+        </Button>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="بحث بالاسم، الهاتف، أو رقم المورد..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-10"
-              />
+      {/* ── Stats ── */}
+      {!isLoading && (
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-white dark:bg-card rounded-xl border px-4 py-3 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+              <Building2 className="w-4 h-4 text-slate-500" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">إجمالي الموردين</p>
+              <p className="text-2xl font-bold leading-tight">{suppliers.length}</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Suppliers Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-primary">
-            <Briefcase className="w-5 h-5" />
-            الموردون ({suppliers.length})
-          </CardTitle>
-          <CardDescription>عرض جميع الموردين المسجلين في النظام</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center h-48">
-              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+          <div className="bg-white dark:bg-card rounded-xl border px-4 py-3 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
             </div>
-          ) : suppliers.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Building2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>لا يوجد موردون مطابقون للبحث</p>
+            <div>
+              <p className="text-xs text-muted-foreground">نشطون</p>
+              <p className="text-2xl font-bold leading-tight text-emerald-600">{suppliers.filter(s => s.isActive).length}</p>
             </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-right">رقم المورد</TableHead>
-                  <TableHead className="text-right">اسم التاجر/المورد</TableHead>
-                  <TableHead className="text-right">الهاتف</TableHead>
-                  <TableHead className="text-right">المسؤول</TableHead>
-                  <TableHead className="text-right">شروط الدفع</TableHead>
-                  <TableHead className="text-center">المستحقات</TableHead>
-                  <TableHead className="text-right">الحالة</TableHead>
-                  <TableHead className="text-center">الإجراءات</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {suppliers.map((supplier) => (
-                  <TableRow
-                    key={supplier.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleEdit(supplier)}
-                  >
-                    <TableCell className="font-mono text-sm text-slate-500">
-                      {supplier.supplierNumber}
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-bold text-slate-700">{supplier.name}</p>
-                        {supplier.nameEn && (
-                          <p className="text-xs text-muted-foreground font-english" dir="ltr">
-                            {supplier.nameEn}
-                          </p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {supplier.phone ? (
-                        <div className="flex items-center gap-1 text-sm font-english" dir="ltr">
-                          <Phone className="w-3 h-3 text-slate-400" />
-                          {supplier.phone}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {supplier.contactPerson || <span className="text-muted-foreground">-</span>}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {supplier.paymentTerms || <span className="text-muted-foreground">-</span>}
-                    </TableCell>
-                    <TableCell className="text-center text-sm font-bold">
-                      {supplier.currentBalance > 0 ? (
-                        <span className="text-amber-600">₪ {formatAmount(supplier.currentBalance)}</span>
-                      ) : (
-                        <span className="text-emerald-500">لا يوجد</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={supplier.isActive ? "default" : "secondary"} className={supplier.isActive ? "bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100" : ""}>
-                        {supplier.isActive ? "نشط" : "غير نشط"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
-                          onClick={() => handleView(supplier)}
-                          title="عرض التفاصيل"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-slate-500 hover:text-slate-600 hover:bg-slate-50"
-                          onClick={() => handleEdit(supplier)}
-                          title="تعديل"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50"
-                          onClick={() => handleDeleteClick(supplier)}
-                          title="حذف"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Pagination Summary */}
-      {suppliersResponse?.meta && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            عرض {suppliers.length} من {suppliersResponse.meta.totalItems} تاجر
-          </p>
+          </div>
+          <div className="bg-white dark:bg-card rounded-xl border px-4 py-3 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+              <CreditCard className="w-4 h-4 text-amber-500" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">لديهم مستحقات</p>
+              <p className="text-2xl font-bold leading-tight text-amber-600">{suppliers.filter(s => s.currentBalance > 0).length}</p>
+            </div>
+          </div>
         </div>
       )}
+
+      {/* ── Search ── */}
+      <div className="relative">
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+        <Input
+          placeholder="بحث بالاسم، الهاتف، أو رقم المورد..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pr-10 bg-white dark:bg-card h-10"
+        />
+      </div>
+
+      {/* ── Table Card ── */}
+      <div className="rounded-xl border bg-white dark:bg-card overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-3 border-b bg-slate-50/60 dark:bg-slate-800/30">
+          <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+            {suppliers.length} مورد مسجّل
+          </span>
+          {suppliersResponse?.meta && (
+            <span className="text-xs text-muted-foreground">
+              عرض {suppliers.length} من {suppliersResponse.meta.totalItems}
+            </span>
+          )}
+        </div>
+
+        {isLoading ? (
+          <div className="flex items-center justify-center h-48 gap-3 text-muted-foreground">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span className="text-sm">جاري تحميل البيانات...</span>
+          </div>
+        ) : suppliers.length === 0 ? (
+          <div className="text-center py-16 text-muted-foreground">
+            <Building2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
+            <p className="text-sm font-medium">لا يوجد موردون مطابقون للبحث</p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="text-right text-xs font-bold text-slate-500 uppercase tracking-wide w-[110px]">رقم المورد</TableHead>
+                <TableHead className="text-right text-xs font-bold text-slate-500 uppercase tracking-wide">اسم التاجر / المورد</TableHead>
+                <TableHead className="text-right text-xs font-bold text-slate-500 uppercase tracking-wide">الهاتف</TableHead>
+                <TableHead className="text-right text-xs font-bold text-slate-500 uppercase tracking-wide">المسؤول</TableHead>
+                <TableHead className="text-right text-xs font-bold text-slate-500 uppercase tracking-wide">شروط الدفع</TableHead>
+                <TableHead className="text-center text-xs font-bold text-slate-500 uppercase tracking-wide">المستحقات</TableHead>
+                <TableHead className="text-center text-xs font-bold text-slate-500 uppercase tracking-wide w-[90px]">الحالة</TableHead>
+                <TableHead className="text-center text-xs font-bold text-slate-500 uppercase tracking-wide w-[100px]">الإجراءات</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {suppliers.map((supplier) => (
+                <TableRow
+                  key={supplier.id}
+                  className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 group"
+                  onClick={() => handleEdit(supplier)}
+                >
+                  <TableCell className="font-mono text-xs text-slate-400 py-3">
+                    {supplier.supplierNumber}
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 flex items-center justify-center shrink-0 text-emerald-700 dark:text-emerald-400 font-bold text-sm">
+                        {supplier.name.charAt(0)}
+                      </div>
+                      <span className="font-semibold text-sm">{supplier.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-3">
+                    {supplier.phone ? (
+                      <div className="flex items-center gap-1.5 text-sm text-slate-600" dir="ltr">
+                        <Phone className="w-3 h-3 text-slate-400" />
+                        {supplier.phone}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="py-3 text-sm text-slate-600">
+                    {supplier.contactPerson || <span className="text-muted-foreground text-xs">—</span>}
+                  </TableCell>
+                  <TableCell className="py-3 text-sm text-slate-600">
+                    {supplier.paymentTerms || <span className="text-muted-foreground text-xs">—</span>}
+                  </TableCell>
+                  <TableCell className="py-3 text-center">
+                    {supplier.currentBalance > 0 ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-100">
+                        ₪ {formatAmount(supplier.currentBalance)}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-600 border border-emerald-100">
+                        <CheckCircle2 className="w-3 h-3" /> مسدّد
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="py-3 text-center">
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                      supplier.isActive
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                        : "bg-slate-100 text-slate-500 border border-slate-200"
+                    }`}>
+                      {supplier.isActive ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                      {supplier.isActive ? "نشط" : "غير نشط"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-slate-400 hover:text-blue-600 hover:bg-blue-50"
+                        onClick={() => handleView(supplier)}
+                        title="عرض التفاصيل"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                        onClick={() => handleEdit(supplier)}
+                        title="تعديل"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                        onClick={() => handleDeleteClick(supplier)}
+                        title="حذف"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
 
       {/* Supplier Detail Card */}
       {viewSupplier && (
@@ -550,16 +578,19 @@ export default function Suppliers() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent dir="rtl">
           <AlertDialogHeader>
-            <AlertDialogTitle>حذف المورد</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              حذف المورد
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              هل أنت متأكد من حذف المورد "{selectedSupplier?.name}"؟
+              هل أنت متأكد من حذف المورد <strong>"{selectedSupplier?.name}"</strong>؟
               <br />
               {selectedSupplier?.currentBalance && selectedSupplier.currentBalance > 0 ? (
-                <span className="text-amber-600 font-medium">
+                <span className="text-amber-600 font-medium mt-2 block">
                   ⚠️ هذا المورد لديه مستحقات مالية قائمة: ₪ {formatAmount(selectedSupplier.currentBalance)}
                 </span>
               ) : (
-                "سيتم حذف المورد من النظام نهائياً إذا لم يكن لديه حركات شراء سابقة."
+                <span className="mt-2 block">سيتم حذف المورد من النظام نهائياً إذا لم يكن لديه حركات شراء سابقة.</span>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>

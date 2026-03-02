@@ -57,7 +57,6 @@ const itemSchema = z.object({
     code: z.string().optional(),
     barcode: z.string().optional(),
     name: z.string().min(2, "اسم الصنف مطلوب"),
-    nameEn: z.string().optional(),
     description: z.string().optional(),
     categoryId: z.coerce.number().min(1, "يجب اختيار التصنيف"),
     defaultSalePrice: z.coerce.number().min(0, "سعر البيع مطلوب"),
@@ -93,7 +92,6 @@ export default function ItemProfile() {
             code: "",
             barcode: "",
             name: "",
-            nameEn: "",
             description: "",
             categoryId: 0,
             defaultSalePrice: 0,
@@ -117,11 +115,10 @@ export default function ItemProfile() {
                 code: existingItem.code || "",
                 barcode: existingItem.barcode || "",
                 name: existingItem.name,
-                nameEn: existingItem.nameEn || "",
                 description: existingItem.description || "",
                 categoryId: existingItem.categoryId,
-                defaultSalePrice: existingItem.defaultSalePrice / 1000,
-                defaultPurchasePrice: (existingItem.defaultPurchasePrice || 0) / 1000,
+                defaultSalePrice: existingItem.defaultSalePrice / 100,
+                defaultPurchasePrice: (existingItem.defaultPurchasePrice || 0) / 100,
                 taxRatePct: (existingItem.taxRatePct || 0) / 100, // Assuming basis points
                 minStockLevel: (existingItem.minStockLevel || 0) / 1000, // Grams to KG
                 maxStockLevel: (existingItem.maxStockLevel || 0) / 1000, // Grams to KG
@@ -151,11 +148,10 @@ export default function ItemProfile() {
             const payload: CreateItemDto = {
                 barcode: values.barcode,
                 name: values.name,
-                nameEn: values.nameEn,
                 description: values.description,
                 categoryId: values.categoryId,
-                defaultSalePrice: Math.round(values.defaultSalePrice * 1000),
-                defaultPurchasePrice: values.defaultPurchasePrice ? Math.round(values.defaultPurchasePrice * 1000) : undefined,
+                defaultSalePrice: Math.round(values.defaultSalePrice * 100),
+                defaultPurchasePrice: values.defaultPurchasePrice ? Math.round(values.defaultPurchasePrice * 100) : undefined,
                 taxRatePct: values.taxRatePct ? Math.round(values.taxRatePct * 100) : undefined,
                 minStockLevelGrams: values.minStockLevel ? Math.round(values.minStockLevel * 1000) : undefined,
                 maxStockLevelGrams: values.maxStockLevel ? Math.round(values.maxStockLevel * 1000) : undefined,
@@ -165,7 +161,7 @@ export default function ItemProfile() {
                 allowNegativeStock: values.allowNegativeStock,
                 isActive: values.isActive,
                 initialQuantityGrams: values.initialQuantity ? Math.round(values.initialQuantity * 1000) : undefined,
-                initialCostPrice: values.initialCostPrice ? Math.round(values.initialCostPrice * 1000) : undefined,
+                initialCostPrice: values.initialCostPrice ? Math.round(values.initialCostPrice * 100) : undefined,
             };
 
             if (isEditing) {
@@ -178,11 +174,14 @@ export default function ItemProfile() {
         } catch (error: any) {
             console.error("Failed to save item:", error);
             const errData = error.response?.data;
+            const errObj = errData?.error || errData;
+            const messageAr = errObj?.messageAr || (Array.isArray(errObj?.message) ? errObj.message[0] : errObj?.message) || "فشل حفظ البيانات";
+            console.error("Save item error:", error.response?.status, errData);
             setCreateError({
-                messageAr: errData?.messageAr || errData?.message?.[0] || "فشل حفظ البيانات",
-                message: Array.isArray(errData?.message) ? errData.message.join(", ") : errData?.message,
+                messageAr,
+                message: Array.isArray(errObj?.message) ? errObj.message.join(", ") : errObj?.message,
             });
-            toast.error(errData?.messageAr || errData?.message || "فشل حفظ البيانات");
+            toast.error(messageAr);
         }
     };
 
@@ -249,14 +248,15 @@ export default function ItemProfile() {
                                     </div>
                                     <h2 className="font-bold text-slate-700">البيانات الأساسية للمنتج</h2>
                                 </div>
-                                <CardContent className="p-6 space-y-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <CardContent className="p-6 space-y-5">
+                                    {/* Row 1: name + barcode */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                         <FormField
                                             control={form.control}
                                             name="name"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>اسم الصنف (العربية) *</FormLabel>
+                                                    <FormLabel>اسم الصنف *</FormLabel>
                                                     <FormControl>
                                                         <Input placeholder="مثال: دجاج طازج كامل" {...field} />
                                                     </FormControl>
@@ -264,22 +264,6 @@ export default function ItemProfile() {
                                                 </FormItem>
                                             )}
                                         />
-                                        <FormField
-                                            control={form.control}
-                                            name="nameEn"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>اسم الصنف (English)</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Example: Fresh Whole Chicken" {...field} className="text-left" />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <FormField
                                             control={form.control}
                                             name="barcode"
@@ -295,6 +279,7 @@ export default function ItemProfile() {
                                         />
                                     </div>
 
+                                    {/* Row 2: category full width */}
                                     <FormField
                                         control={form.control}
                                         name="categoryId"
@@ -320,6 +305,7 @@ export default function ItemProfile() {
                                         )}
                                     />
 
+                                    {/* Row 3: description full width */}
                                     <FormField
                                         control={form.control}
                                         name="description"
@@ -329,7 +315,7 @@ export default function ItemProfile() {
                                                 <FormControl>
                                                     <Textarea
                                                         placeholder="تفاصيل إضافية عن الصنف..."
-                                                        className="min-h-[100px]"
+                                                        className="min-h-[90px]"
                                                         {...field}
                                                     />
                                                 </FormControl>
@@ -388,7 +374,7 @@ export default function ItemProfile() {
                                     {isEditing && existingItem?.effectiveCostPrice != null && (
                                         <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
                                             <p className="text-sm font-medium text-slate-500 mb-1">سعر التكلفة الحالي (من النظام)</p>
-                                            <p className="text-xl font-mono font-bold text-slate-800">₪{(existingItem.effectiveCostPrice / 1000).toFixed(2)}</p>
+                                            <p className="text-xl font-mono font-bold text-slate-800">₪{(existingItem.effectiveCostPrice / 100).toFixed(2)}</p>
                                             <FormDescription>محسوب من المخزون أو سعر الشراء المتوقع. للعرض فقط ولا يُحرّر من هنا.</FormDescription>
                                         </div>
                                     )}
@@ -604,11 +590,11 @@ export default function ItemProfile() {
                                         <div className="space-y-3 pt-2">
                                             <div className="flex justify-between items-center text-sm">
                                                 <span className="text-slate-500">متوسط التكلفة (Avg):</span>
-                                                <span className="font-mono font-bold text-slate-700">₪{((existingItem?.inventory?.averageCost || 0) / 1000).toFixed(2)}</span>
+                                                <span className="font-mono font-bold text-slate-700">₪{((existingItem?.inventory?.averageCost || 0) / 100).toFixed(2)}</span>
                                             </div>
                                             <div className="flex justify-between items-center text-sm">
                                                 <span className="text-slate-500">إجمالي قيمة المخزون:</span>
-                                                <span className="font-mono font-bold text-slate-900 text-lg">₪{((existingItem?.inventory?.totalValue || 0) / 1000).toFixed(2)}</span>
+                                                <span className="font-mono font-bold text-slate-900 text-lg">₪{((existingItem?.inventory?.totalValue || 0) / 100).toFixed(2)}</span>
                                             </div>
                                         </div>
 

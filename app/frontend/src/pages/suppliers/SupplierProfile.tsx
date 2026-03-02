@@ -281,39 +281,19 @@ export default function SupplierProfile() {
                                     <CardDescription>أدخل البيانات الأساسية للتاجر أو المورد</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="name"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>اسم التاجر (عربي)</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="مثال: مزرعة الخير" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="nameEn"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>اسم التاجر (English)</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            placeholder="Example: Al Khair Farm"
-                                                            className="font-english"
-                                                            dir="ltr"
-                                                            {...field}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                                    <FormField
+                                        control={form.control}
+                                        name="name"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>اسم التاجر / المورد *</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="مثال: مزرعة الخير" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <FormField
@@ -639,7 +619,6 @@ export default function SupplierProfile() {
                                 تلميحات
                             </h3>
                             <ul className="text-xs text-emerald-800 space-y-2 list-disc pr-4 opacity-80 leading-relaxed">
-                                <li>يساعد الاسم اللاتيني في عمليات التصدير والتقارير المالية.</li>
                                 <li>تحديد شرط الدفع (نقداً/آجل) يسهل عملية إنشاء فواتير المشتريات لاحقاً.</li>
                                 <li>رقم الحساب البنكي ضروري في حالة التحويلات البنكية للموردين.</li>
                             </ul>

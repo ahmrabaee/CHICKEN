@@ -126,7 +126,7 @@ export class AccountingService {
     ]);
     const entries: GLMapEntry[] = [];
     if (amountPaid > 0) entries.push({ accountId: ids[ACCOUNT_CODES.CASH], debit: amountPaid, partyType: data.customerId ? 'customer' : undefined, partyId: data.customerId, description: 'Cash received' });
-    if (amountDue > 0 && data.customerId) entries.push({ accountId: ids[ACCOUNT_CODES.ACCOUNTS_RECEIVABLE], debit: amountDue, partyType: 'customer', partyId: data.customerId, description: 'Credit sale' });
+    if (amountDue > 0) entries.push({ accountId: ids[ACCOUNT_CODES.ACCOUNTS_RECEIVABLE], debit: amountDue, partyType: data.customerId ? 'customer' : undefined, partyId: data.customerId, description: data.customerId ? 'Credit sale' : 'Partial payment - balance due' });
     entries.push({ accountId: ids[ACCOUNT_CODES.SALES_REVENUE], credit: revenueAmount, partyType: data.customerId ? 'customer' : undefined, partyId: data.customerId, description: 'Sales revenue' });
     if (discountAmount && discountAmount > 0) entries.push({ accountId: ids[ACCOUNT_CODES.DISCOUNTS_GIVEN], debit: discountAmount, partyType: data.customerId ? 'customer' : undefined, partyId: data.customerId, description: 'Sales discount' });
     if (useTax && data.taxTemplateId && (data.totalTaxAmount ?? 0) > 0) {
@@ -295,12 +295,12 @@ export class AccountingService {
       });
     }
 
-    // DR Accounts Receivable (amount due)
-    if (amountDue > 0 && data.customerId) {
+    // DR Accounts Receivable (amount due) - always record when there's balance due for correct double-entry
+    if (amountDue > 0) {
       lines.push({
         accountCode: ACCOUNT_CODES.ACCOUNTS_RECEIVABLE,
         debitAmount: amountDue,
-        description: 'Credit sale',
+        description: data.customerId ? 'Credit sale' : 'Partial payment - balance due',
       });
     }
 

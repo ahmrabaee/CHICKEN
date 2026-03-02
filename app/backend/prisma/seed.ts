@@ -786,9 +786,9 @@ const FIXTURE_DATES = [
 ];
 
 const FIXTURE_CUSTOMERS = [
-  { customerNumber: 'C-SEED-001', name: 'Restaurant A', nameAr: 'مطعم أ', phone: '0501234567', email: 'resta@test.com', address: 'Riyadh' },
-  { customerNumber: 'C-SEED-002', name: 'Hotel B', nameAr: 'فندق ب', phone: '0507654321', email: 'hotelb@test.com', address: 'Jeddah' },
-  { customerNumber: 'C-SEED-003', name: 'Cash Customer', nameAr: 'عميل نقدي', phone: '0000000000', email: null, address: null },
+  { customerNumber: 'C-SEED-001', name: 'Restaurant A', nameAr: 'مطعم أ', phone: '0501234567', address: 'Riyadh' },
+  { customerNumber: 'C-SEED-002', name: 'Hotel B', nameAr: 'فندق ب', phone: '0507654321', address: 'Jeddah' },
+  { customerNumber: 'C-SEED-003', name: 'Cash Customer', nameAr: 'عميل نقدي', phone: '0000000000', address: null },
 ] as const;
 
 const FIXTURE_SUPPLIERS = [
@@ -827,7 +827,6 @@ async function seedCustomers(): Promise<void> {
         name: customer.nameAr,
         nameEn: customer.name,
         phone: customer.phone,
-        email: customer.email,
         address: customer.address,
         isActive: true,
       },
@@ -836,7 +835,6 @@ async function seedCustomers(): Promise<void> {
         name: customer.nameAr,
         nameEn: customer.name,
         phone: customer.phone,
-        email: customer.email,
         address: customer.address,
         isActive: true,
       },

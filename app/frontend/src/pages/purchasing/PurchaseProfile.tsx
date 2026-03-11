@@ -89,7 +89,7 @@ export default function PurchaseProfile() {
       taxAmount: 0,
       amountPaid: 0,
       notes: "",
-      lines: [{ itemId: 0, weightKg: 1, pricePerKg: 0, isLiveBird: false }], // itemId = category.purchaseItemId
+      lines: [{ itemId: 0, weightKg: 1, pricePerKg: 0, isLiveBird: false }], // itemId = category.id (resolved to purchaseItemId on submit)
     },
     mode: "onChange",
   });
@@ -125,12 +125,16 @@ export default function PurchaseProfile() {
     }
     const lines = values.lines
       .filter((l) => Number(l.itemId) > 0 && (Number(l.weightKg) || 0) > 0)
-      .map((l) => ({
-        itemId: Number(l.itemId),
-        weightGrams: kgToGrams(Number(l.weightKg)),
-        pricePerKg: toMinorUnits(Number(l.pricePerKg)),
-        isLiveBird: !!l.isLiveBird,
-      }));
+      .map((l) => {
+        // l.itemId holds category.id — resolve to the actual purchaseItemId
+        const cat = purchaseableCategories.find((c) => c.id === Number(l.itemId));
+        return {
+          itemId: cat?.purchaseItemId ?? Number(l.itemId),
+          weightGrams: kgToGrams(Number(l.weightKg)),
+          pricePerKg: toMinorUnits(Number(l.pricePerKg)),
+          isLiveBird: !!l.isLiveBird,
+        };
+      });
     if (lines.length === 0) {
       toast.error("أضف فئةً واحدة على الأقل بوزن صحيح");
       return;
@@ -298,122 +302,131 @@ export default function PurchaseProfile() {
                 </div>
               </div>
 
-              <Separator />
+              {/* Table header */}
+              <div className="hidden md:grid grid-cols-[3fr_2fr_2fr_2fr_auto_auto] gap-3 px-3 pb-1 border-b">
+                <span className="text-xs font-semibold text-muted-foreground">الفئة</span>
+                <span className="text-xs font-semibold text-muted-foreground">الوزن (كجم)</span>
+                <span className="text-xs font-semibold text-muted-foreground">السعر/كجم (₪)</span>
+                <span className="text-xs font-semibold text-muted-foreground">الإجمالي</span>
+                <span className="text-xs font-semibold text-muted-foreground text-center w-16">حي؟</span>
+                <span className="w-9" />
+              </div>
 
-              <div className="space-y-3">
-                {fields.map((f, idx) => (
-                  <div key={f.id} className="border rounded-lg p-4 bg-background">
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+              <div className="space-y-2">
+                {fields.map((f, idx) => {
+                  const lineTotal = (Number(watchedLines?.[idx]?.weightKg) || 0) * (Number(watchedLines?.[idx]?.pricePerKg) || 0);
+                  return (
+                    <div key={f.id} className="grid grid-cols-1 md:grid-cols-[3fr_2fr_2fr_2fr_auto_auto] gap-3 items-start p-2 rounded-lg hover:bg-muted/30 transition-colors">
+
+                      {/* الفئة */}
                       <FormField
                         control={form.control}
                         name={`lines.${idx}.itemId`}
                         render={({ field }) => (
-                          <FormItem className="md:col-span-5">
-                            <FormLabel>الفئة</FormLabel>
+                          <FormItem className="space-y-0">
+                            <span className="md:hidden text-xs font-semibold text-muted-foreground">الفئة</span>
                             <FormControl>
                               <Select
                                 value={String(field.value || "")}
                                 onValueChange={(v) => {
-                                  const itemId = Number(v);
-                                  field.onChange(itemId);
-                                  const cat = purchaseableCategories.find((c) => c.purchaseItemId === itemId);
+                                  const categoryId = Number(v);
+                                  field.onChange(categoryId);
+                                  const cat = purchaseableCategories.find((c) => c.id === categoryId);
                                   if (!cat?.purchaseItem) return;
                                   const currentPrice = Number(form.getValues(`lines.${idx}.pricePerKg`)) || 0;
-                                  const defaultPriceMinor = cat.purchaseItem.defaultPurchasePrice ?? 0;
-                                  const defaultPriceMajor = defaultPriceMinor / 100;
+                                  const defaultPriceMajor = (cat.purchaseItem.defaultPurchasePrice ?? 0) / 100;
                                   if (currentPrice === 0 && defaultPriceMajor > 0) {
-                                    form.setValue(`lines.${idx}.pricePerKg`, defaultPriceMajor, {
-                                      shouldDirty: true,
-                                      shouldValidate: true,
-                                    });
+                                    form.setValue(`lines.${idx}.pricePerKg`, defaultPriceMajor, { shouldDirty: true, shouldValidate: true });
                                   }
                                 }}
                               >
-                                <SelectTrigger>
-                                  <SelectValue placeholder={categoriesLoading ? "تحميل الفئات..." : "اختر الفئة"} />
+                                <SelectTrigger className="h-9">
+                                  <SelectValue placeholder={categoriesLoading ? "تحميل..." : "اختر الفئة"} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {purchaseableCategories.map((cat) => (
-                                    <SelectItem key={cat.id} value={String(cat.purchaseItemId)}>
-                                      {cat.name}
-                                    </SelectItem>
-                                  ))}
+                                  {purchaseableCategories
+                                    .filter((cat) => (cat.purchaseItemId ?? 0) > 0)
+                                    .map((cat) => (
+                                      <SelectItem key={cat.id} value={String(cat.id)}>
+                                        {cat.name}
+                                      </SelectItem>
+                                    ))}
                                 </SelectContent>
                               </Select>
                             </FormControl>
-                            <FormMessage />
+                            <FormMessage className="text-xs" />
                           </FormItem>
                         )}
                       />
 
+                      {/* الوزن */}
                       <FormField
                         control={form.control}
                         name={`lines.${idx}.weightKg`}
                         render={({ field }) => (
-                          <FormItem className="md:col-span-2">
-                            <FormLabel>الوزن (كجم)</FormLabel>
+                          <FormItem className="space-y-0">
+                            <span className="md:hidden text-xs font-semibold text-muted-foreground">الوزن (كجم)</span>
                             <FormControl>
-                              <NumericInput inputMode="decimal" step="0.01" min="0" {...field} />
+                              <NumericInput className="h-9" inputMode="decimal" step="0.01" min="0" {...field} />
                             </FormControl>
-                            <FormMessage />
+                            <FormMessage className="text-xs" />
                           </FormItem>
                         )}
                       />
 
+                      {/* السعر */}
                       <FormField
                         control={form.control}
                         name={`lines.${idx}.pricePerKg`}
                         render={({ field }) => (
-                          <FormItem className="md:col-span-2">
-                            <FormLabel>السعر/كجم (₪)</FormLabel>
+                          <FormItem className="space-y-0">
+                            <span className="md:hidden text-xs font-semibold text-muted-foreground">السعر/كجم (₪)</span>
                             <FormControl>
-                              <NumericInput inputMode="decimal" step="0.01" min="0" {...field} />
+                              <NumericInput className="h-9" inputMode="decimal" step="0.01" min="0" {...field} />
                             </FormControl>
-                            <FormMessage />
+                            <FormMessage className="text-xs" />
                           </FormItem>
                         )}
                       />
 
+                      {/* الإجمالي */}
+                      <div className="flex items-center h-9">
+                        <span className="font-semibold text-sm font-english text-foreground" dir="ltr">
+                          ₪ {lineTotal.toFixed(2)}
+                        </span>
+                      </div>
+
+                      {/* حي؟ */}
                       <FormField
                         control={form.control}
                         name={`lines.${idx}.isLiveBird`}
                         render={({ field }) => (
-                          <FormItem className="md:col-span-2">
-                            <FormLabel>حي؟</FormLabel>
+                          <FormItem className="space-y-0">
                             <FormControl>
-                              <div className="h-10 flex items-center">
+                              <div className="flex items-center gap-1.5 h-9 w-16 justify-center">
                                 <Switch checked={!!field.value} onCheckedChange={field.onChange} />
-                                <span className="text-xs text-muted-foreground mr-2">طير حي</span>
                               </div>
                             </FormControl>
-                            <FormMessage />
                           </FormItem>
                         )}
                       />
 
-                      <div className="md:col-span-1 flex justify-end">
+                      {/* حذف */}
+                      <div className="flex items-center h-9">
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="h-10 w-10 text-red-600 hover:text-red-700"
+                          className="h-8 w-8 text-rose-500 hover:text-rose-700 hover:bg-rose-50"
                           onClick={() => remove(idx)}
                           title="حذف السطر"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </Button>
                       </div>
                     </div>
-
-                    {/* Line total preview */}
-                    <div className="mt-3 text-sm text-muted-foreground">
-                      الإجمالي التقريبي للسطر:{" "}
-                      <span className="font-semibold text-foreground font-english" dir="ltr">
-                        ₪ {(((Number(watchedLines?.[idx]?.weightKg) || 0) * (Number(watchedLines?.[idx]?.pricePerKg) || 0)) || 0).toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <Separator />

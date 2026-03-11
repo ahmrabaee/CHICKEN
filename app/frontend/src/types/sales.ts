@@ -49,7 +49,7 @@ export interface Sale {
     id: number;
     saleNumber: string;
     saleDate: string;
-    saleType: 'cash' | 'credit' | 'mixed';
+    saleType: 'cash' | 'credit';
     customerId?: number;
     customerName?: string;
     customerPhone?: string;
@@ -116,7 +116,7 @@ export interface CreateSaleDto {
     customerId?: number;
     customerName?: string;
     customerPhone?: string;
-    saleType: 'cash' | 'credit' | 'mixed';
+    saleType: 'cash' | 'credit';
     discountAmount?: number;
     discountPct?: number;
     dueDate?: string;

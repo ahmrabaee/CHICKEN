@@ -10,7 +10,7 @@ export interface StockTransferLineDto {
 
 export interface CreateStockTransferDto {
   sourceLotId: number;
-  expiryDate: string;
+  expiryDate?: string;
   branchId?: number;
   notes?: string;
   lines: StockTransferLineDto[];
@@ -18,6 +18,7 @@ export interface CreateStockTransferDto {
 
 export interface SourceLot {
   id: number;
+  itemId?: number;
   lotNumber: string;
   itemCode: string;
   itemName: string;
@@ -72,14 +73,17 @@ export interface StockTransfer {
 }
 
 export const stockTransferService = {
-  async getSourceLots(branchId?: number): Promise<SourceLot[]> {
-    const params = branchId ? { branchId } : {};
+  async getSourceLots(branchId?: number, itemId?: number): Promise<SourceLot[]> {
+    const params: Record<string, number> = {};
+    if (branchId) params.branchId = branchId;
+    if (itemId) params.itemId = itemId;
     const response = await axiosInstance.get<SourceLot[]>('/stock-transfer/source-lots', { params });
     return Array.isArray(response.data) ? response.data : (response.data as any)?.data ?? [];
   },
 
-  async getProducts(): Promise<TransferrableProduct[]> {
-    const response = await axiosInstance.get<TransferrableProduct[]>('/stock-transfer/products');
+  async getProducts(excludeItemId?: number): Promise<TransferrableProduct[]> {
+    const params = excludeItemId ? { excludeItemId } : {};
+    const response = await axiosInstance.get<TransferrableProduct[]>('/stock-transfer/products', { params });
     return Array.isArray(response.data) ? response.data : (response.data as any)?.data ?? [];
   },
 

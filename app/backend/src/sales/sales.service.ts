@@ -2,6 +2,7 @@ import {
   Injectable, NotFoundException, BadRequestException, ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Customer } from '@prisma/client';
 import { InventoryService } from '../inventory/inventory.service';
 import { AccountingService } from '../accounting/accounting.service';
 import { PaymentLedgerService } from '../accounting/payment-ledger/payment-ledger.service';
@@ -265,7 +266,7 @@ export class SalesService {
     }
 
     // Validate customer if provided
-    let customer = null;
+    let customer: Customer | null = null;
     if (dto.customerId) {
       customer = await this.prisma.customer.findUnique({
         where: { id: dto.customerId },
@@ -280,10 +281,17 @@ export class SalesService {
       }
     }
 
-    // Generate sale number
-    const saleNumber = await this.generateSaleNumber();
-
-    return this.prisma.$transaction(async (tx) => {
+    // Retry up to 5 times on duplicate sale_number (race-condition guard).
+    // Two concurrent requests can both read the same max/count before either
+    // commits; retrying with jittered backoff resolves the collision.
+    let lastTxError: any;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+    return await this.prisma.$transaction(async (tx) => {
+      // Generate sale number inside the transaction so the read is
+      // part of the same atomic write — reduces but does not eliminate
+      // the race window; the retry loop above handles the rare collision.
+      const saleNumber = await this.generateSaleNumber(tx);
       let grossTotal = 0;
       let totalCost = 0;
       const saleLineData: any[] = [];
@@ -362,6 +370,76 @@ export class SalesService {
 
       // Calculate payments
       const totalPayments = dto.payments?.reduce((sum, p) => sum + p.amount, 0) ?? 0;
+
+      // Overpayment guard (tolerance 1 minor unit = 0.01 major)
+      if (totalPayments > totalAmount + 1) {
+        throw new BadRequestException({
+          code: 'OVERPAYMENT',
+          message: 'Paid amount exceeds total. المبلغ المدفوع أكبر من الإجمالي',
+          messageAr: 'المبلغ المدفوع أكبر من الإجمالي',
+        });
+      }
+
+      const remaining = totalAmount - totalPayments;
+
+      // Helper: check if customer info is provided (either customerId or name+phone)
+      const hasCustomerInfo = !!dto.customerId || (!!dto.customerName && dto.customerName.trim().length >= 2 && !!dto.customerPhone && dto.customerPhone.trim().length >= 3);
+
+      // Deferred (credit) sale: customer info is mandatory
+      if (dto.saleType === 'credit') {
+        if (!hasCustomerInfo) {
+          throw new BadRequestException({
+            code: 'CUSTOMER_REQUIRED',
+            message: 'Deferred sale requires customer information.',
+            messageAr: 'البيع الآجل يتطلب تحديد بيانات الزبون.',
+          });
+        }
+      }
+
+      // Partial payment: remaining > 0 requires customer info
+      if (remaining > 1 && !hasCustomerInfo) {
+        throw new BadRequestException({
+          code: 'CUSTOMER_REQUIRED',
+          message: 'Partial or deferred payment requires customer information.',
+          messageAr: 'الدفع الآجل أو الجزئي يتطلب تحديد بيانات الزبون.',
+        });
+      }
+
+      // Auto-create customer if name+phone provided but no customerId, and we need one for debt
+      if (!dto.customerId && hasCustomerInfo && remaining > 1) {
+        // Check if a customer with same phone already exists
+        const existingCustomer = dto.customerPhone
+          ? await tx.customer.findFirst({ where: { phone: dto.customerPhone.trim() } })
+          : null;
+
+        if (existingCustomer) {
+          dto.customerId = existingCustomer.id;
+          customer = existingCustomer;
+        } else {
+          // Generate customerNumber for new customer
+          const lastCust = await tx.customer.findFirst({
+            orderBy: { id: 'desc' },
+            select: { customerNumber: true },
+          });
+          let nextNum = 1;
+          if (lastCust?.customerNumber) {
+            const m = lastCust.customerNumber.match(/CUST(\d+)/);
+            if (m) nextNum = parseInt(m[1], 10) + 1;
+          }
+          const customerNumber = `CUST${nextNum.toString().padStart(4, '0')}`;
+
+          customer = await tx.customer.create({
+            data: {
+              customerNumber,
+              name: dto.customerName!.trim(),
+              phone: dto.customerPhone?.trim() ?? null,
+              currentBalance: 0,
+            },
+          });
+          dto.customerId = customer.id;
+        }
+      }
+
       const paymentStatus = totalPayments >= totalAmount ? 'paid' : totalPayments > 0 ? 'partial' : 'unpaid';
 
       // Create sale
@@ -575,6 +653,18 @@ export class SalesService {
 
       return this.findById(sale.id, tx);
     });
+      } catch (err: any) {
+        // P2002 = Prisma unique constraint violation
+        if (err?.code === 'P2002' && JSON.stringify(err?.meta?.target ?? '').includes('sale_number')) {
+          lastTxError = err;
+          // Small random backoff so concurrent requests don't collide again
+          await new Promise(r => setTimeout(r, 10 + Math.random() * 30));
+          continue;
+        }
+        throw err;
+      }
+    }
+    throw lastTxError;
   }
 
   async voidSale(id: number, dto: VoidSaleDto, userId: number) {
@@ -852,17 +942,24 @@ export class SalesService {
     });
   }
 
-  private async generateSaleNumber(): Promise<string> {
+  private async generateSaleNumber(prismaOrTx: any = this.prisma): Promise<string> {
     const today = new Date();
     const datePrefix = today.toISOString().slice(0, 10).replace(/-/g, '');
-    const count = await this.prisma.sale.count({
-      where: {
-        saleDate: {
-          gte: new Date(today.setHours(0, 0, 0, 0)),
-        },
-      },
+    const prefix = `SAL-${datePrefix}-`;
+    // Use findFirst+orderBy instead of count so the sequence continues
+    // correctly even after voids, and the number is derived from the
+    // actual last-used value rather than a potentially stale row count.
+    const lastSale = await prismaOrTx.sale.findFirst({
+      where: { saleNumber: { startsWith: prefix } },
+      orderBy: { saleNumber: 'desc' },
+      select: { saleNumber: true },
     });
-    return `SAL-${datePrefix}-${(count + 1).toString().padStart(4, '0')}`;
+    let nextNum = 1;
+    if (lastSale) {
+      const seq = parseInt(lastSale.saleNumber.slice(prefix.length), 10);
+      if (!isNaN(seq)) nextNum = seq + 1;
+    }
+    return `${prefix}${nextNum.toString().padStart(4, '0')}`;
   }
 
   private async generatePaymentNumber(tx: any): Promise<string> {

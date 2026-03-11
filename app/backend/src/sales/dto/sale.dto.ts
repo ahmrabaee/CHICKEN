@@ -68,9 +68,9 @@ export class CreateSaleDto {
   @IsOptional()
   customerPhone?: string;
 
-  @ApiProperty({ description: 'Sale type', enum: ['cash', 'credit', 'mixed'] })
+  @ApiProperty({ description: 'Sale type', enum: ['cash', 'credit'] })
   @IsString()
-  @IsIn(['cash', 'credit', 'mixed'])
+  @IsIn(['cash', 'credit'])
   saleType: string;
 
   @ApiPropertyOptional({ description: 'Discount amount in minor units' })

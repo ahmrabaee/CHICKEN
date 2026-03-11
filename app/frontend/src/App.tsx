@@ -21,6 +21,7 @@ import Payments from "@/pages/Payments";
 import PaymentProfile from "@/pages/payments/PaymentProfile";
 import Reconciliation from "@/pages/Reconciliation";
 import CreditNotes from "@/pages/CreditNotes";
+import CreditNoteProfile from "@/pages/credit-notes/CreditNoteProfile";
 import Expenses from "@/pages/Expenses";
 import ExpenseProfile from "@/pages/expenses/ExpenseProfile";
 import Debts from "@/pages/Debts";
@@ -82,6 +83,8 @@ const App = () => (
                 <Route path="/payments/:id" element={<PaymentProfile />} />
                 <Route path="/reconciliation" element={<Reconciliation />} />
                 <Route path="/credit-notes" element={<CreditNotes />} />
+                <Route path="/credit-notes/new" element={<CreditNoteProfile />} />
+                <Route path="/credit-notes/:id" element={<CreditNoteProfile />} />
 
                 {/* Reports */}
                 <Route path="/reports" element={<Reports />} />

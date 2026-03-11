@@ -1,6 +1,7 @@
 /**
  * Custom Barcode System - Types
- * 25-digit format: 1 start + 6 item + 5 weight + 7 totalPrice + 5 price + 1 check
+ * Scale template: [1 start='2'] [6 item code] [7 total price minor] = 14 digits
+ * Weight is NOT encoded in this template; inferred from (totalPrice / pricePerKg).
  */
 
 export interface BarcodeConfig {

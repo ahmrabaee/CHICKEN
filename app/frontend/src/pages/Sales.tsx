@@ -65,7 +65,7 @@ function getPaymentStatusBadge(status: string, isVoided: boolean) {
 
 /** Map sale type to Arabic label */
 function getSaleTypeLabel(saleType: string) {
-  const map: Record<string, string> = { cash: "نقدي", credit: "آجل", mixed: "مختلط" };
+  const map: Record<string, string> = { cash: "نقدي", credit: "آجل" };
   return map[saleType] || saleType;
 }
 

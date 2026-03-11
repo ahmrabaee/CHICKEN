@@ -22,18 +22,23 @@ export class StockTransferController {
   @Get('source-lots')
   @UseGuards(RolesGuard)
   @Roles('admin', 'accountant')
-  @ApiOperation({ summary: 'Get available raw chicken lots for transfer' })
-  getAvailableSourceLots(@Query('branchId') branchId?: string) {
+  @ApiOperation({ summary: 'Get available lots for transfer (any product)' })
+  getAvailableSourceLots(
+    @Query('branchId') branchId?: string,
+    @Query('itemId') itemId?: string,
+  ) {
     const bid = branchId ? parseInt(branchId, 10) : undefined;
-    return this.stockTransferService.getAvailableSourceLots(bid);
+    const iid = itemId ? parseInt(itemId, 10) : undefined;
+    return this.stockTransferService.getAvailableSourceLots(bid, iid);
   }
 
   @Get('products')
   @UseGuards(RolesGuard)
   @Roles('admin', 'accountant')
-  @ApiOperation({ summary: 'Get products that can be created from raw chicken' })
-  getTransferrableProducts() {
-    return this.stockTransferService.getTransferrableProducts();
+  @ApiOperation({ summary: 'Get all products (transfer destination, including raw chicken)' })
+  getTransferrableProducts(@Query('excludeItemId') excludeItemId?: string) {
+    const eid = excludeItemId ? parseInt(excludeItemId, 10) : undefined;
+    return this.stockTransferService.getTransferrableProducts(eid);
   }
 
   @Get()

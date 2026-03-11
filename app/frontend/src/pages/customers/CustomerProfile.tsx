@@ -21,7 +21,6 @@ import {
     Crown,
     FileText,
     Hash,
-    Percent,
     Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -61,12 +60,18 @@ import { PdfPreviewDialog } from "@/components/reports/PdfPreviewDialog";
 const customerSchema = z.object({
     name: z.string().min(2, "اسم العميل يجب أن يكون حرفين على الأقل"),
     nameEn: z.string().optional().or(z.literal("")),
-    phone: z.string().optional().or(z.literal("")),
-    phone2: z.string().optional().or(z.literal("")),
+    phone: z.string().optional().or(z.literal("")).refine(
+        (val) => !val || /^[+]?[0-9][\d\s\-()]{6,19}$/.test(val),
+        { message: "رقم الهاتف غير صحيح" }
+    ),
+    phone2: z.string().optional().or(z.literal("")).refine(
+        (val) => !val || /^[+]?[0-9][\d\s\-()]{6,19}$/.test(val),
+        { message: "رقم الهاتف غير صحيح" }
+    ),
     address: z.string().optional().or(z.literal("")),
     creditLimit: z.coerce.number().min(0, "الحد الائتماني يجب أن يكون 0 أو أكثر").optional(),
     priceLevel: z.enum(["standard", "wholesale", "vip"]).optional(),
-    defaultDiscountPct: z.coerce.number().min(0).max(10000, "النسبة يجب ألا تتجاوز 100%").optional(),
+    defaultDiscountPct: z.coerce.number().min(0).optional(),
     taxNumber: z.string().optional().or(z.literal("")),
     notes: z.string().optional().or(z.literal("")),
 });
@@ -83,9 +88,9 @@ const priceLevelLabels: Record<PriceLevel, string> = {
  * Format amount from minor units to display
  */
 function formatAmount(amount: number): string {
-    return (amount / 1000).toLocaleString("en-US", {
-        minimumFractionDigits: 3,
-        maximumFractionDigits: 3,
+    return (amount / 100).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
     });
 }
 
@@ -130,9 +135,9 @@ export default function CustomerProfile() {
                 phone: existingCustomer.phone || "",
                 phone2: existingCustomer.phone2 || "",
                 address: existingCustomer.address || "",
-                creditLimit: existingCustomer.creditLimit || 0,
+                creditLimit: (existingCustomer.creditLimit || 0) / 100,
                 priceLevel: (existingCustomer.priceLevel as PriceLevel) || "standard",
-                defaultDiscountPct: existingCustomer.defaultDiscountPct || 0,
+                defaultDiscountPct: (existingCustomer.defaultDiscountPct || 0) / 100,
                 taxNumber: existingCustomer.taxNumber || "",
                 notes: existingCustomer.notes || "",
             });
@@ -149,9 +154,9 @@ export default function CustomerProfile() {
                 phone: data.phone || undefined,
                 phone2: data.phone2 || undefined,
                 address: data.address || undefined,
-                creditLimit: data.creditLimit || 0,
+                creditLimit: Math.round((data.creditLimit || 0) * 100),
                 priceLevel: data.priceLevel as PriceLevel,
-                defaultDiscountPct: data.defaultDiscountPct || 0,
+                defaultDiscountPct: Math.round((data.defaultDiscountPct || 0) * 100),
                 taxNumber: data.taxNumber || undefined,
                 notes: data.notes || undefined,
             };
@@ -417,11 +422,11 @@ export default function CustomerProfile() {
                                             name="defaultDiscountPct"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>نسبة الخصم الافتراضية (%)</FormLabel>
+                                                    <FormLabel>خصم افتراضي (₪)</FormLabel>
                                                     <FormControl>
                                                         <div className="relative">
-                                                            <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                                            <NumericInput  placeholder="0" className="pl-10 text-left font-mono" {...field} />
+                                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs font-bold">₪</span>
+                                                            <NumericInput placeholder="0.00" className="pl-8 text-left font-mono" step={0.01} {...field} />
                                                         </div>
                                                     </FormControl>
                                                     <FormMessage />

@@ -1,8 +1,8 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from './auth';
 
-// Create axios instance - hardcode the URL to ensure it works
-const API_BASE_URL = 'http://localhost:3000/v1';
+// Read from .env (VITE_API_URL), fall back to localhost for local dev
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/v1';
 console.log('🔧 Axios configured with base URL:', API_BASE_URL);
 
 const axiosInstance = axios.create({

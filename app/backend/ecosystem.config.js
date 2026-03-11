@@ -16,7 +16,7 @@ module.exports = {
         {
             name: 'chicken-backend',
             script: 'dist/main.js',
-            cwd: '/home/chicken/app/backend',
+            cwd: '/home/jaber/app/backend',
 
             // SQLite requires single-process — never use cluster mode
             instances: 1,
@@ -29,7 +29,7 @@ module.exports = {
             restart_delay: 3000,
 
             // Load .env automatically
-            env_file: '/home/chicken/app/backend/.env',
+            env_file: '/home/jaber/app/backend/.env',
 
             // Always enforce production
             env: {
@@ -38,8 +38,8 @@ module.exports = {
             },
 
             // Logs
-            out_file: '/home/chicken/logs/backend-out.log',
-            error_file: '/home/chicken/logs/backend-error.log',
+            out_file: '/home/jaber/logs/backend-out.log',
+            error_file: '/home/jaber/logs/backend-error.log',
             merge_logs: true,
             log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
         },

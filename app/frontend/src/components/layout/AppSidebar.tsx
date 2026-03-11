@@ -16,7 +16,6 @@ import {
   Menu,
   History,
   FileText,
-  CreditCard,
   Receipt,
   UserCircle,
   Loader2,
@@ -25,6 +24,7 @@ import {
   Shield,
   BookOpen,
   Trash2,
+
 
   ArrowLeftRight,
   RefreshCw,
@@ -90,19 +90,14 @@ const navigation: NavItem[] = [
     title: "Customers",
     titleAr: "الزبائن",
     icon: Users,
-    children: [
-      { title: "Customer List", titleAr: "قائمة الزبائن", href: "/customers", icon: Users },
-      { title: "Credit Accounts", titleAr: "الحسابات", href: "/customers/credits", icon: CreditCard },
-    ],
+    href: "/customers",
   },
   {
     title: "Suppliers",
     titleAr: "التجار",
     icon: Store,
+    href: "/traders",
     adminOnly: true,
-    children: [
-      { title: "Supplier List", titleAr: "قائمة التجار", href: "/traders", icon: Store },
-    ],
   },
   {
     title: "Payments",

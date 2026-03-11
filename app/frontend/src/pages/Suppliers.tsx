@@ -377,163 +377,200 @@ export default function Suppliers() {
     <div className="space-y-5" dir="rtl">
 
       {/* ── Page Header ── */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-            <Briefcase className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-emerald-600 via-teal-600 to-cyan-600 p-6">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2230%22%20height%3D%2230%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cdefs%3E%3Cpattern%20id%3D%22g%22%20patternUnits%3D%22userSpaceOnUse%22%20width%3D%2230%22%20height%3D%2230%22%3E%3Ccircle%20cx%3D%2215%22%20cy%3D%2215%22%20r%3D%221.2%22%20fill%3D%22rgba(255%2C255%2C255%2C0.1)%22%2F%3E%3C%2Fpattern%3E%3C%2Fdefs%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20fill%3D%22url(%23g)%22%2F%3E%3C%2Fsvg%3E')] opacity-60" />
+        <div className="relative flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-white/15 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/25 shadow-lg">
+              <Building2 className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white tracking-tight">التجار والموردون</h1>
+              <p className="text-sm text-white/70 mt-0.5">إدارة بيانات الموردين ومتابعة الحسابات المرتبطة</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold">التجار والموردون</h1>
-            <p className="text-sm text-muted-foreground">إدارة بيانات الموردين ومتابعة الحسابات المرتبطة</p>
-          </div>
+          <Button
+            onClick={handleCreate}
+            className="gap-2 bg-white text-emerald-700 hover:bg-white/90 font-bold shadow-md"
+          >
+            <Plus className="w-4 h-4" /> تاجر جديد
+          </Button>
         </div>
-        <Button onClick={handleCreate} className="gap-2 shrink-0">
-          <Plus className="w-4 h-4" /> تاجر جديد
-        </Button>
       </div>
 
       {/* ── Stats ── */}
       {!isLoading && (
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-white dark:bg-card rounded-xl border px-4 py-3 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
-              <Building2 className="w-4 h-4 text-slate-500" />
+        <div className="grid grid-cols-4 gap-3">
+          <div className="bg-white dark:bg-card rounded-2xl border border-slate-100 dark:border-slate-700 p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+              <Building2 className="w-5 h-5 text-slate-500" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">إجمالي الموردين</p>
+              <p className="text-xs text-muted-foreground font-medium">إجمالي التجار</p>
               <p className="text-2xl font-bold leading-tight">{suppliers.length}</p>
             </div>
           </div>
-          <div className="bg-white dark:bg-card rounded-xl border px-4 py-3 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+          <div className="bg-white dark:bg-card rounded-2xl border border-slate-100 dark:border-slate-700 p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-5 h-5 text-emerald-500" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">نشطون</p>
+              <p className="text-xs text-muted-foreground font-medium">نشطون</p>
               <p className="text-2xl font-bold leading-tight text-emerald-600">{suppliers.filter(s => s.isActive).length}</p>
             </div>
           </div>
-          <div className="bg-white dark:bg-card rounded-xl border px-4 py-3 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
-              <CreditCard className="w-4 h-4 text-amber-500" />
+          <div className="bg-white dark:bg-card rounded-2xl border border-slate-100 dark:border-slate-700 p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">لديهم مستحقات</p>
+              <p className="text-xs text-muted-foreground font-medium">لديهم مستحقات</p>
               <p className="text-2xl font-bold leading-tight text-amber-600">{suppliers.filter(s => s.currentBalance > 0).length}</p>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-card rounded-2xl border border-slate-100 dark:border-slate-700 p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center shrink-0">
+              <XCircle className="w-5 h-5 text-rose-400" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-medium">غير نشطين</p>
+              <p className="text-2xl font-bold leading-tight text-rose-500">{suppliers.filter(s => !s.isActive).length}</p>
             </div>
           </div>
         </div>
       )}
 
       {/* ── Search ── */}
-      <div className="relative">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-        <Input
-          placeholder="بحث بالاسم، الهاتف، أو رقم المورد..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pr-10 bg-white dark:bg-card h-10"
-        />
+      <div className="flex gap-2 bg-white dark:bg-card rounded-2xl border border-slate-100 dark:border-slate-700 p-3 shadow-sm">
+        <div className="relative flex-1">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <Input
+            placeholder="بحث بالاسم، الهاتف، أو رقم المورد..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pr-10 h-9 border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-700 transition-colors"
+          />
+        </div>
       </div>
 
       {/* ── Table Card ── */}
-      <div className="rounded-xl border bg-white dark:bg-card overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-3 border-b bg-slate-50/60 dark:bg-slate-800/30">
+      <div className="rounded-2xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-card overflow-hidden shadow-sm">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/40">
           <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-            {suppliers.length} مورد مسجّل
+            {suppliers.length} تاجر مسجّل
           </span>
           {suppliersResponse?.meta && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-2.5 py-1 rounded-full">
               عرض {suppliers.length} من {suppliersResponse.meta.totalItems}
             </span>
           )}
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center h-48 gap-3 text-muted-foreground">
-            <Loader2 className="w-5 h-5 animate-spin" />
+          <div className="flex items-center justify-center h-52 gap-3 text-muted-foreground">
+            <Loader2 className="w-5 h-5 animate-spin text-emerald-500" />
             <span className="text-sm">جاري تحميل البيانات...</span>
           </div>
         ) : suppliers.length === 0 ? (
-          <div className="text-center py-16 text-muted-foreground">
-            <Building2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p className="text-sm font-medium">لا يوجد موردون مطابقون للبحث</p>
+          <div className="text-center py-20 text-muted-foreground">
+            <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
+              <Building2 className="w-8 h-8 opacity-30" />
+            </div>
+            <p className="text-sm font-semibold">لا يوجد موردون مطابقون للبحث</p>
+            <p className="text-xs mt-1 opacity-60">جرّب تغيير معايير البحث</p>
           </div>
         ) : (
           <Table>
             <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="text-right text-xs font-bold text-slate-500 uppercase tracking-wide w-[110px]">رقم المورد</TableHead>
-                <TableHead className="text-right text-xs font-bold text-slate-500 uppercase tracking-wide">اسم التاجر / المورد</TableHead>
-                <TableHead className="text-right text-xs font-bold text-slate-500 uppercase tracking-wide">الهاتف</TableHead>
-                <TableHead className="text-right text-xs font-bold text-slate-500 uppercase tracking-wide">المسؤول</TableHead>
-                <TableHead className="text-right text-xs font-bold text-slate-500 uppercase tracking-wide">شروط الدفع</TableHead>
-                <TableHead className="text-center text-xs font-bold text-slate-500 uppercase tracking-wide">المستحقات</TableHead>
-                <TableHead className="text-center text-xs font-bold text-slate-500 uppercase tracking-wide w-[90px]">الحالة</TableHead>
-                <TableHead className="text-center text-xs font-bold text-slate-500 uppercase tracking-wide w-[100px]">الإجراءات</TableHead>
+              <TableRow className="hover:bg-transparent border-slate-100 dark:border-slate-700">
+                <TableHead className="text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider w-[110px] pr-5">رقم المورد</TableHead>
+                <TableHead className="text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">اسم التاجر / المورد</TableHead>
+                <TableHead className="text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">الهاتف</TableHead>
+                <TableHead className="text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">المسؤول</TableHead>
+                <TableHead className="text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">شروط الدفع</TableHead>
+                <TableHead className="text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">المستحقات</TableHead>
+                <TableHead className="text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider w-[80px]">الحالة</TableHead>
+                <TableHead className="text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider w-[100px]">الإجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {suppliers.map((supplier) => (
                 <TableRow
                   key={supplier.id}
-                  className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 group"
+                  className="cursor-pointer hover:bg-emerald-50/40 dark:hover:bg-emerald-900/10 group border-slate-50 dark:border-slate-700/50 transition-colors"
                   onClick={() => handleEdit(supplier)}
                 >
-                  <TableCell className="font-mono text-xs text-slate-400 py-3">
+                  <TableCell className="font-mono text-xs text-slate-400 py-3.5 pr-5">
                     {supplier.supplierNumber}
                   </TableCell>
-                  <TableCell className="py-3">
+                  <TableCell className="py-3.5">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 flex items-center justify-center shrink-0 text-emerald-700 dark:text-emerald-400 font-bold text-sm">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 font-bold text-sm">
                         {supplier.name.charAt(0)}
                       </div>
-                      <span className="font-semibold text-sm">{supplier.name}</span>
+                      <div>
+                        <span className="font-semibold text-sm">{supplier.name}</span>
+                        {supplier.nameEn && <p className="text-xs text-muted-foreground">{supplier.nameEn}</p>}
+                      </div>
                     </div>
                   </TableCell>
-                  <TableCell className="py-3">
+                  <TableCell className="py-3.5 text-center">
                     {supplier.phone ? (
-                      <div className="flex items-center gap-1.5 text-sm text-slate-600" dir="ltr">
-                        <Phone className="w-3 h-3 text-slate-400" />
-                        {supplier.phone}
+                      <div className="inline-flex items-center justify-center gap-1.5 text-sm text-slate-600 dark:text-slate-300">
+                        <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span dir="ltr">{supplier.phone}</span>
                       </div>
                     ) : (
                       <span className="text-muted-foreground text-xs">—</span>
                     )}
                   </TableCell>
-                  <TableCell className="py-3 text-sm text-slate-600">
-                    {supplier.contactPerson || <span className="text-muted-foreground text-xs">—</span>}
+                  <TableCell className="py-3.5">
+                    {supplier.contactPerson ? (
+                      <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300">
+                        <Briefcase className="w-3 h-3 text-slate-400 shrink-0" />
+                        {supplier.contactPerson}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">—</span>
+                    )}
                   </TableCell>
-                  <TableCell className="py-3 text-sm text-slate-600">
-                    {supplier.paymentTerms || <span className="text-muted-foreground text-xs">—</span>}
-                  </TableCell>
-                  <TableCell className="py-3 text-center">
-                    {supplier.currentBalance > 0 ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-100">
-                        ₪ {formatAmount(supplier.currentBalance)}
+                  <TableCell className="py-3.5">
+                    {supplier.paymentTerms ? (
+                      <span className="text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md font-medium">
+                        {supplier.paymentTerms}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-600 border border-emerald-100">
+                      <span className="text-muted-foreground text-xs">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="py-3.5 text-center">
+                    {supplier.currentBalance > 0 ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-800">
+                        <AlertTriangle className="w-3 h-3" />
+                        {formatAmount(supplier.currentBalance)}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800">
                         <CheckCircle2 className="w-3 h-3" /> مسدّد
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="py-3 text-center">
+                  <TableCell className="py-3.5 text-center">
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                       supplier.isActive
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                        : "bg-slate-100 text-slate-500 border border-slate-200"
+                        ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800"
+                        : "bg-slate-100 dark:bg-slate-700 text-slate-500 border border-slate-200 dark:border-slate-600"
                     }`}>
                       {supplier.isActive ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                      {supplier.isActive ? "نشط" : "غير نشط"}
+                      {supplier.isActive ? "نشط" : "موقوف"}
                     </span>
                   </TableCell>
-                  <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
+                  <TableCell className="py-3.5" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-slate-400 hover:text-blue-600 hover:bg-blue-50"
+                        className="h-7 w-7 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
                         onClick={() => handleView(supplier)}
                         title="عرض التفاصيل"
                       >
@@ -542,7 +579,7 @@ export default function Suppliers() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                        className="h-7 w-7 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
                         onClick={() => handleEdit(supplier)}
                         title="تعديل"
                       >
@@ -551,7 +588,7 @@ export default function Suppliers() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                        className="h-7 w-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30"
                         onClick={() => handleDeleteClick(supplier)}
                         title="حذف"
                       >

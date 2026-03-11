@@ -29,7 +29,7 @@ export interface ThermalReceiptData {
   grandTotal: number;
   paidAmount?: number;
   remainingAmount?: number;
-  saleType?: "cash" | "credit" | "mixed";
+  saleType?: "cash" | "credit";
   date?: string;
 }
 

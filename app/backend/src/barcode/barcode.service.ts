@@ -14,15 +14,19 @@ export class BarcodeService {
     const group = await this.settingsService.getByGroup('barcode');
     return {
       customEnabled: group['barcode.custom_enabled'] ?? true,
-      totalLength: group['barcode.total_length'] ?? 25,
+      // Template: [StartCode(1)] [ItemCode(6)] [TotalPriceWithTax(7)] = 14 digits
+      totalLength: group['barcode.total_length'] ?? 14,
       itemCodeStart: group['barcode.item_code_start'] ?? 1,
       itemCodeLength: group['barcode.item_code_length'] ?? 6,
+      // Weight field not present in this template — set length to 0
       weightStart: group['barcode.weight_start'] ?? 7,
-      weightLength: group['barcode.weight_length'] ?? 5,
-      totalPriceStart: group['barcode.total_price_start'] ?? 12,
+      weightLength: group['barcode.weight_length'] ?? 0,
+      // Total price occupies positions 7–13
+      totalPriceStart: group['barcode.total_price_start'] ?? 7,
       totalPriceLength: group['barcode.total_price_length'] ?? 7,
-      priceStart: group['barcode.price_start'] ?? 19,
-      priceLength: group['barcode.price_length'] ?? 5,
+      // Unit price field not present
+      priceStart: group['barcode.price_start'] ?? 0,
+      priceLength: group['barcode.price_length'] ?? 0,
     };
   }
 
@@ -114,8 +118,11 @@ export class BarcodeService {
   }
 
   /**
-   * Lookup item by barcode. Supports custom 25-digit format and static barcode.
-   * price = total line price (minor units) when from barcode, else pricePerKg * weightKg
+   * Lookup item by barcode. Supports custom 14-digit scale format and static barcode.
+   *
+   * Scale template: [1 start][6 item][7 totalPrice]
+   * - No weight field: weight is INFERRED from (totalPriceMinor / pricePerKg).
+   * - price = total line price in minor units.
    */
   async lookupByBarcode(barcode: string): Promise<{
     item: any;
@@ -128,12 +135,27 @@ export class BarcodeService {
     if (config.customEnabled && cleaned.length === config.totalLength) {
       const parsed = await this.parseBarcode(barcode);
       const item = await this.itemsService.findByCode(parsed.itemCode);
-      const weightKg = parsed.weightKg ?? 1;
-      const totalFromBarcode = parsed.totalPriceWithTax ?? (parsed.price && parsed.price > 0 ? Math.round(parsed.price * weightKg) : undefined);
-      const price = totalFromBarcode ?? Math.round((item.defaultSalePrice ?? 0) * weightKg);
+
+      // Template provides total price, not weight — infer weight from total/pricePerKg
+      const totalMinor = parsed.totalPriceWithTax ?? parsed.price ?? 0;
+      const pricePerKgMinor = item.defaultSalePrice ?? 0;
+
+      let weightKg: number;
+      if (parsed.weightKg && parsed.weightKg > 0) {
+        // Weight was encoded in barcode (older template)
+        weightKg = parsed.weightKg;
+      } else if (pricePerKgMinor > 0 && totalMinor > 0) {
+        // Infer weight: round to 3 decimal places, tolerance ≤1 minor unit
+        weightKg = Math.round((totalMinor / pricePerKgMinor) * 1000) / 1000;
+      } else {
+        weightKg = 1;
+      }
+
+      const price = totalMinor > 0 ? totalMinor : Math.round(pricePerKgMinor * weightKg);
       return { item, weightKg, price };
     }
 
+    // Fallback: static barcode lookup
     const item = await this.itemsService.findByBarcode(barcode);
     const defPrice = item.defaultSalePrice ?? 0;
     return {

@@ -2,17 +2,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { stockTransferService, CreateStockTransferDto } from '@/services/stock-transfer.service';
 import { toast } from '@/hooks/use-toast';
 
-export const useSourceLots = (branchId?: number) => {
+export const useSourceLots = (branchId?: number, itemId?: number) => {
   return useQuery({
-    queryKey: ['stock-transfer', 'source-lots', branchId],
-    queryFn: () => stockTransferService.getSourceLots(branchId),
+    queryKey: ['stock-transfer', 'source-lots', branchId, itemId],
+    queryFn: () => stockTransferService.getSourceLots(branchId, itemId),
   });
 };
 
-export const useTransferrableProducts = () => {
+export const useTransferrableProducts = (excludeItemId?: number) => {
   return useQuery({
-    queryKey: ['stock-transfer', 'products'],
-    queryFn: () => stockTransferService.getProducts(),
+    queryKey: ['stock-transfer', 'products', excludeItemId],
+    queryFn: () => stockTransferService.getProducts(excludeItemId),
   });
 };
 

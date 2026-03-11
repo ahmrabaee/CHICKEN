@@ -3,7 +3,6 @@ import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import {
   Search,
   Plus,
-  Download,
   MoreHorizontal,
   Eye,
   Edit,
@@ -124,29 +123,6 @@ export default function Inventory() {
     }));
   };
 
-  const handleExportCSV = () => {
-    if (!items || items.length === 0) return;
-    const headers = ["الكود", "الاسم", "التصنيف", "الكمية (كجم)", "الوحدة", "سعر البيع", "متوسط التكلفة"];
-    const rows = items.map(item => [
-      item.itemCode || "",
-      item.itemName || "",
-      item.categoryName || "",
-      ((item.totalQuantity || 0) / 1000).toFixed(2),
-      item.unitOfMeasure || "كجم",
-      ((item.sellingPrice || 0) / 1000).toFixed(3),
-      item.avgCostPrice ? ((item.avgCostPrice) / 1000).toFixed(3) : "-",
-    ]);
-    const BOM = "\uFEFF";
-    const csv = BOM + [headers.join(","), ...rows.map(r => r.map(c => `"${c}"`).join(","))].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `inventory_${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
     try {
@@ -167,10 +143,6 @@ export default function Inventory() {
           <p className="text-muted-foreground mt-1">تتبع مستويات المخزون، الدفعات (FIFO)، وسجل الحركات</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2" onClick={handleExportCSV} disabled={!items || items.length === 0}>
-            <Download className="w-4 h-4" />
-            تصدير البيانات
-          </Button>
           {isAdmin && (
             <Link to="/inventory/new">
               <Button className="gap-2">

@@ -102,10 +102,10 @@ function POS() {
         cart.map((c) =>
           c.itemId === item.id
             ? {
-                ...c,
-                quantityKg: Math.round((c.quantityKg + qty) * 100) / 100,
-                total: Math.round((c.quantityKg + qty) * c.pricePerKg),
-              }
+              ...c,
+              quantityKg: Math.round((c.quantityKg + qty) * 100) / 100,
+              total: Math.round((c.quantityKg + qty) * c.pricePerKg),
+            }
             : c
         )
       );
@@ -478,11 +478,10 @@ function POS() {
                     <button
                       key={t}
                       onClick={() => setSaleType(t)}
-                      className={`h-8 px-3 rounded-lg text-xs font-semibold border transition-colors ${
-                        saleType === t
+                      className={`h-8 px-3 rounded-lg text-xs font-semibold border transition-colors ${saleType === t
                           ? "bg-primary text-primary-foreground border-primary"
                           : "bg-background border-input text-muted-foreground hover:border-primary"
-                      }`}
+                        }`}
                     >
                       {t === "cash" ? "نقدي" : t === "credit" ? "آجل" : "مختلط"}
                     </button>
@@ -623,11 +622,10 @@ function POS() {
                       <button
                         key={m}
                         onClick={() => setPaymentMethod(m)}
-                        className={`flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg text-sm font-semibold border transition-colors ${
-                          paymentMethod === m
+                        className={`flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg text-sm font-semibold border transition-colors ${paymentMethod === m
                             ? "bg-primary text-primary-foreground border-primary"
                             : "bg-background border-input text-muted-foreground hover:border-primary"
-                        }`}
+                          }`}
                       >
                         {m === "cash" ? <Banknote className="w-4 h-4" /> : <CreditCard className="w-4 h-4" />}
                         {m === "cash" ? "نقداً" : "بطاقة"}

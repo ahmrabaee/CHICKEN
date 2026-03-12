@@ -127,6 +127,8 @@ export class PageAccessService {
       return ['*'];
     }
 
+    await this.ensureUserPageAccess(userId);
+
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -140,7 +142,6 @@ export class PageAccessService {
     if (!user) return [];
 
     if (user.userPageAccess.length === 0) {
-      await this.ensureUserPageAccess(userId);
       const refreshed = await this.prisma.user.findUnique({
         where: { id: userId },
         include: {
@@ -158,8 +159,15 @@ export class PageAccessService {
 
   /** Ensure user has UserPageAccess records (seed from role default when none exist) */
   async ensureUserPageAccess(userId: number): Promise<void> {
-    const existing = await this.prisma.userPageAccess.count({ where: { userId } });
-    if (existing > 0) return;
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { userRoles: { include: { role: true } } },
+    });
+    if (!user) return;
+    const isAccountantOrCashier = user.userRoles.some(
+      (ur) => ur.role?.name === 'accountant' || ur.role?.name === 'cashier',
+    );
+    if (!isAccountantOrCashier) return;
 
     const accountantRole = await this.prisma.role.findUnique({
       where: { name: 'accountant' },
@@ -168,7 +176,16 @@ export class PageAccessService {
     if (!accountantRole) return;
 
     const pages = await this.prisma.pageDefinition.findMany();
+    const existingUserAccess = await this.prisma.userPageAccess.findMany({
+      where: { userId },
+      select: { pageId: true },
+    });
+    const existingPageIds = new Set(existingUserAccess.map((access) => access.pageId));
+
     for (const page of pages) {
+      if (existingPageIds.has(page.id)) {
+        continue;
+      }
       const roleAccess = accountantRole.rolePageAccess.find((a) => a.pageId === page.id);
       const allowed = roleAccess?.allowed ?? (!page.isAdminOnly && ['dashboard','inventory','sales','sales-pos','customers','payments','reconciliation','credit-notes','accounting','stock-transfer','reports-sales','reports-holdings','reports-purchases','reports-wastage'].includes(page.key));
       await this.prisma.userPageAccess.upsert({

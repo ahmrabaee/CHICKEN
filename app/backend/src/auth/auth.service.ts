@@ -29,6 +29,15 @@ export interface JwtPayload {
   type?: 'access' | 'refresh';
 }
 
+export interface AuthAccessContext {
+  id: number;
+  username: string;
+  roles: string[];
+  permissions: string[];
+  branchId?: number;
+  allowedPages: string[];
+}
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -354,6 +363,31 @@ export class AuthService {
         },
       },
     });
+  }
+
+  async getAccessContextForUser(userId: number): Promise<AuthAccessContext> {
+    const user = await this.getUserById(userId);
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException({
+        code: 'USER_NOT_FOUND',
+        message: 'User not found or inactive',
+        messageAr: 'المستخدم غير موجود أو غير نشط',
+      });
+    }
+
+    const roles = user.userRoles.map((ur) => ur.role.name);
+    const permissions = this.collectPermissions(user.userRoles);
+    const primaryRole = roles[0] || 'unknown';
+    const allowedPages = await this.pageAccessService.getAllowedPathsForUser(user.id, primaryRole);
+
+    return {
+      id: user.id,
+      username: user.username,
+      roles,
+      permissions,
+      branchId: user.defaultBranchId ?? undefined,
+      allowedPages,
+    };
   }
 
   // Private helper methods

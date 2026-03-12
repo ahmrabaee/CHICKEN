@@ -667,7 +667,9 @@ function POS() {
                         <td className="py-2.5 px-4">
                           <div className="flex items-center gap-1.5">
                             {item.fromBarcode && (
-                              <Barcode className="w-3 h-3 text-amber-500 shrink-0" title="أُضيف بالباركود" />
+                              <span title="أُضيف بالباركود">
+                                <Barcode className="w-3 h-3 text-amber-500 shrink-0" />
+                              </span>
                             )}
                             <span className="font-semibold text-sm leading-tight line-clamp-2">{item.name}</span>
                           </div>

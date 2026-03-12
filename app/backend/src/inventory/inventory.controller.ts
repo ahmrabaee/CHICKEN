@@ -7,7 +7,15 @@ import { CreateAdjustmentDto, InventoryQueryDto } from './dto';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
 import { getPdfContentDisposition } from '../pdf/pdf.helpers';
 import { Response } from 'express';
-import { Roles, RolesGuard, CurrentUser, CurrentUserData, PaginationQueryDto } from '../common';
+import {
+  Roles,
+  RolesGuard,
+  CurrentUser,
+  CurrentUserData,
+  PaginationQueryDto,
+  PageAccessGuard,
+  RequirePageAccess,
+} from '../common';
 
 @ApiTags('inventory')
 @ApiBearerAuth('JWT-auth')
@@ -56,8 +64,9 @@ export class InventoryController {
   }
 
   @Get(':itemId/lots')
-  @UseGuards(RolesGuard)
-  @Roles('admin')
+  @UseGuards(RolesGuard, PageAccessGuard)
+  @Roles('admin', 'accountant')
+  @RequirePageAccess('/inventory')
   @ApiOperation({ summary: 'Get FIFO lots for an item' })
   @ApiParam({ name: 'itemId', description: 'Item ID' })
   async getLots(@Param('itemId', ParseIntPipe) itemId: number) {
@@ -65,8 +74,9 @@ export class InventoryController {
   }
 
   @Get(':itemId/movements')
-  @UseGuards(RolesGuard)
-  @Roles('admin')
+  @UseGuards(RolesGuard, PageAccessGuard)
+  @Roles('admin', 'accountant')
+  @RequirePageAccess('/inventory')
   @ApiOperation({ summary: 'Get stock movement history for an item' })
   @ApiParam({ name: 'itemId', description: 'Item ID' })
   async getMovements(
@@ -77,8 +87,9 @@ export class InventoryController {
   }
 
   @Post('adjustments')
-  @UseGuards(RolesGuard)
-  @Roles('admin')
+  @UseGuards(RolesGuard, PageAccessGuard)
+  @Roles('admin', 'accountant')
+  @RequirePageAccess('/inventory/adjustments')
   @ApiOperation({ summary: 'Create manual stock adjustment' })
   @ApiResponse({ status: 201, description: 'Adjustment created successfully' })
   async createAdjustment(

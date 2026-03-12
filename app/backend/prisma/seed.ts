@@ -114,6 +114,7 @@ const PAGE_DEFINITIONS = [
   { key: 'dashboard', path: '/', titleAr: 'لوحة التحكم', groupKey: null, isAdminOnly: false, sortOrder: 0 },
   { key: 'inventory', path: '/inventory', titleAr: 'المخزون', groupKey: 'inventory', isAdminOnly: false, sortOrder: 10 },
   { key: 'inventory-new', path: '/inventory/new', titleAr: 'إضافة صنف', groupKey: 'inventory', isAdminOnly: true, sortOrder: 11 },
+  { key: 'inventory-adjustments', path: '/inventory/adjustments', titleAr: 'تسوية المخزون', groupKey: 'inventory', isAdminOnly: true, sortOrder: 12 },
   { key: 'sales', path: '/sales', titleAr: 'البيع', groupKey: 'sales', isAdminOnly: false, sortOrder: 20 },
   { key: 'sales-pos', path: '/sales/new', titleAr: 'نقطة البيع', groupKey: 'sales', isAdminOnly: false, sortOrder: 21 },
   { key: 'customers', path: '/customers', titleAr: 'الزبائن', groupKey: null, isAdminOnly: false, sortOrder: 30 },

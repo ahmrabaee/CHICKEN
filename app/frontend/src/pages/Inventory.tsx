@@ -68,7 +68,10 @@ import InventoryLotsDialog from "@/components/inventory/InventoryLotsDialog";
 import InventoryMovementsDialog from "@/components/inventory/InventoryMovementsDialog";
 
 export default function Inventory() {
-  const { isAdmin } = useRole();
+  const { isAdmin, canAccessPath } = useRole();
+  const canCreateItem = isAdmin || canAccessPath("/inventory/new");
+  const canAdjustStock = isAdmin || canAccessPath("/inventory/adjustments");
+  const canDeleteItem = canCreateItem;
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
@@ -143,7 +146,7 @@ export default function Inventory() {
           <p className="text-muted-foreground mt-1">تتبع مستويات المخزون، الدفعات (FIFO)، وسجل الحركات</p>
         </div>
         <div className="flex items-center gap-3">
-          {isAdmin && (
+          {canCreateItem && (
             <Link to="/inventory/new">
               <Button className="gap-2">
                 <Plus className="w-4 h-4" />
@@ -335,13 +338,13 @@ export default function Inventory() {
                                 <History className="w-4 h-4 text-emerald-500" />
                                 سجل حركات المخزون
                               </DropdownMenuItem>
-                              {isAdmin && (
+                              {canAdjustStock && (
                                 <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => setAdjustingItem(item)}>
                                   <Edit className="w-4 h-4 text-orange-500" />
                                   تعديل الكمية (تسوية يدوية)
                                 </DropdownMenuItem>
                               )}
-                              {isAdmin && (
+                              {canDeleteItem && (
                                 <DropdownMenuItem
                                   className="gap-2 cursor-pointer text-destructive focus:text-destructive"
                                   onClick={() => setDeleteTarget(item)}

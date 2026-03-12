@@ -5,7 +5,15 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { ItemsService } from './items.service';
 import { CreateItemDto, UpdateItemDto, ItemResponseDto, ItemListQueryDto } from './dto';
-import { Roles, RolesGuard, CurrentUser, CurrentUserData, PaginatedResult } from '../common';
+import {
+  Roles,
+  RolesGuard,
+  CurrentUser,
+  CurrentUserData,
+  PaginatedResult,
+  PageAccessGuard,
+  RequirePageAccess,
+} from '../common';
 
 @ApiTags('items')
 @ApiBearerAuth('JWT-auth')
@@ -50,7 +58,9 @@ export class ItemsController {
   }
 
   @Post()
-  @Roles('admin')
+  @UseGuards(PageAccessGuard)
+  @Roles('admin', 'accountant')
+  @RequirePageAccess('/inventory/new')
   @ApiOperation({ summary: 'Create item' })
   @ApiResponse({ status: 201, type: ItemResponseDto })
   async create(
@@ -61,7 +71,9 @@ export class ItemsController {
   }
 
   @Put(':id')
-  @Roles('admin')
+  @UseGuards(PageAccessGuard)
+  @Roles('admin', 'accountant')
+  @RequirePageAccess('/inventory/new')
   @ApiOperation({ summary: 'Update item' })
   @ApiParam({ name: 'id', description: 'Item ID' })
   @ApiResponse({ status: 200, type: ItemResponseDto })
@@ -74,7 +86,9 @@ export class ItemsController {
   }
 
   @Delete(':id')
-  @Roles('admin')
+  @UseGuards(PageAccessGuard)
+  @Roles('admin', 'accountant')
+  @RequirePageAccess('/inventory/new')
   @ApiOperation({ summary: 'Deactivate item' })
   @ApiParam({ name: 'id', description: 'Item ID' })
   async delete(@Param('id', ParseIntPipe) id: number) {

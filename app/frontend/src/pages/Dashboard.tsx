@@ -78,8 +78,14 @@ function filterDebtsByRange(rows: DashboardDebtRow[], startDate: string, endDate
   });
 }
 
+function isForbiddenError(error: unknown): boolean {
+  const status = (error as { response?: { status?: number } } | undefined)?.response?.status;
+  return status === 403;
+}
+
 export default function DashboardPage() {
-  const { isAdmin } = useRole();
+  const { isAdmin, canAccessPath } = useRole();
+  const canViewDebts = isAdmin || canAccessPath("/debts");
   const [searchParams, setSearchParams] = useSearchParams();
   const filters = useMemo(() => parseDashboardFilters(searchParams), [searchParams]);
   const activeRange = useMemo(
@@ -94,6 +100,9 @@ export default function DashboardPage() {
   const receivablesQuery = useReceivables({ page: 1, pageSize: 500 });
   const payablesQuery = usePayables({ page: 1, pageSize: 500 });
   const lowStockQuery = useLowStockItems();
+  const receivablesForbidden = isForbiddenError(receivablesQuery.error);
+  const payablesForbidden = isForbiddenError(payablesQuery.error);
+  const shouldShowDebtWidgets = canViewDebts && !receivablesForbidden && !payablesForbidden;
 
   const updateFilters = useCallback(
     (patch: Partial<typeof filters>) => {
@@ -108,24 +117,28 @@ export default function DashboardPage() {
   }, [setSearchParams]);
 
   const retryAll = useCallback(() => {
-    void Promise.all([
+    const queries = [
       salesCurrentQuery.refetch(),
       salesPreviousQuery.refetch(),
-      receivablesQuery.refetch(),
-      payablesQuery.refetch(),
       lowStockQuery.refetch(),
-    ]);
-  }, [lowStockQuery, payablesQuery, receivablesQuery, salesCurrentQuery, salesPreviousQuery]);
+    ];
+    if (shouldShowDebtWidgets) {
+      queries.push(receivablesQuery.refetch(), payablesQuery.refetch());
+    }
+    void Promise.all(queries);
+  }, [lowStockQuery, payablesQuery, receivablesQuery, salesCurrentQuery, salesPreviousQuery, shouldShowDebtWidgets]);
 
   const receivableRows = useMemo(() => {
+    if (!shouldShowDebtWidgets) return [];
     const source = (receivablesQuery.data?.data ?? []) as unknown[];
     return source.map(mapDebtRow).filter((row): row is DashboardDebtRow => !!row);
-  }, [receivablesQuery.data?.data]);
+  }, [receivablesQuery.data?.data, shouldShowDebtWidgets]);
 
   const payableRows = useMemo(() => {
+    if (!shouldShowDebtWidgets) return [];
     const source = (payablesQuery.data?.data ?? []) as unknown[];
     return source.map(mapDebtRow).filter((row): row is DashboardDebtRow => !!row);
-  }, [payablesQuery.data?.data]);
+  }, [payablesQuery.data?.data, shouldShowDebtWidgets]);
 
   const lowStockRows = useMemo(() => {
     const source = (lowStockQuery.data ?? []) as unknown[];
@@ -249,45 +262,50 @@ export default function DashboardPage() {
       actionLabel: "فتح المخزون",
       actionTo: "/inventory",
     },
-    {
-      key: "customer-debts",
-      title: "ديون الزبائن",
-      value: formatCurrency(receivablesAmount),
-      rawValue: receivablesAmount,
-      icon: CreditCard,
-      tone: "danger",
-      deltaPct: receivablesDelta.pct,
-      deltaDirection: receivablesDelta.direction,
-      subtitle: "مستحقات غير محصلة",
-      size: "wide",
-      details: [
-        { label: "الرصيد الحالي", value: formatCurrency(receivablesAmount) },
-        { label: "الرصيد السابق", value: formatCurrency(previousReceivablesAmount) },
-        { label: "عدد السجلات", value: currentReceivables.length.toLocaleString("en-US") },
-      ],
-      actionLabel: "إدارة ديون الزبائن",
-      actionTo: "/debts",
-    },
-    {
-      key: "supplier-debts",
-      title: "ديون الموردين",
-      value: formatCurrency(payablesAmount),
-      rawValue: payablesAmount,
-      icon: Wallet,
-      tone: "warning",
-      deltaPct: payablesDelta.pct,
-      deltaDirection: payablesDelta.direction,
-      subtitle: "التزامات مالية مستحقة",
-      size: "wide",
-      details: [
-        { label: "الرصيد الحالي", value: formatCurrency(payablesAmount) },
-        { label: "الرصيد السابق", value: formatCurrency(previousPayablesAmount) },
-        { label: "عدد السجلات", value: currentPayables.length.toLocaleString("en-US") },
-      ],
-      actionLabel: "إدارة ديون الموردين",
-      actionTo: "/debts",
-    },
   ];
+
+  if (shouldShowDebtWidgets) {
+    kpiItems.push(
+      {
+        key: "customer-debts",
+        title: "ديون الزبائن",
+        value: formatCurrency(receivablesAmount),
+        rawValue: receivablesAmount,
+        icon: CreditCard,
+        tone: "danger",
+        deltaPct: receivablesDelta.pct,
+        deltaDirection: receivablesDelta.direction,
+        subtitle: "مستحقات غير محصلة",
+        size: "wide",
+        details: [
+          { label: "الرصيد الحالي", value: formatCurrency(receivablesAmount) },
+          { label: "الرصيد السابق", value: formatCurrency(previousReceivablesAmount) },
+          { label: "عدد السجلات", value: currentReceivables.length.toLocaleString("en-US") },
+        ],
+        actionLabel: "إدارة ديون الزبائن",
+        actionTo: "/debts",
+      },
+      {
+        key: "supplier-debts",
+        title: "ديون الموردين",
+        value: formatCurrency(payablesAmount),
+        rawValue: payablesAmount,
+        icon: Wallet,
+        tone: "warning",
+        deltaPct: payablesDelta.pct,
+        deltaDirection: payablesDelta.direction,
+        subtitle: "التزامات مالية مستحقة",
+        size: "wide",
+        details: [
+          { label: "الرصيد الحالي", value: formatCurrency(payablesAmount) },
+          { label: "الرصيد السابق", value: formatCurrency(previousPayablesAmount) },
+          { label: "عدد السجلات", value: currentPayables.length.toLocaleString("en-US") },
+        ],
+        actionLabel: "إدارة ديون الموردين",
+        actionTo: "/debts",
+      },
+    );
+  }
 
   if (isAdmin) {
     kpiItems.splice(2, 0, {
@@ -318,14 +336,12 @@ export default function DashboardPage() {
   const kpiLoading =
     salesCurrentQuery.isLoading ||
     salesPreviousQuery.isLoading ||
-    receivablesQuery.isLoading ||
-    payablesQuery.isLoading ||
+    (shouldShowDebtWidgets && (receivablesQuery.isLoading || payablesQuery.isLoading)) ||
     lowStockQuery.isLoading;
   const kpiError =
     salesCurrentQuery.isError ||
     salesPreviousQuery.isError ||
-    receivablesQuery.isError ||
-    payablesQuery.isError ||
+    (shouldShowDebtWidgets && (receivablesQuery.isError || payablesQuery.isError)) ||
     lowStockQuery.isError;
 
   return (
@@ -365,15 +381,17 @@ export default function DashboardPage() {
       />
 
       <div className="grid gap-6 2xl:grid-cols-2">
-        <DebtsTable
-          rows={tableDebtsRows}
-          range={activeRange}
-          isLoading={receivablesQuery.isLoading}
-          isError={receivablesQuery.isError}
-          onRetry={() => {
-            void receivablesQuery.refetch();
-          }}
-        />
+        {shouldShowDebtWidgets && (
+          <DebtsTable
+            rows={tableDebtsRows}
+            range={activeRange}
+            isLoading={receivablesQuery.isLoading}
+            isError={receivablesQuery.isError}
+            onRetry={() => {
+              void receivablesQuery.refetch();
+            }}
+          />
+        )}
         <LowStockTable
           rows={tableLowStockRows}
           isLoading={lowStockQuery.isLoading}

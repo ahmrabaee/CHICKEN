@@ -28,33 +28,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       });
     }
 
-    // Get full user data to ensure they still exist and are active
-    const user = await this.authService.getUserById(payload.sub);
-
-    if (!user) {
-      throw new UnauthorizedException({
-        code: 'USER_NOT_FOUND',
-        message: 'User not found',
-        messageAr: 'المستخدم غير موجود',
-      });
-    }
-
-    if (!user.isActive) {
-      throw new UnauthorizedException({
-        code: 'USER_INACTIVE',
-        message: 'User account is inactive',
-        messageAr: 'حساب المستخدم غير نشط',
-      });
-    }
+    const accessContext = await this.authService.getAccessContextForUser(payload.sub);
 
     // Return user data that will be attached to request.user
     return {
-      id: payload.sub,
-      username: payload.username,
-      roles: payload.roles,
-      permissions: payload.permissions,
-      branchId: payload.branchId,
-      allowedPages: payload.allowedPages ?? [],
+      id: accessContext.id,
+      username: accessContext.username,
+      roles: accessContext.roles,
+      permissions: accessContext.permissions,
+      branchId: accessContext.branchId,
+      allowedPages: accessContext.allowedPages,
     };
   }
 }

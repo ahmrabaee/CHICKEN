@@ -22,6 +22,7 @@ import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
 import { buildInvoicePdfOptions } from '../pdf/templates/invoice.template';
 import { buildReportPdfOptions } from '../pdf/templates/report.template';
 import { formatDateForHeader } from '../pdf/pdf.helpers';
+import { localizePaymentStatus } from '../pdf/pdf.localization';
 
 @Injectable()
 export class SalesService {
@@ -207,6 +208,7 @@ export class SalesService {
   }
 
   async getSalesReportPdf(query: PdfQueryDto) {
+    const language = query.language || 'en';
     const start = query.startDate ? new Date(query.startDate) : new Date(new Date().setDate(1));
     const end = query.endDate ? new Date(query.endDate) : new Date();
 
@@ -219,14 +221,14 @@ export class SalesService {
       orderBy: { saleDate: 'asc' },
     });
 
-    const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+    const meta = await this.pdfService.getStoreMeta(this.prisma, language);
 
     const rows = sales.map(s => ({
       date: s.saleDate.toISOString().split('T')[0],
       number: s.saleNumber,
       customer: s.customer?.name || s.customerName || 'Cash Customer',
       total: s.grandTotal ?? s.totalAmount, // Fallback
-      status: s.paymentStatus,
+      status: localizePaymentStatus(s.paymentStatus, language),
     }));
 
     const totalSales = rows.reduce((sum, r) => sum + (r.total || 0), 0);

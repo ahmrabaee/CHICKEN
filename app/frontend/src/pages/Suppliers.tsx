@@ -68,9 +68,9 @@ import { PdfPreviewDialog } from "@/components/reports/PdfPreviewDialog";
  * Format amount from minor units to display
  */
 function formatAmount(amount: number): string {
-  return (amount / 1000).toLocaleString("en-US", {
-    minimumFractionDigits: 3,
-    maximumFractionDigits: 3,
+  return (amount / 100).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   });
 }
 
@@ -141,7 +141,7 @@ function SupplierDetailCard({ supplier, onClose }: { supplier: Supplier; onClose
             <div className="bg-white rounded-xl shadow-md border border-slate-100 p-3 text-center">
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">المستحقات الحالية</p>
               <p className={`text-lg font-bold ${supplier.currentBalance > 0 ? "text-amber-600" : "text-green-600"}`}>
-                {supplier.currentBalance > 0 ? formatAmount(supplier.currentBalance) : "0.000"}
+                {supplier.currentBalance > 0 ? formatAmount(supplier.currentBalance) : "0.00"}
               </p>
             </div>
             <div className="bg-white rounded-xl shadow-md border border-slate-100 p-3 text-center">

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsPositive, IsString, IsNotEmpty, IsIn, IsOptional } from 'class-validator';
+import { IsInt, IsPositive, IsString, IsNotEmpty, IsIn, IsOptional, IsDateString } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class InventoryResponseDto {
@@ -80,6 +80,11 @@ export class CreateAdjustmentDto {
   @IsInt()
   @IsOptional()
   unitCost?: number;
+
+  @ApiPropertyOptional({ description: 'Expiry date for adjustment lot (ISO date, increase only)' })
+  @IsDateString()
+  @IsOptional()
+  expiryDate?: string;
 
   @ApiPropertyOptional({ description: 'Branch ID (optional)' })
   @Type(() => Number)

@@ -73,6 +73,16 @@ export interface CreatePurchaseDto {
     lines: CreatePurchaseLineDto[];
 }
 
+export interface UpdatePurchaseDto {
+    supplierId?: number;
+    purchaseDate?: string;
+    dueDate?: string;
+    taxAmount?: number;
+    amountPaid?: number;
+    notes?: string;
+    lines?: CreatePurchaseLineDto[];
+}
+
 export interface ReceiveLineDto {
     purchaseLineId: number;
     receivedWeightGrams: number;

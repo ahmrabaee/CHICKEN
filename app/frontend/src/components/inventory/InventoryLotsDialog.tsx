@@ -82,7 +82,7 @@ export default function InventoryLotsDialog({ item, onClose }: InventoryLotsDial
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-center font-mono">
-                                            ₪{(lot.unitPurchasePrice / 1000).toFixed(2)}
+                                            ₪{(lot.unitPurchasePrice / 100).toFixed(2)}
                                         </TableCell>
                                         <TableCell className="text-right text-xs">
                                             {format(new Date(lot.receivedAt), "PP", { locale: ar })}

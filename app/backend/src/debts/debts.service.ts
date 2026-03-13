@@ -5,6 +5,7 @@ import { PdfService } from '../pdf/pdf.service';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
 import { buildReportPdfOptions } from '../pdf/templates/report.template';
 import { formatDateForHeader } from '../pdf/pdf.helpers';
+import { localizeDebtStatus } from '../pdf/pdf.localization';
 import { DebtQueryDto } from './dto/debt.dto';
 import { Prisma } from '@prisma/client';
 
@@ -313,12 +314,13 @@ export class DebtsService {
   }
 
   async getReceivablesPdf(query: PdfQueryDto) {
+    const language = query.language || 'en';
     const debts = await this.prisma.debt.findMany({
       where: { direction: 'receivable', status: { not: 'paid' } },
       orderBy: { totalAmount: 'desc' },
     });
 
-    const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+    const meta = await this.pdfService.getStoreMeta(this.prisma, language);
 
     const rows = debts.map(d => ({
       party: d.partyName || 'Unknown',
@@ -326,7 +328,7 @@ export class DebtsService {
       total: d.totalAmount,
       paid: d.amountPaid,
       balance: d.totalAmount - d.amountPaid,
-      status: d.status
+      status: localizeDebtStatus(d.status, language)
     }));
 
     const totalReceivable = rows.reduce((sum, r) => sum + r.balance, 0);
@@ -353,12 +355,13 @@ export class DebtsService {
   }
 
   async getPayablesPdf(query: PdfQueryDto) {
+    const language = query.language || 'en';
     const debts = await this.prisma.debt.findMany({
       where: { direction: 'payable', status: { not: 'paid' } },
       orderBy: { totalAmount: 'desc' },
     });
 
-    const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+    const meta = await this.pdfService.getStoreMeta(this.prisma, language);
 
     const rows = debts.map(d => ({
       party: d.partyName || 'Unknown',
@@ -366,7 +369,7 @@ export class DebtsService {
       total: d.totalAmount,
       paid: d.amountPaid,
       balance: d.totalAmount - d.amountPaid,
-      status: d.status
+      status: localizeDebtStatus(d.status, language)
     }));
 
     const totalPayable = rows.reduce((sum, r) => sum + r.balance, 0);

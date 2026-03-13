@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -32,7 +32,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useSuppliers } from "@/hooks/use-suppliers";
 import { usePurchaseableCategories } from "@/hooks/use-inventory";
-import { useCreatePurchase } from "@/hooks/use-purchases";
+import { useCreatePurchase, usePurchase, useUpdatePurchase } from "@/hooks/use-purchases";
 import type { CreatePurchaseDto } from "@/types/purchases";
 
 // UI uses major units (₪) and kg. API expects minor units and grams.
@@ -66,10 +66,16 @@ function kgToGrams(kg: number): number {
 }
 
 export default function PurchaseProfile() {
+  const { id } = useParams();
   const navigate = useNavigate();
+  const isEditing = !!id;
+  const purchaseId = isEditing ? Number(id) : 0;
   const createPurchase = useCreatePurchase();
+  const updatePurchase = useUpdatePurchase();
 
   const [supplierSearch, setSupplierSearch] = useState("");
+
+  const { data: existingPurchase, isLoading: isFetchingPurchase } = usePurchase(purchaseId);
 
   const { data: suppliersResp, isLoading: suppliersLoading } = useSuppliers({
     page: 1,
@@ -117,6 +123,32 @@ export default function PurchaseProfile() {
   const grandTotalMajor = subtotalMajor + taxNum;
   const remainingMajor = Math.max(0, grandTotalMajor - amountPaidNum);
 
+  useEffect(() => {
+    if (!isEditing || !existingPurchase || categoriesLoading) return;
+
+    const mappedLines = (existingPurchase.purchaseLines || []).length > 0
+      ? (existingPurchase.purchaseLines || []).map((line) => {
+        const category = purchaseableCategories.find((c) => c.purchaseItemId === line.itemId);
+        return {
+          itemId: category?.id ?? line.itemId,
+          weightKg: Number((line.weightGrams / 1000).toFixed(3)),
+          pricePerKg: Number((line.pricePerKg / 100).toFixed(2)),
+          isLiveBird: !!line.isLiveBird,
+        };
+      })
+      : [{ itemId: 0, weightKg: 1, pricePerKg: 0, isLiveBird: false }];
+
+    form.reset({
+      supplierId: existingPurchase.supplierId || 0,
+      purchaseDate: existingPurchase.purchaseDate?.slice(0, 10) || new Date().toISOString().slice(0, 10),
+      dueDate: existingPurchase.dueDate ? existingPurchase.dueDate.slice(0, 10) : "",
+      taxAmount: (existingPurchase.taxAmount || 0) / 100,
+      amountPaid: (existingPurchase.amountPaid || 0) / 100,
+      notes: existingPurchase.notes || "",
+      lines: mappedLines,
+    });
+  }, [isEditing, existingPurchase, categoriesLoading, purchaseableCategories, form]);
+
   const onSubmit = async (values: PurchaseFormValues) => {
     const supplierId = Number(values.supplierId);
     if (!supplierId || supplierId < 1) {
@@ -149,18 +181,33 @@ export default function PurchaseProfile() {
       lines,
     };
 
-    const created = await createPurchase.mutateAsync(dto);
+    if (isEditing) {
+      await updatePurchase.mutateAsync({ id: purchaseId, data: dto });
+    } else {
+      const created = await createPurchase.mutateAsync(dto);
+      void created;
+    }
+
     navigate(`/purchasing`, { replace: true });
-    // toast is handled in hook
-    void created;
+    // toast is handled in hooks
   };
+
+  const isSaving = createPurchase.isPending || updatePurchase.isPending;
+
+  if (isEditing && isFetchingPurchase) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6" dir="rtl">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">أمر شراء جديد</h1>
+          <h1 className="text-2xl font-bold text-foreground">{isEditing ? "تعديل أمر الشراء" : "أمر شراء جديد"}</h1>
         </div>
 
         <div className="flex items-center gap-2">
@@ -174,14 +221,14 @@ export default function PurchaseProfile() {
             type="button"
             className="gap-2"
             onClick={form.handleSubmit(onSubmit)}
-            disabled={createPurchase.isPending}
+            disabled={isSaving}
           >
-            {createPurchase.isPending ? (
+            {isSaving ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <Save className="w-4 h-4" />
             )}
-            حفظ أمر الشراء
+            {isEditing ? "حفظ التعديلات" : "حفظ أمر الشراء"}
           </Button>
         </div>
       </div>
@@ -508,14 +555,14 @@ export default function PurchaseProfile() {
             <Button
               type="submit"
               className="flex-1 gap-2"
-              disabled={createPurchase.isPending}
+              disabled={isSaving}
             >
-              {createPurchase.isPending ? (
+              {isSaving ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <Save className="w-4 h-4" />
               )}
-              حفظ
+              {isEditing ? "حفظ التعديلات" : "حفظ"}
             </Button>
           </div>
         </form>

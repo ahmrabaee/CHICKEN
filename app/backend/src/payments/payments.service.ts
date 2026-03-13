@@ -12,6 +12,7 @@ import { ACCOUNT_CODES } from '../accounting/accounting.service';
 import { PdfService } from '../pdf/pdf.service';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
 import { buildPaymentVoucherPdfOptions } from '../pdf/templates/payment-voucher.template';
+import { buildReferenceLabel, localizePaymentMethod, localizePaymentValidity } from '../pdf/pdf.localization';
 
 @Injectable()
 export class PaymentsService {
@@ -60,6 +61,7 @@ export class PaymentsService {
   }
 
   async getPaymentPdf(id: number, query: PdfQueryDto) {
+    const language = query.language || 'en';
     const payment = await this.prisma.payment.findUnique({
       where: { id },
       include: { receivedBy: true, branch: true },
@@ -88,22 +90,29 @@ export class PaymentsService {
       referenceNumber = purchase?.purchaseNumber;
     }
 
-    const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+    const meta = await this.pdfService.getStoreMeta(this.prisma, language);
+
+    const referenceDisplay = buildReferenceLabel(
+      payment.referenceType,
+      payment.referenceId || undefined,
+      referenceNumber,
+      language,
+    );
 
     const pdfData = {
       paymentNumber: payment.paymentNumber,
       date: payment.paymentDate.toISOString(),
       amount: payment.amount,
-      method: payment.paymentMethod,
+      method: localizePaymentMethod(payment.paymentMethod, language),
       partyName: payment.partyName || undefined,
       partyType: payment.partyType || undefined,
       referenceType: payment.referenceType || undefined,
       referenceId: payment.referenceId || undefined,
-      referenceNumber,
+      referenceNumber: referenceDisplay,
       receivedBy: payment.receivedBy?.fullName || 'System',
       branchName: payment.branch?.name || undefined,
       notes: payment.notes || undefined,
-      status: payment.isVoided ? 'Voided' : 'Valid',
+      status: localizePaymentValidity(payment.isVoided, language),
       isVoided: payment.isVoided,
     };
 
@@ -221,18 +230,27 @@ export class PaymentsService {
       });
     }
 
+    const amount = Number(dto.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new BadRequestException({
+        code: 'INVALID_AMOUNT',
+        message: 'Payment amount must be greater than zero',
+        messageAr: 'مبلغ الدفع يجب أن يكون أكبر من صفر',
+      });
+    }
+
     // Use purchase.amountPaid as the base for amount due calculation
     // This accounts for the initial payment made during purchase creation
     const currentPaidAmount = purchase.amountPaid ?? 0;
     const totalAmount = purchase.grandTotal ?? purchase.totalAmount;
     const amountDue = totalAmount - currentPaidAmount;
 
-    if (dto.amount > amountDue) {
+    if (amount > amountDue) {
       const fmt = (n: number) => (n / 100).toFixed(2);
       throw new BadRequestException({
         code: 'OVERPAYMENT',
-        message: `Payment amount (${fmt(dto.amount)} ₪) exceeds amount due (${fmt(amountDue)} ₪)`,
-        messageAr: `مبلغ الدفع (${fmt(dto.amount)} ₪) يتجاوز المبلغ المستحق (${fmt(amountDue)} ₪)`,
+        message: `Payment amount (${fmt(amount)} ₪) exceeds amount due (${fmt(amountDue)} ₪)`,
+        messageAr: `مبلغ الدفع (${fmt(amount)} ₪) يتجاوز المبلغ المستحق (${fmt(amountDue)} ₪)`,
       });
     }
 
@@ -243,7 +261,7 @@ export class PaymentsService {
         data: {
           paymentNumber,
           paymentDate: dto.paymentDate ? new Date(dto.paymentDate) : new Date(),
-          amount: dto.amount,
+          amount,
           paymentMethod: dto.paymentMethod ?? 'cash',
           referenceType: 'purchase',
           referenceId: dto.purchaseId,
@@ -259,14 +277,14 @@ export class PaymentsService {
       });
 
       // Update purchase amountPaid and status
-      const newTotalPaidAmount = currentPaidAmount + dto.amount;
+      const newTotalPaidAmount = currentPaidAmount + amount;
       const paymentStatus = newTotalPaidAmount >= totalAmount ? 'paid'
         : newTotalPaidAmount > 0 ? 'partial' : 'unpaid';
 
       await tx.purchase.update({
         where: { id: dto.purchaseId },
         data: {
-          amountPaid: { increment: dto.amount },
+          amountPaid: { increment: amount },
           paymentStatus
         },
       });
@@ -280,7 +298,7 @@ export class PaymentsService {
         await tx.debt.updateMany({
           where: { sourceType: 'purchase', sourceId: dto.purchaseId },
           data: {
-            amountPaid: { increment: dto.amount },
+            amountPaid: { increment: amount },
             status: paymentStatus === 'paid' ? 'paid' : 'partial',
           },
         });
@@ -319,7 +337,7 @@ export class PaymentsService {
         payment.paymentNumber,
         purchase.branchId ?? null,
         userId,
-        dto.amount,
+        amount,
       );
 
       // Blueprint 04: PLE for payment against purchase
@@ -328,7 +346,7 @@ export class PaymentsService {
         payment.id,
         dto.purchaseId,
         purchase.supplierId,
-        dto.amount,
+        amount,
         payment.paymentDate,
       );
 
@@ -547,8 +565,9 @@ export class PaymentsService {
         });
         if (purchase) {
           const purchNewPaid = purchase.amountPaid - payment.amount;
+          const payableTotal = purchase.grandTotal ?? purchase.totalAmount;
           const paymentStatus =
-            purchNewPaid <= 0 ? 'unpaid' : purchNewPaid >= purchase.totalAmount ? 'paid' : 'partial';
+            purchNewPaid <= 0 ? 'unpaid' : purchNewPaid >= payableTotal ? 'paid' : 'partial';
           await tx.purchase.update({
             where: { id: payment.referenceId },
             data: {
@@ -558,7 +577,7 @@ export class PaymentsService {
           });
 
           const debtStatus =
-            purchNewPaid <= 0 ? 'unpaid' : purchNewPaid >= purchase.totalAmount ? 'paid' : 'partial';
+            purchNewPaid <= 0 ? 'unpaid' : purchNewPaid >= payableTotal ? 'paid' : 'partial';
 
           await tx.debt.updateMany({
             where: { sourceType: 'purchase', sourceId: payment.referenceId },

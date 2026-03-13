@@ -9,7 +9,9 @@ export function getPdfContentDisposition(filename: string, inline?: string): str
 }
 
 export function formatCurrency(amount: number | string): string {
-    return Number(amount).toFixed(2);
+    const minorUnits = Number(amount);
+    if (!Number.isFinite(minorUnits)) return '0.00';
+    return (minorUnits / 100).toFixed(2);
 }
 
 export function formatWeight(amount: number | string): string {

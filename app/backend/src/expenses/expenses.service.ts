@@ -6,6 +6,7 @@ import { PdfService } from '../pdf/pdf.service';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
 import { buildReportPdfOptions } from '../pdf/templates/report.template';
 import { formatDateForHeader } from '../pdf/pdf.helpers';
+import { localizeExpenseType } from '../pdf/pdf.localization';
 
 @Injectable()
 export class ExpensesService {
@@ -215,7 +216,7 @@ export class ExpensesService {
       category: e.category?.name || 'Uncategorized',
       supplier: e.supplier?.name || '-',
       amount: e.amount,
-      type: e.expenseType,
+      type: localizeExpenseType(e.expenseType, language),
     }));
 
     const totalExpenses = rows.reduce((sum, r) => sum + r.amount, 0);

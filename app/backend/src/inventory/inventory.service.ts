@@ -270,6 +270,8 @@ export class InventoryService {
       select: { username: true },
     });
 
+    const parsedExpiryDate = dto.expiryDate ? new Date(dto.expiryDate) : null;
+
     return this.prisma.$transaction(async (tx) => {
       let newTotalValue: number;
       let lotIdForMovement: number | null = dto.lotId ?? null;
@@ -298,6 +300,7 @@ export class InventoryService {
               remainingQuantityGrams: dto.quantityGrams,
               unitPurchasePrice: dto.unitCost,
               receivedAt: new Date(),
+              expiryDate: parsedExpiryDate,
               createdById: userId,
             },
           });
@@ -533,7 +536,7 @@ export class InventoryService {
       item: inv.item.name,
       category: inv.item.category?.name || 'Uncategorized',
       quantity: inv.currentQuantityGrams / 1000,
-      avgCost: inv.averageCost / 10, // Minor units to major? averageCost is minor per kg?
+      avgCost: inv.averageCost / 100,
       // averageCost is minor units per kg.
       // totalValue is minor units.
       value: inv.totalValue,

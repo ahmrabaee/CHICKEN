@@ -76,7 +76,7 @@ function toCreateSupplierDto(values: SupplierFormValues): CreateSupplierDto {
     if (values.bankName?.trim()) dto.bankName = values.bankName.trim();
     if (values.bankAccountNumber?.trim()) dto.bankAccountNumber = values.bankAccountNumber.trim();
     if (values.notes?.trim()) dto.notes = values.notes.trim();
-    if (values.creditLimit != null) dto.creditLimit = Number(values.creditLimit);
+    if (values.creditLimit != null) dto.creditLimit = Math.round(Number(values.creditLimit) * 100);
     if (values.rating != null) dto.rating = Number(values.rating);
     return dto;
 }
@@ -107,9 +107,9 @@ type SupplierFormValues = z.infer<typeof supplierSchema>;
  * Format amount from minor units to display
  */
 function formatAmount(amount: number): string {
-    return (amount / 1000).toLocaleString("en-US", {
-        minimumFractionDigits: 3,
-        maximumFractionDigits: 3,
+    return (amount / 100).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
     });
 }
 
@@ -156,7 +156,7 @@ export default function SupplierProfile() {
                 address: existingSupplier.address || "",
                 paymentTerms: existingSupplier.paymentTerms || "",
                 taxNumber: existingSupplier.taxNumber || "",
-                creditLimit: existingSupplier.creditLimit || 0,
+                creditLimit: (existingSupplier.creditLimit || 0) / 100,
                 bankName: existingSupplier.bankName || "",
                 bankAccountNumber: existingSupplier.bankAccountNumber || "",
                 rating: existingSupplier.rating || 0,
@@ -402,10 +402,10 @@ export default function SupplierProfile() {
                                                     <FormControl>
                                                         <div className="relative">
                                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs font-bold font-mono">₪</span>
-                                                            <NumericInput  placeholder="0.000" className="pl-8 text-left font-mono" {...field} />
+                                                            <NumericInput  placeholder="0.00" className="pl-8 text-left font-mono" {...field} />
                                                         </div>
                                                     </FormControl>
-                                                    <FormDescription className="text-xs">سيتم ضرب القيمة في 1000 داخلياً لعرضها بالمليم</FormDescription>
+                                                    <FormDescription className="text-xs">سيتم حفظ القيمة بوحدة العملة الصغرى تلقائياً</FormDescription>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}

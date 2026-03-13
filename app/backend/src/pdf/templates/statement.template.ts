@@ -5,6 +5,7 @@ import { formatDateForHeader } from '../pdf.helpers';
 export function buildStatementPdfOptions(meta: PdfMeta, data: StatementPdfData): PdfGenerateOptions {
     const startFmt = formatDateForHeader(data.startDate);
     const endFmt = formatDateForHeader(data.endDate);
+    const isArabic = meta.language === 'ar';
     return {
         meta: {
             ...meta,
@@ -27,12 +28,12 @@ export function buildStatementPdfOptions(meta: PdfMeta, data: StatementPdfData):
             // Opening Balance Row
             {
                 date: data.startDate,
-                type: 'Opening Balance',
+                type: isArabic ? 'رصيد افتتاحي' : 'Opening Balance',
                 reference: '-',
                 debit: data.openingBalance > 0 ? data.openingBalance : 0,
                 credit: data.openingBalance < 0 ? Math.abs(data.openingBalance) : 0,
                 balance: data.openingBalance,
-                notes: 'Opening Balance / رصيد افتتاحي'
+                notes: isArabic ? 'رصيد افتتاحي' : 'Opening Balance'
             },
             ...data.transactions
         ] as any[],

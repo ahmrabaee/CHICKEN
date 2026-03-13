@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Plus, Download, Eye, PackageCheck, Loader2, Package, CreditCard, Receipt, FileText } from "lucide-react";
+import { Search, Plus, Download, Eye, Loader2, Package, CreditCard, Receipt, FileText, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { DocumentStatusBadge } from "@/components/posting";
-import { usePurchases, usePurchase } from "@/hooks/use-purchases";
+import { usePurchases, usePurchase, useDeletePurchase } from "@/hooks/use-purchases";
 import { Purchase } from "@/types/purchases";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
@@ -313,8 +313,19 @@ export default function Purchasing() {
   const { data, isLoading, error } = usePurchases(queryParams);
   const purchases = data?.data || [];
   const pagination = data?.pagination;
+  const deletePurchase = useDeletePurchase();
 
   const [detailId, setDetailId] = useState<number | null>(null);
+
+  const handleDeletePurchase = async (purchase: Purchase) => {
+    if (!window.confirm(`هل أنت متأكد من حذف أمر الشراء ${purchase.purchaseNumber}؟`)) return;
+    try {
+      await deletePurchase.mutateAsync(purchase.id);
+      if (detailId === purchase.id) setDetailId(null);
+    } catch {
+      // Toast is already handled in mutation onError
+    }
+  };
 
   const filteredPurchases = purchases.filter((p: Purchase) => {
     if (!searchQuery) return true;
@@ -398,7 +409,7 @@ export default function Purchasing() {
                   <TableHead className="text-center">المدفوع</TableHead>
                   <TableHead className="text-center">الحالة</TableHead>
                   <TableHead className="text-center">الدفع</TableHead>
-                  <TableHead className="text-center w-20">إجراءات</TableHead>
+                  <TableHead className="text-center w-44">إجراءات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -425,11 +436,37 @@ export default function Purchasing() {
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
+                      {(() => {
+                        const canModify = purchase.paymentStatus === "unpaid" && purchase.status !== "cancelled";
+                        return (
                       <div className="flex items-center justify-center gap-1">
                         <Button variant="ghost" size="icon" className="h-8 w-8" title="عرض التفاصيل"
                           onClick={() => setDetailId(purchase.id)}>
                           <Eye className="w-4 h-4" />
                         </Button>
+                        {canModify && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-blue-600"
+                            title="تعديل أمر الشراء"
+                            onClick={() => navigate(`/purchasing/${purchase.id}/edit`)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        )}
+                        {canModify && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-rose-600"
+                            title="حذف أمر الشراء"
+                            onClick={() => handleDeletePurchase(purchase)}
+                            disabled={deletePurchase.isPending}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
                         {purchase.paymentStatus !== "paid" && (
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600" title="تسجيل دفعة"
                             onClick={() => navigate(`/payments/new?purchaseId=${purchase.id}`)}>
@@ -437,6 +474,8 @@ export default function Purchasing() {
                           </Button>
                         )}
                       </div>
+                        );
+                      })()}
                     </TableCell>
                   </TableRow>
                 ))}

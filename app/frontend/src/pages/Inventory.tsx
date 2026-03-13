@@ -143,7 +143,7 @@ export default function Inventory() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">المخزون وإدارة الأصناف</h1>
-          <p className="text-muted-foreground mt-1">تتبع مستويات المخزون، الدفعات (FIFO)، وسجل الحركات</p>
+          <p className="text-muted-foreground mt-1">تتبع مستويات المخزون وسجل الحركات</p>
         </div>
         <div className="flex items-center gap-3">
           {canCreateItem && (

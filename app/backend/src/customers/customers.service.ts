@@ -6,6 +6,7 @@ import { PaymentLedgerService } from '../accounting/payment-ledger/payment-ledge
 import { PdfService } from '../pdf/pdf.service';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
 import { buildStatementPdfOptions } from '../pdf/templates/statement.template';
+import { localizeReference, localizeVoucherType } from '../pdf/pdf.localization';
 
 @Injectable()
 export class CustomersService {
@@ -266,6 +267,7 @@ export class CustomersService {
 
   async getStatementPdf(id: number, query: PdfQueryDto) {
     const customer = await this.findById(id);
+    const language = query.language || 'en';
 
     const start = query.startDate ? new Date(query.startDate) : new Date(new Date().setDate(1));
     const end = query.endDate ? new Date(query.endDate) : new Date();
@@ -277,10 +279,10 @@ export class CustomersService {
       end,
     );
 
-    const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+    const meta = await this.pdfService.getStoreMeta(this.prisma, language);
 
     const pdfData = {
-      partyName: query.language === 'ar' ? (customer.name || customer.nameEn || '') : (customer.nameEn || customer.name || ''),
+      partyName: language === 'ar' ? (customer.name || customer.nameEn || '') : (customer.nameEn || customer.name || ''),
       partyAddress: customer.address || undefined,
       partyPhone: customer.phone || undefined,
       partyTaxNumber: customer.taxNumber || undefined,
@@ -293,6 +295,8 @@ export class CustomersService {
       transactions: statementData.transactions.map((t: any) => ({
         ...t,
         date: t.date.toISOString().split('T')[0],
+        type: localizeVoucherType(t.type, language),
+        reference: localizeReference(t.reference, language),
       })),
     };
 

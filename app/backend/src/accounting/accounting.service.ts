@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { createPaginatedResult, PaginationQueryDto } from '../common';
 import { ChartOfAccountsService } from './chart-of-accounts/chart-of-accounts.service';
@@ -971,8 +971,25 @@ export class AccountingService {
   }
 
   private async generateEntryNumberTx(tx: any): Promise<string> {
-    const count = await tx.journalEntry.count();
-    return `JE-${(count + 1).toString().padStart(6, '0')}`;
+    // Avoid count-based numbering because deleted rows create gaps and can cause duplicates.
+    let nextNumber = (await tx.journalEntry.count()) + 1;
+
+    for (let attempts = 0; attempts < 100000; attempts++) {
+      const candidate = `JE-${nextNumber.toString().padStart(6, '0')}`;
+      const exists = await tx.journalEntry.findUnique({
+        where: { entryNumber: candidate },
+        select: { id: true },
+      });
+
+      if (!exists) return candidate;
+      nextNumber += 1;
+    }
+
+    throw new InternalServerErrorException({
+      code: 'ENTRY_NUMBER_GENERATION_FAILED',
+      message: 'Unable to generate a unique journal entry number',
+      messageAr: 'تعذر إنشاء رقم قيد محاسبي فريد',
+    });
   }
 
   // ============ REVERSE BY VOUCHER (Blueprint 03) ============

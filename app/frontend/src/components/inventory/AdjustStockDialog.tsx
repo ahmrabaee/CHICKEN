@@ -102,7 +102,7 @@ export default function AdjustStockDialog({ item, onClose }: AdjustStockDialogPr
             quantityGrams,
             reason: data.reason,
             unitCost: data.costPerUnit ? Math.round(parseFloat(data.costPerUnit) * 1000) : undefined,
-            expiryDate: data.expiryDate || undefined,
+            expiryDate: data.adjustmentType === "increase" ? (data.expiryDate || undefined) : undefined,
             storageLocation: data.storageLocation || undefined,
         }, {
             onSuccess: () => {

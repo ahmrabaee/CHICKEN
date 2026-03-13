@@ -10,6 +10,8 @@ import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
 import { buildPurchaseOrderPdfOptions } from '../pdf/templates/purchase-order.template';
 import { buildReportPdfOptions } from '../pdf/templates/report.template';
 import { formatDateForHeader } from '../pdf/pdf.helpers';
+import { localizePaymentStatus } from '../pdf/pdf.localization';
+import { ReceivePurchaseDto } from './dto/purchase.dto';
 
 @Injectable()
 export class PurchasesService {
@@ -70,9 +72,14 @@ export class PurchasesService {
       });
     }
 
-    // Get payments separately
+    // Return only active payments to keep details aligned with financial state.
     const payments = await this.prisma.payment.findMany({
-      where: { referenceType: 'purchase', referenceId: id },
+      where: {
+        referenceType: 'purchase',
+        referenceId: id,
+        isVoided: false,
+        docstatus: { not: 2 },
+      },
     });
 
     return { ...purchase, payments, status: this.computeStatus(purchase) };
@@ -95,10 +102,9 @@ export class PurchasesService {
       });
     }
 
-    const payments = await this.prisma.payment.findMany({
-      where: { referenceType: 'purchase', referenceId: id },
-    });
-    const amountPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+    const payableTotal = purchase.grandTotal ?? purchase.totalAmount;
+    const amountPaid = purchase.amountPaid ?? 0;
+    const balanceDue = Math.max(0, payableTotal - amountPaid);
 
     const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
 
@@ -116,10 +122,10 @@ export class PurchasesService {
         total: line.lineTotalAmount,
       })),
       taxAmount: purchase.taxAmount || 0,
-      totalAmount: purchase.totalAmount,
+      totalAmount: payableTotal,
       paymentStatus: purchase.paymentStatus,
-      amountPaid: amountPaid,
-      balanceDue: purchase.totalAmount - amountPaid,
+      amountPaid,
+      balanceDue,
       notes: purchase.notes ?? undefined,
     };
 
@@ -129,6 +135,7 @@ export class PurchasesService {
   }
 
   async getPurchasesReportPdf(query: PdfQueryDto) {
+    const language = query.language || 'en';
     const start = query.startDate ? new Date(query.startDate) : new Date(new Date().setDate(1));
     const end = query.endDate ? new Date(query.endDate) : new Date();
 
@@ -141,14 +148,14 @@ export class PurchasesService {
       orderBy: { purchaseDate: 'asc' },
     });
 
-    const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+    const meta = await this.pdfService.getStoreMeta(this.prisma, language);
 
     const rows = purchases.map(p => ({
       date: p.purchaseDate.toISOString().split('T')[0],
       number: p.purchaseNumber,
       supplier: p.supplier?.name || p.supplierName || 'Unknown',
       total: p.totalAmount,
-      status: p.paymentStatus,
+      status: localizePaymentStatus(p.paymentStatus, language),
     }));
 
     const totalPurchases = rows.reduce((sum, r) => sum + (r.total || 0), 0);
@@ -172,6 +179,143 @@ export class PurchasesService {
     });
 
     return this.pdfService.generate(options);
+  }
+
+  private async assertPurchaseCanBeModifiedOrDeleted(tx: any, purchase: { id: number; docstatus: number; inventoryLots: Array<{ id: number }> }) {
+    if (purchase.docstatus === 2) {
+      throw new BadRequestException({
+        code: 'PURCHASE_CANCELLED',
+        message: 'Cancelled purchase cannot be modified',
+        messageAr: 'لا يمكن تعديل أمر شراء ملغي',
+      });
+    }
+
+    const [activePayments, activeCreditNotes] = await Promise.all([
+      tx.payment.count({
+        where: {
+          referenceType: 'purchase',
+          referenceId: purchase.id,
+          docstatus: { not: 2 },
+        },
+      }),
+      tx.creditNote.count({
+        where: {
+          originalInvoiceType: 'purchase',
+          originalInvoiceId: purchase.id,
+          docstatus: { not: 2 },
+        },
+      }),
+    ]);
+
+    if (activePayments > 0) {
+      throw new BadRequestException({
+        code: 'PURCHASE_HAS_PAYMENTS',
+        message: 'Cannot modify purchase with linked payments',
+        messageAr: 'لا يمكن تعديل أو حذف أمر شراء مرتبط بدفعات',
+      });
+    }
+
+    if (activeCreditNotes > 0) {
+      throw new BadRequestException({
+        code: 'PURCHASE_HAS_CREDIT_NOTES',
+        message: 'Cannot modify purchase with linked credit notes',
+        messageAr: 'لا يمكن تعديل أو حذف أمر شراء مرتبط بإشعارات دائنة',
+      });
+    }
+
+    const lotIds = purchase.inventoryLots.map((lot) => lot.id);
+    if (lotIds.length === 0) return;
+
+    const [saleAllocations, wastageRefs, transferRefs, nonPurchaseMovements] = await Promise.all([
+      tx.saleLineCostAllocation.count({ where: { lotId: { in: lotIds } } }),
+      tx.wastageRecord.count({
+        where: {
+          lotId: { in: lotIds },
+          docstatus: { not: 2 },
+        },
+      }),
+      tx.stockTransfer.count({
+        where: {
+          sourceLotId: { in: lotIds },
+          status: { not: 'cancelled' },
+        },
+      }),
+      tx.stockMovement.count({
+        where: {
+          lotId: { in: lotIds },
+          NOT: {
+            AND: [
+              { movementType: 'purchase' },
+              { referenceType: 'purchase' },
+              { referenceId: purchase.id },
+            ],
+          },
+        },
+      }),
+    ]);
+
+    if (saleAllocations > 0 || wastageRefs > 0 || transferRefs > 0 || nonPurchaseMovements > 0) {
+      throw new BadRequestException({
+        code: 'PURCHASE_STOCK_ALREADY_USED',
+        message: 'Cannot modify purchase because stock was already used',
+        messageAr: 'لا يمكن تعديل أو حذف أمر الشراء لأن المخزون الناتج منه تم استخدامه',
+      });
+    }
+  }
+
+  private async rollbackPurchaseDerivedData(
+    tx: any,
+    purchase: {
+      id: number;
+      supplierId: number;
+      grandTotal: number | null;
+      totalAmount: number;
+      amountPaid: number;
+      purchaseLines: Array<{ itemId: number; weightGrams: number; lineTotalAmount: number }>;
+    },
+  ): Promise<void> {
+    for (const line of purchase.purchaseLines) {
+      const inventory = await tx.inventory.findUnique({ where: { itemId: line.itemId } });
+      if (!inventory) continue;
+
+      const newQty = Math.max(0, inventory.currentQuantityGrams - line.weightGrams);
+      const newTotalValue = Math.max(0, inventory.totalValue - line.lineTotalAmount);
+
+      await tx.inventory.update({
+        where: { itemId: line.itemId },
+        data: {
+          currentQuantityGrams: newQty,
+          totalValue: newTotalValue,
+          averageCost: newQty > 0 ? Math.round((newTotalValue * 1000) / newQty) : 0,
+        },
+      });
+    }
+
+    await Promise.all([
+      tx.stockMovement.deleteMany({ where: { referenceType: 'purchase', referenceId: purchase.id } }),
+      tx.stockLedgerEntry.deleteMany({ where: { voucherType: 'purchase', voucherId: purchase.id } }),
+      tx.inventoryLot.deleteMany({ where: { purchaseId: purchase.id } }),
+      tx.purchaseLine.deleteMany({ where: { purchaseId: purchase.id } }),
+      tx.journalEntry.deleteMany({ where: { sourceType: 'purchase', sourceId: purchase.id } }),
+      tx.paymentLedgerEntry.deleteMany({
+        where: {
+          OR: [
+            { voucherType: 'purchase', voucherId: purchase.id },
+            { againstVoucherType: 'purchase', againstVoucherId: purchase.id },
+          ],
+        },
+      }),
+      tx.debt.deleteMany({ where: { sourceType: 'purchase', sourceId: purchase.id } }),
+    ]);
+
+    const previousGrandTotal = purchase.grandTotal ?? purchase.totalAmount;
+    const previousOutstanding = Math.max(0, previousGrandTotal - (purchase.amountPaid ?? 0));
+    if (previousOutstanding > 0) {
+      await tx.supplier.update({
+        where: { id: purchase.supplierId },
+        data: { currentBalance: { decrement: previousOutstanding } },
+      });
+    }
   }
 
   async create(dto: any, userId: number) {
@@ -446,7 +590,327 @@ export class PurchasesService {
     return this.findById(purchaseId);
   }
 
-  async receive(id: number, dto: any, userId: number) {
+  async update(id: number, dto: any, userId: number) {
+    return this.prisma.$transaction(async (tx) => {
+      const existing = await tx.purchase.findUnique({
+        where: { id },
+        include: {
+          purchaseLines: true,
+          inventoryLots: { select: { id: true } },
+        },
+      });
+
+      if (!existing) {
+        throw new NotFoundException({
+          code: 'NOT_FOUND',
+          message: 'Purchase not found',
+          messageAr: 'أمر الشراء غير موجود',
+        });
+      }
+
+      await this.assertPurchaseCanBeModifiedOrDeleted(tx, existing);
+
+      const supplierId = dto.supplierId ?? existing.supplierId;
+      const supplier = await tx.supplier.findUnique({ where: { id: supplierId } });
+      if (!supplier) {
+        throw new BadRequestException({
+          code: 'SUPPLIER_NOT_FOUND',
+          message: 'Supplier not found',
+          messageAr: 'المورد غير موجود',
+        });
+      }
+
+      const amountPaid = Number(dto.amountPaid ?? 0);
+      if (amountPaid > 0) {
+        throw new BadRequestException({
+          code: 'PURCHASE_UPDATE_WITH_PAYMENT_NOT_ALLOWED',
+          message: 'Update supports only unpaid purchases',
+          messageAr: 'تعديل أمر الشراء مسموح فقط للأوامر غير المدفوعة',
+        });
+      }
+
+      const incomingLines = Array.isArray(dto.lines) && dto.lines.length > 0
+        ? dto.lines
+        : existing.purchaseLines.map((line) => ({
+          itemId: line.itemId,
+          weightGrams: line.weightGrams,
+          pricePerKg: line.pricePerKg,
+          isLiveBird: line.isLiveBird,
+        }));
+
+      if (incomingLines.length === 0) {
+        throw new BadRequestException({
+          code: 'INVALID_LINES',
+          message: 'At least one line is required',
+          messageAr: 'يجب إدخال سطر واحد على الأقل',
+        });
+      }
+
+      await this.rollbackPurchaseDerivedData(tx, existing);
+
+      const normalizedLines: Array<{
+        lineNumber: number;
+        itemId: number;
+        itemName: string;
+        itemCode: string;
+        weightGrams: number;
+        pricePerKg: number;
+        lineTotal: number;
+        isLiveBird: boolean;
+      }> = [];
+
+      let netTotal = 0;
+      for (let i = 0; i < incomingLines.length; i++) {
+        const line = incomingLines[i];
+        const item = await tx.item.findUnique({ where: { id: line.itemId } });
+
+        if (!item) {
+          throw new BadRequestException({
+            code: 'ITEM_NOT_FOUND',
+            message: `Item not found for line ${i + 1}`,
+            messageAr: `الصنف غير موجود في السطر ${i + 1}`,
+          });
+        }
+
+        const weightGrams = Number(line.weightGrams || 0);
+        const pricePerKg = Number(line.pricePerKg || 0);
+
+        if (weightGrams <= 0) {
+          throw new BadRequestException({
+            code: 'INVALID_WEIGHT',
+            message: `Invalid weight in line ${i + 1}`,
+            messageAr: `وزن غير صالح في السطر ${i + 1}`,
+          });
+        }
+
+        if (pricePerKg < 0) {
+          throw new BadRequestException({
+            code: 'INVALID_PRICE',
+            message: `Invalid price in line ${i + 1}`,
+            messageAr: `سعر غير صالح في السطر ${i + 1}`,
+          });
+        }
+
+        const lineTotal = Math.round((weightGrams / 1000) * pricePerKg);
+        netTotal += lineTotal;
+
+        normalizedLines.push({
+          lineNumber: i + 1,
+          itemId: item.id,
+          itemName: item.name,
+          itemCode: item.code,
+          weightGrams,
+          pricePerKg,
+          lineTotal,
+          isLiveBird: !!line.isLiveBird,
+        });
+      }
+
+      const taxAmount = Math.max(0, Number(dto.taxAmount ?? existing.taxAmount ?? 0));
+      const grandTotal = netTotal + taxAmount;
+      const purchaseDate = dto.purchaseDate ? new Date(dto.purchaseDate) : existing.purchaseDate;
+      const dueDate = dto.dueDate === '' ? null : (dto.dueDate ? new Date(dto.dueDate) : existing.dueDate);
+      const paymentStatus = grandTotal > 0 ? 'unpaid' : 'paid';
+      const branchId = dto.branchId ?? existing.branchId ?? null;
+
+      await tx.purchase.update({
+        where: { id },
+        data: {
+          supplierId,
+          supplierName: supplier.name,
+          purchaseDate,
+          dueDate,
+          taxAmount,
+          totalAmount: grandTotal,
+          netTotal,
+          grandTotal,
+          amountPaid: 0,
+          paymentStatus,
+          notes: dto.notes !== undefined ? dto.notes : existing.notes,
+          branchId,
+          receivedAt: new Date(),
+          receivedById: userId,
+        },
+      });
+
+      let totalInventoryValue = 0;
+
+      for (const line of normalizedLines) {
+        const purchaseLine = await tx.purchaseLine.create({
+          data: {
+            purchaseId: id,
+            lineNumber: line.lineNumber,
+            itemId: line.itemId,
+            itemName: line.itemName,
+            itemCode: line.itemCode,
+            weightGrams: line.weightGrams,
+            pricePerKg: line.pricePerKg,
+            lineTotalAmount: line.lineTotal,
+            isLiveBird: line.isLiveBird,
+          },
+        });
+
+        totalInventoryValue += line.lineTotal;
+
+        const lotNumber = await this.generateLotNumber(tx);
+        const item = await tx.item.findUnique({ where: { id: line.itemId } });
+        const lot = await tx.inventoryLot.create({
+          data: {
+            itemId: line.itemId,
+            purchaseId: id,
+            purchaseLineId: purchaseLine.id,
+            branchId,
+            lotNumber,
+            totalQuantityGrams: line.weightGrams,
+            remainingQuantityGrams: line.weightGrams,
+            unitPurchasePrice: line.pricePerKg,
+            receivedAt: new Date(),
+            expiryDate: item?.shelfLifeDays
+              ? new Date(Date.now() + item.shelfLifeDays * 24 * 60 * 60 * 1000)
+              : null,
+            createdById: userId,
+          },
+        });
+
+        await tx.inventory.upsert({
+          where: { itemId: line.itemId },
+          update: {
+            currentQuantityGrams: { increment: line.weightGrams },
+            totalValue: { increment: line.lineTotal },
+            lastRestockedAt: new Date(),
+          },
+          create: {
+            itemId: line.itemId,
+            branchId,
+            currentQuantityGrams: line.weightGrams,
+            reservedQuantityGrams: 0,
+            totalValue: line.lineTotal,
+            lastRestockedAt: new Date(),
+          },
+        });
+
+        const inv = await tx.inventory.findUnique({ where: { itemId: line.itemId } });
+        if (inv && inv.currentQuantityGrams > 0) {
+          await tx.inventory.update({
+            where: { itemId: line.itemId },
+            data: { averageCost: Math.round((inv.totalValue * 1000) / inv.currentQuantityGrams) },
+          });
+        }
+
+        await tx.stockMovement.create({
+          data: {
+            itemId: line.itemId,
+            lotId: lot.id,
+            branchId,
+            movementType: 'purchase',
+            quantityGrams: line.weightGrams,
+            unitCost: line.pricePerKg,
+            referenceType: 'purchase',
+            referenceId: id,
+            performedById: userId,
+          },
+        });
+
+        await this.stockLedgerService.createSLE(tx, {
+          itemId: line.itemId,
+          branchId,
+          voucherType: 'purchase',
+          voucherId: id,
+          voucherDetailNo: `lot-${lot.lotNumber}`,
+          qtyChange: line.weightGrams,
+          valuationRate: line.pricePerKg,
+          stockValueDifference: line.lineTotal,
+          postingDate: purchaseDate,
+          remarks: `Purchase ${existing.purchaseNumber} (updated)`,
+        });
+      }
+
+      if (totalInventoryValue > 0) {
+        const stockAccountCode = await this.stockAccountMapperService.getStockAccountCode(branchId);
+        await this.accountingService.createPurchaseJournalEntry(
+          tx,
+          id,
+          existing.purchaseNumber,
+          branchId,
+          userId,
+          {
+            totalAmount: totalInventoryValue,
+            amountPaid: 0,
+            supplierId,
+            stockAccountCode,
+          },
+        );
+      }
+
+      if (grandTotal > 0) {
+        await tx.debt.create({
+          data: {
+            debtNumber: `DEB-${existing.purchaseNumber}`,
+            direction: 'payable',
+            partyType: 'supplier',
+            partyId: supplierId,
+            partyName: supplier.name,
+            sourceType: 'purchase',
+            sourceId: id,
+            totalAmount: grandTotal,
+            amountPaid: 0,
+            dueDate,
+            status: 'open',
+            branchId,
+          },
+        });
+
+        await tx.supplier.update({
+          where: { id: supplierId },
+          data: { currentBalance: { increment: grandTotal } },
+        });
+
+        await this.paymentLedgerService.createPLEForPurchase(
+          tx,
+          id,
+          supplierId,
+          grandTotal,
+          purchaseDate,
+          dueDate,
+        );
+      }
+
+      return this.findById(id);
+    });
+  }
+
+  async remove(id: number, _userId: number) {
+    await this.prisma.$transaction(async (tx) => {
+      const purchase = await tx.purchase.findUnique({
+        where: { id },
+        include: {
+          purchaseLines: true,
+          inventoryLots: { select: { id: true } },
+        },
+      });
+
+      if (!purchase) {
+        throw new NotFoundException({
+          code: 'NOT_FOUND',
+          message: 'Purchase not found',
+          messageAr: 'أمر الشراء غير موجود',
+        });
+      }
+
+      await this.assertPurchaseCanBeModifiedOrDeleted(tx, purchase);
+      await this.rollbackPurchaseDerivedData(tx, purchase);
+
+      await tx.purchase.delete({ where: { id } });
+    });
+
+    return {
+      success: true,
+      message: 'Purchase deleted successfully',
+      messageAr: 'تم حذف أمر الشراء بنجاح',
+    };
+  }
+
+  async receive(id: number, dto: ReceivePurchaseDto, userId: number) {
     const purchase = await this.prisma.purchase.findUnique({
       where: { id },
       include: { purchaseLines: true },

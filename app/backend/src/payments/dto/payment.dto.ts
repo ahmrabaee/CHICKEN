@@ -1,4 +1,4 @@
-import { IsNumber, IsString, IsOptional, IsIn } from 'class-validator';
+import { IsNumber, IsString, IsOptional, IsIn, IsPositive } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationQueryDto } from '../../common';
 
@@ -39,6 +39,7 @@ export class RecordPurchasePaymentDto {
 
   @ApiProperty({ description: 'Amount in minor units (cents)' })
   @IsNumber()
+  @IsPositive()
   amount: number;
 
   @ApiProperty({ enum: ['cash', 'card', 'bank_transfer', 'mobile_payment', 'check'] })

@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Delete,
   Param,
   Body,
   Query,
@@ -15,7 +16,7 @@ import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
 import { getPdfContentDisposition } from '../pdf/pdf.helpers';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PurchasesService } from './purchases.service';
-import { CreatePurchaseDto, ReceivePurchaseDto } from './dto/purchase.dto';
+import { CreatePurchaseDto, ReceivePurchaseDto, UpdatePurchaseDto } from './dto/purchase.dto';
 import { PaginationQueryDto, Roles, RolesGuard, CurrentUser } from '../common';
 
 @ApiTags('purchases')
@@ -73,6 +74,25 @@ export class PurchasesController {
   @ApiOperation({ summary: 'Create new purchase order' })
   create(@Body() dto: CreatePurchaseDto, @CurrentUser() user: any) {
     return this.purchasesService.create(dto, user.id);
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Update purchase order' })
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdatePurchaseDto,
+    @CurrentUser() user: any,
+  ) {
+    return this.purchasesService.update(id, dto, user.id);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete purchase order' })
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: any,
+  ) {
+    return this.purchasesService.remove(id, user.id);
   }
 
   @Put(':id/receive')

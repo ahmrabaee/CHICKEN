@@ -112,22 +112,25 @@ export class PdfService implements OnModuleInit {
     }
 
     async generate(options: PdfGenerateOptions): Promise<Buffer> {
-        const { meta, columns, rows, summaryItems, sections, grandTotal } = options;
+        const { meta, columns, rows, summaryItems, sections, grandTotal, statementEmpty, statementPartyInfo } = options;
         const isArabic = meta.language === 'ar';
 
+        const mainContent = statementEmpty
+            ? {
+                text: statementEmpty,
+                alignment: 'center' as const,
+                margin: [0, 40, 0, 0],
+                fontSize: 12,
+                color: PDF_DESIGN.colors.textLight,
+            }
+            : (columns && rows && rows.length) ? this.buildTableSection(columns, rows, isArabic) : (sections ? this.buildFinancialSections(sections, isArabic) : { text: '' });
+
         const content: any[] = [
-            // Spacer (subtitle/period moved to header)
             { text: '', margin: [0, 5, 0, 0] },
-
-            // Meta Info (generatedBy, branchName) - only if present
             this.buildMetaInfoSection(meta, isArabic),
-
-            // Main Content: Table OR Sections
-            (columns && rows) ? this.buildTableSection(columns, rows, isArabic) : { text: '' },
-            (sections) ? this.buildFinancialSections(sections, isArabic) : { text: '' },
-
-            // Summary & Totals
-            (summaryItems) ? this.buildSummarySection(summaryItems, isArabic) : { text: '' },
+            statementPartyInfo ? this.buildStatementPartyInfoSection(statementPartyInfo, isArabic) : { text: '' },
+            mainContent,
+            (summaryItems && !statementEmpty) ? this.buildSummarySection(summaryItems, isArabic) : { text: '' },
             (grandTotal) ? this.buildGrandTotal(grandTotal, isArabic) : { text: '' },
         ];
 
@@ -206,6 +209,81 @@ export class PdfService implements OnModuleInit {
                 { stack: rightSide, width: '*' },
             ],
             margin: PDF_DESIGN.margins.section,
+        };
+    }
+
+    private buildStatementPartyInfoSection(
+        info: NonNullable<PdfGenerateOptions['statementPartyInfo']>,
+        isArabic: boolean,
+    ) {
+        const fmt = (d: string) => formatDateForHeader(d);
+        const rows: any[] = [
+            {
+                text: [
+                    { text: isArabic ? 'اسم العميل: ' : 'Customer: ', bold: true, color: PDF_DESIGN.colors.textMuted, fontSize: 10 },
+                    { text: info.partyName, bold: true, fontSize: 11 },
+                ],
+                margin: [0, 0, 0, 4],
+            },
+        ];
+        if (info.partyNumber) {
+            rows.push({
+                text: [
+                    { text: isArabic ? 'رقم العميل: ' : 'Customer No: ', bold: true, color: PDF_DESIGN.colors.textMuted, fontSize: 10 },
+                    info.partyNumber,
+                ],
+                margin: [0, 0, 0, 4],
+            });
+        }
+        if (info.partyPhone) {
+            rows.push({
+                text: [
+                    { text: isArabic ? 'الهاتف: ' : 'Phone: ', bold: true, color: PDF_DESIGN.colors.textMuted, fontSize: 10 },
+                    info.partyPhone,
+                ],
+                margin: [0, 0, 0, 4],
+            });
+        }
+        if (info.partyAddress) {
+            rows.push({
+                text: [
+                    { text: isArabic ? 'العنوان: ' : 'Address: ', bold: true, color: PDF_DESIGN.colors.textMuted, fontSize: 10 },
+                    info.partyAddress,
+                ],
+                margin: [0, 0, 0, 4],
+            });
+        }
+        if (info.partyTaxNumber) {
+            rows.push({
+                text: [
+                    { text: isArabic ? 'الرقم الضريبي: ' : 'Tax No: ', bold: true, color: PDF_DESIGN.colors.textMuted, fontSize: 10 },
+                    info.partyTaxNumber,
+                ],
+                margin: [0, 0, 0, 4],
+            });
+        }
+        rows.push({
+            text: [
+                { text: isArabic ? 'الفترة: ' : 'Period: ', bold: true, color: PDF_DESIGN.colors.textMuted, fontSize: 10 },
+                `${fmt(info.startDate)} — ${fmt(info.endDate)}`,
+            ],
+            margin: [0, 0, 0, 4],
+        });
+        rows.push({
+            text: [
+                { text: isArabic ? 'تاريخ الإصدار: ' : 'Issue Date: ', bold: true, color: PDF_DESIGN.colors.textMuted, fontSize: 10 },
+                fmt(info.issueDate),
+            ],
+            margin: [0, 0, 0, 0],
+        });
+
+        return {
+            table: {
+                widths: ['*'],
+                body: [[{ stack: rows, border: [false, false, false, false], fillColor: '#f8fafc', padding: 12 }]],
+            },
+            layout: 'noBorders',
+            margin: [0, 12, 0, 16],
         };
     }
 

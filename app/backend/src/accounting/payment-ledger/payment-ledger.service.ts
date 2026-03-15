@@ -183,6 +183,8 @@ export class PaymentLedgerService {
 
   /**
    * Get Statement of Account for a party
+   * Uses PaymentLedgerEntry (PLE) as primary source.
+   * For customers: falls back to Sale+Payment when PLE is empty (e.g. seeded/legacy data).
    */
   async getStatement(
     partyType: string,
@@ -193,7 +195,7 @@ export class PaymentLedgerService {
   ) {
     const db = tx ?? this.prisma;
 
-    // 1. Calculate Opening Balance
+    // 1. Try PLE (Payment Ledger Entry) - primary source
     const openingAgg = await db.paymentLedgerEntry.aggregate({
       _sum: { amount: true },
       where: {
@@ -203,9 +205,8 @@ export class PaymentLedgerService {
         delinked: false,
       },
     });
-    const openingBalance = openingAgg._sum.amount || 0;
+    const pleOpeningBalance = openingAgg._sum.amount || 0;
 
-    // 2. Fetch Transactions
     const entries = await db.paymentLedgerEntry.findMany({
       where: {
         partyType,
@@ -216,36 +217,213 @@ export class PaymentLedgerService {
       orderBy: { postingDate: 'asc' },
     });
 
-    // 3. Process Transactions
+    // 2. If PLE has data, use it
+    if (entries.length > 0) {
+      let runningBalance = pleOpeningBalance;
+      let totalDebits = 0;
+      let totalCredits = 0;
+
+      const transactions = entries.map((entry: any) => {
+        const debit = entry.amount > 0 ? entry.amount : 0;
+        const credit = entry.amount < 0 ? Math.abs(entry.amount) : 0;
+
+        runningBalance += entry.amount;
+        totalDebits += debit;
+        totalCredits += credit;
+
+        return {
+          id: entry.id,
+          date: entry.postingDate,
+          type: entry.voucherType,
+          reference: `${entry.voucherType} #${entry.voucherId}`,
+          debit,
+          credit,
+          balance: runningBalance,
+          notes: entry.remarks,
+        };
+      });
+
+      return {
+        openingBalance: pleOpeningBalance,
+        transactions,
+        closingBalance: runningBalance,
+        totalDebits,
+        totalCredits,
+      };
+    }
+
+    // 3. Fallback for customers: build from Sale + Payment when PLE is empty
+    if (partyType === 'customer') {
+      return this.getStatementForCustomerFromSales(db, partyId, startDate, endDate);
+    }
+
+    // 4. No data: return empty statement
+    return {
+      openingBalance: pleOpeningBalance,
+      transactions: [],
+      closingBalance: pleOpeningBalance,
+      totalDebits: 0,
+      totalCredits: 0,
+    };
+  }
+
+  /**
+   * Build customer statement from Sale + Payment tables (fallback when PLE empty)
+   * Covers seeded/legacy data that bypassed PLE creation.
+   * Matches sales by customerId OR by customerName+customerPhone when customerId is null.
+   */
+  private async getStatementForCustomerFromSales(
+    db: any,
+    customerId: number,
+    startDate: Date,
+    endDate: Date,
+  ) {
+    type StmtRow = { date: Date; type: string; ref: string; amount: number; remarks?: string };
+
+    const customer = await db.customer.findUnique({
+      where: { id: customerId },
+      select: { name: true, phone: true, phone2: true },
+    });
+    if (!customer) {
+      return {
+        openingBalance: 0,
+        transactions: [],
+        closingBalance: 0,
+        totalDebits: 0,
+        totalCredits: 0,
+      };
+    }
+
+    // Build sales OR: by customerId OR by name+phone (for walk-in sales without customerId)
+    const phones = [customer.phone, customer.phone2].filter(Boolean) as string[];
+    const salesOr: any[] = [{ customerId, isVoided: false, docstatus: 1 }];
+    if (customer.name && phones.length > 0) {
+      salesOr.push({
+        customerId: null,
+        customerName: customer.name,
+        customerPhone: { in: phones },
+        isVoided: false,
+        docstatus: 1,
+      });
+    }
+    const salesBaseWhere = { OR: salesOr };
+
+    // Opening: sales before start - payments before start
+    const salesBefore = await db.sale.aggregate({
+      _sum: { totalAmount: true },
+      where: {
+        ...salesBaseWhere,
+        saleDate: { lt: startDate },
+      },
+    });
+    const paymentsBefore = await db.payment.aggregate({
+      _sum: { amount: true },
+      where: {
+        partyType: 'customer',
+        partyId: customerId,
+        isVoided: false,
+        docstatus: 1,
+        paymentDate: { lt: startDate },
+      },
+    });
+
+    const openingBalance =
+      (salesBefore._sum?.totalAmount ?? 0) - (paymentsBefore._sum?.amount ?? 0);
+
+    // Sales in range: debit (increase receivable)
+    const sales = await db.sale.findMany({
+      where: {
+        ...salesBaseWhere,
+        saleDate: { gte: startDate, lte: endDate },
+      },
+      orderBy: { saleDate: 'asc' },
+    });
+
+    // Payments in range: credit (decrease receivable)
+    const payments = await db.payment.findMany({
+      where: {
+        partyType: 'customer',
+        partyId: customerId,
+        isVoided: false,
+        docstatus: 1,
+        paymentDate: { gte: startDate, lte: endDate },
+      },
+      orderBy: { paymentDate: 'asc' },
+    });
+
+    const rows: StmtRow[] = [];
+
+    for (const s of sales) {
+      const amt = s.grandTotal ?? s.totalAmount ?? 0;
+      rows.push({
+        date: s.saleDate,
+        type: 'sale',
+        ref: `sale #${s.id}`,
+        amount: amt,
+        remarks: s.saleNumber,
+      });
+    }
+
+    for (const p of payments) {
+      const amt = p.amount ?? 0;
+      rows.push({
+        date: p.paymentDate,
+        type: 'payment',
+        ref: `payment #${p.id}`,
+        amount: -amt,
+        remarks:
+          p.paymentNumber ??
+          (p.referenceType === 'sale' && p.referenceId
+            ? `سند دفع لفاتورة #${p.referenceId}`
+            : undefined),
+      });
+    }
+
+    rows.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    // Debug: when no transactions, log to help diagnose
+    if (rows.length === 0) {
+      const anyByCustomerId = await db.sale.count({ where: { customerId, isVoided: false } });
+      const anyByNamePhone =
+        customer.name && phones.length
+          ? await db.sale.count({
+              where: { customerId: null, customerName: customer.name, customerPhone: { in: phones }, isVoided: false },
+            })
+          : 0;
+      // eslint-disable-next-line no-console
+      console.log(
+        `[Statement] customerId=${customerId} (${customer.name}) period=${startDate.toISOString().split('T')[0]}/${endDate.toISOString().split('T')[0]}`,
+        `| salesInRange=0 paymentsInRange=${payments.length} | salesByCustomerId=${anyByCustomerId} salesByNamePhone=${anyByNamePhone}`,
+      );
+    }
+
     let runningBalance = openingBalance;
     let totalDebits = 0;
     let totalCredits = 0;
 
-    const transactions = entries.map((entry: any) => {
-      // Debit = Positive amount (Asset Increase / Liability Decrease)
-      // Credit = Negative amount (Asset Decrease / Liability Increase)
-      const debit = entry.amount > 0 ? entry.amount : 0;
-      const credit = entry.amount < 0 ? Math.abs(entry.amount) : 0;
+    const transactions = rows.map((r) => {
+      const debit = r.amount > 0 ? r.amount : 0;
+      const credit = r.amount < 0 ? Math.abs(r.amount) : 0;
 
-      runningBalance += entry.amount;
+      runningBalance += r.amount;
       totalDebits += debit;
       totalCredits += credit;
 
       return {
-        id: entry.id,
-        date: entry.postingDate,
-        type: entry.voucherType, // e.g., 'sale', 'payment'
-        reference: `${entry.voucherType} #${entry.voucherId}`,
+        id: 0,
+        date: r.date,
+        type: r.type,
+        reference: r.ref,
         debit,
         credit,
         balance: runningBalance,
-        notes: entry.remarks,
+        notes: r.remarks,
       };
     });
 
     return {
       openingBalance,
-      transactions, // Map to DTO in controller/service
+      transactions,
       closingBalance: runningBalance,
       totalDebits,
       totalCredits,

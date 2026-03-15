@@ -23,6 +23,7 @@ const rangeOptions: Array<{ value: DashboardFilters["range"]; label: string }> =
   { value: "today", label: "اليوم" },
   { value: "week", label: "هذا الأسبوع" },
   { value: "month", label: "هذا الشهر" },
+  { value: "last30days", label: "آخر 30 يوم" },
   { value: "custom", label: "مخصص" },
 ];
 

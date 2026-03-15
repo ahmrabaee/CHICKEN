@@ -135,6 +135,7 @@ export class SuppliersService {
 
     const pdfData = {
       partyName: language === 'ar' ? (supplier.name || supplier.nameEn || '') : (supplier.nameEn || supplier.name || ''),
+      partyNumber: supplier.supplierNumber || undefined,
       partyAddress: supplier.address || undefined,
       partyPhone: supplier.phone || undefined,
       partyTaxNumber: supplier.taxNumber || undefined,
@@ -146,7 +147,7 @@ export class SuppliersService {
       closingBalance: statementData.closingBalance,
       transactions: statementData.transactions.map((t: any) => ({
         ...t,
-        date: t.date.toISOString().split('T')[0],
+        date: t.date instanceof Date ? t.date.toISOString().split('T')[0] : t.date,
         type: localizeVoucherType(t.type, language),
         reference: localizeReference(t.reference, language),
       })),

@@ -11,6 +11,7 @@ export interface StatementTransaction {
 
 export interface StatementPdfData {
     partyName: string;
+    partyNumber?: string;     // customerNumber / supplierNumber
     partyAddress?: string;
     partyPhone?: string;
     partyTaxNumber?: string;
@@ -21,4 +22,6 @@ export interface StatementPdfData {
     totalCredits: number;
     closingBalance: number;
     transactions: StatementTransaction[];
+    /** When true: no movements in period; show empty state message */
+    isEmpty?: boolean;
 }

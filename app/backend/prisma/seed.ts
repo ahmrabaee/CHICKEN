@@ -735,7 +735,7 @@ async function seedDefaultAdmin(): Promise<void> {
     throw new Error('Branch or admin role not found');
   }
 
-  const passwordHash = await bcrypt.hash('Admin@123', SALT_ROUNDS);
+  const passwordHash = await bcrypt.hash('admin123', SALT_ROUNDS);
 
   const admin = await prisma.user.upsert({
     where: { username: 'admin' },
@@ -773,7 +773,7 @@ async function seedDefaultAdmin(): Promise<void> {
 
   console.log('✓ Default admin user seeded');
   console.log('  Username: admin');
-  console.log('  Password: Admin@123');
+  console.log('  Password: admin123');
 }
 
 // =============================================================================

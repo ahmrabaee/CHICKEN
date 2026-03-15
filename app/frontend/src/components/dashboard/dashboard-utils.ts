@@ -79,6 +79,13 @@ export function getPresetDateRange(
     };
   }
 
+  if (preset === "last30days") {
+    return {
+      startDate: toDateString(startOfDay(addDays(now, -29))),
+      endDate: toDateString(now),
+    };
+  }
+
   return {
     startDate: toDateString(startOfDay(now)),
     endDate: toDateString(now),
@@ -86,7 +93,7 @@ export function getPresetDateRange(
 }
 
 export function getDefaultDashboardFilters(): DashboardFilters {
-  const preset = "today" as const;
+  const preset = "last30days" as const;
   const range = getPresetDateRange(preset);
   return {
     range: preset,
@@ -139,10 +146,10 @@ export function normalizeDashboardFilters(filters: DashboardFilters): DashboardF
 }
 
 function parseRangeParam(value: string | null): DashboardDatePreset {
-  if (value === "today" || value === "week" || value === "month" || value === "custom") {
+  if (value === "today" || value === "week" || value === "month" || value === "last30days" || value === "custom") {
     return value;
   }
-  return "today";
+  return "last30days";
 }
 
 export function parseDashboardFilters(params: URLSearchParams): DashboardFilters {

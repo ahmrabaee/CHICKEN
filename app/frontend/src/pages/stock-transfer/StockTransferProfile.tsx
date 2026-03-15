@@ -94,7 +94,7 @@ export default function StockTransferProfile() {
     };
 
     createTransfer.mutate(payload, {
-      onSuccess: () => navigate("/stock-transfer"),
+      onSuccess: () => navigate("/inventory?tab=stock-transfer"),
     });
   };
 
@@ -107,7 +107,7 @@ export default function StockTransferProfile() {
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex items-center gap-4">
-        <Link to="/stock-transfer" className="text-muted-foreground hover:text-foreground">
+        <Link to="/inventory?tab=stock-transfer" className="text-muted-foreground hover:text-foreground">
           <ArrowRight className="w-5 h-5" />
         </Link>
         <div>
@@ -284,7 +284,7 @@ export default function StockTransferProfile() {
               {createTransfer.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               تنفيذ التحويل
             </Button>
-            <Button variant="outline" onClick={() => navigate("/stock-transfer")}>
+            <Button variant="outline" onClick={() => navigate("/inventory?tab=stock-transfer")}>
               إلغاء
             </Button>
           </div>

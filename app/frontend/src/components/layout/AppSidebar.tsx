@@ -131,12 +131,6 @@ const navigation: NavItem[] = [
     adminOnly: true,
   },
   {
-    title: "Stock Transfer",
-    titleAr: "تحويل المخزون",
-    icon: RefreshCw,
-    href: "/stock-transfer",
-  },
-  {
     title: "Reports",
     titleAr: "التقارير",
     icon: BarChart3,

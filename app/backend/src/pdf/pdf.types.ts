@@ -70,4 +70,17 @@ export interface PdfGenerateOptions {
   };
   pageOrientation?: 'portrait' | 'landscape';
   watermark?: string;         // e.g., "VOID" for voided sales
+  /** When set, show centered empty state message instead of table (e.g. كشف حساب) */
+  statementEmpty?: string;
+  /** Party details block for statement header (اسم العميل، الرقم، الهاتف، الفترة...) */
+  statementPartyInfo?: {
+    partyName: string;
+    partyNumber?: string;
+    partyAddress?: string;
+    partyPhone?: string;
+    partyTaxNumber?: string;
+    startDate: string;
+    endDate: string;
+    issueDate: string;
+  };
 }

@@ -53,14 +53,15 @@ import { CreateItemDto } from "@/types/inventory";
 import { itemService } from "@/services/item.service";
 import { toast } from "sonner";
 
-const itemSchema = z.object({
-    code: z.string().optional(),
-    barcode: z.string().optional(),
-    name: z.string().min(2, "اسم الصنف مطلوب"),
-    description: z.string().optional(),
-    categoryId: z.coerce.number().min(1, "يجب اختيار التصنيف"),
-    defaultSalePrice: z.coerce.number().min(0, "سعر البيع مطلوب"),
-    defaultPurchasePrice: z.coerce.number().min(0).optional(),
+const itemSchema = z
+    .object({
+        code: z.string().optional(),
+        barcode: z.string().optional(),
+        name: z.string().min(2, "اسم الصنف مطلوب"),
+        description: z.string().optional(),
+        categoryId: z.coerce.number().min(1, "يجب اختيار التصنيف"),
+        defaultSalePrice: z.coerce.number().min(0, "سعر البيع مطلوب"),
+        defaultPurchasePrice: z.coerce.number().min(0).optional(),
     taxRatePct: z.coerce.number().min(0).max(100).optional(),
     minStockLevel: z.coerce.number().min(0).optional(),
     maxStockLevel: z.coerce.number().min(0).optional(),
@@ -71,7 +72,16 @@ const itemSchema = z.object({
     isActive: z.boolean().default(true),
     initialQuantity: z.coerce.number().min(0).default(0),
     initialCostPrice: z.coerce.number().min(0).default(0),
-});
+})
+    .refine(
+        (data) => {
+            const purchase = data.defaultPurchasePrice ?? 0;
+            const sale = data.defaultSalePrice ?? 0;
+            if (purchase === 0 || sale === 0) return true;
+            return purchase < sale;
+        },
+        { message: "سعر الشراء يجب أن يكون أقل من سعر البيع", path: ["defaultPurchasePrice"] }
+    );
 
 type ItemFormValues = z.infer<typeof itemSchema>;
 

@@ -270,7 +270,9 @@ export class CustomersService {
     const language = query.language || 'en';
 
     const start = query.startDate ? new Date(query.startDate) : new Date(new Date().setDate(1));
-    const end = query.endDate ? new Date(query.endDate) : new Date();
+    let end = query.endDate ? new Date(query.endDate) : new Date();
+    // End-of-day to include all transactions on the end date (avoid timezone cutoff)
+    end.setHours(23, 59, 59, 999);
 
     const statementData = await this.paymentLedgerService.getStatement(
       'customer',
@@ -279,10 +281,17 @@ export class CustomersService {
       end,
     );
 
+    // Debug log: transaction count for troubleshooting
+    if (statementData.transactions.length > 0) {
+      // eslint-disable-next-line no-console
+      console.log(`[Statement] customerId=${id} period=${start.toISOString().split('T')[0]}/${end.toISOString().split('T')[0]} transactions=${statementData.transactions.length} opening=${statementData.openingBalance} closing=${statementData.closingBalance}`);
+    }
+
     const meta = await this.pdfService.getStoreMeta(this.prisma, language);
 
     const pdfData = {
       partyName: language === 'ar' ? (customer.name || customer.nameEn || '') : (customer.nameEn || customer.name || ''),
+      partyNumber: customer.customerNumber || undefined,
       partyAddress: customer.address || undefined,
       partyPhone: customer.phone || undefined,
       partyTaxNumber: customer.taxNumber || undefined,
@@ -294,7 +303,7 @@ export class CustomersService {
       closingBalance: statementData.closingBalance,
       transactions: statementData.transactions.map((t: any) => ({
         ...t,
-        date: t.date.toISOString().split('T')[0],
+        date: t.date instanceof Date ? t.date.toISOString().split('T')[0] : t.date,
         type: localizeVoucherType(t.type, language),
         reference: localizeReference(t.reference, language),
       })),

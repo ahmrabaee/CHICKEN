@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-export type DashboardDatePreset = "today" | "week" | "month" | "custom";
+export type DashboardDatePreset = "today" | "week" | "month" | "last30days" | "custom";
 export type DashboardTrendDirection = "up" | "down" | "flat";
 
 export interface DashboardFilters {

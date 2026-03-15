@@ -66,6 +66,7 @@ import { InventoryQuery, InventoryItem } from "@/types/inventory";
 import AdjustStockDialog from "@/components/inventory/AdjustStockDialog";
 import InventoryLotsDialog from "@/components/inventory/InventoryLotsDialog";
 import InventoryMovementsDialog from "@/components/inventory/InventoryMovementsDialog";
+import StockTransfer from "@/pages/stock-transfer/StockTransfer";
 
 export default function Inventory() {
   const { isAdmin, canAccessPath } = useRole();
@@ -75,11 +76,13 @@ export default function Inventory() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
-  const activeTab = tabParam === "categories" ? "categories" : "items";
+  const activeTab = tabParam === "categories" ? "categories" : tabParam === "stock-transfer" ? "stock-transfer" : "items";
 
   const handleTabChange = (value: string) => {
     if (value === "categories") {
       setSearchParams({ tab: "categories" });
+    } else if (value === "stock-transfer") {
+      setSearchParams({ tab: "stock-transfer" });
     } else {
       setSearchParams({});
     }
@@ -161,6 +164,7 @@ export default function Inventory() {
         <TabsList className="mb-4">
           <TabsTrigger value="items">الأصناف</TabsTrigger>
           <TabsTrigger value="categories">الفئات</TabsTrigger>
+          <TabsTrigger value="stock-transfer">تحويل المخزون</TabsTrigger>
         </TabsList>
 
         <TabsContent value="items" className="space-y-6 mt-0">
@@ -484,6 +488,9 @@ export default function Inventory() {
 
         <TabsContent value="categories" className="mt-0">
           <CategoriesManagement />
+        </TabsContent>
+        <TabsContent value="stock-transfer" className="mt-0">
+          <StockTransfer />
         </TabsContent>
       </Tabs>
     </div>

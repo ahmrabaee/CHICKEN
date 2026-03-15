@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, Loader2, CheckCircle, Plus, Search, ChevronsUpDown, Download, FileText, RotateCcw, ArrowDownToLine, ArrowUpFromLine, Wallet } from "lucide-react";
+import { Eye, Loader2, CheckCircle, Plus, Search, ChevronsUpDown, Download, FileText, RotateCcw, ArrowDownToLine, ArrowUpFromLine, Wallet, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,6 +29,7 @@ import { AccountTreeRow } from "@/components/accounting/AccountTreeRow";
 import { ROOT_TYPE_COLORS } from "@/lib/accounting";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PdfPreviewDialog } from "@/components/reports/PdfPreviewDialog";
 
 
@@ -323,7 +324,7 @@ function Info({ label, value }: { label: string; value: React.ReactNode }) {
     return (
         <div>
             <p className="text-xs text-muted-foreground mb-0.5">{label}</p>
-            <p className="text-sm font-medium">{value}</p>
+            <div className="text-sm font-medium">{value}</div>
         </div>
     );
 }
@@ -737,6 +738,21 @@ export default function Accounting() {
 
             {/* Trial Balance Tab */}
             {tab === "trial" && (
+                <div className="space-y-4">
+                    {!trialLoading && trialBalance.length > 0 && (() => {
+                        const totalDebit = trialBalance.reduce((s: number, t: TrialBalanceEntry) => s + t.debit, 0);
+                        const totalCredit = trialBalance.reduce((s: number, t: TrialBalanceEntry) => s + t.credit, 0);
+                        const isBalanced = totalDebit === totalCredit;
+                        return !isBalanced ? (
+                            <Alert variant="destructive">
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertTitle>ميزان المراجعة غير متوازن</AlertTitle>
+                                <AlertDescription>
+                                    إجمالي المدين ({formatCurrency(totalDebit)}) ≠ إجمالي الدائن ({formatCurrency(totalCredit)}). الفرق: {formatCurrency(Math.abs(totalDebit - totalCredit))}. تحقق من القيود المرحّلة.
+                                </AlertDescription>
+                            </Alert>
+                        ) : null;
+                    })()}
                 <Card>
                     <CardContent className="p-0">
                         {trialLoading ? (
@@ -764,16 +780,24 @@ export default function Accounting() {
                                             <TableCell className="text-center">{t.credit > 0 ? formatCurrency(t.credit) : "-"}</TableCell>
                                         </TableRow>
                                     ))}
-                                    <TableRow className="bg-muted/50 font-bold">
-                                        <TableCell colSpan={3} className="text-left">الإجمالي</TableCell>
-                                        <TableCell className="text-center">{formatCurrency(trialBalance.reduce((s: number, t: TrialBalanceEntry) => s + t.debit, 0))}</TableCell>
-                                        <TableCell className="text-center">{formatCurrency(trialBalance.reduce((s: number, t: TrialBalanceEntry) => s + t.credit, 0))}</TableCell>
-                                    </TableRow>
+                                    {(() => {
+                                        const totalDebit = trialBalance.reduce((s: number, t: TrialBalanceEntry) => s + t.debit, 0);
+                                        const totalCredit = trialBalance.reduce((s: number, t: TrialBalanceEntry) => s + t.credit, 0);
+                                        const isBalanced = totalDebit === totalCredit;
+                                        return (
+                                            <TableRow className={isBalanced ? "bg-muted/50 font-bold" : "bg-destructive/10 font-bold border-destructive/30"}>
+                                                <TableCell colSpan={3} className="text-left">{isBalanced ? "الإجمالي" : "الإجمالي — غير متوازن"}</TableCell>
+                                                <TableCell className="text-center">{formatCurrency(totalDebit)}</TableCell>
+                                                <TableCell className="text-center">{formatCurrency(totalCredit)}</TableCell>
+                                            </TableRow>
+                                        );
+                                    })()}
                                 </TableBody>
                             </Table>
                         )}
                     </CardContent>
                 </Card>
+                </div>
             )}
 
             {detailEntryId && <JournalDetailCard entryId={detailEntryId} open={!!detailEntryId} onClose={() => setDetailEntryId(null)} onOpenEntry={(id) => setDetailEntryId(id)} />}

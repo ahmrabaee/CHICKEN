@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { DatePicker } from '@/components/ui/date-picker';
-import { Download, Loader2, FileWarning, ZoomIn, ZoomOut, RotateCcw, RefreshCw } from 'lucide-react';
+import { Download, Loader2, FileWarning, ZoomIn, ZoomOut, RotateCcw, RefreshCw, Printer } from 'lucide-react';
 import { usePdfDownload } from '@/hooks/use-pdf-download';
 
 type PdfParams = {
@@ -77,6 +77,7 @@ export function PdfPreviewDialog({
   const [endDate, setEndDate] = useState(params.endDate || defaults.endDate);
   const [asOfDate, setAsOfDate] = useState(params.asOfDate || defaults.asOfDate);
   const [zoom, setZoom] = useState(100);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   const needsDateRange = REPORT_NEEDS_DATE_RANGE.includes(reportType);
   const needsAsOfDate = REPORT_NEEDS_AS_OF_DATE.includes(reportType);
@@ -122,6 +123,15 @@ export function PdfPreviewDialog({
 
   const handleDownload = () => {
     download(reportType, mergedParams);
+  };
+
+  const handlePrint = () => {
+    if (previewUrl && iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.print();
+    } else if (previewUrl) {
+      const w = window.open(previewUrl, '_blank');
+      w?.addEventListener('load', () => w.print(), { once: true });
+    }
   };
 
   return (
@@ -256,6 +266,7 @@ export function PdfPreviewDialog({
                   }}
                 >
                   <iframe
+                    ref={iframeRef}
                     src={previewUrl}
                     title={title}
                     className="w-full border-0"
@@ -270,6 +281,15 @@ export function PdfPreviewDialog({
         <DialogFooter className="px-6 py-4 border-t bg-muted/20 flex-row gap-2 justify-start">
           <Button variant="outline" onClick={() => onOpenChange(false)} className="gap-2">
             إغلاق
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handlePrint}
+            disabled={isLoading || !!error || !previewUrl}
+            className="gap-2"
+          >
+            <Printer className="w-4 h-4" />
+            طباعة
           </Button>
           <Button
             onClick={handleDownload}

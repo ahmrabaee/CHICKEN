@@ -1,18 +1,23 @@
 import { useState } from "react";
-import { Eye, Loader2, ArrowUpRight, ArrowDownLeft, AlertTriangle, Download } from "lucide-react";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { Eye, Loader2, ArrowUpRight, ArrowDownLeft, AlertTriangle, Download, XCircle, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-    Dialog, DialogContent, DialogHeader, DialogTitle,
+    Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useReceivables, usePayables, useDebtSummary, useDebt } from "@/hooks/use-debts";
 import { Debt } from "@/types/debts";
 import { PdfPreviewDialog } from "@/components/reports/PdfPreviewDialog";
 import { formatCurrency, computeDebtNumbers } from "@/lib/formatters";
+import { debtService } from "@/services/debt.service";
+import { toast } from "@/hooks/use-toast";
 
 function formatDate(d: string) { return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }); }
 
@@ -29,6 +34,27 @@ function getStatusBadge(status: string) {
 
 function DebtDetailCard({ debtId, open, onClose }: { debtId: number; open: boolean; onClose: () => void }) {
     const { data: debt, isLoading } = useDebt(debtId);
+    const queryClient = useQueryClient();
+    const [showWriteOff, setShowWriteOff] = useState(false);
+    const [writeOffReason, setWriteOffReason] = useState('');
+
+    const writeOff = useMutation({
+        mutationFn: () => debtService.writeOffDebt(debtId, writeOffReason),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['debts'] });
+            queryClient.invalidateQueries({ queryKey: ['customers'] });
+            toast({ title: 'تم شطب الدين بنجاح' });
+            setShowWriteOff(false);
+            onClose();
+        },
+        onError: (error: any) => {
+            const msg = error?.response?.data?.messageAr ?? error?.message ?? 'حدث خطأ';
+            toast({ variant: 'destructive', title: 'خطأ في شطب الدين', description: msg });
+        },
+    });
+
+    const canWriteOff = debt && !['written_off', 'settled', 'paid'].includes(debt.status) && debt.debtType === 'receivable';
+
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="max-w-lg max-h-[85dvh] overflow-y-auto" dir="rtl">
@@ -57,6 +83,43 @@ function DebtDetailCard({ debtId, open, onClose }: { debtId: number; open: boole
                             {debt.isOverdue && <Info label="متأخر" value={<StatusBadge status="danger">متأخر</StatusBadge>} />}
                             <Info label="تاريخ الإنشاء" value={formatDate(debt.createdAt)} />
                         </div>
+
+                        {/* UI-05: Write-off action for receivable debts only */}
+                        {canWriteOff && !showWriteOff && (
+                            <Button
+                                variant="destructive"
+                                size="sm"
+                                className="gap-2 w-full"
+                                onClick={() => setShowWriteOff(true)}
+                            >
+                                <XCircle className="w-4 h-4" />
+                                شطب الدين
+                            </Button>
+                        )}
+                        {canWriteOff && showWriteOff && (
+                            <div className="space-y-3 border border-red-300 rounded-md p-4 bg-red-50 dark:bg-red-950/20">
+                                <Label className="text-sm font-medium">سبب الشطب</Label>
+                                <Input
+                                    placeholder="أدخل سبب شطب الدين..."
+                                    value={writeOffReason}
+                                    onChange={(e) => setWriteOffReason(e.target.value)}
+                                    dir="rtl"
+                                />
+                                <div className="flex gap-2">
+                                    <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        disabled={!writeOffReason.trim() || writeOff.isPending}
+                                        onClick={() => writeOff.mutate()}
+                                        className="gap-1"
+                                    >
+                                        {writeOff.isPending && <Loader2 className="w-3 h-3 animate-spin" />}
+                                        تأكيد الشطب
+                                    </Button>
+                                    <Button size="sm" variant="outline" onClick={() => setShowWriteOff(false)}>إلغاء</Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 ) : <p className="text-center text-muted-foreground py-8">لم يتم العثور على الدين</p>}
             </DialogContent>
@@ -85,7 +148,13 @@ function DebtTable({ debts, isLoading, error, isReceivable }: {
                     {isLoading ? (
                         <div className="flex items-center justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
                     ) : error ? (
-                        <div className="text-center py-16 text-red-500"><p>حدث خطأ</p></div>
+                        <div className="text-center py-16 text-red-500">
+                            <p>حدث خطأ في تحميل البيانات</p>
+                            {/* UI-10: Show actual error message instead of generic text */}
+                            <p className="text-sm mt-1 text-muted-foreground">
+                                {(error as any)?.response?.data?.messageAr ?? (error as any)?.message ?? 'خطأ غير متوقع'}
+                            </p>
+                        </div>
                     ) : debts.length === 0 ? (
                         <div className="text-center py-16 text-muted-foreground"><p>لا توجد ديون</p></div>
                     ) : (
@@ -136,6 +205,12 @@ function DebtTable({ debts, isLoading, error, isReceivable }: {
 export default function Debts() {
     const [tab, setTab] = useState<"receivables" | "payables">("receivables");
     const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+    const [autoPrint, setAutoPrint] = useState(false);
+
+    const openPdf = (print = false) => {
+        setAutoPrint(print);
+        setPdfDialogOpen(true);
+    };
 
     const { data: recvData, isLoading: recvLoading, error: recvError } = useReceivables();
     const { data: payData, isLoading: payLoading, error: payError } = usePayables();
@@ -151,21 +226,28 @@ export default function Debts() {
                     <h1 className="text-2xl font-bold text-foreground">الديون</h1>
                     <p className="text-muted-foreground mt-1">إدارة المستحقات والالتزامات</p>
                 </div>
-                <Button
-                    variant="outline"
-                    className="gap-2 bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/30 dark:border-emerald-800 dark:text-emerald-200"
-                    onClick={() => setPdfDialogOpen(true)}
-                >
-                    <Download className="w-4 h-4" />
-                    تصدير PDF
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        className="gap-2 bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/30 dark:border-emerald-800 dark:text-emerald-200"
+                        onClick={() => openPdf(false)}
+                    >
+                        <Download className="w-4 h-4" />
+                        تصدير PDF
+                    </Button>
+                    <Button variant="outline" className="gap-2" onClick={() => openPdf(true)}>
+                        <Printer className="w-4 h-4" />
+                        طباعة
+                    </Button>
+                </div>
             </div>
             <PdfPreviewDialog
                 open={pdfDialogOpen}
-                onOpenChange={setPdfDialogOpen}
+                onOpenChange={(v) => { setPdfDialogOpen(v); if (!v) setAutoPrint(false); }}
                 reportType={tab === "receivables" ? "receivables-report" : "payables-report"}
                 params={{ language: "ar" }}
                 title={tab === "receivables" ? "تقرير الذمم المدينة PDF" : "تقرير الذمم الدائنة PDF"}
+                autoPrint={autoPrint}
             />
 
             {/* Summary Cards */}
@@ -189,10 +271,10 @@ export default function Debts() {
             {/* Tabs */}
             <div className="flex gap-2">
                 <Button variant={tab === "receivables" ? "default" : "outline"} onClick={() => setTab("receivables")} className="gap-2">
-                    <ArrowDownLeft className="w-4 h-4" /> مستحقات لنا ({receivables.length})
+                    <ArrowDownLeft className="w-4 h-4" /> مستحقات لنا ({recvData?.pagination?.totalItems ?? receivables.length})
                 </Button>
                 <Button variant={tab === "payables" ? "default" : "outline"} onClick={() => setTab("payables")} className="gap-2">
-                    <ArrowUpRight className="w-4 h-4" /> مستحقات علينا ({payables.length})
+                    <ArrowUpRight className="w-4 h-4" /> مستحقات علينا ({payData?.pagination?.totalItems ?? payables.length})
                 </Button>
             </div>
 

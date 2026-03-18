@@ -13,6 +13,7 @@ import {
   DollarSign,
   Scale,
   ArrowRight,
+  Printer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -123,6 +124,12 @@ export default function Reports() {
   const [dateRange, setDateRange] = useState<DateRangeQuery>(getDefaultDateRange());
   const [rangePreset, setRangePreset] = useState("month");
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [autoPrint, setAutoPrint] = useState(false);
+
+  const openPdf = (print = false) => {
+    setAutoPrint(print);
+    setPdfDialogOpen(true);
+  };
 
   const rangeForQuery = useMemo(() => {
     const now = new Date();
@@ -268,14 +275,24 @@ export default function Reports() {
             </Select>
           )}
           {pdfConfig && (
-            <Button
-              variant="outline"
-              className="gap-2 bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/30 dark:border-emerald-800 dark:text-emerald-200"
-              onClick={() => setPdfDialogOpen(true)}
-            >
-              <Download className="w-4 h-4" />
-              تصدير PDF
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                className="gap-2 bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/30 dark:border-emerald-800 dark:text-emerald-200"
+                onClick={() => openPdf(false)}
+              >
+                <Download className="w-4 h-4" />
+                تصدير PDF
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={() => openPdf(true)}
+              >
+                <Printer className="w-4 h-4" />
+                طباعة
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -777,10 +794,11 @@ export default function Reports() {
       {pdfConfig && (
         <PdfPreviewDialog
           open={pdfDialogOpen}
-          onOpenChange={setPdfDialogOpen}
+          onOpenChange={(v) => { setPdfDialogOpen(v); if (!v) setAutoPrint(false); }}
           reportType={pdfConfig.type}
           params={pdfConfig.getParams(rangeForQuery, stockVsGLDate)}
           title={pdfConfig.title}
+          autoPrint={autoPrint}
         />
       )}
     </div>

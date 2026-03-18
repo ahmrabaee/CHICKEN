@@ -50,6 +50,8 @@ interface PdfPreviewDialogProps {
   params: PdfParams;
   title: string;
   showFilters?: boolean;
+  /** When true, automatically triggers the browser print dialog once the PDF preview loads */
+  autoPrint?: boolean;
 }
 
 function getDefaultDates() {
@@ -70,6 +72,7 @@ export function PdfPreviewDialog({
   params,
   title,
   showFilters = true,
+  autoPrint = false,
 }: PdfPreviewDialogProps) {
   const defaults = getDefaultDates();
   const [language, setLanguage] = useState<'ar' | 'en'>(params.language || 'ar');
@@ -133,6 +136,15 @@ export function PdfPreviewDialog({
       w?.addEventListener('load', () => w.print(), { once: true });
     }
   };
+
+  // Auto-trigger print once PDF is rendered when autoPrint=true
+  useEffect(() => {
+    if (autoPrint && previewUrl && !isLoading && !error) {
+      // Small delay so iframe renders before the print dialog opens
+      const timer = setTimeout(() => handlePrint(), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [autoPrint, previewUrl, isLoading, error]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

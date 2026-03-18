@@ -95,6 +95,8 @@ export const useCancelPayment = () => {
             queryClient.invalidateQueries({ queryKey: ['sales'] });
             queryClient.invalidateQueries({ queryKey: ['purchases'] });
             queryClient.invalidateQueries({ queryKey: ['debts'] });
+            // UI-03: Also refresh customers so balance is updated after cancellation
+            queryClient.invalidateQueries({ queryKey: ['customers'] });
             toast({ title: 'تم إلغاء الدفعة بنجاح' });
         },
         onError: (error: any) => {

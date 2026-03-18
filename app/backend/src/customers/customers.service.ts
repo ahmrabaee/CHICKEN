@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCustomerDto, UpdateCustomerDto, CustomerResponseDto, CustomerListQueryDto } from './dto';
 import { createPaginatedResult, PaginatedResult } from '../common';
@@ -228,6 +228,22 @@ export class CustomersService {
         code: 'NOT_FOUND',
         message: 'Customer not found',
         messageAr: 'العميل غير موجود',
+      });
+    }
+
+    // WK-05: Block deletion when customer has open debts
+    const openDebts = await this.prisma.debt.count({
+      where: {
+        partyType: 'customer',
+        partyId: id,
+        status: { notIn: ['paid', 'written_off'] },
+      },
+    });
+    if (openDebts > 0) {
+      throw new BadRequestException({
+        code: 'CUSTOMER_HAS_OPEN_DEBTS',
+        message: `Customer has ${openDebts} open debt(s) and cannot be deleted`,
+        messageAr: `لا يمكن حذف الزبون لوجود ${openDebts} دين غير مسدد`,
       });
     }
 

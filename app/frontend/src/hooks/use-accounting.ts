@@ -106,8 +106,8 @@ export const useCreateJournalEntry = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (data: CreateJournalEntryDto) => accountingService.createJournalEntry(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['accounting', 'journal-entries'] });
+        onSuccess: async () => {
+            await queryClient.refetchQueries({ queryKey: ['accounting', 'journal-entries'] });
             toast({ title: 'تم إنشاء القيد بنجاح' });
         },
         onError: (error: any) => {

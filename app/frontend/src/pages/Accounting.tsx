@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Eye, Loader2, CheckCircle, Plus, Search, ChevronsUpDown, Download, FileText, RotateCcw, ArrowDownToLine, ArrowUpFromLine, Wallet, AlertTriangle, Printer } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -389,6 +389,7 @@ function buildAccountTree(flat: Account[]): AccountWithChildren[] {
 
 export default function Accounting() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [tab, setTab] = useState<"accounts" | "journals" | "trial">("accounts");
     const [journalPage, setJournalPage] = useState(1);
     const [detailEntryId, setDetailEntryId] = useState<number | null>(null);
@@ -431,6 +432,15 @@ export default function Accounting() {
             ? accountsData
             : [];
     const accountTree = useMemo(() => buildAccountTree(rawAccounts), [rawAccounts]);
+
+    // When coming from "create journal entry", show journals tab directly
+    useEffect(() => {
+        const stateTab = (location.state as { tab?: "accounts" | "journals" | "trial" } | null)?.tab;
+        if (stateTab === "journals") {
+            setTab("journals");
+            navigate(location.pathname, { replace: true, state: {} });
+        }
+    }, [location.state, location.pathname, navigate]);
 
     // Expand 1110 النقدية by default so 1115/1116 (شيكات) are visible
     const hasExpandedCash = useRef(false);
@@ -545,7 +555,7 @@ export default function Accounting() {
     };
 
     const groupAccountsForParent = rawAccounts.filter((a) => a.isGroup);
-    const journals = journalsData?.data || [];
+    const journals = journalsData?.data ?? journalsData?.items ?? [];
     const journalPagination = journalsData?.pagination;
     const trialBalance = trialData || [];
 

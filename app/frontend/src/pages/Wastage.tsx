@@ -74,8 +74,7 @@ function WastageDetailCard({
               <Info label="الدفعة (معرف)" value={record.lotId ?? "—"} />
               <Info label="رقم الدفعة" value={record.lot?.lotNumber ?? "—"} />
               <Info label="الفرع (معرف)" value={record.branchId ?? "—"} />
-              <Info label="الكمية (غرام)" value={record.weightGrams} />
-              <Info label="الكمية (كجم)" value={(record.weightGrams / 1000).toFixed(2)} />
+              <Info label="الكمية (كغم)" value={(record.weightGrams / 1000).toFixed(2)} />
               <Info label="نوع الهدر" value={record.wastageType} />
               <Info label="السبب" value={reasonLabels[record.reason] ?? record.reason} />
               <Info label="التكلفة المقدرة (فلس)" value={record.estimatedCostValue} />

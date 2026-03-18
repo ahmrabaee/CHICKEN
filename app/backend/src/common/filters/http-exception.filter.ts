@@ -132,11 +132,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
         };
       }
       default:
+        this.logger.warn(`Prisma error ${error.code}: ${error.message}`, error.meta);
         return {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
           code: 'DATABASE_ERROR',
-          message: 'A database error occurred',
-          messageAr: 'حدث خطأ في قاعدة البيانات',
+          message: `A database error occurred (${error.code})`,
+          messageAr: `حدث خطأ في قاعدة البيانات (${error.code})`,
         };
     }
   }

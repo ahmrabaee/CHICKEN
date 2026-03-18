@@ -1270,7 +1270,7 @@ export class AccountingService {
         skip,
         take: pageSize,
         include: { lines: { include: { account: true, costCenter: true } }, createdBy: true },
-        orderBy: { entryDate: 'desc' },
+        orderBy: { id: 'desc' },
       }),
       this.prisma.journalEntry.count(),
     ]);

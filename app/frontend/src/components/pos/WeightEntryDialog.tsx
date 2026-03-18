@@ -123,7 +123,7 @@ export function WeightEntryDialog({
               <span className="text-lg font-semibold text-muted-foreground">كجم</span>
             </div>
             <div className="flex items-center justify-center gap-4 mt-1 text-xs text-muted-foreground">
-              <span>{grams} غرام</span>
+              <span>{(grams / 1000).toFixed(2)} كغم</span>
               {qty > 0 && (
                 <span className="text-primary font-bold text-sm">
                   المجموع: ₪{toMajor(total)}

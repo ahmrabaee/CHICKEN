@@ -128,8 +128,8 @@ export default function JournalEntryProfile() {
             )
             .map((l) => ({
                 accountId: Number(l.accountId),
-                debit: Math.round((Number(l.debit) || 0) * 100),
-                credit: Math.round((Number(l.credit) || 0) * 100),
+                debit: Math.round(Number(l.debit) || 0),
+                credit: Math.round(Number(l.credit) || 0),
             }));
 
         const dto: CreateJournalEntryDto = {
@@ -140,8 +140,7 @@ export default function JournalEntryProfile() {
 
         createMutation.mutate(dto, {
             onSuccess: () => {
-                toast({ title: "تم إنشاء القيد بنجاح" });
-                navigate("/accounting");
+                navigate("/accounting", { state: { tab: "journals" } });
             },
         });
     };
@@ -352,7 +351,7 @@ export default function JournalEntryProfile() {
                                             isBalanced ? "text-emerald-600 font-medium" : "text-muted-foreground"
                                         )}
                                     >
-                                        المدين: {(totalDebit || 0).toFixed(2)} ₪ — الدائن: {(totalCredit || 0).toFixed(2)} ₪
+                                        المدين: {((totalDebit || 0) / 100).toFixed(2)} ₪ — الدائن: {((totalCredit || 0) / 100).toFixed(2)} ₪
                                         {!isBalanced && validLineCount > 0 && (
                                             <span className="text-destructive mr-2"> — القيد غير متوازن (الفرق: {(diff / 100).toFixed(2)} ₪)</span>
                                         )}
@@ -376,11 +375,11 @@ export default function JournalEntryProfile() {
                                     <div className="space-y-1">
                                         <div className="flex justify-between items-center text-sm text-slate-400">
                                             <span>إجمالي المدين</span>
-                                            <span className="font-mono">₪ {(totalDebit || 0).toFixed(2)}</span>
+                                            <span className="font-mono">₪ {((totalDebit || 0) / 100).toFixed(2)}</span>
                                         </div>
                                         <div className="flex justify-between items-center text-sm text-slate-400">
                                             <span>إجمالي الدائن</span>
-                                            <span className="font-mono">₪ {(totalCredit || 0).toFixed(2)}</span>
+                                            <span className="font-mono">₪ {((totalCredit || 0) / 100).toFixed(2)}</span>
                                         </div>
                                     </div>
                                     <Separator className="bg-slate-700/50" />

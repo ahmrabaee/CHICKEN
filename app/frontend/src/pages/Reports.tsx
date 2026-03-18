@@ -433,7 +433,7 @@ export default function Reports() {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <p><span className="text-muted-foreground">عدد الأصناف:</span> <strong>{inventoryReport.summary.totalItems}</strong></p>
-                  <p><span className="text-muted-foreground">الكمية الإجمالية (غ):</span> <strong>{inventoryReport.summary.totalWeight}</strong></p>
+                  <p><span className="text-muted-foreground">الكمية الإجمالية (كغم):</span> <strong>{((inventoryReport.summary.totalWeight ?? 0) / 1000).toFixed(2)}</strong></p>
                   <p><span className="text-muted-foreground">قيمة المخزون:</span> <strong>₪ {formatMinor(inventoryReport.summary.totalValue)}</strong></p>
                   <p><span className="text-muted-foreground">الدفعات النشطة:</span> <strong>{inventoryReport.summary.activeLots}</strong></p>
                 </CardContent>
@@ -451,7 +451,7 @@ export default function Reports() {
                     <TableRow className="data-table-header">
                       <TableHead className="text-right">الصنف</TableHead>
                       <TableHead className="text-right">الفئة</TableHead>
-                      <TableHead className="text-center">الكمية (غ)</TableHead>
+                      <TableHead className="text-center">الكمية (كغم)</TableHead>
                       <TableHead className="text-center">القيمة</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -460,7 +460,7 @@ export default function Reports() {
                       <TableRow key={inv.itemId}>
                         <TableCell className="font-medium">{inv.itemName}</TableCell>
                         <TableCell>{inv.categoryName ?? "—"}</TableCell>
-                        <TableCell className="text-center font-english" dir="ltr">{inv.currentWeight}</TableCell>
+                        <TableCell className="text-center font-english" dir="ltr">{((inv.currentWeight ?? 0) / 1000).toFixed(2)}</TableCell>
                         <TableCell className="text-center">₪ {formatMinor(inv.value)}</TableCell>
                       </TableRow>
                     ))}
@@ -571,7 +571,7 @@ export default function Reports() {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <p><span className="text-muted-foreground">عدد السجلات:</span> <strong>{wastageReport.summary.count}</strong></p>
-                  <p><span className="text-muted-foreground">إجمالي الوزن (غ):</span> <strong>{wastageReport.summary.totalWeight}</strong></p>
+                  <p><span className="text-muted-foreground">إجمالي الوزن (كغم):</span> <strong>{((wastageReport.summary.totalWeight ?? 0) / 1000).toFixed(2)}</strong></p>
                   <p><span className="text-muted-foreground">التكلفة التقديرية:</span> <strong>₪ {formatMinor(wastageReport.summary.totalCost)}</strong></p>
                 </CardContent>
               </Card>
@@ -590,7 +590,7 @@ export default function Reports() {
                       <TableHead className="text-right">الصنف</TableHead>
                       <TableHead className="text-right">النوع</TableHead>
                       <TableHead className="text-right">السبب</TableHead>
-                      <TableHead className="text-center">الوزن (غ)</TableHead>
+                      <TableHead className="text-center">الوزن (كغم)</TableHead>
                       <TableHead className="text-center">التكلفة</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -601,7 +601,7 @@ export default function Reports() {
                         <TableCell>{r.itemName}</TableCell>
                         <TableCell>{r.type}</TableCell>
                         <TableCell>{wastageReasonLabels[r.reason ?? ""] ?? r.reason ?? "—"}</TableCell>
-                        <TableCell className="text-center font-english" dir="ltr">{r.weight}</TableCell>
+                        <TableCell className="text-center font-english" dir="ltr">{((r.weight ?? 0) / 1000).toFixed(2)}</TableCell>
                         <TableCell className="text-center">₪ {formatMinor(r.cost)}</TableCell>
                       </TableRow>
                     ))}

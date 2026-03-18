@@ -149,7 +149,7 @@ export class StockTransferService {
       throw new BadRequestException({
         code: 'INSUFFICIENT_QUANTITY',
         message: `Total weight (${totalWeightGrams}g) exceeds available (${sourceLot.remainingQuantityGrams}g)`,
-        messageAr: `الوزن الإجمالي (${totalWeightGrams}غ) يتجاوز المتاح (${sourceLot.remainingQuantityGrams}غ)`,
+        messageAr: `الوزن الإجمالي (${(totalWeightGrams / 1000).toFixed(2)} كغم) يتجاوز المتاح (${(sourceLot.remainingQuantityGrams / 1000).toFixed(2)} كغم)`,
       });
     }
 

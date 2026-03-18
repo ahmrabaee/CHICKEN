@@ -83,4 +83,10 @@ export interface PdfGenerateOptions {
     endDate: string;
     issueDate: string;
   };
+  /** Account ledger header (اسم الحساب، رقم الحساب، تاريخ الاستخراج) */
+  statementAccountInfo?: {
+    accountName: string;
+    accountCode: string;
+    extractionDate: string;
+  };
 }

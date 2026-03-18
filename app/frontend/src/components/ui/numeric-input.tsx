@@ -12,8 +12,12 @@ export interface NumericInputProps extends Omit<React.InputHTMLAttributes<HTMLIn
 }
 
 const NumericInput = forwardRef<HTMLInputElement, NumericInputProps>(
-    ({ className, value, onChange, onValueChange, suffix, prefixNode, allowNegative = false, ...props }, ref) => {
-        const [internalValue, setInternalValue] = useState<string>("");
+    ({ className, value, defaultValue, onChange, onValueChange, suffix, prefixNode, allowNegative = false, ...props }, ref) => {
+        const [internalValue, setInternalValue] = useState<string>(() => {
+            if (value !== undefined && value !== null) return String(value);
+            if (defaultValue !== undefined && defaultValue !== null) return String(defaultValue);
+            return "";
+        });
 
         useEffect(() => {
             // Sync from external value

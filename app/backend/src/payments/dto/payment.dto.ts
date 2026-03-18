@@ -30,6 +30,11 @@ export class RecordSalePaymentDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @ApiPropertyOptional({ description: 'Bank account ID (for bank_transfer/card)' })
+  @IsNumber()
+  @IsOptional()
+  bankAccountId?: number;
 }
 
 export class RecordPurchasePaymentDto {
@@ -66,6 +71,11 @@ export class RecordPurchasePaymentDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @ApiPropertyOptional({ description: 'Bank account ID (for bank_transfer/card)' })
+  @IsNumber()
+  @IsOptional()
+  bankAccountId?: number;
 }
 
 export class PaymentQueryDto extends PaginationQueryDto {
@@ -115,4 +125,9 @@ export class CreateAdvancePaymentDto {
   @ApiPropertyOptional()
   @IsOptional()
   paymentDate?: string;
+
+  @ApiPropertyOptional({ description: 'Bank account ID (for bank_transfer/card)' })
+  @IsNumber()
+  @IsOptional()
+  bankAccountId?: number;
 }

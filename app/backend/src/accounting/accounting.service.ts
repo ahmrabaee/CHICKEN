@@ -12,6 +12,7 @@ import { PdfSection, PdfSectionItem } from '../pdf/pdf.types';
 import { buildFinancialStatementPdfOptions } from '../pdf/templates/financial-statement.template';
 import { buildReportPdfOptions } from '../pdf/templates/report.template';
 import { formatDateForHeader } from '../pdf/pdf.helpers';
+import { DESCRIPTION_AR, SOURCE_TYPE_AR } from './ledger-localization';
 
 // Standard account codes - must match prisma/seed.ts chart of accounts
 export const ACCOUNT_CODES = {
@@ -77,6 +78,46 @@ export class AccountingService {
     return setting?.value === 'true';
   }
 
+  /** Resolve cash (1111) or bank account for payments - used when paymentMethod is bank_transfer/card and bankAccountId is set */
+  private async resolveCashOrBankAccount(
+    paymentMethod?: string,
+    bankAccountId?: number | null,
+    tx?: any,
+  ): Promise<number> {
+    const prisma = tx ?? this.prisma;
+    if (paymentMethod && ['bank_transfer', 'card'].includes(paymentMethod)) {
+      let resolvedBankId = bankAccountId;
+      if (!resolvedBankId) {
+        let fallback = await prisma.bankAccount.findFirst({
+          where: { isDefault: true, isActive: true, companyId: 1 },
+          select: { id: true },
+        });
+        if (!fallback) {
+          fallback = await prisma.bankAccount.findFirst({
+            where: { isActive: true, companyId: 1 },
+            select: { id: true },
+            orderBy: { id: 'asc' },
+          });
+        }
+        resolvedBankId = fallback?.id ?? null;
+      }
+      if (resolvedBankId) {
+        const bank = await prisma.bankAccount.findUnique({
+          where: { id: resolvedBankId },
+          select: { accountId: true },
+        });
+        if (bank) return bank.accountId;
+      }
+    }
+    const id = await this.chartOfAccountsService.getAccountIdByCode(ACCOUNT_CODES.CASH);
+    if (!id) throw new BadRequestException({
+      code: 'ACCOUNT_NOT_FOUND',
+      message: `Account not found for code: ${ACCOUNT_CODES.CASH}`,
+      messageAr: `الحساب المحاسبي غير موجود`,
+    });
+    return id;
+  }
+
   /** Resolve account codes to IDs - helper for GL Maps */
   private async resolveAccountIds(codes: string[]): Promise<Record<string, number>> {
     const result: Record<string, number> = {};
@@ -112,6 +153,8 @@ export class AccountingService {
       netTotal?: number;
       totalTaxAmount?: number;
       grandTotal?: number;
+      paymentMethod?: string;
+      bankAccountId?: number | null;
     },
   ): Promise<GLMapEntry[]> {
     const { totalAmount, totalCost, amountPaid, discountAmount } = data;
@@ -124,8 +167,12 @@ export class AccountingService {
       ACCOUNT_CODES.CASH, ACCOUNT_CODES.ACCOUNTS_RECEIVABLE, ACCOUNT_CODES.SALES_REVENUE,
       ACCOUNT_CODES.DISCOUNTS_GIVEN, ACCOUNT_CODES.COST_OF_GOODS_SOLD, stockCode,
     ]);
+    const cashOrBankId = amountPaid > 0
+      ? await this.resolveCashOrBankAccount(data.paymentMethod, data.bankAccountId)
+      : ids[ACCOUNT_CODES.CASH];
+    const isBank = amountPaid > 0 && cashOrBankId !== ids[ACCOUNT_CODES.CASH];
     const entries: GLMapEntry[] = [];
-    if (amountPaid > 0) entries.push({ accountId: ids[ACCOUNT_CODES.CASH], debit: amountPaid, partyType: data.customerId ? 'customer' : undefined, partyId: data.customerId, description: 'Cash received' });
+    if (amountPaid > 0) entries.push({ accountId: cashOrBankId, debit: amountPaid, partyType: data.customerId ? 'customer' : undefined, partyId: data.customerId, description: isBank ? 'Bank received' : 'Cash received' });
     if (amountDue > 0) entries.push({ accountId: ids[ACCOUNT_CODES.ACCOUNTS_RECEIVABLE], debit: amountDue, partyType: data.customerId ? 'customer' : undefined, partyId: data.customerId, description: data.customerId ? 'Credit sale' : 'Partial payment - balance due' });
     entries.push({ accountId: ids[ACCOUNT_CODES.SALES_REVENUE], credit: revenueAmount, partyType: data.customerId ? 'customer' : undefined, partyId: data.customerId, description: 'Sales revenue' });
     if (discountAmount && discountAmount > 0) entries.push({ accountId: ids[ACCOUNT_CODES.DISCOUNTS_GIVEN], debit: discountAmount, partyType: data.customerId ? 'customer' : undefined, partyId: data.customerId, description: 'Sales discount' });
@@ -143,6 +190,7 @@ export class AccountingService {
     totalAmount: number; totalCost: number; amountPaid: number; discountAmount?: number;
     stockAccountCode?: string; customerId?: number;
     taxTemplateId?: number; netTotal?: number; totalTaxAmount?: number; grandTotal?: number;
+    paymentMethod?: string; bankAccountId?: number | null;
   }): Promise<GLMapEntry[]> {
     const { totalAmount, totalCost, amountPaid, discountAmount } = data;
     const useTax = !!(await this.isTaxEngineEnabled()) && data.taxTemplateId && data.netTotal != null && data.grandTotal != null;
@@ -151,8 +199,11 @@ export class AccountingService {
     const amountDue = receivableTotal - amountPaid;
     const stockCode = data.stockAccountCode ?? ACCOUNT_CODES.INVENTORY;
     const ids = await this.resolveAccountIds([ACCOUNT_CODES.CASH, ACCOUNT_CODES.ACCOUNTS_RECEIVABLE, ACCOUNT_CODES.SALES_REVENUE, ACCOUNT_CODES.DISCOUNTS_GIVEN, ACCOUNT_CODES.COST_OF_GOODS_SOLD, stockCode]);
+    const cashOrBankId = amountPaid > 0
+      ? await this.resolveCashOrBankAccount(data.paymentMethod ?? 'cash', data.bankAccountId)
+      : ids[ACCOUNT_CODES.CASH];
     const entries: GLMapEntry[] = [];
-    if (amountPaid > 0) entries.push({ accountId: ids[ACCOUNT_CODES.CASH], credit: amountPaid, description: 'Cash refund' });
+    if (amountPaid > 0) entries.push({ accountId: cashOrBankId, credit: amountPaid, description: 'Payment refund' });
     if (amountDue > 0) entries.push({ accountId: ids[ACCOUNT_CODES.ACCOUNTS_RECEIVABLE], credit: amountDue, description: 'Write off receivable' });
     entries.push({ accountId: ids[ACCOUNT_CODES.SALES_REVENUE], debit: revenueAmount, description: 'Sales revenue reversal' });
     if (discountAmount && discountAmount > 0) entries.push({ accountId: ids[ACCOUNT_CODES.DISCOUNTS_GIVEN], credit: discountAmount, description: 'Discount reversal' });
@@ -171,6 +222,7 @@ export class AccountingService {
   async getPurchaseGLMap(data: {
     totalAmount: number; amountPaid: number; supplierId?: number; stockAccountCode?: string;
     taxTemplateId?: number; netTotal?: number; totalTaxAmount?: number; grandTotal?: number;
+    paymentMethod?: string; bankAccountId?: number | null;
   }): Promise<GLMapEntry[]> {
     const { totalAmount, amountPaid, supplierId } = data;
     const useTax = !!(await this.isTaxEngineEnabled()) && data.taxTemplateId && data.netTotal != null && data.grandTotal != null;
@@ -179,29 +231,34 @@ export class AccountingService {
     const amountDue = payableTotal - amountPaid;
     const stockCode = data.stockAccountCode ?? ACCOUNT_CODES.INVENTORY;
     const ids = await this.resolveAccountIds([stockCode, ACCOUNT_CODES.CASH, ACCOUNT_CODES.ACCOUNTS_PAYABLE]);
+    const cashOrBankId = amountPaid > 0
+      ? await this.resolveCashOrBankAccount(data.paymentMethod ?? 'cash', data.bankAccountId)
+      : ids[ACCOUNT_CODES.CASH];
     const entries: GLMapEntry[] = [{ accountId: ids[stockCode], debit: inventoryAmount, partyType: supplierId ? 'supplier' : undefined, partyId: supplierId, description: 'Inventory purchase' }];
     if (useTax && (data.totalTaxAmount ?? 0) > 0) {
       const taxEntries = await this.taxEngineService.getPurchaseTaxGLEntries(data.taxTemplateId!, data.netTotal!, 2);
       entries.push(...taxEntries.map(e => ({ ...e, partyType: supplierId ? 'supplier' as const : undefined, partyId: supplierId })));
     }
-    if (amountPaid > 0) entries.push({ accountId: ids[ACCOUNT_CODES.CASH], credit: amountPaid, partyType: supplierId ? 'supplier' : undefined, partyId: supplierId, description: 'Cash payment' });
+    if (amountPaid > 0) entries.push({ accountId: cashOrBankId, credit: amountPaid, partyType: supplierId ? 'supplier' : undefined, partyId: supplierId, description: 'Payment made' });
     if (amountDue > 0) entries.push({ accountId: ids[ACCOUNT_CODES.ACCOUNTS_PAYABLE], credit: amountDue, partyType: supplierId ? 'supplier' : undefined, partyId: supplierId, description: 'Credit purchase' });
     return entries;
   }
 
-  async getPaymentReceivedGLMap(amount: number): Promise<GLMapEntry[]> {
+  async getPaymentReceivedGLMap(amount: number, paymentMethod?: string, bankAccountId?: number | null): Promise<GLMapEntry[]> {
     const ids = await this.resolveAccountIds([ACCOUNT_CODES.CASH, ACCOUNT_CODES.ACCOUNTS_RECEIVABLE]);
+    const cashOrBankId = await this.resolveCashOrBankAccount(paymentMethod ?? 'cash', bankAccountId);
     return [
-      { accountId: ids[ACCOUNT_CODES.CASH], debit: amount, description: 'Payment received' },
+      { accountId: cashOrBankId, debit: amount, description: 'Payment received' },
       { accountId: ids[ACCOUNT_CODES.ACCOUNTS_RECEIVABLE], credit: amount, description: 'Reduce receivable' },
     ];
   }
 
-  async getPaymentMadeGLMap(amount: number): Promise<GLMapEntry[]> {
+  async getPaymentMadeGLMap(amount: number, paymentMethod?: string, bankAccountId?: number | null): Promise<GLMapEntry[]> {
     const ids = await this.resolveAccountIds([ACCOUNT_CODES.ACCOUNTS_PAYABLE, ACCOUNT_CODES.CASH]);
+    const cashOrBankId = await this.resolveCashOrBankAccount(paymentMethod ?? 'cash', bankAccountId);
     return [
       { accountId: ids[ACCOUNT_CODES.ACCOUNTS_PAYABLE], debit: amount, description: 'Pay supplier' },
-      { accountId: ids[ACCOUNT_CODES.CASH], credit: amount, description: 'Cash payment' },
+      { accountId: cashOrBankId, credit: amount, description: 'Payment made' },
     ];
   }
 
@@ -214,12 +271,19 @@ export class AccountingService {
     ];
   }
 
-  async getExpenseGLMap(amount: number, paymentMethod?: string): Promise<GLMapEntry[]> {
-    const ids = await this.resolveAccountIds([ACCOUNT_CODES.OPERATING_EXPENSES, paymentMethod === 'credit' ? ACCOUNT_CODES.ACCOUNTS_PAYABLE : ACCOUNT_CODES.CASH]);
-    const creditAccount = paymentMethod === 'credit' ? ACCOUNT_CODES.ACCOUNTS_PAYABLE : ACCOUNT_CODES.CASH;
+  async getExpenseGLMap(amount: number, paymentMethod?: string, bankAccountId?: number | null): Promise<GLMapEntry[]> {
+    if (paymentMethod === 'credit') {
+      const ids = await this.resolveAccountIds([ACCOUNT_CODES.OPERATING_EXPENSES, ACCOUNT_CODES.ACCOUNTS_PAYABLE]);
+      return [
+        { accountId: ids[ACCOUNT_CODES.OPERATING_EXPENSES], debit: amount, description: 'Operating expense' },
+        { accountId: ids[ACCOUNT_CODES.ACCOUNTS_PAYABLE], credit: amount, description: 'Expense on credit' },
+      ];
+    }
+    const ids = await this.resolveAccountIds([ACCOUNT_CODES.OPERATING_EXPENSES, ACCOUNT_CODES.CASH]);
+    const cashOrBankId = await this.resolveCashOrBankAccount(paymentMethod ?? 'cash', bankAccountId);
     return [
       { accountId: ids[ACCOUNT_CODES.OPERATING_EXPENSES], debit: amount, description: 'Operating expense' },
-      { accountId: ids[creditAccount], credit: amount, description: paymentMethod === 'credit' ? 'Expense on credit' : 'Cash payment' },
+      { accountId: cashOrBankId, credit: amount, description: paymentMethod === 'bank_transfer' ? 'Bank payment' : 'Cash payment' },
     ];
   }
 
@@ -279,6 +343,8 @@ export class AccountingService {
       netTotal?: number;
       totalTaxAmount?: number;
       grandTotal?: number;
+      paymentMethod?: string;
+      bankAccountId?: number | null;
     },
   ) {
     const lines: JournalLineInput[] = [];
@@ -286,12 +352,15 @@ export class AccountingService {
     const amountDue = totalAmount - amountPaid;
 
     // Revenue side
-    // DR Cash (amount paid)
+    // DR Cash or Bank (amount paid) - resolve based on paymentMethod and bankAccountId
     if (amountPaid > 0) {
+      const cashOrBankAccountId = await this.resolveCashOrBankAccount(data.paymentMethod, data.bankAccountId, tx);
+      const cashAccountId = await this.chartOfAccountsService.getAccountIdByCode(ACCOUNT_CODES.CASH);
+      const isBank = cashOrBankAccountId !== cashAccountId;
       lines.push({
-        accountCode: ACCOUNT_CODES.CASH,
+        accountId: cashOrBankAccountId,
         debitAmount: amountPaid,
-        description: 'Cash received',
+        description: isBank ? 'Bank received' : 'Cash received',
       });
     }
 
@@ -385,6 +454,8 @@ export class AccountingService {
       netTotal?: number;
       totalTaxAmount?: number;
       grandTotal?: number;
+      paymentMethod?: string;
+      bankAccountId?: number | null;
     },
   ) {
     const lines: JournalLineInput[] = [];
@@ -392,12 +463,15 @@ export class AccountingService {
     const amountDue = totalAmount - amountPaid;
 
     // Reverse revenue side
-    // CR Cash (refund)
+    // CR Cash or Bank (refund) - resolve based on paymentMethod and bankAccountId
     if (amountPaid > 0) {
+      const cashOrBankAccountId = await this.resolveCashOrBankAccount(data.paymentMethod, data.bankAccountId, tx);
+      const cashAccountId = await this.chartOfAccountsService.getAccountIdByCode(ACCOUNT_CODES.CASH);
+      const isBank = cashOrBankAccountId !== cashAccountId;
       lines.push({
-        accountCode: ACCOUNT_CODES.CASH,
+        accountId: cashOrBankAccountId,
         creditAmount: amountPaid,
-        description: 'Cash refund',
+        description: isBank ? 'Bank refund' : 'Cash refund',
       });
     }
 
@@ -449,6 +523,7 @@ export class AccountingService {
         stockAccountCode: data.stockAccountCode, customerId: data.customerId,
         taxTemplateId: data.taxTemplateId, netTotal: data.netTotal,
         totalTaxAmount: data.totalTaxAmount, grandTotal: data.grandTotal,
+        paymentMethod: data.paymentMethod, bankAccountId: data.bankAccountId,
       });
       return this.glEngineService.post(glMap, {
         voucherType: 'sale_void',
@@ -486,6 +561,8 @@ export class AccountingService {
       amountPaid: number;
       supplierId?: number;
       stockAccountCode?: string;
+      paymentMethod?: string;
+      bankAccountId?: number | null;
     },
   ) {
     const lines: JournalLineInput[] = [];
@@ -523,7 +600,9 @@ export class AccountingService {
         totalAmount,
         amountPaid,
         supplierId: data.supplierId,
-        stockAccountCode: data.stockAccountCode
+        stockAccountCode: data.stockAccountCode,
+        paymentMethod: data.paymentMethod,
+        bankAccountId: data.bankAccountId,
       });
       return this.glEngineService.post(glMap, {
         voucherType: 'purchase',
@@ -609,6 +688,8 @@ export class AccountingService {
     branchId: number | null,
     userId: number,
     amount: number,
+    paymentMethod?: string,
+    bankAccountId?: number | null,
   ) {
     const lines: JournalLineInput[] = [
       {
@@ -624,7 +705,7 @@ export class AccountingService {
     ];
 
     if (await this.isGlEngineEnabled()) {
-      const glMap = await this.getPaymentReceivedGLMap(amount);
+      const glMap = await this.getPaymentReceivedGLMap(amount, paymentMethod, bankAccountId);
       return this.glEngineService.post(glMap, {
         voucherType: 'payment',
         voucherId: paymentId,
@@ -657,6 +738,8 @@ export class AccountingService {
     branchId: number | null,
     userId: number,
     amount: number,
+    paymentMethod?: string,
+    bankAccountId?: number | null,
   ) {
     const lines: JournalLineInput[] = [
       {
@@ -672,7 +755,7 @@ export class AccountingService {
     ];
 
     if (await this.isGlEngineEnabled()) {
-      const glMap = await this.getPaymentMadeGLMap(amount);
+      const glMap = await this.getPaymentMadeGLMap(amount, paymentMethod, bankAccountId);
       return this.glEngineService.post(glMap, {
         voucherType: 'payment',
         voucherId: paymentId,
@@ -832,6 +915,7 @@ export class AccountingService {
     userId: number,
     amount: number,
     paymentMethod?: string,
+    bankAccountId?: number | null,
   ) {
     const lines: JournalLineInput[] = [
       {
@@ -853,7 +937,7 @@ export class AccountingService {
     ];
 
     if (await this.isGlEngineEnabled()) {
-      const glMap = await this.getExpenseGLMap(amount, paymentMethod);
+      const glMap = await this.getExpenseGLMap(amount, paymentMethod, bankAccountId);
       return this.glEngineService.post(glMap, {
         voucherType: 'expense',
         voucherId: expenseId,
@@ -1070,7 +1154,44 @@ export class AccountingService {
       this.prisma.journalEntry.count(),
     ]);
 
-    return createPaginatedResult(entries, page, pageSize, totalItems);
+    const sourcePartyMap = await this.resolveSourcePartyForEntries(entries.map(e => ({ id: e.id, sourceType: e.sourceType, sourceId: e.sourceId })));
+    const enriched = entries.map((e) => {
+      const sp = sourcePartyMap.get(e.id);
+      return {
+        ...e,
+        sourcePartyName: sp?.sourcePartyName ?? null,
+        sourcePartyType: sp?.sourcePartyType ?? null,
+        sourceExpenseCategoryName: sp?.sourceExpenseCategoryName ?? null,
+      };
+    });
+
+    return createPaginatedResult(enriched, page, pageSize, totalItems);
+  }
+
+  /** جلب الطرف (عميل/مورد) للقيد المحاسبي المعين من المستند المصدر */
+  async getJournalEntryParty(id: number) {
+    const entry = await this.prisma.journalEntry.findUnique({
+      where: { id },
+      select: { id: true, sourceType: true, sourceId: true, lines: { select: { partyType: true, partyId: true } } },
+    });
+    if (!entry) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Journal entry not found', messageAr: 'القيد غير موجود' });
+    }
+    const spMap = await this.resolveSourcePartyForEntries([{ id: entry.id, sourceType: entry.sourceType, sourceId: entry.sourceId }]);
+    const sp = spMap.get(entry.id);
+    const partyFromLine = entry.lines?.find((l) => l.partyType && l.partyId);
+    let partyName: string | null = null;
+    let partyType: string | null = null;
+    if (sp?.sourcePartyName) {
+      partyName = sp.sourcePartyName;
+      partyType = sp.sourcePartyType ?? null;
+    } else if (partyFromLine) {
+      const keys = [`${partyFromLine.partyType}:${partyFromLine.partyId}`];
+      const map = await this.resolvePartyNamesBatch(keys);
+      partyName = map.get(keys[0]) ?? null;
+      partyType = partyFromLine.partyType;
+    }
+    return { partyName, partyType };
   }
 
   async getJournalEntryById(id: number) {
@@ -1095,7 +1216,7 @@ export class AccountingService {
       });
     }
 
-    // Resolve Party names
+    // Resolve Party names for lines
     const linesWithParty = await Promise.all(
       entry.lines.map(async (line) => {
         let partyName: string | null = null;
@@ -1116,7 +1237,17 @@ export class AccountingService {
       }),
     );
 
-    return { ...entry, lines: linesWithParty };
+    // Resolve sourcePartyName for entry-level display
+    const sourcePartyMap = await this.resolveSourcePartyForEntries([{ id: entry.id, sourceType: entry.sourceType, sourceId: entry.sourceId }]);
+    const sp = sourcePartyMap.get(entry.id);
+
+    return {
+      ...entry,
+      lines: linesWithParty,
+      sourcePartyName: sp?.sourcePartyName ?? null,
+      sourcePartyType: sp?.sourcePartyType ?? null,
+      sourceExpenseCategoryName: sp?.sourceExpenseCategoryName ?? null,
+    };
   }
 
   async createJournalEntry(dto: any, userId: number) {
@@ -1291,24 +1422,24 @@ export class AccountingService {
     if (typeof accountIdOrCode === 'number') {
       accountId = accountIdOrCode;
     } else {
-      // Try parsing as ID first if it's numeric
-      const numericId = parseInt(accountIdOrCode, 10);
-      if (!Number.isNaN(numericId) && /^\d+$/.test(accountIdOrCode)) {
-        accountId = numericId;
-      } else {
-        const id = await this.chartOfAccountsService.getAccountIdByCode(accountIdOrCode);
-        if (!id) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Account not found', messageAr: 'الحساب غير موجود' });
-        accountId = id;
-      }
+      const id = await this.chartOfAccountsService.getAccountIdByCode(accountIdOrCode);
+      if (!id) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Account not found', messageAr: 'الحساب غير موجود' });
+      accountId = id;
     }
 
-    const where: Record<string, unknown> = { accountId };
+    const journalEntryWhere: Record<string, unknown> = { isPosted: true };
     if (startDate || endDate) {
       const entryDate: Record<string, Date> = {};
       if (startDate) entryDate.gte = new Date(startDate);
-      if (endDate) entryDate.lte = new Date(endDate);
-      where.journalEntry = { entryDate };
+      if (endDate) {
+        // Include full end day: "2026-03-18" should include entries at 23:59:59 on that day
+        const end = new Date(endDate);
+        end.setUTCHours(23, 59, 59, 999);
+        entryDate.lte = end;
+      }
+      journalEntryWhere.entryDate = entryDate;
     }
+    const where: Record<string, unknown> = { accountId, journalEntry: journalEntryWhere };
 
     const lines = await this.prisma.journalEntryLine.findMany({
       where,
@@ -1316,19 +1447,217 @@ export class AccountingService {
       orderBy: { journalEntry: { entryDate: 'asc' } },
     });
 
+    // Batch-resolve party names and reference numbers
+    const partyKeys = new Set<string>();
+    const sourceKeys = new Set<string>();
+    for (const l of lines) {
+      if (l.partyType && l.partyId) partyKeys.add(`${l.partyType}:${l.partyId}`);
+      const je = l.journalEntry;
+      if (je.sourceType && je.sourceId != null) sourceKeys.add(`${je.sourceType}:${je.sourceId}`);
+    }
+
+    const [partyMap, refMap, sourcePartyMap] = await Promise.all([
+      this.resolvePartyNamesBatch(Array.from(partyKeys)),
+      this.resolveReferenceNumbersBatch(Array.from(sourceKeys)),
+      this.resolvePartyFromSourceBatch(Array.from(sourceKeys)),
+    ]);
+
     let runningBalance = 0;
     return lines.map((l) => {
       runningBalance += l.debitAmount - l.creditAmount;
+      const entry = l.journalEntry;
+      const partyKey = l.partyType && l.partyId ? `${l.partyType}:${l.partyId}` : null;
+      const sourceKey = entry.sourceType && entry.sourceId != null ? `${entry.sourceType}:${entry.sourceId}` : null;
+      const partyFromLine = partyKey ? (partyMap.get(partyKey) ?? null) : null;
+      const partyFromSource = sourceKey ? (sourcePartyMap.get(sourceKey) ?? null) : null;
+      const partyName = partyFromLine ?? partyFromSource ?? null;
+      const referenceNumber = sourceKey ? refMap.get(sourceKey) ?? null : null;
+      const transactionTypeAr = SOURCE_TYPE_AR[entry.sourceType ?? ''] ?? entry.sourceType ?? '';
+      const descEn = l.description ?? entry.description ?? '';
+      const descriptionAr = this.buildDescriptionAr(descEn, transactionTypeAr, partyName);
+
       return {
         id: l.id,
-        entryDate: l.journalEntry.entryDate,
-        entryNumber: l.journalEntry.entryNumber,
-        description: l.description ?? l.journalEntry.description ?? '',
+        entryDate: entry.entryDate,
+        entryNumber: entry.entryNumber,
+        description: descEn,
+        descriptionAr,
         debit: l.debitAmount,
         credit: l.creditAmount,
         balance: runningBalance,
+        partyName,
+        partyType: l.partyType ?? null,
+        transactionType: entry.sourceType ?? null,
+        transactionTypeAr,
+        referenceNumber,
       };
     });
+  }
+
+  private buildDescriptionAr(descEn: string, transactionTypeAr: string, partyName: string | null): string {
+    const direct = descEn ? DESCRIPTION_AR[descEn.trim()] : null;
+    const base = direct ?? transactionTypeAr;
+    return partyName ? `${base} — ${partyName}` : base;
+  }
+
+  private async resolvePartyNamesBatch(keys: string[]): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    const customerIds = new Set<number>();
+    const supplierIds = new Set<number>();
+    for (const k of keys) {
+      const [type, idStr] = k.split(':');
+      const id = parseInt(idStr, 10);
+      if (type === 'customer') customerIds.add(id);
+      else if (type === 'supplier') supplierIds.add(id);
+    }
+    const [customers, suppliers] = await Promise.all([
+      customerIds.size > 0 ? this.prisma.customer.findMany({ where: { id: { in: Array.from(customerIds) } }, select: { id: true, name: true } }) : [],
+      supplierIds.size > 0 ? this.prisma.supplier.findMany({ where: { id: { in: Array.from(supplierIds) } }, select: { id: true, name: true } }) : [],
+    ]);
+    for (const c of customers) map.set(`customer:${c.id}`, c.name);
+    for (const s of suppliers) map.set(`supplier:${s.id}`, s.name);
+    return map;
+  }
+
+  private async resolveReferenceNumbersBatch(keys: string[]): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    const byType: Record<string, Set<number>> = { sale: new Set(), purchase: new Set(), payment: new Set(), expense: new Set(), credit_note: new Set() };
+    for (const k of keys) {
+      const [type, idStr] = k.split(':');
+      const id = parseInt(idStr, 10);
+      if (byType[type]) byType[type].add(id);
+    }
+
+    const [sales, purchases, expenses, creditNotes] = await Promise.all([
+      byType.sale.size > 0 ? this.prisma.sale.findMany({ where: { id: { in: Array.from(byType.sale) } }, select: { id: true, saleNumber: true } }) : [],
+      byType.purchase.size > 0 ? this.prisma.purchase.findMany({ where: { id: { in: Array.from(byType.purchase) } }, select: { id: true, purchaseNumber: true } }) : [],
+      byType.expense.size > 0 ? this.prisma.expense.findMany({ where: { id: { in: Array.from(byType.expense) } }, select: { id: true, expenseNumber: true } }) : [],
+      byType.credit_note.size > 0 ? this.prisma.creditNote.findMany({ where: { id: { in: Array.from(byType.credit_note) } }, select: { id: true, creditNoteNumber: true } }) : [],
+    ]);
+
+    for (const s of sales) map.set(`sale:${s.id}`, s.saleNumber);
+    for (const p of purchases) map.set(`purchase:${p.id}`, p.purchaseNumber);
+    for (const e of expenses) map.set(`expense:${e.id}`, e.expenseNumber);
+    for (const cn of creditNotes) map.set(`credit_note:${cn.id}`, String(cn.creditNoteNumber));
+    for (const id of byType.payment) map.set(`payment:${id}`, `PAY-${id}`);
+    return map;
+  }
+
+  /** استخراج اسم الطرف (عميل/مورد) من المستند المصدر sale, purchase, payment */
+  private async resolvePartyFromSourceBatch(keys: string[]): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    if (keys.length === 0) return map;
+
+    const byType: Record<string, Set<number>> = { sale: new Set(), purchase: new Set(), payment: new Set() };
+    for (const k of keys) {
+      const [type, idStr] = k.split(':');
+      const id = parseInt(idStr, 10);
+      if (byType[type]) byType[type].add(id);
+    }
+
+    const saleIds = Array.from(byType.sale ?? []);
+    const purchaseIds = Array.from(byType.purchase ?? []);
+    const paymentIds = Array.from(byType.payment ?? []);
+
+    const [sales, purchases, payments] = await Promise.all([
+      saleIds.length ? this.prisma.sale.findMany({ where: { id: { in: saleIds } }, select: { id: true, customerId: true, customerName: true } }) : [],
+      purchaseIds.length ? this.prisma.purchase.findMany({ where: { id: { in: purchaseIds } }, select: { id: true, supplierId: true, supplierName: true } }) : [],
+      paymentIds.length ? this.prisma.payment.findMany({ where: { id: { in: paymentIds } }, select: { id: true, partyType: true, partyId: true, partyName: true } }) : [],
+    ]);
+
+    const customerIds = [...new Set(sales.filter(s => s.customerId).map(s => s.customerId!))];
+    const supplierIdsFromPurchases = [...new Set(purchases.map(p => p.supplierId))];
+    const supplierIdsFromPayments = [...new Set(payments.filter(p => p.partyType === 'supplier' && p.partyId).map(p => p.partyId!))];
+    const customerIdsFromPayments = [...new Set(payments.filter(p => p.partyType === 'customer' && p.partyId).map(p => p.partyId!))];
+    const allCustomerIds = [...new Set([...customerIds, ...customerIdsFromPayments])];
+    const allSupplierIds = [...new Set([...supplierIdsFromPurchases, ...supplierIdsFromPayments])];
+
+    const [customers, suppliers] = await Promise.all([
+      allCustomerIds.length ? this.prisma.customer.findMany({ where: { id: { in: allCustomerIds } }, select: { id: true, name: true } }) : [],
+      allSupplierIds.length ? this.prisma.supplier.findMany({ where: { id: { in: allSupplierIds } }, select: { id: true, name: true } }) : [],
+    ]);
+    const customerMap = new Map(customers.map(c => [c.id, c.name]));
+    const supplierMap = new Map(suppliers.map(s => [s.id, s.name]));
+
+    for (const s of sales) {
+      const name = s.customerId ? (customerMap.get(s.customerId) ?? s.customerName) : (s.customerName ?? null);
+      if (name) map.set(`sale:${s.id}`, name);
+    }
+    for (const p of purchases) {
+      const name = supplierMap.get(p.supplierId) ?? p.supplierName ?? null;
+      if (name) map.set(`purchase:${p.id}`, name);
+    }
+    for (const pay of payments) {
+      let name = pay.partyName ?? null;
+      if (!name && pay.partyType === 'customer' && pay.partyId) name = customerMap.get(pay.partyId) ?? null;
+      if (!name && pay.partyType === 'supplier' && pay.partyId) name = supplierMap.get(pay.partyId) ?? null;
+      if (name) map.set(`payment:${pay.id}`, name);
+    }
+    return map;
+  }
+
+  /** Resolve sourcePartyName, sourcePartyType, sourceExpenseCategoryName for journal entries */
+  private async resolveSourcePartyForEntries(entries: { id: number; sourceType: string | null; sourceId: number | null }[]): Promise<Map<number, { sourcePartyName: string; sourcePartyType?: string; sourceExpenseCategoryName?: string }>> {
+    const map = new Map<number, { sourcePartyName: string; sourcePartyType?: string; sourceExpenseCategoryName?: string }>();
+    if (entries.length === 0) return map;
+
+    const byType: Record<string, number[]> = {};
+    for (const e of entries) {
+      if (!e.sourceType || e.sourceId == null) continue;
+      if (!byType[e.sourceType]) byType[e.sourceType] = [];
+      byType[e.sourceType].push(e.sourceId);
+    }
+
+    const saleIds = [...new Set(byType.sale ?? [])];
+    const purchaseIds = [...new Set(byType.purchase ?? [])];
+    const paymentIds = [...new Set(byType.payment ?? [])];
+    const expenseIds = [...new Set(byType.expense ?? [])];
+    const [sales, purchases, payments, expenses] = await Promise.all([
+      saleIds.length ? this.prisma.sale.findMany({ where: { id: { in: saleIds } }, select: { id: true, customerId: true, customerName: true } }) : [],
+      purchaseIds.length ? this.prisma.purchase.findMany({ where: { id: { in: purchaseIds } }, select: { id: true, supplierId: true, supplierName: true } }) : [],
+      paymentIds.length ? this.prisma.payment.findMany({ where: { id: { in: paymentIds } }, select: { id: true, partyType: true, partyId: true, partyName: true } }) : [],
+      expenseIds.length ? this.prisma.expense.findMany({ where: { id: { in: expenseIds } }, include: { category: { select: { name: true } } } }) : [],
+    ]);
+
+    const customerIdsFromSales = [...new Set(sales.filter(s => s.customerId).map(s => s.customerId!))];
+    const customerIdsFromPayments = [...new Set(payments.filter(p => p.partyType === 'customer' && p.partyId).map(p => p.partyId!))];
+    const customerIds = [...new Set([...customerIdsFromSales, ...customerIdsFromPayments])];
+    const supplierIdsFromPurchases = [...new Set(purchases.map(p => p.supplierId))];
+    const supplierIdsFromPayments = [...new Set(payments.filter(p => p.partyType === 'supplier' && p.partyId).map(p => p.partyId!))];
+    const allSupplierIds = [...new Set([...supplierIdsFromPurchases, ...supplierIdsFromPayments])];
+    const [customers, suppliers] = await Promise.all([
+      customerIds.length ? this.prisma.customer.findMany({ where: { id: { in: customerIds } }, select: { id: true, name: true } }) : [],
+      allSupplierIds.length ? this.prisma.supplier.findMany({ where: { id: { in: allSupplierIds } }, select: { id: true, name: true } }) : [],
+    ]);
+    const customerMap = new Map(customers.map(c => [c.id, c.name]));
+    const supplierMap = new Map(suppliers.map(s => [s.id, s.name]));
+
+    for (const e of entries) {
+      if (!e.sourceType || e.sourceId == null) continue;
+      const st = e.sourceType;
+      const sid = e.sourceId;
+
+      if (st === 'sale') {
+        const sale = sales.find(s => s.id === sid);
+        const name = sale?.customerId ? (customerMap.get(sale.customerId) ?? sale.customerName) : (sale?.customerName ?? null);
+        if (name) map.set(e.id, { sourcePartyName: name, sourcePartyType: 'customer' });
+      } else if (st === 'purchase') {
+        const purchase = purchases.find(p => p.id === sid);
+        const name = purchase ? (supplierMap.get(purchase.supplierId) ?? purchase.supplierName) : null;
+        if (name) map.set(e.id, { sourcePartyName: name, sourcePartyType: 'supplier' });
+      } else if (st === 'payment') {
+        const payment = payments.find(p => p.id === sid);
+        let name = payment?.partyName;
+        if (!name && payment?.partyType === 'customer' && payment?.partyId) name = customerMap.get(payment.partyId) ?? null;
+        if (!name && payment?.partyType === 'supplier' && payment?.partyId) name = supplierMap.get(payment.partyId) ?? null;
+        if (name) map.set(e.id, { sourcePartyName: name, sourcePartyType: payment?.partyType ?? undefined });
+      } else if (st === 'expense') {
+        const expense = expenses.find(ex => ex.id === sid);
+        const name = expense?.category?.name;
+        if (name) map.set(e.id, { sourcePartyName: name, sourceExpenseCategoryName: name });
+      }
+    }
+    return map;
   }
 
   // ============ FINANCIAL STATEMENTS ============
@@ -1565,14 +1894,25 @@ export class AccountingService {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Account not found', messageAr: 'الحساب غير موجود' });
     }
 
-    const rows = ledger.map((l: any) => ({
-      date: l.date.toISOString().split('T')[0],
-      entry: l.entryNumber,
-      description: l.description,
-      debit: l.debit,
-      credit: l.credit,
-      balance: l.balance,
-    }));
+    const extractionDate = new Date().toISOString().split('T')[0];
+    const rows = ledger.map((l: any) => {
+      const d = l.entryDate ? new Date(l.entryDate) : null;
+      const dateStr = d && !isNaN(d.getTime())
+        ? `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`
+        : '';
+      const partyVal = l.partyName ?? ''; // اسم العميل أو المورد فقط، بدون قيم افتراضية
+      return {
+        date: dateStr,
+        entry: l.entryNumber ?? '',
+        transactionType: l.transactionTypeAr ?? '',
+        reference: l.referenceNumber ?? '',
+        party: partyVal,
+        description: l.descriptionAr ?? l.description ?? '',
+        debit: l.debit,
+        credit: l.credit,
+        balance: l.balance,
+      };
+    });
 
     const subtitle = start && end
       ? `${formatDateForHeader(start)} to ${formatDateForHeader(end)}`
@@ -1594,9 +1934,17 @@ export class AccountingService {
       titleAr: `دفتر الحساب: ${account.name}`,
       subtitle,
       subtitleAr,
+      statementAccountInfo: {
+        accountName: account.name,
+        accountCode: account.code,
+        extractionDate,
+      },
       columns: [
-        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto', format: 'date' },
+        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto' },
         { header: 'Entry', headerAr: 'القيد', field: 'entry', width: 'auto' },
+        { header: 'Type', headerAr: 'نوع العملية', field: 'transactionType', width: 'auto' },
+        { header: 'Reference', headerAr: 'المرجع', field: 'reference', width: 'auto' },
+        { header: 'Party', headerAr: 'الطرف', field: 'party', width: 'auto' },
         { header: 'Description', headerAr: 'الوصف', field: 'description', width: '*' },
         { header: 'Debit', headerAr: 'مدين', field: 'debit', width: 'auto', format: 'currency' },
         { header: 'Credit', headerAr: 'دائن', field: 'credit', width: 'auto', format: 'currency' },

@@ -34,7 +34,7 @@ export class PaymentsService {
         skip,
         take: pageSize,
         where,
-        include: { receivedBy: true, branch: true },
+        include: { receivedBy: true, branch: true, bankAccount: { select: { id: true, code: true, name: true } } },
         orderBy: { paymentDate: 'desc' },
       }),
       this.prisma.payment.count({ where }),
@@ -46,7 +46,7 @@ export class PaymentsService {
   async findById(id: number) {
     const payment = await this.prisma.payment.findUnique({
       where: { id },
-      include: { receivedBy: true, branch: true },
+      include: { receivedBy: true, branch: true, bankAccount: { select: { id: true, code: true, name: true } } },
     });
 
     if (!payment) {
@@ -64,7 +64,7 @@ export class PaymentsService {
     const language = query.language || 'en';
     const payment = await this.prisma.payment.findUnique({
       where: { id },
-      include: { receivedBy: true, branch: true },
+      include: { receivedBy: true, branch: true, bankAccount: { select: { id: true, code: true, name: true } } },
     });
 
     if (!payment) {
@@ -156,6 +156,7 @@ export class PaymentsService {
           paymentDate: dto.paymentDate ? new Date(dto.paymentDate) : new Date(),
           amount: dto.amount,
           paymentMethod: dto.paymentMethod ?? 'cash',
+          bankAccountId: dto.bankAccountId ?? null,
           referenceType: 'sale',
           referenceId: dto.saleId,
           partyType: sale.customerId ? 'customer' : null,
@@ -199,6 +200,8 @@ export class PaymentsService {
         sale.branchId ?? null,
         userId,
         dto.amount,
+        dto.paymentMethod ?? 'cash',
+        dto.bankAccountId ?? null,
       );
 
       // Blueprint 04: PLE for payment against sale
@@ -263,6 +266,7 @@ export class PaymentsService {
           paymentDate: dto.paymentDate ? new Date(dto.paymentDate) : new Date(),
           amount,
           paymentMethod: dto.paymentMethod ?? 'cash',
+          bankAccountId: dto.bankAccountId ?? null,
           referenceType: 'purchase',
           referenceId: dto.purchaseId,
           partyType: 'supplier',
@@ -338,6 +342,8 @@ export class PaymentsService {
         purchase.branchId ?? null,
         userId,
         amount,
+        dto.paymentMethod ?? 'cash',
+        dto.bankAccountId ?? null,
       );
 
       // Blueprint 04: PLE for payment against purchase
@@ -398,6 +404,7 @@ export class PaymentsService {
           paymentDate: dto.paymentDate ? new Date(dto.paymentDate) : new Date(),
           amount: dto.amount,
           paymentMethod: dto.paymentMethod ?? 'cash',
+          bankAccountId: dto.bankAccountId ?? null,
           referenceType: 'expense',
           referenceId: dto.expenseId,
           partyType: 'supplier',
@@ -438,6 +445,8 @@ export class PaymentsService {
         expense.branchId ?? null,
         userId,
         dto.amount,
+        dto.paymentMethod ?? 'cash',
+        dto.bankAccountId ?? null,
       );
 
       // Blueprint 04: PLE for payment against expense (payable)
@@ -671,6 +680,7 @@ export class PaymentsService {
           paymentDate: dto.paymentDate ? new Date(dto.paymentDate) : new Date(),
           amount: dto.amount,
           paymentMethod: dto.paymentMethod ?? 'cash',
+          bankAccountId: dto.bankAccountId ?? null,
           referenceType: null,
           referenceId: null,
           partyType: dto.partyType,
@@ -691,6 +701,8 @@ export class PaymentsService {
           null,
           userId,
           dto.amount,
+          dto.paymentMethod ?? 'cash',
+          dto.bankAccountId ?? null,
         );
         await this.paymentLedgerService.createPLE(
           {
@@ -716,6 +728,8 @@ export class PaymentsService {
           null,
           userId,
           dto.amount,
+          dto.paymentMethod ?? 'cash',
+          dto.bankAccountId ?? null,
         );
         await this.paymentLedgerService.createPLE(
           {

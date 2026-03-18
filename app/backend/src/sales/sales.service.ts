@@ -444,6 +444,10 @@ export class SalesService {
 
       const paymentStatus = totalPayments >= totalAmount ? 'paid' : totalPayments > 0 ? 'partial' : 'unpaid';
 
+      const firstPayment = dto.payments?.[0];
+      const salePaymentMethod = firstPayment?.paymentMethod ?? 'cash';
+      const saleBankAccountId = firstPayment?.bankAccountId ?? null;
+
       // Create sale
       const now = new Date();
       const sale = await tx.sale.create({
@@ -469,6 +473,8 @@ export class SalesService {
           grandTotal: dto.taxTemplateId ? grandTotal : null,
           paymentStatus,
           amountPaid: totalPayments,
+          paymentMethod: salePaymentMethod,
+          bankAccountId: saleBankAccountId,
           dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
           notes: dto.notes,
           docstatus: 1,
@@ -571,12 +577,14 @@ export class SalesService {
               paymentDate: new Date(),
               amount: payment.amount,
               paymentMethod: payment.paymentMethod,
+              bankAccountId: payment.bankAccountId ?? null,
               referenceType: 'sale',
               referenceId: sale.id,
               partyType: 'customer',
               partyId: dto.customerId,
               partyName: customer?.name,
               receivedById: cashierId,
+              branchId: sale.branchId ?? undefined,
             },
           });
           if (dto.customerId) {
@@ -638,6 +646,8 @@ export class SalesService {
           netTotal: sale.netTotal ?? undefined,
           totalTaxAmount: sale.totalTaxAmount ?? undefined,
           grandTotal: sale.grandTotal ?? undefined,
+          paymentMethod: salePaymentMethod,
+          bankAccountId: saleBankAccountId,
         },
       );
 
@@ -839,6 +849,8 @@ export class SalesService {
           netTotal: sale.netTotal ?? undefined,
           totalTaxAmount: sale.totalTaxAmount ?? undefined,
           grandTotal: sale.grandTotal ?? undefined,
+          paymentMethod: sale.paymentMethod ?? undefined,
+          bankAccountId: sale.bankAccountId ?? undefined,
         },
       );
 

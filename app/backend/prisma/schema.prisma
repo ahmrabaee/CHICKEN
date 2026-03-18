@@ -614,6 +614,8 @@ model Sale {
   totalProfit      Int       @default(0) @map("total_profit")
   paymentStatus    String    @default("unpaid") @map("payment_status") // 'unpaid', 'partial', 'paid'
   amountPaid       Int       @default(0) @map("amount_paid")
+  paymentMethod    String?   @map("payment_method")
+  bankAccountId    Int?      @map("bank_account_id")
   dueDate          DateTime? @map("due_date")
   isVoided         Boolean   @default(false) @map("is_voided")
   voidedAt         DateTime? @map("voided_at")
@@ -634,9 +636,10 @@ model Sale {
   cancelReason    String?   @map("cancel_reason")
 
   // Relations
-  customer    Customer?  @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  cashier     User       @relation("SaleCashier", fields: [cashierId], references: [id], onDelete: Restrict)
-  branch      Branch?    @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  customer    Customer?   @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  cashier     User        @relation("SaleCashier", fields: [cashierId], references: [id], onDelete: Restrict)
+  branch      Branch?     @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  bankAccount BankAccount? @relation(fields: [bankAccountId], references: [id], onDelete: SetNull)
   voidedBy    User?      @relation("SaleVoidedBy", fields: [voidedById], references: [id], onDelete: SetNull)
   cancelledBy User?      @relation("SaleCancelledBy", fields: [cancelledById], references: [id], onDelete: SetNull)
   submittedBy User?      @relation("SaleSubmittedBy", fields: [submittedById], references: [id], onDelete: SetNull)
@@ -724,6 +727,8 @@ model Purchase {
   totalTaxAmount  Int       @default(0) @map("total_tax_amount")
   grandTotal      Int?      @map("grand_total")
   amountPaid            Int       @default(0) @map("amount_paid")
+  paymentMethod         String?   @map("payment_method")
+  bankAccountId         Int?      @map("bank_account_id")
   dueDate               DateTime? @map("due_date")
   receivedById          Int?      @map("received_by")
   receivedAt            DateTime? @map("received_at")
@@ -747,6 +752,7 @@ model Purchase {
 
   // Relations
   supplier      Supplier       @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  bankAccount   BankAccount?   @relation(fields: [bankAccountId], references: [id], onDelete: SetNull)
   receivedBy    User?          @relation("PurchaseReceivedBy", fields: [receivedById], references: [id], onDelete: SetNull)
   approvedBy    User?          @relation("PurchaseApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
   branch        Branch?        @relation(fields: [branchId], references: [id], onDelete: SetNull)
@@ -812,10 +818,11 @@ model Payment {
   bankTransactionId String?  @map("bank_transaction_id")
   receivedById      Int?     @map("received_by")
   branchId          Int?     @map("branch_id")
-  isVoided          Boolean  @default(false) @map("is_voided")
-  notes             String?
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  bankAccountId    Int?     @map("bank_account_id")
+  isVoided         Boolean  @default(false) @map("is_voided")
+  notes            String?
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   // Blueprint 03: Posting workflow (Payment submitted on create; cancel creates GL reversal)
   docstatus     Int       @default(1) @map("docstatus") // 1=Submitted, 2=Cancelled
@@ -824,15 +831,17 @@ model Payment {
   cancelReason  String?   @map("cancel_reason")
 
   // Relations
-  receivedBy   User?   @relation(fields: [receivedById], references: [id], onDelete: SetNull)
-  cancelledBy  User?   @relation("PaymentCancelledBy", fields: [cancelledById], references: [id], onDelete: SetNull)
-  branch       Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  receivedBy   User?         @relation(fields: [receivedById], references: [id], onDelete: SetNull)
+  cancelledBy  User?         @relation("PaymentCancelledBy", fields: [cancelledById], references: [id], onDelete: SetNull)
+  branch       Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  bankAccount  BankAccount?  @relation(fields: [bankAccountId], references: [id], onDelete: SetNull)
   allocations  PaymentAllocation[] @relation // Blueprint 04: multi-invoice allocation
 
   @@index([paymentDate])
   @@index([referenceType, referenceId])
   @@index([partyType, partyId])
   @@index([docstatus])
+  @@index([bankAccountId])
   @@map("payments")
 }
 
@@ -979,6 +988,7 @@ model Expense {
   description     String
   supplierId      Int?      @map("supplier_id")
   paymentMethod   String?   @map("payment_method")
+  bankAccountId   Int?      @map("bank_account_id")
   referenceNumber String?   @map("reference_number")
   isApproved      Boolean   @default(false) @map("is_approved")
   approvedById    Int?      @map("approved_by")
@@ -999,8 +1009,9 @@ model Expense {
   cancelReason  String?   @map("cancel_reason")
 
   // Relations
-  category   ExpenseCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  supplier   Supplier?        @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  category     ExpenseCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  supplier     Supplier?        @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  bankAccount  BankAccount?     @relation(fields: [bankAccountId], references: [id], onDelete: SetNull)
   approvedBy User?            @relation("ExpenseApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
   branch     Branch?          @relation(fields: [branchId], references: [id], onDelete: SetNull)
   createdBy  User             @relation("ExpenseCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
@@ -1041,6 +1052,7 @@ model Company {
   roundOffAccount      Account?  @relation("CompanyRoundOffAccount", fields: [roundOffAccountId], references: [id], onDelete: SetNull)
   roundOffCostCenter   CostCenter? @relation("CompanyRoundOffCostCenter", fields: [roundOffCostCenterId], references: [id], onDelete: SetNull) // One cost center can be round-off for multiple companies
   journalEntryLines    JournalEntryLine[]
+  bankAccounts         BankAccount[]
 
   @@map("companies")
 }
@@ -1083,6 +1095,7 @@ model Account {
   taxTemplateItems    TaxTemplateItem[]
   saleTaxBreakdowns   SaleTaxBreakdown[]
   purchaseTaxBreakdowns PurchaseTaxBreakdown[]
+  bankAccounts       BankAccount[]
 
   @@unique([code, companyId])
   @@index([companyId])
@@ -1329,6 +1342,31 @@ model CostCenter {
   @@unique([code, companyId])
   @@index([companyId])
   @@map("cost_centers")
+}
+
+/// Bank accounts linked to chart of accounts (for bank_transfer, card payments)
+model BankAccount {
+  id          Int       @id @default(autoincrement())
+  code        String    @unique
+  name        String
+  nameEn      String?   @map("name_en")
+  accountId   Int       @map("account_id")
+  companyId   Int?      @map("company_id")
+  isActive    Boolean   @default(true) @map("is_active")
+  isDefault   Boolean   @default(false) @map("is_default")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  account   Account   @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  company   Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  payments  Payment[]
+  expenses  Expense[]
+  sales     Sale[]
+  purchases Purchase[]
+
+  @@index([accountId])
+  @@index([companyId])
+  @@map("bank_accounts")
 }
 
 // =============================================================================

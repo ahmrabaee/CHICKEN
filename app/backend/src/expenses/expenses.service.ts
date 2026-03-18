@@ -68,6 +68,7 @@ export class ExpensesService {
           description: dto.description,
           supplierId: dto.supplierId,
           paymentMethod: dto.paymentMethod,
+          bankAccountId: dto.bankAccountId ?? null,
           referenceNumber: dto.referenceNumber,
           branchId: dto.branchId,
           attachmentUrl: dto.attachmentUrl,
@@ -85,6 +86,7 @@ export class ExpensesService {
         userId,
         dto.amount,
         dto.paymentMethod,
+        dto.bankAccountId ?? null,
       );
 
       // Create debt record if on credit

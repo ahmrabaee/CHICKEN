@@ -66,12 +66,14 @@ export function BankAccountsSettingsTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: BANK_ACCOUNTS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ["bank-accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["accounting", "accounts"] });
       toast.success("تم إضافة الحساب البنكي بنجاح");
       setShowForm(false);
       resetForm();
     },
     onError: (err: unknown) => {
-      const msg = (err as { response?: { data?: { messageAr?: string } } })?.response?.data?.messageAr ?? "فشل الإضافة";
+      const data = (err as { response?: { data?: { error?: { messageAr?: string }; messageAr?: string } } })?.response?.data;
+      const msg = data?.error?.messageAr ?? data?.messageAr ?? "فشل الإضافة";
       toast.error(msg);
     },
   });
@@ -136,8 +138,12 @@ export function BankAccountsSettingsTab() {
   };
 
   const handleSubmit = () => {
-    if (!formData.name || !formData.accountId) {
-      toast.error("الاسم والحساب مطلوبان");
+    if (!formData.name?.trim()) {
+      toast.error("الاسم مطلوب");
+      return;
+    }
+    if (editingId && (!formData.accountId || formData.accountId === 0)) {
+      toast.error("الحساب مطلوب عند التعديل");
       return;
     }
     if (editingId) {
@@ -245,13 +251,18 @@ export function BankAccountsSettingsTab() {
               <div className="space-y-2">
                 <Label>الحساب في دليل الحسابات *</Label>
                 <Select
-                  value={formData.accountId ? String(formData.accountId) : ""}
+                  value={formData.accountId !== undefined && formData.accountId !== null ? String(formData.accountId) : ""}
                   onValueChange={(v) => setFormData((f) => ({ ...f, accountId: parseInt(v, 10) }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="اختر الحساب" />
                   </SelectTrigger>
                   <SelectContent>
+                    {!editingId && (
+                      <SelectItem value="0">
+                        إنشاء حساب جديد تحت النقد في البنك (1112)
+                      </SelectItem>
+                    )}
                     {postableAccounts.map((a) => (
                       <SelectItem key={a.id} value={String(a.id)}>
                         {a.code} - {a.name}

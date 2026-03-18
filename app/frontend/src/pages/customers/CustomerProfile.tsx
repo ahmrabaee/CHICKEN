@@ -168,12 +168,15 @@ export default function CustomerProfile() {
                 });
                 toast.success("تم تحديث بيانات العميل بنجاح");
             } else {
-                const newCustomer = await createMutation.mutateAsync(cleanData);
+                await createMutation.mutateAsync(cleanData);
                 toast.success("تم إنشاء العميل بنجاح");
-                navigate(`/customers/${newCustomer.id}`);
+                navigate("/customers");
             }
         } catch (error: any) {
+            const err = error.response?.data?.error;
             const errorMsg =
+                err?.messageAr ||
+                err?.message ||
                 error.response?.data?.messageAr ||
                 error.response?.data?.message ||
                 "حدث خطأ أثناء حفظ البيانات";
@@ -191,7 +194,10 @@ export default function CustomerProfile() {
             toast.success("تم حذف العميل بنجاح");
             navigate("/customers");
         } catch (error: any) {
+            const err = error.response?.data?.error;
             const errorMsg =
+                err?.messageAr ||
+                err?.message ||
                 error.response?.data?.messageAr ||
                 error.response?.data?.message ||
                 "حدث خطأ أثناء حذف العميل";

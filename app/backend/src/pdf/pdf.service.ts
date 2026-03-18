@@ -112,7 +112,7 @@ export class PdfService implements OnModuleInit {
     }
 
     async generate(options: PdfGenerateOptions): Promise<Buffer> {
-        const { meta, columns, rows, summaryItems, sections, grandTotal, statementEmpty, statementPartyInfo } = options;
+        const { meta, columns, rows, summaryItems, sections, grandTotal, statementEmpty, statementPartyInfo, statementAccountInfo } = options;
         const isArabic = meta.language === 'ar';
 
         const mainContent = statementEmpty
@@ -129,6 +129,7 @@ export class PdfService implements OnModuleInit {
             { text: '', margin: [0, 5, 0, 0] },
             this.buildMetaInfoSection(meta, isArabic),
             statementPartyInfo ? this.buildStatementPartyInfoSection(statementPartyInfo, isArabic) : { text: '' },
+            statementAccountInfo ? this.buildStatementAccountInfoSection(statementAccountInfo, isArabic) : { text: '' },
             mainContent,
             (summaryItems && !statementEmpty) ? this.buildSummarySection(summaryItems, isArabic) : { text: '' },
             (grandTotal) ? this.buildGrandTotal(grandTotal, isArabic) : { text: '' },
@@ -276,6 +277,45 @@ export class PdfService implements OnModuleInit {
             ],
             margin: [0, 0, 0, 0],
         });
+
+        return {
+            table: {
+                widths: ['*'],
+                body: [[{ stack: rows, border: [false, false, false, false], fillColor: '#f8fafc', padding: 12 }]],
+            },
+            layout: 'noBorders',
+            margin: [0, 12, 0, 16],
+        };
+    }
+
+    private buildStatementAccountInfoSection(
+        info: NonNullable<PdfGenerateOptions['statementAccountInfo']>,
+        isArabic: boolean,
+    ) {
+        const fmt = (d: string) => formatDateForHeader(d);
+        const rows: any[] = [
+            {
+                text: [
+                    { text: isArabic ? 'اسم الحساب: ' : 'Account Name: ', bold: true, color: PDF_DESIGN.colors.textMuted, fontSize: 10 },
+                    { text: info.accountName, bold: true, fontSize: 11 },
+                ],
+                margin: [0, 0, 0, 4],
+            },
+            {
+                text: [
+                    { text: isArabic ? 'رقم الحساب: ' : 'Account Code: ', bold: true, color: PDF_DESIGN.colors.textMuted, fontSize: 10 },
+                    info.accountCode,
+                ],
+                margin: [0, 0, 0, 4],
+            },
+            {
+                text: [
+                    { text: isArabic ? 'تاريخ استخراج الكشف: ' : 'Report Extraction Date: ', bold: true, color: PDF_DESIGN.colors.textMuted, fontSize: 10 },
+                    fmt(info.extractionDate),
+                ],
+                margin: [0, 0, 0, 0],
+            },
+        ];
 
         return {
             table: {

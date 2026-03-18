@@ -346,6 +346,7 @@ async function seedAccounts(): Promise<void> {
     { code: '1110', name: 'النقدية', nameEn: 'Cash', accountType: 'asset', parentAccountCode: '1100', isSystemAccount: true },
     { code: '1111', name: 'النقد في الصندوق', nameEn: 'Cash in Drawer', accountType: 'asset', parentAccountCode: '1110' },
     { code: '1112', name: 'النقد في البنك', nameEn: 'Cash in Bank', accountType: 'asset', parentAccountCode: '1110' },
+    { code: '1112-001', name: 'حساب بنكي عام', nameEn: 'General Bank Account', accountType: 'Bank', parentAccountCode: '1112' },
     { code: '1120', name: 'حسابات القبض', nameEn: 'Accounts Receivable', accountType: 'asset', parentAccountCode: '1100', isSystemAccount: true },
     { code: '1125', name: 'ضريبة القيمة المضافة القابلة للاسترداد', nameEn: 'VAT Receivable', accountType: 'asset', parentAccountCode: '1100', isSystemAccount: true },
     { code: '1130', name: 'المخزون', nameEn: 'Inventory', accountType: 'asset', parentAccountCode: '1100', isSystemAccount: true },

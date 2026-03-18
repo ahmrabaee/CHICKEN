@@ -46,6 +46,11 @@ export class SalePaymentDto {
   @IsString()
   @IsIn(['cash', 'card', 'bank_transfer', 'mobile', 'check'])
   paymentMethod: string;
+
+  @ApiPropertyOptional({ description: 'Bank account ID for bank_transfer/card' })
+  @Type(() => Number)
+  @IsOptional()
+  bankAccountId?: number;
 }
 
 export class CreateSaleDto {

@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import {
   Search,
   Plus,
@@ -10,6 +10,7 @@ import {
   Printer,
   CreditCard,
   Banknote,
+  Building2,
   X,
   Loader2,
   FileText,
@@ -23,9 +24,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useQuery } from "@tanstack/react-query";
 import { useItems } from "@/hooks/use-inventory";
 import { useCustomers } from "@/hooks/use-customers";
 import { useCreateSale } from "@/hooks/use-sales";
+import { bankAccountsService } from "@/services/bank-accounts.service";
 import { TaxTemplateSelector } from "@/components/tax/TaxTemplateSelector";
 import { ThermalReceipt } from "@/components/pos/ThermalReceipt";
 import { CustomerSearchCombobox } from "@/components/pos/CustomerSearchCombobox";
@@ -65,7 +68,8 @@ function POS() {
   const [discount, setDiscount] = useState(0);
   const [paidAmount, setPaidAmount] = useState("");
   const [saleType, setSaleType] = useState<"cash" | "credit">("cash");
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card">("cash");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "bank_transfer">("cash");
+  const [bankAccountId, setBankAccountId] = useState<number | null>(null);
   const [taxTemplateId, setTaxTemplateId] = useState<number | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -84,7 +88,39 @@ function POS() {
     pageSize: 100,
   });
   const { data: customersResp } = useCustomers({ isActive: true, pageSize: 500 });
+  const { data: bankAccountsRes } = useQuery({
+    queryKey: ["bank-accounts"],
+    queryFn: async () => {
+      const res = await bankAccountsService.getAll(false);
+      return res.data?.data ?? res.data ?? [];
+    },
+  });
+  const bankAccounts = (Array.isArray(bankAccountsRes) ? bankAccountsRes : []) as { id: number; code: string; name: string; isDefault?: boolean }[];
   const createSale = useCreateSale();
+
+  // عند الانتقال من نقداً إلى بطاقة/تحويل بنكي، أو عند تحميل البنوك: اختيار البنك الافتراضي تلقائياً
+  const prevPaymentMethodRef = useRef<"cash" | "card" | "bank_transfer">(paymentMethod);
+  const prevBankCountRef = useRef(0);
+  const userHasChosenBankRef = useRef(false);
+  useEffect(() => {
+    if (paymentMethod === "cash") {
+      setBankAccountId(null);
+      prevPaymentMethodRef.current = "cash";
+      userHasChosenBankRef.current = false;
+      prevBankCountRef.current = 0;
+      return;
+    }
+    const didJustSwitchFromCash = prevPaymentMethodRef.current === "cash" &&
+      (paymentMethod === "card" || paymentMethod === "bank_transfer");
+    const banksJustLoaded = bankAccounts.length > 0 && prevBankCountRef.current === 0;
+    prevPaymentMethodRef.current = paymentMethod;
+    prevBankCountRef.current = bankAccounts.length;
+    const shouldAutoSelect = (didJustSwitchFromCash || banksJustLoaded) && bankAccountId == null && !userHasChosenBankRef.current;
+    if (shouldAutoSelect && bankAccounts.length > 0) {
+      const defaultBank = bankAccounts.find((b) => b.isDefault) ?? bankAccounts[0];
+      if (defaultBank) setBankAccountId(defaultBank.id);
+    }
+  }, [paymentMethod, bankAccounts, bankAccountId]);
 
   const items: Item[] = (itemsResp?.data ?? []).filter(i => (i.defaultSalePrice ?? 0) > 0);
   const customers: Customer[] = customersResp?.data ?? [];
@@ -377,10 +413,17 @@ function POS() {
         paidAmount === "" ? totalMinor : Math.min(Math.max(0, paidMinor), totalMinor)
       );
       if (amount > 0) {
+        // عند بطاقة/تحويل بنكي: استخدم البنك المختار، أو الافتراضي إن وُجد، وإلا صندوق
+        let effectiveBankId: number | undefined = bankAccountId ?? undefined;
+        if ((paymentMethod === "bank_transfer" || paymentMethod === "card") && bankAccounts.length > 0 && !effectiveBankId) {
+          const defaultBank = bankAccounts.find((b) => b.isDefault) ?? bankAccounts[0];
+          effectiveBankId = defaultBank?.id;
+        }
         dto.payments = [
           {
             amount,
-            paymentMethod: paymentMethod === "cash" ? "cash" : "card",
+            paymentMethod: paymentMethod,
+            bankAccountId: (paymentMethod === "bank_transfer" || paymentMethod === "card") ? effectiveBankId : undefined,
           },
         ];
       }
@@ -803,7 +846,7 @@ function POS() {
                     </p>
                   )}
                   <div className="flex gap-2">
-                    {(["cash", "card"] as const).map((m) => (
+                    {(["cash", "card", "bank_transfer"] as const).map((m) => (
                       <button
                         key={m}
                         onClick={() => setPaymentMethod(m)}
@@ -812,11 +855,32 @@ function POS() {
                             : "bg-background border-input text-muted-foreground hover:border-primary"
                           }`}
                       >
-                        {m === "cash" ? <Banknote className="w-4 h-4" /> : <CreditCard className="w-4 h-4" />}
-                        {m === "cash" ? "نقداً" : "بطاقة"}
+                        {m === "cash" && <Banknote className="w-4 h-4" />}
+                        {m === "card" && <CreditCard className="w-4 h-4" />}
+                        {m === "bank_transfer" && <Building2 className="w-4 h-4" />}
+                        {m === "cash" ? "نقداً" : m === "card" ? "بطاقة" : "تحويل بنكي"}
                       </button>
                     ))}
                   </div>
+                  {(paymentMethod === "card" || paymentMethod === "bank_transfer") && bankAccounts.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground shrink-0">استلام في:</span>
+                      <select
+                        value={bankAccountId ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value ? Number(e.target.value) : null;
+                          setBankAccountId(val);
+                          userHasChosenBankRef.current = true;
+                        }}
+                        className="flex-1 h-9 rounded-md border border-input bg-background px-3 text-sm"
+                      >
+                        <option value="">— صندوق —</option>
+                        {bankAccounts.map((b) => (
+                          <option key={b.id} value={b.id}>{b.code} - {b.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-muted-foreground shrink-0">المبلغ المدفوع</span>
                     <Input

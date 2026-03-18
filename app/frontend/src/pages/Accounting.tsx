@@ -51,14 +51,18 @@ const typeLabels: Record<string, string> = {
     asset: "أصول", liability: "خصوم", equity: "حقوق ملكية", revenue: "إيرادات", expense: "مصروفات",
 };
 
-/** Detect if journal entry is receipt (from customer), payment (to supplier), or expense */
-function getEntryDisplayType(entry: JournalEntry): "receipt" | "payment" | "expense" | null {
+/** Detect if journal entry is receipt (from customer), payment (to supplier), expense, sale, or purchase */
+function getEntryDisplayType(entry: JournalEntry): "receipt" | "payment" | "expense" | "sale" | "purchase" | null {
     if (entry.sourceType === "expense") return "expense";
-    if (entry.sourceType !== "payment") return null;
-    if (entry.sourcePartyType === "customer") return "receipt";
-    if (entry.sourcePartyType === "supplier") return "payment";
-    if (entry.description?.includes("تحصيل")) return "receipt";
-    if (entry.description?.includes("دفع")) return "payment";
+    const hasParty = entry.sourcePartyName ?? entry.lines?.find((l) => l.partyName)?.partyName;
+    if (entry.sourceType === "sale" && hasParty) return "sale";
+    if (entry.sourceType === "purchase" && hasParty) return "purchase";
+    if (entry.sourceType === "payment") {
+        if (entry.sourcePartyType === "customer") return "receipt";
+        if (entry.sourcePartyType === "supplier") return "payment";
+        if (entry.description?.includes("تحصيل")) return "receipt";
+        if (entry.description?.includes("دفع")) return "payment";
+    }
     return null;
 }
 
@@ -123,11 +127,38 @@ function JournalDetailCard({ entryId, open, onClose, onOpenEntry }: { entryId: n
                                     </div>
                                 );
                             }
+                            if ((displayType === "sale" || displayType === "purchase") && partyName) {
+                                return (
+                                    <div className="rounded-xl p-4 flex items-center gap-3 border-r-4 bg-slate-100 dark:bg-slate-800/50 border-slate-400">
+                                        <div className="flex-1">
+                                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                                                {displayType === "sale" ? "الطرف (عميل)" : "الطرف (مورد)"}
+                                            </p>
+                                            <p className="text-lg font-bold text-foreground mt-0.5">{partyName}</p>
+                                        </div>
+                                    </div>
+                                );
+                            }
                             return null;
                         })()}
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             <Info label="رقم القيد" value={entry.entryNumber} />
                             <Info label="التاريخ" value={formatDate(entry.entryDate)} />
+                            {(entry.sourcePartyName ?? entry.lines?.find((l) => l.partyName)?.partyName) && (
+                                <Info
+                                    label="الطرف"
+                                    value={
+                                        <span className="font-medium">
+                                            {entry.sourcePartyName ?? entry.lines?.find((l) => l.partyName)?.partyName}
+                                            {entry.sourcePartyType && (
+                                                <span className="text-muted-foreground text-sm mr-1">
+                                                    ({entry.sourcePartyType === "customer" ? "عميل" : entry.sourcePartyType === "supplier" ? "مورد" : entry.sourcePartyType})
+                                                </span>
+                                            )}
+                                        </span>
+                                    }
+                                />
+                            )}
                             <Info label="الحالة" value={
                                 <div className="flex flex-wrap gap-1.5 items-center">
                                     {entryStatus(entry) === "posted" ? <StatusBadge status="success">مرحّل</StatusBadge> : <StatusBadge status="warning">مسودة</StatusBadge>}
@@ -172,6 +203,9 @@ function JournalDetailCard({ entryId, open, onClose, onOpenEntry }: { entryId: n
                             )}
                             <Info label="إجمالي المدين" value={formatCurrency(entryTotalDebit(entry))} />
                             <Info label="إجمالي الدائن" value={formatCurrency(entryTotalCredit(entry))} />
+                            {(entry.sourcePartyName ?? entry.lines?.find((l) => l.partyName)?.partyName) && (
+                                <Info label="الطرف" value={entry.sourcePartyName ?? entry.lines?.find((l) => l.partyName)?.partyName ?? ""} />
+                            )}
                         </div>
 
                         {/* Profit Summary Section */}
@@ -267,9 +301,9 @@ function JournalDetailCard({ entryId, open, onClose, onOpenEntry }: { entryId: n
                                                 <TableCell className="text-sm">
                                                     {(() => {
                                                         const partyName = line.partyName
-                                                            ?? (entry.sourceType === "payment" && entry.sourcePartyName ? entry.sourcePartyName : null)
+                                                            ?? (["sale", "purchase", "payment"].includes(entry.sourceType ?? "") && entry.sourcePartyName ? entry.sourcePartyName : null)
                                                             ?? (entry.sourceType === "expense" && entry.sourceExpenseCategoryName ? entry.sourceExpenseCategoryName : null);
-                                                        const partyType = line.partyType ?? (entry.sourceType === "payment" ? entry.sourcePartyType : null);
+                                                        const partyType = line.partyType ?? entry.sourcePartyType ?? null;
                                                         if (partyName) {
                                                             const typeLabel = partyType
                                                                 ? (partyType === "customer" ? "عميل" : partyType === "supplier" ? "مورد" : partyType)

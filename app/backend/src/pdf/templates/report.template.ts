@@ -10,6 +10,12 @@ export interface ReportPdfData {
     rows: any[];
     summaryItems?: PdfSummaryItem[];
     orientation?: 'portrait' | 'landscape';
+    /** Account ledger header: اسم الحساب، رقم الحساب، تاريخ الاستخراج */
+    statementAccountInfo?: {
+        accountName: string;
+        accountCode: string;
+        extractionDate: string;
+    };
 }
 
 export function buildReportPdfOptions(meta: PdfMeta, data: ReportPdfData): PdfGenerateOptions {
@@ -25,5 +31,6 @@ export function buildReportPdfOptions(meta: PdfMeta, data: ReportPdfData): PdfGe
         columns: data.columns,
         rows: data.rows,
         summaryItems: data.summaryItems,
+        statementAccountInfo: data.statementAccountInfo,
     };
 }

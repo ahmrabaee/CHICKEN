@@ -143,4 +143,14 @@ export interface LedgerEntry {
     entryNumber?: string;
     /** Bank name when transaction is from bank transfer (payment) */
     bankName?: string | null;
+    /** Enriched: Arabic description */
+    descriptionAr?: string;
+    /** Enriched: Party name (customer/supplier) */
+    partyName?: string | null;
+    partyType?: string | null;
+    /** Enriched: Transaction type (sale, purchase, payment, etc.) */
+    transactionType?: string | null;
+    transactionTypeAr?: string;
+    /** Enriched: Reference number (SAL-XXX, PUR-XXX, etc.) */
+    referenceNumber?: string | null;
 }

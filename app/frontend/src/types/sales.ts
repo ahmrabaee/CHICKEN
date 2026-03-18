@@ -110,6 +110,8 @@ export interface CreateSaleLineDto {
 export interface CreateSalePaymentDto {
     amount: number;
     paymentMethod: 'cash' | 'card' | 'bank_transfer' | 'mobile' | 'check';
+    /** Bank account ID when paymentMethod is card or bank_transfer */
+    bankAccountId?: number;
 }
 
 export interface CreateSaleDto {

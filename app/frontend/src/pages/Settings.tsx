@@ -208,7 +208,7 @@ export default function Settings() {
                 </div>
                 <div className="space-y-2">
                   <Label>نسبة الضريبة الافتراضية (%)</Label>
-                  <NumericInput  defaultValue="17" />
+                  <NumericInput value="17" />
                 </div>
                 <div className="space-y-2">
                   <Label>بداية السنة المالية</Label>

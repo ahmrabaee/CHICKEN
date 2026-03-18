@@ -492,6 +492,8 @@ export class PurchasesService {
             amountPaid: amountPaid,
             supplierId: dto.supplierId,
             stockAccountCode,
+            paymentMethod: (dto.paymentMethod as string) ?? 'cash',
+            bankAccountId: dto.bankAccountId ?? null,
           },
         );
       }
@@ -543,6 +545,7 @@ export class PurchasesService {
               paymentDate: now,
               amount: amountPaid,
               paymentMethod: (dto.paymentMethod as string) ?? 'cash',
+              bankAccountId: dto.bankAccountId ?? null,
               referenceType: 'purchase',
               referenceId: purchase.id,
               partyType: 'supplier',

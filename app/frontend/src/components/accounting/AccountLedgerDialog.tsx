@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, Download } from "lucide-react";
+import { Loader2, Download, Printer } from "lucide-react";
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -10,8 +10,8 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useAccountLedger } from "@/hooks/use-accounting";
-import { formatCurrency, formatDate } from "@/lib/formatters";
-import { downloadReportPdf } from "@/services/pdf.service";
+import { formatCurrency, formatDateArabic } from "@/lib/formatters";
+import { downloadReportPdf, fetchPdfBlob, createPdfObjectUrl, revokePdfObjectUrl } from "@/services/pdf.service";
 import { toast } from "@/hooks/use-toast";
 import type { Account } from "@/types/accounting";
 
@@ -33,19 +33,37 @@ export function AccountLedgerDialog({
     const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
     const [pdfLoading, setPdfLoading] = useState(false);
 
+    const pdfParams = { accountCode: account?.code || "", startDate, endDate, language: "ar" as const };
+
     const handleDownloadLedgerPdf = async () => {
         if (!account?.code) return;
         setPdfLoading(true);
         try {
-            await downloadReportPdf("ledger", {
-                accountCode: account.code,
-                startDate,
-                endDate,
-                language: "ar",
-            });
+            await downloadReportPdf("ledger", pdfParams);
             toast({ title: "تم التحميل", description: "تم تحميل كشف الحساب بنجاح" });
         } catch {
             toast({ variant: "destructive", title: "فشل التحميل", description: "تعذر تحميل ملف PDF" });
+        } finally {
+            setPdfLoading(false);
+        }
+    };
+
+    const handlePrintLedger = async () => {
+        if (!account?.code) return;
+        setPdfLoading(true);
+        try {
+            const blob = await fetchPdfBlob("ledger", pdfParams);
+            const url = createPdfObjectUrl(blob);
+            const win = window.open(url, "_blank", "noopener,noreferrer");
+            if (win) {
+                win.onload = () => setTimeout(() => { try { win.print(); } catch { /* fallback: user can Ctrl+P */ } }, 800);
+                toast({ title: "تم فتح كشف الحساب", description: "نافذة الطباعة ستظهر تلقائياً، أو استخدم Ctrl+P" });
+            } else {
+                revokePdfObjectUrl(url);
+                toast({ variant: "destructive", title: "فشل الطباعة", description: "يرجى السماح بنوافذ منبثقة ثم المحاولة مجدداً" });
+            }
+        } catch {
+            toast({ variant: "destructive", title: "فشل الطباعة", description: "تعذر إنشاء كشف الحساب للطباعة" });
         } finally {
             setPdfLoading(false);
         }
@@ -93,6 +111,16 @@ export function AccountLedgerDialog({
                             {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                             تحميل PDF
                         </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-2"
+                            onClick={handlePrintLedger}
+                            disabled={pdfLoading}
+                        >
+                            {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
+                            طباعة
+                        </Button>
                     </div>
 
                     {isLoading ? (
@@ -110,7 +138,9 @@ export function AccountLedgerDialog({
                                     <TableRow className="bg-muted/50">
                                         <TableHead className="text-right">التاريخ</TableHead>
                                         <TableHead className="text-right">رقم القيد</TableHead>
-                                        <TableHead className="text-right">البنك</TableHead>
+                                        <TableHead className="text-right">نوع العملية</TableHead>
+                                        <TableHead className="text-right">المرجع</TableHead>
+                                        <TableHead className="text-right">الطرف</TableHead>
                                         <TableHead className="text-right">الوصف</TableHead>
                                         <TableHead className="text-center">مدين</TableHead>
                                         <TableHead className="text-center">دائن</TableHead>
@@ -120,15 +150,17 @@ export function AccountLedgerDialog({
                                 <TableBody>
                                     {entries.map((e, i) => (
                                         <TableRow key={e.id ?? i}>
-                                            <TableCell className="text-sm">{formatDate(e.entryDate ?? "")}</TableCell>
-                                            <TableCell className="font-mono text-sm">{e.entryNumber || "-"}</TableCell>
-                                            <TableCell className="text-sm font-medium">{e.bankName || "—"}</TableCell>
-                                            <TableCell className="max-w-[200px] truncate">{e.description || "-"}</TableCell>
+                                            <TableCell className="text-sm font-mono">{formatDateArabic(e.entryDate ?? "")}</TableCell>
+                                            <TableCell className="font-mono text-sm">{e.entryNumber || "—"}</TableCell>
+                                            <TableCell className="text-sm">{e.transactionTypeAr || "—"}</TableCell>
+                                            <TableCell className="font-mono text-sm">{e.referenceNumber || "—"}</TableCell>
+                                            <TableCell className="text-sm font-medium max-w-[140px] truncate" title={e.partyName ?? undefined}>{e.partyName || "—"}</TableCell>
+                                            <TableCell className="max-w-[180px] truncate" title={e.descriptionAr ?? e.description ?? undefined}>{e.descriptionAr || e.description || "—"}</TableCell>
                                             <TableCell className="text-center">
-                                                {e.debit > 0 ? formatCurrency(e.debit) : "-"}
+                                                {e.debit > 0 ? formatCurrency(e.debit) : "—"}
                                             </TableCell>
                                             <TableCell className="text-center">
-                                                {e.credit > 0 ? formatCurrency(e.credit) : "-"}
+                                                {e.credit > 0 ? formatCurrency(e.credit) : "—"}
                                             </TableCell>
                                             <TableCell className="text-center font-medium">
                                                 {formatCurrency(e.balance)}

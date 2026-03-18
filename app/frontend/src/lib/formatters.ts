@@ -53,3 +53,13 @@ export function formatDate(d: string): string {
         day: "numeric",
     });
 }
+
+/** Format date as DD/MM/YYYY for Arabic reports (كشوف الحساب) */
+export function formatDateArabic(d: string | Date): string {
+    const date = typeof d === "string" ? new Date(d) : d;
+    if (isNaN(date.getTime())) return "—";
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+}

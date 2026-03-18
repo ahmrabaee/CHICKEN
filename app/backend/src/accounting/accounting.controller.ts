@@ -100,6 +100,12 @@ export class AccountingController {
     return this.accountingService.getJournalEntries(pagination);
   }
 
+  @Get('journal-entries/:id/party')
+  @ApiOperation({ summary: 'Get party (customer/supplier) for a journal entry' })
+  getJournalEntryParty(@Param('id', ParseIntPipe) id: number) {
+    return this.accountingService.getJournalEntryParty(id);
+  }
+
   @Get('journal-entries/:id')
   @ApiOperation({ summary: 'Get journal entry by ID' })
   getJournalEntryById(@Param('id', ParseIntPipe) id: number) {

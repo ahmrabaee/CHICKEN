@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Eye, Loader2, CheckCircle, Plus, Search, ChevronsUpDown, Download, FileText, RotateCcw, ArrowDownToLine, ArrowUpFromLine, Wallet, AlertTriangle, Printer } from "lucide-react";
+import { Eye, Loader2, CheckCircle, Plus, Search, ChevronsUpDown, Download, FileText, RotateCcw, ArrowDownToLine, ArrowUpFromLine, Wallet, AlertTriangle, Printer, HelpCircle } from "lucide-react";
+import { AccountingHelpDialog } from "@/components/accounting/AccountingHelpDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -408,6 +409,7 @@ export default function Accounting() {
         params: object;
         autoPrint: boolean;
     }>({ open: false, type: "", title: "", params: {}, autoPrint: false });
+    const [helpDialogOpen, setHelpDialogOpen] = useState(false);
 
     const getAccountingPdfParams = (type: "balance" | "income" | "trial") => {
         const n = new Date();
@@ -562,9 +564,21 @@ export default function Accounting() {
     return (
         <div className="space-y-6" dir="rtl">
             <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-foreground">المحاسبة</h1>
-                    <p className="text-muted-foreground mt-1">دليل الحسابات وقيود اليومية</p>
+                <div className="flex items-center gap-3">
+                    <div>
+                        <h1 className="text-2xl font-bold text-foreground">المحاسبة</h1>
+                        <p className="text-muted-foreground mt-1">دليل الحسابات وقيود اليومية</p>
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setHelpDialogOpen(true)}
+                        className="relative h-10 w-10 shrink-0 rounded-full border-2 border-primary/50 bg-primary/5 text-primary shadow-lg transition-all hover:scale-110 hover:bg-primary/10 hover:shadow-primary/25"
+                        title="دليل المستخدم"
+                    >
+                        <span className="absolute -inset-1 animate-ping rounded-full bg-primary/20" aria-hidden />
+                        <HelpCircle className="relative h-5 w-5" />
+                    </Button>
                 </div>
                 <div className="flex gap-2 flex-wrap">
                     <Button
@@ -912,6 +926,8 @@ export default function Accounting() {
                 onOpenChange={(open) => !open && setLedgerAccount(null)}
                 account={ledgerAccount}
             />
+
+            <AccountingHelpDialog open={helpDialogOpen} onOpenChange={setHelpDialogOpen} />
 
             {accountingPdfDialog.open && (
                 <PdfPreviewDialog

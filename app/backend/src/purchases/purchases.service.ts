@@ -480,6 +480,15 @@ export class PurchasesService {
       }
 
       if (totalInventoryValue > 0) {
+        if (amountPaid > 0) {
+          await this.accountingService.assertSufficientBalance(
+            amountPaid,
+            (dto.paymentMethod as string) ?? 'cash',
+            dto.bankAccountId ?? null,
+            purchase.purchaseDate ?? new Date(),
+            tx,
+          );
+        }
         const stockAccountCode = await this.stockAccountMapperService.getStockAccountCode(branchId);
         await this.accountingService.createPurchaseJournalEntry(
           tx,

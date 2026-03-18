@@ -192,16 +192,16 @@ export class PaymentsService {
         },
       });
 
-      // Create journal entry for payment received
+      // Create journal entry for payment received (use payment.* as source of truth)
       await this.accountingService.createPaymentReceivedJournalEntry(
         tx,
         payment.id,
         payment.paymentNumber,
         sale.branchId ?? null,
         userId,
-        dto.amount,
-        dto.paymentMethod ?? 'cash',
-        dto.bankAccountId ?? null,
+        payment.amount,
+        payment.paymentMethod ?? 'cash',
+        payment.bankAccountId ?? null,
       );
 
       // Blueprint 04: PLE for payment against sale
@@ -257,13 +257,24 @@ export class PaymentsService {
       });
     }
 
+    const paymentDate = dto.paymentDate ? new Date(dto.paymentDate) : new Date();
+
     return this.prisma.$transaction(async (tx) => {
+      // Assert sufficient balance: use current balance (no date filter) so we reflect real ledger state
+      await this.accountingService.assertSufficientBalance(
+        amount,
+        dto.paymentMethod ?? 'cash',
+        dto.bankAccountId ?? null,
+        undefined, // current balance, not filtered by payment date
+        tx,
+      );
+
       const paymentNumber = await this.generatePaymentNumber();
 
       const payment = await tx.payment.create({
         data: {
           paymentNumber,
-          paymentDate: dto.paymentDate ? new Date(dto.paymentDate) : new Date(),
+          paymentDate,
           amount,
           paymentMethod: dto.paymentMethod ?? 'cash',
           bankAccountId: dto.bankAccountId ?? null,
@@ -436,6 +447,15 @@ export class PaymentsService {
           data: { currentBalance: { decrement: dto.amount } },
         });
       }
+
+      // Assert sufficient balance before payment
+      await this.accountingService.assertSufficientBalance(
+        dto.amount,
+        dto.paymentMethod ?? 'cash',
+        dto.bankAccountId ?? null,
+        payment.paymentDate,
+        tx,
+      );
 
       // Create journal entry for payment
       await this.accountingService.createPaymentMadeJournalEntry(
@@ -721,6 +741,14 @@ export class PaymentsService {
           tx,
         );
       } else {
+        // Assert sufficient balance before advance payment to supplier
+        await this.accountingService.assertSufficientBalance(
+          dto.amount,
+          dto.paymentMethod ?? 'cash',
+          dto.bankAccountId ?? null,
+          payment.paymentDate,
+          tx,
+        );
         await this.accountingService.createPaymentMadeJournalEntry(
           tx,
           payment.id,

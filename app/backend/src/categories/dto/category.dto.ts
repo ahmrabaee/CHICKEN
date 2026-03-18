@@ -93,6 +93,7 @@ export class CategoryResponseDto {
     name: string;
     defaultPurchasePrice: number | null;
     defaultSalePrice: number;
+    averageCost: number;
   };
 
   @ApiProperty({ example: '2026-01-01T00:00:00.000Z' })

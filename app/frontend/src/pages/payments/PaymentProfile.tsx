@@ -458,6 +458,11 @@ export default function PaymentProfile() {
     const onSubmit = async (values: PaymentFormValues) => {
         const amountMinor = Math.round(values.amount * 100);
 
+        if ((values.paymentMethod === "bank_transfer" || values.paymentMethod === "card") && bankAccounts.length > 0 && !values.bankAccountId) {
+            toast({ variant: "destructive", title: "خطأ", description: "يجب اختيار البنك عند الدفع بالتحويل البنكي أو البطاقة" });
+            return;
+        }
+
         if (values.paymentType === "advance") {
             const partyId = Number(values.partyId);
             const partyType = values.partyType as "customer" | "supplier";
@@ -805,13 +810,13 @@ export default function PaymentProfile() {
                                         />
                                     </div>
 
-                                    {paymentMethod === "bank_transfer" && bankAccounts.length > 0 && (
+                                    {(paymentMethod === "bank_transfer" || paymentMethod === "card") && bankAccounts.length > 0 && (
                                         <FormField
                                             control={form.control}
                                             name="bankAccountId"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>الحساب البنكي</FormLabel>
+                                                    <FormLabel>الحساب البنكي *</FormLabel>
                                                     <Select
                                                         onValueChange={(v) => field.onChange(v ? parseInt(v, 10) : undefined)}
                                                         value={field.value ? String(field.value) : ""}
@@ -833,6 +838,12 @@ export default function PaymentProfile() {
                                                 </FormItem>
                                             )}
                                         />
+                                    )}
+                                    {(paymentMethod === "bank_transfer" || paymentMethod === "card") && bankAccounts.length === 0 && (
+                                        <p className="text-sm text-amber-600 flex items-center gap-2">
+                                            يجب إضافة حسابات بنكية من{" "}
+                                            <Link to="/settings" className="underline font-medium">الإعدادات</Link> أولاً لتفعيل التحويل البنكي أو البطاقة.
+                                        </p>
                                     )}
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

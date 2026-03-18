@@ -14,6 +14,86 @@ export function formatCurrency(amount: number | string): string {
     return (minorUnits / 100).toFixed(2);
 }
 
+/** Format amount with currency symbol for financial reports (e.g. "84.00 ₪") — symbol may not render in all fonts */
+export function formatCurrencyWithSymbol(amount: number | string): string {
+    const formatted = formatCurrency(amount);
+    return `${formatted} ₪`;
+}
+
+// ========== SAFE FORMATTERS — never allow NaN, undefined, null in PDF ==========
+const FALLBACK_DATE_AR = 'غير محدد';
+const FALLBACK_DATE_EN = 'Not specified';
+
+/** Parse date safely; prefer ISO YYYY-MM-DD or DD-MM-YYYY. Returns DD-MM-YYYY or fallback. */
+export function formatDateSafe(value: string | Date | undefined | null, fallback?: string, lang: 'ar' | 'en' = 'ar'): string {
+    const fb = fallback ?? (lang === 'ar' ? FALLBACK_DATE_AR : FALLBACK_DATE_EN);
+    if (value == null) return fb;
+    const str = typeof value === 'string' ? value.trim() : '';
+    if (typeof value === 'string' && !str) return fb;
+    let d: Date;
+    // Prefer ISO YYYY-MM-DD (parses reliably)
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(str)) {
+        d = new Date(str.substring(0, 10));
+    } else if (typeof value === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(str)) {
+        // DD-MM-YYYY — avoid Invalid Date from new Date('18-03-2026')
+        const [dayStr, monthStr, yearStr] = str.split('-');
+        const day = parseInt(dayStr!, 10);
+        const month = parseInt(monthStr!, 10) - 1;
+        const year = parseInt(yearStr!, 10);
+        if (day >= 1 && day <= 31 && month >= 0 && month <= 11 && year > 0) {
+            d = new Date(year, month, day);
+            if (d.getDate() === day && d.getMonth() === month && d.getFullYear() === year) {
+                return str; // already valid DD-MM-YYYY
+            }
+        }
+        d = new Date(NaN);
+    } else {
+        d = value instanceof Date ? value : new Date(value as string);
+    }
+    const ts = d.getTime();
+    if (!Number.isFinite(ts)) return fb;
+    const day = d.getDate();
+    const month = d.getMonth();
+    const year = d.getFullYear();
+    if (!Number.isFinite(day) || !Number.isFinite(month) || !Number.isFinite(year)) return fb;
+    return `${String(day).padStart(2, '0')}-${String(month + 1).padStart(2, '0')}-${year}`;
+}
+
+/** Format number safely; never NaN. Default 0 if invalid. */
+export function formatNumberSafe(value: number | string | undefined | null, defaultVal = 0): string {
+    const n = value == null ? defaultVal : Number(value);
+    if (!Number.isFinite(n)) return String(defaultVal);
+    return String(n);
+}
+
+/** Format currency (minor units → major) safely; never NaN. Default "0.00". */
+export function formatCurrencySafe(amount: number | string | undefined | null): string {
+    return formatCurrency(amount ?? 0);
+}
+
+/** Amount only for table cells — no symbol (avoids font glyph issues with ₪). */
+export function formatCurrencyDisplay(amount: number | string | undefined | null): string {
+    return formatCurrencySafe(amount);
+}
+
+/** Currency label for reports: "شيكل (₪)" in Arabic, "ILS (₪)" in English. */
+export function getCurrencyReportLabel(lang: 'ar' | 'en', custom?: string): string {
+    if (custom) return custom;
+    return lang === 'ar' ? 'شيكل (₪)' : 'ILS (₪)';
+}
+
+/** Format ISO timestamp for footer: "DD-MM-YYYY HH:mm" or fallback. */
+export function formatDateTimeSafe(value: string | Date | undefined | null, fallback = ''): string {
+    if (value == null) return fallback;
+    const d = typeof value === 'string' ? new Date(value) : value;
+    if (!(d instanceof Date) || !Number.isFinite(d.getTime())) return fallback;
+    const date = formatDateSafe(value, fallback, 'en');
+    if (date === FALLBACK_DATE_EN || date === FALLBACK_DATE_AR) return fallback;
+    const h = String(d.getHours()).padStart(2, '0');
+    const m = String(d.getMinutes()).padStart(2, '0');
+    return `${date} ${h}:${m}`;
+}
+
 export function formatWeight(amount: number | string): string {
     return Number(amount).toFixed(3) + ' kg';
 }
@@ -27,18 +107,10 @@ export function formatDate(date: string | Date | undefined, lang: 'en' | 'ar'): 
     }
 }
 
-/** Date for header: DD-MM-YYYY with Western numerals — avoids Arabic numeral rendering issues in PDF */
+/** Date for header: DD-MM-YYYY with Western numerals — avoids Arabic numeral rendering issues. Prefer formatDateSafe for critical reports. */
 export function formatDateForHeader(date: string | Date | undefined): string {
-    if (!date) return '';
-    try {
-        const d = new Date(date);
-        const day = String(d.getDate()).padStart(2, '0');
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const year = d.getFullYear();
-        return `${day}-${month}-${year}`;
-    } catch (e) {
-        return String(date);
-    }
+    const s = formatDateSafe(date, undefined, 'en');
+    return s === FALLBACK_DATE_EN ? '' : s;
 }
 
 /** Build rich header with app data, store info, and report title - RTL aware */
@@ -218,3 +290,150 @@ export function buildFooter(meta: PdfMeta, logoBase64: string | null): (currentP
         margin: [0, 10, 0, 0],
     });
 }
+
+export interface FinancialReportHeaderData {
+    companyName: string;
+    reportTitle: string;
+    reportTitleAr: string;
+    dateLabel?: string;
+    dateLabelAr?: string;
+    dateValue?: string; // e.g. "As of date" or "Period"
+    dateValueAr?: string;
+    asOfDateRaw?: string;
+    asOfDate?: string;
+    language: 'en' | 'ar';
+    generatedAt?: string;
+    generatedBy?: string;
+    currency?: string;
+    branchName?: string;
+}
+
+/** Legacy alias */
+export type BalanceSheetHeaderData = FinancialReportHeaderData;
+
+/** Professional financial report header — company, title, date, extraction metadata. RTL aware. */
+export function buildFinancialReportHeader(data: FinancialReportHeaderData, logoBase64: string | null): Content {
+    const isArabic = data.language === 'ar';
+    const title = isArabic ? data.reportTitleAr : data.reportTitle;
+    const currencyLabel = data.currency || (isArabic ? 'شيكل' : 'ILS');
+    const dateLabelStr = isArabic ? (data.dateLabelAr || 'التاريخ: ') : (data.dateLabel || 'Date: ');
+    const dateValueStr = isArabic ? (data.dateValueAr || data.dateValue || '') : (data.dateValue || '');
+
+    const logoCol = logoBase64 ? {
+        image: logoBase64,
+        width: 42,
+        height: 42,
+        margin: (isArabic ? [0, 0, 12, 0] : [12, 0, 0, 0]) as [number, number, number, number],
+    } : { text: '', width: 0 };
+
+    const metaLines: any[] = [];
+    if (data.generatedAt) {
+        const genDate = formatDateSafe(data.generatedAt, undefined, data.language);
+        const genTime = (() => {
+            try {
+                const d = new Date(data.generatedAt!);
+                if (!Number.isFinite(d.getTime())) return '';
+                return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            } catch { return ''; }
+        })();
+        metaLines.push({
+            text: isArabic
+                ? [`تاريخ استخراج التقرير: `, genDate, genTime ? `  |  وقت الاستخراج: ` : '', genTime]
+                : [`Report extraction date: `, genDate, genTime ? `  |  Time: ` : '', genTime],
+            fontSize: 8,
+            color: PDF_DESIGN.colors.textMuted,
+            margin: [0, 2, 0, 0],
+        });
+    }
+    if (data.generatedBy) {
+        metaLines.push({
+            text: isArabic ? [`تمت الطباعة بواسطة: `, data.generatedBy] : [`Printed by: `, data.generatedBy],
+            fontSize: 8,
+            color: PDF_DESIGN.colors.textMuted,
+            margin: [0, 1, 0, 0],
+        });
+    }
+    metaLines.push({
+        text: isArabic ? [`العملة: `, currencyLabel] : [`Currency: `, currencyLabel],
+        fontSize: 8,
+        color: PDF_DESIGN.colors.textMuted,
+        margin: [0, 1, 0, 0],
+    });
+    if (data.branchName) {
+        metaLines.push({
+            text: isArabic ? [`الفرع: `, data.branchName] : [`Branch: `, data.branchName],
+            fontSize: 8,
+            color: PDF_DESIGN.colors.textMuted,
+            margin: [0, 1, 0, 0],
+        });
+    }
+
+    const centerCol = {
+        stack: [
+            { text: data.companyName, fontSize: 18, bold: true, color: PDF_DESIGN.colors.primary, alignment: 'center' },
+            { text: title, fontSize: 14, bold: true, color: PDF_DESIGN.colors.secondary, alignment: 'center', margin: [0, 6, 0, 0] },
+            dateValueStr ? { text: `${dateLabelStr} ${dateValueStr}`, fontSize: 11, color: PDF_DESIGN.colors.textLight, alignment: 'center', margin: [0, 4, 0, 0] } : { text: '' },
+            ...metaLines.map(l => ({ ...l, alignment: 'center' as const })),
+        ],
+        width: '*',
+    };
+
+    const columns = isArabic ? [{ text: '', width: 'auto' }, centerCol, logoCol] : [logoCol, centerCol, { text: '', width: 'auto' }];
+    return {
+        stack: [
+            { columns, margin: [0, 0, 0, 12] },
+            { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1, lineColor: PDF_DESIGN.colors.border }] },
+        ],
+    } as Content;
+}
+
+/** Backward compatibility alias */
+export function buildBalanceSheetHeader(data: BalanceSheetHeaderData, logoBase64: string | null): Content {
+    const isArabic = data.language === 'ar';
+    const dateStr = formatDateSafe(data.asOfDateRaw || data.asOfDate, undefined, data.language);
+    return buildFinancialReportHeader({
+        ...data,
+        dateLabel: 'As of:',
+        dateLabelAr: 'كما في تاريخ:',
+        dateValue: dateStr,
+        dateValueAr: dateStr,
+    }, logoBase64);
+}
+
+/** Professional financial report footer — page number, version, generation timestamp */
+export function buildFinancialReportFooter(data: {
+    appVersion?: string;
+    generatedAt?: string;
+    language?: 'en' | 'ar';
+}): (currentPage: number, pageCount: number) => any {
+    const isArabic = data.language === 'ar';
+    const genStr = formatDateTimeSafe(data.generatedAt);
+
+    return (currentPage: number, pageCount: number) => ({
+        columns: [
+            {
+                text: [
+                    data.appVersion ? (isArabic ? `الإصدار ${data.appVersion}` : `v${data.appVersion}`) : '',
+                    genStr ? (data.appVersion ? '  •  ' : '') + genStr : '',
+                ].filter(Boolean).join('') || ' ',
+                fontSize: 7,
+                color: PDF_DESIGN.colors.textMuted,
+                alignment: isArabic ? 'right' : 'left',
+                width: '*',
+            },
+            {
+                text: isArabic ? `صفحة ${currentPage} من ${pageCount}` : `Page ${currentPage} of ${pageCount}`,
+                fontSize: 9,
+                color: PDF_DESIGN.colors.textMuted,
+                alignment: 'center' as const,
+                width: 'auto',
+            },
+            { text: '', width: '*' },
+        ],
+        padding: [0, 20, 0, 0],
+        margin: [40, 10, 40, 0],
+    });
+}
+
+/** Backward compatibility alias */
+export const buildBalanceSheetFooter = buildFinancialReportFooter;

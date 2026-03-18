@@ -57,6 +57,124 @@ export interface PdfSection {
   total?: number;
 }
 
+/** Balance Sheet: 3-column table rows (Code | Name | Amount) */
+export interface BalanceSheetRow {
+  code: string;
+  name: string;
+  nameAr?: string;
+  value: number;
+}
+
+export interface BalanceSheetSection {
+  title: string;
+  titleAr: string;
+  rows: BalanceSheetRow[];
+  total: number;
+}
+
+/** Income Statement: 3-column table rows (Code | Name | Amount) */
+export interface IncomeStatementRow {
+  code: string;
+  name: string;
+  nameAr?: string;
+  value: number;
+  indent?: number;
+  /** Whether the row is a subtotal or grand total (for styling) */
+  isTotal?: boolean;
+  /** Whether the row is a major section header (for styling) */
+  isHeader?: boolean;
+}
+
+export interface IncomeStatementSection {
+  title: string;
+  titleAr: string;
+  rows: IncomeStatementRow[];
+  total: number;
+}
+
+export interface IncomeStatementPdfData {
+  companyName: string;
+  companyNameAr?: string;
+  reportTitle: string;
+  reportTitleAr: string;
+  /** ISO date strings (YYYY-MM-DD) */
+  startDate: string;
+  endDate: string;
+  sections: IncomeStatementSection[];
+  netIncomeLabel: string;
+  netIncomeLabelAr: string;
+  netIncomeValue: number;
+  language: 'en' | 'ar';
+  appVersion?: string;
+  generatedAt?: string;
+  generatedBy?: string;
+  currency?: string;
+  branchName?: string;
+}
+
+export interface BalanceSheetPdfData {
+  companyName: string;
+  companyNameAr?: string;
+  reportTitle: string;
+  reportTitleAr: string;
+  /** ISO date string (YYYY-MM-DD) - preferred for safe formatting */
+  asOfDateRaw?: string;
+  /** Legacy formatted date - used only if asOfDateRaw omitted */
+  asOfDate?: string;
+  sections: BalanceSheetSection[];
+  grandTotalLabel: string;
+  grandTotalLabelAr: string;
+  grandTotalValue: number;
+  /** Total assets for balance check (assets === liabilities + equity) */
+  totalAssets?: number;
+  language: 'en' | 'ar';
+  appVersion?: string;
+  /** ISO timestamp when report was generated */
+  generatedAt?: string;
+  /** User who generated the report */
+  generatedBy?: string;
+  /** Currency label for display (e.g. "شيكل") */
+  currency?: string;
+  /** Branch/store name if applicable */
+  branchName?: string;
+}
+
+/** Trial Balance: 8-column table rows (Code | Name | Opening D/C | Period D/C | Ending D/C) */
+export interface TrialBalanceRow {
+  code: string;
+  name: string;
+  nameAr?: string;
+  openingDebit: number;
+  openingCredit: number;
+  periodDebit: number;
+  periodCredit: number;
+  endingDebit: number;
+  endingCredit: number;
+}
+
+export interface TrialBalancePdfData {
+  companyName: string;
+  companyNameAr?: string;
+  reportTitle: string;
+  reportTitleAr: string;
+  startDate: string;
+  endDate: string;
+  rows: TrialBalanceRow[];
+  totalOpeningDebit: number;
+  totalOpeningCredit: number;
+  totalPeriodDebit: number;
+  totalPeriodCredit: number;
+  totalEndingDebit: number;
+  totalEndingCredit: number;
+  isBalanced: boolean;
+  language: 'en' | 'ar';
+  appVersion?: string;
+  generatedAt?: string;
+  generatedBy?: string;
+  currency?: string;
+  branchName?: string;
+}
+
 export interface PdfGenerateOptions {
   meta: PdfMeta;
   columns?: PdfTableColumn[];
@@ -89,4 +207,10 @@ export interface PdfGenerateOptions {
     accountCode: string;
     extractionDate: string;
   };
+  /** Balance Sheet: use professional 3-column layout with dedicated header/footer */
+  balanceSheetData?: BalanceSheetPdfData;
+  /** Income Statement: use professional 3-column layout matching Balance Sheet */
+  incomeStatementData?: IncomeStatementPdfData;
+  /** Trial Balance: use professional 8-column layout matching Balance Sheet */
+  trialBalanceData?: TrialBalancePdfData;
 }

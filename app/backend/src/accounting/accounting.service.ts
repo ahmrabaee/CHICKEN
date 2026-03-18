@@ -2,13 +2,14 @@ import { Injectable, NotFoundException, BadRequestException, InternalServerError
 import { PrismaService } from '../prisma/prisma.service';
 import { createPaginatedResult, PaginationQueryDto } from '../common';
 import { ChartOfAccountsService } from './chart-of-accounts/chart-of-accounts.service';
+import { AccountRepository } from './chart-of-accounts/account.repository';
 import { PreventGroupPostingGuard } from './chart-of-accounts/prevent-group-posting.guard';
 import { GlEngineService } from './gl-engine/gl-engine.service';
 import { TaxEngineService } from './tax/tax-engine.service';
 import { GLMapEntry } from './gl-engine/types/gl-map.types';
 import { PdfService } from '../pdf/pdf.service';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
-import { PdfSection, PdfSectionItem } from '../pdf/pdf.types';
+import { PdfSection, PdfSectionItem, BalanceSheetPdfData, BalanceSheetSection, BalanceSheetRow } from '../pdf/pdf.types';
 import { buildFinancialStatementPdfOptions } from '../pdf/templates/financial-statement.template';
 import { buildReportPdfOptions } from '../pdf/templates/report.template';
 import { formatDateForHeader } from '../pdf/pdf.helpers';
@@ -104,9 +105,23 @@ export class AccountingService {
       if (resolvedBankId) {
         const bank = await prisma.bankAccount.findUnique({
           where: { id: resolvedBankId },
-          select: { accountId: true },
+          select: { accountId: true, name: true },
         });
         if (bank) return bank.accountId;
+        throw new BadRequestException({
+          code: 'BANK_ACCOUNT_NOT_FOUND',
+          message: `Bank account #${resolvedBankId} not found`,
+          messageAr: 'الحساب البنكي المحدد غير موجود',
+        });
+      }
+      // عند تحويل بنكي/بطاقة بدون بنك محدد: لا نعود للصندوق بصمت — نرمي خطأ
+      const bankCount = await prisma.bankAccount.count({ where: { isActive: true, companyId: 1 } });
+      if (bankCount > 0) {
+        throw new BadRequestException({
+          code: 'BANK_ACCOUNT_REQUIRED',
+          message: 'Bank account must be selected for bank transfer or card payment',
+          messageAr: 'يجب اختيار البنك عند الدفع بالتحويل البنكي أو البطاقة',
+        });
       }
     }
     const id = await this.chartOfAccountsService.getAccountIdByCode(ACCOUNT_CODES.CASH);
@@ -131,6 +146,104 @@ export class AccountingService {
       result[code] = id;
     }
     return result;
+  }
+
+  /**
+   * Get account balance (debit - credit) as of a date.
+   * For asset accounts (cash, bank), positive balance = funds available.
+   */
+  async getAccountBalance(
+    accountIdOrCode: number | string,
+    asOfDate?: Date,
+    tx?: any,
+  ): Promise<number> {
+    const prisma = tx ?? this.prisma;
+    let accountId: number;
+    if (typeof accountIdOrCode === 'number') {
+      accountId = accountIdOrCode;
+    } else {
+      const id = await this.chartOfAccountsService.getAccountIdByCode(accountIdOrCode);
+      if (!id) throw new BadRequestException({
+        code: 'ACCOUNT_NOT_FOUND',
+        message: `Account not found for code: ${accountIdOrCode}`,
+        messageAr: `الحساب المحاسبي غير موجود`,
+      });
+      accountId = id;
+    }
+
+    const where: Record<string, unknown> = {
+      accountId,
+      journalEntry: { isPosted: true },
+    };
+    if (asOfDate) {
+      // Include full day: set to end of day so entries on asOfDate are counted (matches getAccountLedger)
+      const endOfDay = new Date(asOfDate);
+      endOfDay.setUTCHours(23, 59, 59, 999);
+      (where.journalEntry as Record<string, unknown>).entryDate = { lte: endOfDay };
+    }
+
+    const agg = await prisma.journalEntryLine.aggregate({
+      where,
+      _sum: { debitAmount: true, creditAmount: true },
+    });
+    const debit = agg._sum?.debitAmount ?? 0;
+    const credit = agg._sum?.creditAmount ?? 0;
+    return debit - credit;
+  }
+
+  /**
+   * Resolve cash or bank account and get its balance. Used before payment operations.
+   */
+  async getCashOrBankBalance(
+    paymentMethod: string,
+    bankAccountId?: number | null,
+    asOfDate?: Date,
+    tx?: any,
+  ): Promise<{ accountId: number; balance: number; accountName: string }> {
+    const accountId = await this.resolveCashOrBankAccount(paymentMethod, bankAccountId, tx);
+    const balance = await this.getAccountBalance(accountId, asOfDate, tx);
+    const prisma = tx ?? this.prisma;
+    const account = await prisma.account.findUnique({
+      where: { id: accountId },
+      select: { name: true },
+    });
+    return {
+      accountId,
+      balance,
+      accountName: account?.name ?? 'Unknown',
+    };
+  }
+
+  /**
+   * Throw INSUFFICIENT_BALANCE if the cash/bank account does not have enough balance for the payment.
+   * Only call for outflow operations (purchase payment, supplier payment, expense).
+   */
+  async assertSufficientBalance(
+    amount: number,
+    paymentMethod: string,
+    bankAccountId?: number | null,
+    asOfDate?: Date,
+    tx?: any,
+  ): Promise<void> {
+    if (amount <= 0) return;
+    const { balance, accountName } = await this.getCashOrBankBalance(paymentMethod, bankAccountId, asOfDate, tx);
+    if (balance < amount) {
+      const fmt = (n: number) => (n / 100).toFixed(2);
+      const shortfall = (amount - balance) / 100;
+      const hintAr =
+        paymentMethod === 'cash'
+          ? ' يمكنك استخدام تحويل بنكي أو بطاقة إذا كان رصيد البنك كافياً، أو تسجيل الشراء آجلاً (بدون دفع فوري).'
+          : ' يمكنك اختيار حساب بنكي آخر أو تسجيل الشراء آجلاً.';
+      const hintEn =
+        paymentMethod === 'cash'
+          ? ' Use bank transfer or card if balance suffices, or record as credit purchase.'
+          : ' Choose another bank account or record as credit purchase.';
+      throw new BadRequestException({
+        code: 'INSUFFICIENT_BALANCE',
+        message: `Insufficient balance in ${accountName}. Available: ${fmt(balance)} ₪, required: ${fmt(amount)} ₪. Shortfall: ${shortfall.toFixed(2)} ₪.${hintEn}`,
+        messageAr: `الرصيد غير كافٍ في ${accountName}. المتاح: ${fmt(balance)} ₪، المطلوب: ${fmt(amount)} ₪. النقص: ${shortfall.toFixed(2)} ₪.${hintAr}`,
+      });
+    }
   }
 
   /**
@@ -577,12 +690,18 @@ export class AccountingService {
       description: 'Inventory purchase',
     });
 
-    // CR Cash (if paid)
+    // CR Cash or Bank (if paid) - use selected bank when paymentMethod is bank_transfer/card
     if (amountPaid > 0) {
+      const paymentAccountId = await this.resolveCashOrBankAccount(
+        data.paymentMethod ?? 'cash',
+        data.bankAccountId ?? null,
+        tx,
+      );
+      const isBank = data.paymentMethod === 'bank_transfer' || data.paymentMethod === 'card';
       lines.push({
-        accountCode: ACCOUNT_CODES.CASH,
+        accountId: paymentAccountId,
         creditAmount: amountPaid,
-        description: 'Cash payment',
+        description: isBank ? 'Bank payment' : 'Cash payment',
       });
     }
 
@@ -691,9 +810,10 @@ export class AccountingService {
     paymentMethod?: string,
     bankAccountId?: number | null,
   ) {
+    const cashOrBankAccountId = await this.resolveCashOrBankAccount(paymentMethod ?? 'cash', bankAccountId, tx);
     const lines: JournalLineInput[] = [
       {
-        accountCode: ACCOUNT_CODES.CASH,
+        accountId: cashOrBankAccountId,
         debitAmount: amount,
         description: 'Payment received',
       },
@@ -741,6 +861,7 @@ export class AccountingService {
     paymentMethod?: string,
     bankAccountId?: number | null,
   ) {
+    const cashOrBankAccountId = await this.resolveCashOrBankAccount(paymentMethod ?? 'cash', bankAccountId, tx);
     const lines: JournalLineInput[] = [
       {
         accountCode: ACCOUNT_CODES.ACCOUNTS_PAYABLE,
@@ -748,7 +869,7 @@ export class AccountingService {
         description: 'Pay supplier',
       },
       {
-        accountCode: ACCOUNT_CODES.CASH,
+        accountId: cashOrBankAccountId,
         creditAmount: amount,
         description: 'Cash payment',
       },
@@ -1383,38 +1504,81 @@ export class AccountingService {
 
   // ============ TRIAL BALANCE & LEDGER ============
 
-  async getTrialBalance(asOfDate?: string) {
-    const dateFilter = asOfDate ? { lte: new Date(asOfDate) } : undefined;
+  async getTrialBalance(startDate?: string, endDate?: string) {
+    const start = startDate ? new Date(startDate) : null;
+    if (start) start.setUTCHours(0, 0, 0, 0);
 
-    const grouped = await this.prisma.journalEntryLine.groupBy({
+    const end = endDate ? new Date(endDate) : new Date();
+    end.setUTCHours(23, 59, 59, 999);
+
+    // 1. Get Opening Balances (all entries BEFORE start date)
+    const openingGrouped = start ? await this.prisma.journalEntryLine.groupBy({
       by: ['accountId'],
-      where: dateFilter
-        ? { journalEntry: { entryDate: dateFilter, isPosted: true } }
-        : { journalEntry: { isPosted: true } },
+      where: { journalEntry: { entryDate: { lt: start }, isPosted: true } },
+      _sum: { debitAmount: true, creditAmount: true },
+    }) : [];
+
+    // 2. Get Period Movements (all entries BETWEEN start and end date)
+    const periodGrouped = await this.prisma.journalEntryLine.groupBy({
+      by: ['accountId'],
+      where: {
+        journalEntry: {
+          entryDate: start ? { gte: start, lte: end } : { lte: end },
+          isPosted: true
+        }
+      },
       _sum: { debitAmount: true, creditAmount: true },
     });
 
-    const accountIds = grouped.map((g) => g.accountId);
+    // 3. Get all involved account IDs
+    const accountIds = Array.from(new Set([
+      ...openingGrouped.map(g => g.accountId),
+      ...periodGrouped.map(g => g.accountId)
+    ]));
+
+    if (accountIds.length === 0) {
+      return [];
+    }
+
     const accounts = await this.prisma.account.findMany({
       where: { id: { in: accountIds } },
+      select: { id: true, code: true, name: true, accountType: true, rootType: true },
     });
 
     const accountMap = new Map(accounts.map((a) => [a.id, a]));
+    const openingMap = new Map(openingGrouped.map(g => [g.accountId, { debit: g._sum?.debitAmount ?? 0, credit: g._sum?.creditAmount ?? 0 }]));
+    const periodMap = new Map(periodGrouped.map(g => [g.accountId, { debit: g._sum?.debitAmount ?? 0, credit: g._sum?.creditAmount ?? 0 }]));
 
-    return grouped.map((b) => {
-      const account = accountMap.get(b.accountId);
-      const debit = b._sum?.debitAmount ?? 0;
-      const credit = b._sum?.creditAmount ?? 0;
+    return accounts.map(account => {
+      const opening = openingMap.get(account.id) || { debit: 0, credit: 0 };
+      const period = periodMap.get(account.id) || { debit: 0, credit: 0 };
+
+      const openingNet = opening.debit - opening.credit;
+      const endingNet = openingNet + period.debit - period.credit;
+
       return {
-        accountId: b.accountId,
-        accountCode: account?.code ?? 'Unknown',
-        accountName: account?.name ?? 'Unknown',
-        accountType: account?.accountType ?? 'unknown',
-        debit,
-        credit,
-        balance: debit - credit,
+        accountId: account.id,
+        accountCode: account.code,
+        name: account.name,
+        nameAr: account.name,
+        accountName: account.name, // Keep for backward compatibility
+        accountType: account.accountType,
+        rootType: account.rootType,
+        // Opening (Net)
+        openingDebit: openingNet > 0 ? openingNet : 0,
+        openingCredit: openingNet < 0 ? Math.abs(openingNet) : 0,
+        // Period (Gross Movements)
+        periodDebit: period.debit,
+        periodCredit: period.credit,
+        // Ending (Net)
+        endingDebit: endingNet > 0 ? endingNet : 0,
+        endingCredit: endingNet < 0 ? Math.abs(endingNet) : 0,
+        // Backward Compatibility for Balance Sheet
+        debit: period.debit,
+        credit: period.credit,
+        balance: endingNet,
       };
-    });
+    }).sort((a, b) => a.accountCode.localeCompare(b.accountCode, undefined, { numeric: true }));
   }
 
   async getAccountLedger(accountIdOrCode: number | string, startDate?: string, endDate?: string) {
@@ -1663,35 +1827,96 @@ export class AccountingService {
   // ============ FINANCIAL STATEMENTS ============
 
   async getBalanceSheet(asOfDate?: string) {
-    const accounts = await this.getTrialBalance(asOfDate);
+    const date = asOfDate || new Date().toISOString().split('T')[0];
+    const accounts = await this.getTrialBalance(date);
 
-    const assets = accounts.filter(a => a.accountType === 'asset');
-    const liabilities = accounts.filter(a => a.accountType === 'liability');
-    const equity = accounts.filter(a => a.accountType === 'equity');
+    // Account.rootType is 'Asset'|'Liability'|'Equity'; accountType is 'Bank','Cash','Payable',etc.
+    let assets = accounts.filter(a => (a as any).rootType === 'Asset' || a.accountType === 'asset');
+    let liabilities = accounts.filter(a => (a as any).rootType === 'Liability' || a.accountType === 'liability');
+    let equity = accounts.filter(a => (a as any).rootType === 'Equity' || a.accountType === 'equity');
+
+    // Include key accounts with zero balance for completeness (3100 Capital, 3200 Retained Earnings)
+    const keyEquityCodes = [ACCOUNT_CODES.CAPITAL, ACCOUNT_CODES.RETAINED_EARNINGS];
+    const equityCodes = new Set(equity.map(e => e.accountCode));
+    for (const code of keyEquityCodes) {
+      if (!equityCodes.has(code)) {
+        const acc = await this.prisma.account.findFirst({
+          where: { code, companyId: 1 },
+          select: { id: true, code: true, name: true, accountType: true },
+        });
+        if (acc) {
+          equity = [...equity, {
+            accountId: acc.id,
+            accountCode: acc.code,
+            name: acc.name,
+            nameAr: acc.name,
+            accountName: acc.name,
+            accountType: acc.accountType,
+            rootType: 'Equity' as const,
+            debit: 0,
+            credit: 0,
+            balance: 0,
+            openingDebit: 0,
+            openingCredit: 0,
+            periodDebit: 0,
+            periodCredit: 0,
+            endingDebit: 0,
+            endingCredit: 0,
+          }];
+        }
+      }
+    }
+    equity.sort((a, b) => a.accountCode.localeCompare(b.accountCode, undefined, { numeric: true }));
+
+    // Include net income for period (fiscal year start to asOfDate) to balance the sheet
+    const netIncomeForPeriod = await this.getNetIncomeForPeriod(date);
 
     const totalAssets = assets.reduce((sum, a) => sum + a.balance, 0);
     const totalLiabilities = liabilities.reduce((sum, a) => sum + a.balance, 0);
-    const totalEquity = equity.reduce((sum, a) => sum + a.balance, 0);
+    const totalEquityFromAccounts = equity.reduce((sum, a) => sum + a.balance, 0);
+    const totalEquity = totalEquityFromAccounts + netIncomeForPeriod;
 
     return {
       assets,
       liabilities,
       equity,
+      netIncomeForPeriod,
       totalAssets,
       totalLiabilities,
       totalEquity,
-      asOfDate: asOfDate || new Date().toISOString().split('T')[0],
+      asOfDate: date,
     };
   }
 
+  /** Net income from fiscal year start to asOfDate (for balance sheet equity balancing) */
+  private async getNetIncomeForPeriod(asOfDate: string): Promise<number> {
+    const d = new Date(asOfDate);
+    const year = d.getFullYear();
+    const company = await this.prisma.company.findFirst();
+    const startMonth = (company?.fiscalYearStartMonth ?? 1) - 1;
+    const fiscalStart = new Date(year, startMonth, 1);
+    if (d < fiscalStart) {
+      fiscalStart.setFullYear(year - 1);
+    }
+    const startDate = fiscalStart.toISOString().split('T')[0];
+    const end = new Date(asOfDate);
+    end.setUTCHours(23, 59, 59, 999);
+    const endDate = end.toISOString().split('T')[0];
+    const is = await this.getIncomeStatement(startDate, endDate);
+    return is.netIncome;
+  }
+
   async getIncomeStatement(startDate: string, endDate: string) {
-    // Get all journal entry lines within the date range
+    // Include full end-of-day for endDate
+    const end = new Date(endDate);
+    end.setUTCHours(23, 59, 59, 999);
+
     const lines = await this.prisma.journalEntryLine.findMany({
       where: {
         journalEntry: {
           entryDate: {
             gte: new Date(startDate),
-            lte: new Date(endDate),
+            lte: end,
           },
           isPosted: true,
         },
@@ -1719,27 +1944,43 @@ export class AccountingService {
     });
 
     const accounts = Array.from(accountBalances.values());
-    const revenue = accounts.filter(a => a.account.accountType === 'revenue');
-    const expenses = accounts.filter(a => a.account.accountType === 'expense');
+    // rootType: 'Income'|'Expense' (accountType is 'Income Account','Expense Account',etc.)
+    const allRevenue = accounts.filter(a => a.account.rootType === 'Income');
+    const allExpenses = accounts.filter(a => a.account.rootType === 'Expense');
+
+    // Separate COGS from other expenses
+    const cogsAccounts = allExpenses.filter(e => e.account.code === ACCOUNT_CODES.COST_OF_GOODS_SOLD || e.account.code.startsWith('51'));
+    const operatingExpenses = allExpenses.filter(e => !cogsAccounts.includes(e));
 
     // For revenue accounts, credit is positive (revenue increases with credits)
-    const totalRevenue = revenue.reduce((sum, a) => sum - a.balance, 0); // Negate because balance is debit - credit
-    const totalExpenses = expenses.reduce((sum, a) => sum + a.balance, 0);
-    const netIncome = totalRevenue - totalExpenses;
+    const totalRevenue = allRevenue.reduce((sum, a) => sum - a.balance, 0);
+    const totalCogs = cogsAccounts.reduce((sum, a) => sum + a.balance, 0);
+    const grossProfit = totalRevenue - totalCogs;
+    const totalOperatingExpenses = operatingExpenses.reduce((sum, a) => sum + a.balance, 0);
+    const operatingProfit = grossProfit - totalOperatingExpenses;
+    const netIncome = totalRevenue - (totalCogs + totalOperatingExpenses);
 
     return {
-      revenue: revenue.map(r => ({
+      revenue: allRevenue.map(r => ({
         accountCode: r.account.code,
         accountName: r.account.name,
-        amount: -r.balance, // Negate to show positive revenue
+        amount: -r.balance,
       })),
-      expenses: expenses.map(e => ({
+      cogs: cogsAccounts.map(c => ({
+        accountCode: c.account.code,
+        accountName: c.account.name,
+        amount: c.balance,
+      })),
+      operatingExpenses: operatingExpenses.map(e => ({
         accountCode: e.account.code,
         accountName: e.account.name,
         amount: e.balance,
       })),
       totalRevenue,
-      totalExpenses,
+      totalCogs,
+      grossProfit,
+      totalOperatingExpenses,
+      operatingProfit,
       netIncome,
       startDate,
       endDate,
@@ -1753,53 +1994,109 @@ export class AccountingService {
     const bs = await this.getBalanceSheet(asOfDate);
     const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
 
+    // Sort by account code for proper display order
+    const sortByCode = <T extends { accountCode: string }>(arr: T[]) =>
+      [...arr].sort((a, b) => a.accountCode.localeCompare(b.accountCode, undefined, { numeric: true }));
+    const sortedAssets = sortByCode(bs.assets);
+    const sortedLiabilities = sortByCode(bs.liabilities);
+    const sortedEquity = sortByCode(bs.equity);
+
+    // Indent by account code depth (1111=0, 1112-001=1)
+    const indentForCode = (code: string) => Math.min(2, (code.match(/[-.]/g) || []).length);
+
+    // Equity items: accounts + net income (loss) for period
+    const equityItems: PdfSectionItem[] = [
+      ...sortedEquity.map(e => ({
+        label: `${e.accountCode} ${e.accountName}`,
+        labelAr: `${e.accountCode} ${e.accountName}`,
+        value: -e.balance,
+        indent: indentForCode(e.accountCode),
+      })),
+      ...(bs.netIncomeForPeriod !== 0 ? [{
+        label: 'Net Income (Loss) for Period',
+        labelAr: 'صافي الربح (أو الخسارة) للفترة',
+        value: bs.netIncomeForPeriod,
+        indent: 0,
+      }] : []),
+    ];
+
+    // Assets: debit balance (positive); Liabilities/Equity: credit balance (negate for display)
     const sections: PdfSection[] = [
       {
         title: 'Assets',
         titleAr: 'الأصول',
-        items: bs.assets.map(a => ({
-          label: a.accountName,
-          labelAr: a.accountName,
+        items: sortedAssets.map(a => ({
+          label: `${a.accountCode} ${a.accountName}`,
+          labelAr: `${a.accountCode} ${a.accountName}`,
           value: a.balance,
+          indent: indentForCode(a.accountCode),
         })),
         total: bs.totalAssets,
       },
       {
         title: 'Liabilities',
         titleAr: 'الخصوم',
-        items: bs.liabilities.map(l => ({
-          label: l.accountName,
-          labelAr: l.accountName,
-          value: l.balance,
+        items: sortedLiabilities.map(l => ({
+          label: `${l.accountCode} ${l.accountName}`,
+          labelAr: `${l.accountCode} ${l.accountName}`,
+          value: -l.balance,
+          indent: indentForCode(l.accountCode),
         })),
-        total: bs.totalLiabilities,
+        total: Math.abs(bs.totalLiabilities),
       },
       {
         title: 'Equity',
         titleAr: 'حقوق الملكية',
-        items: bs.equity.map(e => ({
-          label: e.accountName,
-          labelAr: e.accountName,
-          value: e.balance,
-        })),
-        total: bs.totalEquity,
+        items: equityItems,
+        total: bs.totalEquity, // already includes netIncomeForPeriod
       },
     ];
 
-    const options = buildFinancialStatementPdfOptions(meta as any, {
-      title: 'Balance Sheet',
-      titleAr: 'الميزانية العمومية',
-      subtitle: `As of ${formatDateForHeader(asOfDate || new Date())}`,
-      subtitleAr: `اعتباراً من ${formatDateForHeader(asOfDate || new Date())}`,
-      sections,
-      grandTotal: {
-        label: 'Total Equity & Liabilities',
-        labelAr: 'إجمالي الخصوم وحقوق الملكية',
-        value: bs.totalLiabilities + bs.totalEquity,
-      },
-    });
+    const lang = (query.language || 'ar') as 'en' | 'ar';
+    const bsData: BalanceSheetPdfData = {
+      companyName: meta.storeName || meta.storeNameEn || 'Store',
+      reportTitle: 'Balance Sheet',
+      reportTitleAr: 'قائمة المركز المالي',
+      asOfDateRaw: asOfDate,
+      generatedAt: new Date().toISOString(),
+      generatedBy: (meta as any).generatedBy,
+      currency: lang === 'ar' ? 'شيكل (₪)' : 'ILS (₪)',
+      totalAssets: bs.totalAssets,
+      branchName: (meta as any).branchName,
+      sections: [
+        {
+          title: 'Assets',
+          titleAr: 'الأصول',
+          rows: sortedAssets.map(a => ({ code: a.accountCode, name: a.accountName, nameAr: a.accountName, value: a.balance } as BalanceSheetRow)),
+          total: bs.totalAssets,
+        },
+        {
+          title: 'Liabilities',
+          titleAr: 'الخصوم',
+          rows: sortedLiabilities.map(l => ({ code: l.accountCode, name: l.accountName, nameAr: l.accountName, value: -l.balance } as BalanceSheetRow)),
+          total: Math.abs(bs.totalLiabilities),
+        },
+        {
+          title: 'Equity',
+          titleAr: 'حقوق الملكية',
+          rows: [
+            ...sortedEquity.map(e => ({ code: e.accountCode, name: e.accountName, nameAr: e.accountName, value: -e.balance } as BalanceSheetRow)),
+            ...(bs.netIncomeForPeriod !== 0 ? [{ code: '', name: 'Net Income (Loss) for Period', nameAr: 'صافي الربح (أو الخسارة) للفترة', value: bs.netIncomeForPeriod } as BalanceSheetRow] : []),
+          ],
+          total: bs.totalEquity,
+        },
+      ],
+      grandTotalLabel: 'Total Equity & Liabilities',
+      grandTotalLabelAr: 'إجمالي الخصوم وحقوق الملكية',
+      grandTotalValue: Math.abs(bs.totalLiabilities) + bs.totalEquity,
+      language: lang,
+      appVersion: meta.appVersion,
+    };
 
-    return this.pdfService.generate(options);
+    return this.pdfService.generate({
+      meta: meta as any,
+      balanceSheetData: bsData,
+    });
   }
 
   async getIncomeStatementPdf(query: PdfQueryDto) {
@@ -1807,80 +2104,107 @@ export class AccountingService {
     const end = query.endDate || new Date().toISOString().split('T')[0];
     const is = await this.getIncomeStatement(start, end);
     const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+    const lang = (query.language || 'ar') as 'en' | 'ar';
 
-    const sections: PdfSection[] = [
+    const sections: import('../pdf/pdf.types').IncomeStatementSection[] = [
       {
         title: 'Revenue',
         titleAr: 'الإيرادات',
-        items: is.revenue.map(r => ({
-          label: r.accountName,
-          labelAr: r.accountName,
-          value: r.amount,
-        })),
+        rows: is.revenue.map(r => ({ code: r.accountCode, name: r.accountName, value: r.amount })),
         total: is.totalRevenue,
       },
       {
-        title: 'Expenses',
-        titleAr: 'المصروفات',
-        items: is.expenses.map(e => ({
-          label: e.accountName,
-          labelAr: e.accountName,
-          value: e.amount,
-        })),
-        total: is.totalExpenses,
+        title: 'Direct Costs (COGS)',
+        titleAr: 'تكلفة البضاعة المباعة',
+        rows: is.cogs.map(c => ({ code: c.accountCode, name: c.accountName, value: c.amount })),
+        total: is.totalCogs,
+      },
+      {
+        title: 'Operating Expenses',
+        titleAr: 'المصروفات التشغيلية',
+        rows: is.operatingExpenses.map(e => ({ code: e.accountCode, name: e.accountName, value: e.amount })),
+        total: is.totalOperatingExpenses,
       },
     ];
 
-    const options = buildFinancialStatementPdfOptions(meta as any, {
-      title: 'Income Statement',
-      titleAr: 'قائمة الدخل',
-      subtitle: `${formatDateForHeader(start)} to ${formatDateForHeader(end)}`,
-      subtitleAr: `${formatDateForHeader(start)} إلى ${formatDateForHeader(end)}`,
+    const isData: import('../pdf/pdf.types').IncomeStatementPdfData = {
+      companyName: meta.storeName || meta.storeNameEn || 'Store',
+      reportTitle: 'Income Statement',
+      reportTitleAr: 'قائمة الدخل',
+      startDate: start,
+      endDate: end,
       sections,
-      grandTotal: {
-        label: 'Net Income',
-        labelAr: 'صافي الدخل',
-        value: is.netIncome,
-      },
-    });
+      netIncomeLabel: 'Net Income',
+      netIncomeLabelAr: 'صافي الربح',
+      netIncomeValue: is.netIncome,
+      language: lang,
+      appVersion: meta.appVersion,
+      generatedAt: new Date().toISOString(),
+      generatedBy: (meta as any).generatedBy,
+      currency: lang === 'ar' ? 'شيكل (₪)' : 'ILS (₪)',
+      branchName: (meta as any).branchName,
+    };
 
-    return this.pdfService.generate(options);
+    return this.pdfService.generate({
+      meta: meta as any,
+      incomeStatementData: isData,
+    });
   }
 
   async getTrialBalancePdf(query: PdfQueryDto) {
-    const asOfDate = query.asOfDate;
-    const tb = await this.getTrialBalance(asOfDate);
+    const start = query.startDate;
+    const end = query.asOfDate || query.endDate || new Date().toISOString().split('T')[0];
+    const tb = await this.getTrialBalance(start, end);
     const meta = await this.pdfService.getStoreMeta(this.prisma, query.language || 'en');
+    const lang = (query.language || 'ar') as 'en' | 'ar';
 
-    const rows = tb.map(t => ({
+    const rows: import('../pdf/pdf.types').TrialBalanceRow[] = tb.map(t => ({
       code: t.accountCode,
       name: t.accountName,
-      debit: t.debit,
-      credit: t.credit,
+      openingDebit: t.openingDebit,
+      openingCredit: t.openingCredit,
+      periodDebit: t.periodDebit,
+      periodCredit: t.periodCredit,
+      endingDebit: t.endingDebit,
+      endingCredit: t.endingCredit,
     }));
 
-    const totalDebit = tb.reduce((sum, t) => sum + t.debit, 0);
-    const totalCredit = tb.reduce((sum, t) => sum + t.credit, 0);
+    const totalOpeningDebit = tb.reduce((sum, t) => sum + t.openingDebit, 0);
+    const totalOpeningCredit = tb.reduce((sum, t) => sum + t.openingCredit, 0);
+    const totalPeriodDebit = tb.reduce((sum, t) => sum + t.periodDebit, 0);
+    const totalPeriodCredit = tb.reduce((sum, t) => sum + t.periodCredit, 0);
+    const totalEndingDebit = tb.reduce((sum, t) => sum + t.endingDebit, 0);
+    const totalEndingCredit = tb.reduce((sum, t) => sum + t.endingCredit, 0);
 
-    const options = buildReportPdfOptions(meta as any, {
-      title: 'Trial Balance',
-      titleAr: 'ميزان المراجعة',
-      subtitle: `As of ${formatDateForHeader(asOfDate || new Date())}`,
-      subtitleAr: `اعتباراً من ${formatDateForHeader(asOfDate || new Date())}`,
-      columns: [
-        { header: 'Code', headerAr: 'الكود', field: 'code', width: 'auto' },
-        { header: 'Account', headerAr: 'الحساب', field: 'name', width: '*' },
-        { header: 'Debit', headerAr: 'مدين', field: 'debit', width: 'auto', format: 'currency' },
-        { header: 'Credit', headerAr: 'دائن', field: 'credit', width: 'auto', format: 'currency' },
-      ],
+    // Precise check for balancing (allow small rounding error if using floats, though here they should be decimals)
+    const isBalanced = Math.abs(totalEndingDebit - totalEndingCredit) < 0.01;
+
+    const tbData: import('../pdf/pdf.types').TrialBalancePdfData = {
+      companyName: meta.storeName || meta.storeNameEn || 'Store',
+      reportTitle: 'Trial Balance',
+      reportTitleAr: 'ميزان المراجعة',
+      startDate: start || 'Start',
+      endDate: end,
       rows,
-      summaryItems: [
-        { label: 'Total Debit', labelAr: 'إجمالي المدين', value: totalDebit, format: 'currency', bold: true },
-        { label: 'Total Credit', labelAr: 'إجمالي الدائن', value: totalCredit, format: 'currency', bold: true },
-      ],
-    });
+      totalOpeningDebit,
+      totalOpeningCredit,
+      totalPeriodDebit,
+      totalPeriodCredit,
+      totalEndingDebit,
+      totalEndingCredit,
+      isBalanced,
+      language: lang,
+      appVersion: meta.appVersion,
+      generatedAt: new Date().toISOString(),
+      generatedBy: (meta as any).generatedBy,
+      currency: lang === 'ar' ? 'شيكل (₪)' : 'ILS (₪)',
+      branchName: (meta as any).branchName,
+    };
 
-    return this.pdfService.generate(options);
+    return this.pdfService.generate({
+      meta: meta as any,
+      trialBalanceData: tbData,
+    });
   }
 
   async getAccountLedgerPdf(accountCode: string, query: PdfQueryDto) {

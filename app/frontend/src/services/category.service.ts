@@ -15,6 +15,7 @@ export interface PurchaseableCategory {
         name: string;
         defaultPurchasePrice: number | null;
         defaultSalePrice: number;
+        averageCost?: number;
     };
 }
 

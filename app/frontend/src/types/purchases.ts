@@ -69,6 +69,8 @@ export interface CreatePurchaseDto {
     dueDate?: string;
     taxAmount?: number;
     amountPaid?: number;
+    paymentMethod?: string;
+    bankAccountId?: number;
     notes?: string;
     lines: CreatePurchaseLineDto[];
 }
@@ -79,6 +81,8 @@ export interface UpdatePurchaseDto {
     dueDate?: string;
     taxAmount?: number;
     amountPaid?: number;
+    paymentMethod?: string;
+    bankAccountId?: number;
     notes?: string;
     lines?: CreatePurchaseLineDto[];
 }

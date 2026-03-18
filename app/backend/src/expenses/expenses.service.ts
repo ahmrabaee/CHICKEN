@@ -77,6 +77,17 @@ export class ExpensesService {
         },
       });
 
+      // Assert sufficient balance for cash/bank payment (skip for credit)
+      if (dto.paymentMethod !== 'credit') {
+        await this.accountingService.assertSufficientBalance(
+          dto.amount,
+          dto.paymentMethod ?? 'cash',
+          dto.bankAccountId ?? null,
+          expense.expenseDate,
+          tx,
+        );
+      }
+
       // Create accounting journal entry
       await this.accountingService.createExpenseJournalEntry(
         tx,

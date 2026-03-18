@@ -52,6 +52,16 @@ export class CreatePurchaseDto {
   @IsOptional()
   amountPaid?: number;
 
+  @ApiPropertyOptional({ description: 'Payment method: cash, card, bank_transfer, mobile_payment, check' })
+  @IsString()
+  @IsOptional()
+  paymentMethod?: string;
+
+  @ApiPropertyOptional({ description: 'Bank account ID when paymentMethod is bank_transfer or card' })
+  @IsNumber()
+  @IsOptional()
+  bankAccountId?: number;
+
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()

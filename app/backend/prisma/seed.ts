@@ -270,13 +270,28 @@ async function seedItems(): Promise<void> {
     });
   }
 
-  // Link CHICKEN_RAW category to its purchase item (raw chicken)
-  const rawChickenItem = await prisma.item.findUnique({ where: { code: 'CHK-RAW-01' } });
-  if (rawChickenItem && chickenRaw) {
-    await prisma.category.update({
-      where: { code: 'CHICKEN_RAW' },
-      data: { purchaseItemId: rawChickenItem.id },
-    });
+  // Link categories to their purchase items so price auto-fills in purchase form
+  const itemByCode = async (code: string) => prisma.item.findUnique({ where: { code } });
+  const rawChickenItem = await itemByCode('CHK-RAW-01');
+  const wholeChickenItem = await itemByCode('CHK-WHOLE-01');
+  const breastItem = await itemByCode('CHK-BREAST-01');
+  const skewerItem = await itemByCode('CHK-SKEWER-01');
+
+  const links: Array<[string, typeof rawChickenItem]> = [
+    ['CHICKEN_RAW', rawChickenItem],
+    ['FRESH_WHOLE', wholeChickenItem],
+    ['FRESH_PARTS', breastItem],
+    ['FROZEN_WHOLE', wholeChickenItem],
+    ['FROZEN_PARTS', breastItem],
+    ['PROCESSED', skewerItem],
+  ];
+  for (const [catCode, item] of links) {
+    if (item) {
+      await prisma.category.update({
+        where: { code: catCode },
+        data: { purchaseItemId: item.id },
+      });
+    }
   }
 
   console.log('✓ Items seeded');

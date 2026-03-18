@@ -7,15 +7,19 @@ export class CategoriesService {
   constructor(private prisma: PrismaService) { }
 
   async findPurchaseable(): Promise<CategoryResponseDto[]> {
-    // Fetch all active categories (with or without a purchaseItem)
+    // Fetch all active categories (with purchaseItem and inventory for price fallback)
     const categories = await this.prisma.category.findMany({
       where: { isActive: true },
-      include: { purchaseItem: true },
+      include: {
+        purchaseItem: {
+          include: { inventory: true },
+        },
+      },
       orderBy: { displayOrder: 'asc' },
     });
 
-    // Auto-bootstrap: for each category that lacks a purchaseItem, create one now.
-    // This is idempotent — it only runs once per category and never creates duplicates.
+    // Auto-bootstrap: for each category that lacks a purchaseItem, use existing item or create one.
+    // Prefer an existing item in this category (with defaultPurchasePrice) so the price auto-fills.
     const results: typeof categories = [];
     for (const cat of categories) {
       if (cat.purchaseItemId) {
@@ -23,14 +27,21 @@ export class CategoriesService {
         continue;
       }
 
-      // Derive a unique item code from the category code
-      const itemCode = `${cat.code}_RAW`;
-      let item = await this.prisma.item.findUnique({ where: { code: itemCode } });
+      // Try to find an existing item in this category (prefer one with defaultPurchasePrice > 0)
+      const existingItems = await this.prisma.item.findMany({
+        where: { categoryId: cat.id, isActive: true },
+        include: { inventory: true },
+        orderBy: { id: 'asc' },
+      });
+      const preferredItem = existingItems.find((i) => (i.defaultPurchasePrice ?? 0) > 0) ?? existingItems[0];
 
-      if (!item) {
-        item = await this.prisma.item.create({
+      let itemId: number;
+      if (preferredItem) {
+        itemId = preferredItem.id;
+      } else {
+        const created = await this.prisma.item.create({
           data: {
-            code: itemCode,
+            code: `${cat.code}_RAW`,
             name: cat.name,
             nameEn: cat.nameEn ?? null,
             categoryId: cat.id,
@@ -40,13 +51,13 @@ export class CategoriesService {
             isActive: true,
           },
         });
+        itemId = created.id;
       }
 
-      // Link the item to the category
       const updated = await this.prisma.category.update({
         where: { id: cat.id },
-        data: { purchaseItemId: item.id },
-        include: { purchaseItem: true },
+        data: { purchaseItemId: itemId },
+        include: { purchaseItem: { include: { inventory: true } } },
       });
       results.push(updated);
     }
@@ -237,12 +248,14 @@ export class CategoriesService {
     };
     if (category.purchaseItemId != null) dto.purchaseItemId = category.purchaseItemId;
     if (category.purchaseItem) {
+      const inv = category.purchaseItem.inventory;
       dto.purchaseItem = {
         id: category.purchaseItem.id,
         code: category.purchaseItem.code,
         name: category.purchaseItem.name,
         defaultPurchasePrice: category.purchaseItem.defaultPurchasePrice,
         defaultSalePrice: category.purchaseItem.defaultSalePrice,
+        averageCost: inv?.averageCost ?? 0,
       };
     }
     return dto;

@@ -28,8 +28,9 @@ export const useCreatePurchase = () => {
             toast({ title: 'تم إنشاء أمر الشراء بنجاح' });
         },
         onError: (error: any) => {
-            const err = error.response?.data?.error;
-            const description = err?.messageAr || err?.message || error.response?.data?.message || 'حدث خطأ غير متوقع';
+            const d = error.response?.data;
+            const err = d?.error;
+            const description = d?.messageAr || err?.messageAr || d?.message || err?.message || 'حدث خطأ غير متوقع';
             toast({
                 variant: 'destructive',
                 title: 'خطأ في إنشاء أمر الشراء',

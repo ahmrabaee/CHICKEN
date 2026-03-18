@@ -29,10 +29,12 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useSuppliers } from "@/hooks/use-suppliers";
 import { usePurchaseableCategories } from "@/hooks/use-inventory";
 import { useCreatePurchase, usePurchase, useUpdatePurchase } from "@/hooks/use-purchases";
+import { bankAccountsService } from "@/services/bank-accounts.service";
 import type { CreatePurchaseDto } from "@/types/purchases";
 
 // UI uses major units (₪) and kg. API expects minor units and grams.
@@ -42,6 +44,8 @@ const purchaseSchema = z.object({
   dueDate: z.string().optional(),
   taxAmount: z.coerce.number().min(0, "قيمة الضريبة غير صحيحة").optional(),
   amountPaid: z.coerce.number().min(0, "المبلغ المدفوع غير صحيح").optional(),
+  paymentMethod: z.string().optional(),
+  bankAccountId: z.coerce.number().optional(),
   notes: z.string().optional(),
   lines: z
     .array(
@@ -94,6 +98,8 @@ export default function PurchaseProfile() {
       dueDate: "",
       taxAmount: 0,
       amountPaid: 0,
+      paymentMethod: "cash",
+      bankAccountId: undefined,
       notes: "",
       lines: [{ itemId: 0, weightKg: 1, pricePerKg: 0, isLiveBird: false }], // itemId = category.id (resolved to purchaseItemId on submit)
     },
@@ -119,9 +125,20 @@ export default function PurchaseProfile() {
 
   const taxNum = Number(watchedTax) || 0;
   const watchedPaid = useWatch({ control: form.control, name: "amountPaid", defaultValue: 0 });
+  const paymentMethod = useWatch({ control: form.control, name: "paymentMethod", defaultValue: "cash" });
   const amountPaidNum = Number(watchedPaid) || 0;
   const grandTotalMajor = subtotalMajor + taxNum;
   const remainingMajor = Math.max(0, grandTotalMajor - amountPaidNum);
+  const hasSelectedItem = (watchedLines || []).some((l: { itemId?: number }) => (l?.itemId || 0) > 0);
+
+  const { data: bankAccountsRes } = useQuery({
+    queryKey: ["bank-accounts"],
+    queryFn: async () => {
+      const res = await bankAccountsService.getAll(false);
+      return res.data?.data ?? res.data ?? [];
+    },
+  });
+  const bankAccounts = (Array.isArray(bankAccountsRes) ? bankAccountsRes : []) as { id: number; code: string; name: string }[];
 
   useEffect(() => {
     if (!isEditing || !existingPurchase || categoriesLoading) return;
@@ -177,6 +194,8 @@ export default function PurchaseProfile() {
       dueDate: values.dueDate?.trim() ? values.dueDate : undefined,
       taxAmount: values.taxAmount != null && values.taxAmount > 0 ? toMinorUnits(values.taxAmount) : undefined,
       amountPaid: values.amountPaid != null && values.amountPaid > 0 ? toMinorUnits(values.amountPaid) : undefined,
+      paymentMethod: values.amountPaid != null && values.amountPaid > 0 ? (values.paymentMethod || "cash") : undefined,
+      bankAccountId: values.amountPaid != null && values.amountPaid > 0 && (values.paymentMethod === "bank_transfer" || values.paymentMethod === "card") ? values.bankAccountId : undefined,
       notes: values.notes?.trim() ? values.notes.trim() : undefined,
       lines,
     };
@@ -217,24 +236,18 @@ export default function PurchaseProfile() {
               إلغاء
             </Button>
           </Link>
-          <Button
-            type="button"
-            className="gap-2"
-            onClick={form.handleSubmit(onSubmit)}
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            {isEditing ? "حفظ التعديلات" : "حفظ أمر الشراء"}
-          </Button>
         </div>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form
+            onSubmit={form.handleSubmit(onSubmit, (errors) => {
+              const first = Object.values(errors)[0];
+              const msg = first?.message ?? "يرجى تصحيح الأخطاء في النموذج";
+              toast.error(String(msg));
+            })}
+            className="space-y-6"
+          >
           {/* Main info */}
           <Card>
             <CardContent className="pt-6 space-y-6">
@@ -252,7 +265,10 @@ export default function PurchaseProfile() {
                             value={supplierSearch}
                             onChange={(e) => setSupplierSearch(e.target.value)}
                           />
-                          <Select value={String(field.value || "")} onValueChange={(v) => field.onChange(v)}>
+                          <Select
+                            value={field.value && field.value > 0 ? String(field.value) : ""}
+                            onValueChange={(v) => field.onChange(v ? Number(v) : 0)}
+                          >
                             <SelectTrigger>
                               <SelectValue placeholder={suppliersLoading ? "جاري تحميل التجار..." : "اختر التاجر"} />
                             </SelectTrigger>
@@ -380,10 +396,13 @@ export default function PurchaseProfile() {
                                   field.onChange(categoryId);
                                   const cat = purchaseableCategories.find((c) => c.id === categoryId);
                                   if (!cat?.purchaseItem) return;
-                                  const currentPrice = Number(form.getValues(`lines.${idx}.pricePerKg`)) || 0;
-                                  const defaultPriceMajor = (cat.purchaseItem.defaultPurchasePrice ?? 0) / 100;
-                                  if (currentPrice === 0 && defaultPriceMajor > 0) {
-                                    form.setValue(`lines.${idx}.pricePerKg`, defaultPriceMajor, { shouldDirty: true, shouldValidate: true });
+                                  // Use defaultPurchasePrice first, fallback to averageCost from inventory (both in minor units)
+                                  const def = cat.purchaseItem.defaultPurchasePrice ?? 0;
+                                  const avg = cat.purchaseItem.averageCost ?? 0;
+                                  const priceMinor = def > 0 ? def : avg;
+                                  const priceMajor = priceMinor / 100;
+                                  if (priceMajor > 0) {
+                                    form.setValue(`lines.${idx}.pricePerKg`, priceMajor, { shouldDirty: true, shouldValidate: true });
                                   }
                                 }}
                               >
@@ -535,6 +554,68 @@ export default function PurchaseProfile() {
                     )}
                   />
 
+                  {(grandTotalMajor > 0 || hasSelectedItem) && (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="paymentMethod"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-muted-foreground text-sm">طريقة الدفع</FormLabel>
+                            <Select value={field.value ?? "cash"} onValueChange={field.onChange}>
+                              <FormControl>
+                                <SelectTrigger className="h-9">
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent dir="rtl">
+                                <SelectItem value="cash">نقدي</SelectItem>
+                                <SelectItem value="card">بطاقة</SelectItem>
+                                <SelectItem value="bank_transfer">تحويل بنكي</SelectItem>
+                                <SelectItem value="mobile_payment">دفع إلكتروني</SelectItem>
+                                <SelectItem value="check">شيك</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      {(paymentMethod === "bank_transfer" || paymentMethod === "card") && bankAccounts.length > 0 ? (
+                        <FormField
+                          control={form.control}
+                          name="bankAccountId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-muted-foreground text-sm">الحساب البنكي</FormLabel>
+                              <Select
+                                value={field.value ? String(field.value) : ""}
+                                onValueChange={(v) => field.onChange(v ? parseInt(v, 10) : undefined)}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className="h-9">
+                                    <SelectValue placeholder="اختر البنك" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent dir="rtl">
+                                  {bankAccounts.map((b) => (
+                                    <SelectItem key={b.id} value={String(b.id)}>
+                                      {b.code} - {b.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      ) : (paymentMethod === "bank_transfer" || paymentMethod === "card") && bankAccounts.length === 0 ? (
+                        <div className="col-span-2 text-amber-600 text-xs flex items-center gap-2">
+                          <Link to="/settings" className="underline">أضف حسابات بنكية من الإعدادات</Link> لتفعيل التحويل البنكي
+                        </div>
+                      ) : null}
+                    </>
+                  )}
+
                   <div className="col-span-2 border-t border-muted-foreground/10 my-2" />
 
                   <span className="text-muted-foreground font-semibold">المتبقي (دين)</span>
@@ -544,17 +625,17 @@ export default function PurchaseProfile() {
             </CardContent>
           </Card>
 
-          {/* Mobile sticky actions (optional but helpful) */}
-          <div className="md:hidden flex gap-2">
-            <Link to="/purchasing" className="flex-1">
-              <Button type="button" variant="outline" className="w-full gap-2">
+          {/* Footer actions - Save & Cancel at bottom for easier access */}
+          <div className="flex flex-col sm:flex-row gap-3 sticky bottom-4 bg-background/95 backdrop-blur py-4 rounded-lg border shadow-lg px-4">
+            <Link to="/purchasing" className="order-2 sm:order-1">
+              <Button type="button" variant="outline" className="w-full sm:w-auto gap-2">
                 <X className="w-4 h-4" />
                 إلغاء
               </Button>
             </Link>
             <Button
               type="submit"
-              className="flex-1 gap-2"
+              className="flex-1 gap-2 order-1 sm:order-2"
               disabled={isSaving}
             >
               {isSaving ? (
@@ -562,7 +643,7 @@ export default function PurchaseProfile() {
               ) : (
                 <Save className="w-4 h-4" />
               )}
-              {isEditing ? "حفظ التعديلات" : "حفظ"}
+              {isEditing ? "حفظ التعديلات" : "حفظ أمر الشراء"}
             </Button>
           </div>
         </form>

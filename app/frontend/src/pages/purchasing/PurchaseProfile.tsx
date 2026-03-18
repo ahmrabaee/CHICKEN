@@ -160,7 +160,7 @@ export default function PurchaseProfile() {
       purchaseDate: existingPurchase.purchaseDate?.slice(0, 10) || new Date().toISOString().slice(0, 10),
       dueDate: existingPurchase.dueDate ? existingPurchase.dueDate.slice(0, 10) : "",
       taxAmount: (existingPurchase.taxAmount || 0) / 100,
-      amountPaid: (existingPurchase.amountPaid || 0) / 100,
+      amountPaid: 0,
       notes: existingPurchase.notes || "",
       lines: mappedLines,
     });
@@ -527,6 +527,8 @@ export default function PurchaseProfile() {
                   <span className="text-muted-foreground font-bold">الإجمالي النهائي</span>
                   <span className="text-left font-bold font-english text-lg" dir="ltr">₪ {grandTotalMajor.toFixed(2)}</span>
 
+                  {!isEditing ? (
+                    <>
                   <span className="text-green-700 font-bold flex flex-col gap-1">
                     <span>المبلغ المدفوع (₪)</span>
                     <Button
@@ -614,6 +616,12 @@ export default function PurchaseProfile() {
                         </div>
                       ) : null}
                     </>
+                  )}
+                    </>
+                  ) : (
+                    <div className="col-span-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm text-blue-700 dark:text-blue-300">
+                      💡 لتعديل الدفعات، استخدم صفحة <Link to="/payments" className="underline font-bold">المدفوعات</Link>
+                    </div>
                   )}
 
                   <div className="col-span-2 border-t border-muted-foreground/10 my-2" />

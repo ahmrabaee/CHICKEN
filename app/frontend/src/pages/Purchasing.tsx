@@ -13,6 +13,10 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { DocumentStatusBadge } from "@/components/posting";
 import { usePurchases, usePurchase, useDeletePurchase } from "@/hooks/use-purchases";
@@ -59,10 +63,12 @@ function getPaymentBadge(status: string | null | undefined) {
 
 // ─── Detail Card ──────────────────────────────────────────
 
-function PurchaseDetailCard({ purchaseId, open, onClose }: { purchaseId: number; open: boolean; onClose: () => void }) {
+function PurchaseDetailCard({ purchaseId, open, onClose, onRequestDelete }: { purchaseId: number; open: boolean; onClose: () => void; onRequestDelete?: (purchase: Purchase) => void }) {
+  const navigate = useNavigate();
   const { data: purchase, isLoading } = usePurchase(purchaseId);
   const [showCreditNoteDialog, setShowCreditNoteDialog] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const canModifyDetail = purchase && purchase.status !== "cancelled";
 
   const handleDownloadOrderPdf = async () => {
     setPdfLoading(true);
@@ -125,6 +131,30 @@ function PurchaseDetailCard({ purchaseId, open, onClose }: { purchaseId: number;
 
             {/* Actions area – min-w-10 keeps it from collapsing; shrink-0 prevents squishing */}
             <div className="flex items-center gap-2 shrink-0">
+              {canModifyDetail && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-1.5 px-3 text-blue-600 hover:text-blue-700"
+                  onClick={() => { onClose(); navigate(`/purchasing/${purchaseId}/edit`); }}
+                  title="تعديل أمر الشراء"
+                >
+                  <Pencil className="w-4 h-4" />
+                  <span className="hidden sm:inline">تعديل</span>
+                </Button>
+              )}
+              {canModifyDetail && onRequestDelete && purchase && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-1.5 px-3 text-rose-600 hover:text-rose-700"
+                  onClick={() => { onClose(); onRequestDelete(purchase as Purchase); }}
+                  title="حذف أمر الشراء"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">حذف</span>
+                </Button>
+              )}
               {purchase && (
                 <Button
                   variant="outline"
@@ -316,14 +346,17 @@ export default function Purchasing() {
   const deletePurchase = useDeletePurchase();
 
   const [detailId, setDetailId] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Purchase | null>(null);
 
-  const handleDeletePurchase = async (purchase: Purchase) => {
-    if (!window.confirm(`هل أنت متأكد من حذف أمر الشراء ${purchase.purchaseNumber}؟`)) return;
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deletePurchase.mutateAsync(purchase.id);
-      if (detailId === purchase.id) setDetailId(null);
+      await deletePurchase.mutateAsync(deleteTarget.id);
+      if (detailId === deleteTarget.id) setDetailId(null);
     } catch {
       // Toast is already handled in mutation onError
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
@@ -437,7 +470,7 @@ export default function Purchasing() {
                     </TableCell>
                     <TableCell className="text-center">
                       {(() => {
-                        const canModify = purchase.paymentStatus === "unpaid" && purchase.status !== "cancelled";
+                        const canModify = purchase.status !== "cancelled";
                         return (
                       <div className="flex items-center justify-center gap-1">
                         <Button variant="ghost" size="icon" className="h-8 w-8" title="عرض التفاصيل"
@@ -461,10 +494,13 @@ export default function Purchasing() {
                             size="icon"
                             className="h-8 w-8 text-rose-600"
                             title="حذف أمر الشراء"
-                            onClick={() => handleDeletePurchase(purchase)}
-                            disabled={deletePurchase.isPending}
+                            onClick={() => setDeleteTarget(purchase)}
+                            disabled={deletePurchase.isPending && deleteTarget?.id === purchase.id}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            {deletePurchase.isPending && deleteTarget?.id === purchase.id
+                              ? <Loader2 className="w-4 h-4 animate-spin" />
+                              : <Trash2 className="w-4 h-4" />
+                            }
                           </Button>
                         )}
                         {purchase.paymentStatus !== "paid" && (
@@ -500,8 +536,32 @@ export default function Purchasing() {
       </div>
 
       {detailId && (
-        <PurchaseDetailCard purchaseId={detailId} open={!!detailId} onClose={() => setDetailId(null)} />
+        <PurchaseDetailCard purchaseId={detailId} open={!!detailId} onClose={() => setDetailId(null)} onRequestDelete={(p) => setDeleteTarget(p)} />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>حذف أمر الشراء</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span className="block">سيتم حذف أمر الشراء <strong>{deleteTarget?.purchaseNumber}</strong> نهائياً.</span>
+              <span className="block text-rose-600">سيتم عكس جميع تأثيرات المخزون والمحاسبة المرتبطة بهذا الأمر.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogCancel disabled={deletePurchase.isPending}>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deletePurchase.isPending}
+              className="bg-rose-600 hover:bg-rose-700 text-white gap-2"
+            >
+              {deletePurchase.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              حذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -7,6 +7,9 @@ import {
   Query,
   ParseIntPipe,
   Res,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
@@ -20,21 +23,24 @@ import {
   CancelPaymentDto,
   CreateAdvancePaymentDto,
 } from './dto/payment.dto';
-import { CurrentUser } from '../common';
+import { CurrentUser, Roles, RolesGuard } from '../common';
 
 @ApiTags('payments')
 @ApiBearerAuth('JWT-auth')
+@UseGuards(RolesGuard)   // WK-13: Enforce role-based access control on all payment endpoints
 @Controller('payments')
 export class PaymentsController {
   constructor(private paymentsService: PaymentsService) { }
 
   @Get()
+  @Roles('admin', 'accountant', 'cashier')
   @ApiOperation({ summary: 'List all payments' })
   findAll(@Query() query: PaymentQueryDto) {
     return this.paymentsService.findAll(query, query.type);
   }
 
   @Get(':id/pdf')
+  @Roles('admin', 'accountant', 'cashier')
   @ApiOperation({ summary: 'Download payment voucher PDF' })
   async getPaymentPdf(
     @Param('id', ParseIntPipe) id: number,
@@ -51,24 +57,29 @@ export class PaymentsController {
   }
 
   @Post('sale')
+  @Roles('admin', 'accountant', 'cashier')
   @ApiOperation({ summary: 'Record a sale payment' })
   recordSalePayment(@Body() dto: RecordSalePaymentDto, @CurrentUser() user: any) {
     return this.paymentsService.recordSalePayment(dto, user.id);
   }
 
   @Post('purchase')
+  @Roles('admin', 'accountant')
   @ApiOperation({ summary: 'Record a purchase payment' })
   recordPurchasePayment(@Body() dto: RecordPurchasePaymentDto, @CurrentUser() user: any) {
     return this.paymentsService.recordPurchasePayment(dto, user.id);
   }
 
   @Post('advance')
+  @Roles('admin', 'accountant')
   @ApiOperation({ summary: 'Create advance payment (Blueprint 04 - for reconciliation)' })
   createAdvancePayment(@Body() dto: CreateAdvancePaymentDto, @CurrentUser() user: any) {
     return this.paymentsService.createAdvancePayment(dto, user.id);
   }
 
   @Post(':id/cancel')
+  @Roles('admin', 'accountant')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Cancel payment (creates GL reversal)',
     description: 'Blueprint 03: Cancels payment with full GL reversal. Use instead of void.',
@@ -82,8 +93,10 @@ export class PaymentsController {
   }
 
   @Get(':id')
+  @Roles('admin', 'accountant', 'cashier')
   @ApiOperation({ summary: 'Get payment by ID' })
   findById(@Param('id', ParseIntPipe) id: number) {
     return this.paymentsService.findById(id);
   }
 }
+

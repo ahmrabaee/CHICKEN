@@ -1,11 +1,15 @@
 import {
   Controller,
   Get,
+  Post,
   Param,
+  Body,
   Query,
   ParseIntPipe,
   Res,
   UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
@@ -13,7 +17,7 @@ import { getPdfContentDisposition } from '../pdf/pdf.helpers';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { DebtsService } from './debts.service';
 import { DebtQueryDto } from './dto/debt.dto';
-import { Roles, RolesGuard, PageAccessGuard, RequirePageAccess } from '../common';
+import { Roles, RolesGuard, PageAccessGuard, RequirePageAccess, CurrentUser } from '../common';
 
 @ApiTags('debts')
 @ApiBearerAuth('JWT-auth')
@@ -87,5 +91,17 @@ export class DebtsController {
   @ApiOperation({ summary: 'Get debt by ID' })
   findById(@Param('id', ParseIntPipe) id: number) {
     return this.debtsService.findById(id);
+  }
+
+  @Post(':id/write-off')
+  @Roles('admin', 'accountant')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'شطب الدين (Write off bad debt)' })
+  writeOff(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { reason: string },
+    @CurrentUser() user: any,
+  ) {
+    return this.debtsService.writeOff(id, body.reason, user.id);
   }
 }

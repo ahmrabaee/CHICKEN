@@ -148,7 +148,7 @@ export class PaymentsService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      const paymentNumber = await this.generatePaymentNumber();
+      const paymentNumber = await this.generatePaymentNumber(tx);
 
       const payment = await tx.payment.create({
         data: {
@@ -191,6 +191,14 @@ export class PaymentsService {
           status: paymentStatus === 'paid' ? 'paid' : 'partial',
         },
       });
+
+      // WK-01: Decrement customer balance now that payment is recorded
+      if (sale.customerId) {
+        await tx.customer.update({
+          where: { id: sale.customerId },
+          data: { currentBalance: { decrement: dto.amount } },
+        });
+      }
 
       // Create journal entry for payment received
       await this.accountingService.createPaymentReceivedJournalEntry(
@@ -258,7 +266,7 @@ export class PaymentsService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      const paymentNumber = await this.generatePaymentNumber();
+      const paymentNumber = await this.generatePaymentNumber(tx);
 
       const payment = await tx.payment.create({
         data: {
@@ -396,7 +404,7 @@ export class PaymentsService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      const paymentNumber = await this.generatePaymentNumber();
+      const paymentNumber = await this.generatePaymentNumber(tx);
 
       const payment = await tx.payment.create({
         data: {
@@ -672,7 +680,7 @@ export class PaymentsService {
     const partyName = (party as { name?: string }).name ?? '';
 
     return this.prisma.$transaction(async (tx) => {
-      const paymentNumber = await this.generatePaymentNumber();
+      const paymentNumber = await this.generatePaymentNumber(tx);
 
       const payment = await tx.payment.create({
         data: {
@@ -759,8 +767,16 @@ export class PaymentsService {
     return acc.id;
   }
 
-  private async generatePaymentNumber(): Promise<string> {
-    const count = await this.prisma.payment.count();
-    return `PAY-${(count + 1).toString().padStart(6, '0')}`;
+  // WK-02: Fixed race condition — use last record ID instead of COUNT(*)
+  // Pass the transaction (tx) so the read is inside the same atomic transaction
+  private async generatePaymentNumber(prismaOrTx: any = this.prisma): Promise<string> {
+    const last = await prismaOrTx.payment.findFirst({
+      orderBy: { id: 'desc' },
+      select: { paymentNumber: true },
+    });
+    const lastNum = last?.paymentNumber
+      ? parseInt(last.paymentNumber.replace('PAY-', ''), 10) || 0
+      : 0;
+    return `PAY-${(lastNum + 1).toString().padStart(6, '0')}`;
   }
 }

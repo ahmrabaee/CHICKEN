@@ -251,6 +251,7 @@ export default function Payments() {
                                     <TableHead className="text-right">رقم الدفعة</TableHead>
                                     <TableHead className="text-center">التاريخ</TableHead>
                                     <TableHead className="text-center">النوع</TableHead>
+                                    <TableHead className="text-center">الحالة</TableHead>
                                     <TableHead className="text-center">المبلغ</TableHead>
                                     <TableHead className="text-center">طريقة الدفع</TableHead>
                                     <TableHead className="text-right">المرجع</TableHead>
@@ -259,13 +260,21 @@ export default function Payments() {
                             </TableHeader>
                             <TableBody>
                                 {filtered.map((p: Payment) => (
-                                    <TableRow key={p.id} className="data-table-row">
+                                    <TableRow key={p.id} className={`data-table-row${(p.isVoided || p.docstatus === 2) ? ' opacity-60' : ''}`}>
                                         <TableCell className="font-mono text-sm">{p.paymentNumber}</TableCell>
                                         <TableCell className="text-center text-muted-foreground">{formatDate(p.paymentDate)}</TableCell>
                                         <TableCell className="text-center">
                                             <StatusBadge status={p.referenceType === "sale" ? "success" : "info"}>
                                                 {p.referenceType === "sale" ? "مبيعات" : "مشتريات"}
                                             </StatusBadge>
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            {/* UI-04: Show cancelled/active status */}
+                                            {(p.isVoided || p.docstatus === 2) ? (
+                                                <StatusBadge status="danger">ملغي</StatusBadge>
+                                            ) : (
+                                                <StatusBadge status="success">نشط</StatusBadge>
+                                            )}
                                         </TableCell>
                                         <TableCell className="text-center font-semibold">{formatCurrency(p.amount)}</TableCell>
                                         <TableCell className="text-center">{methodLabels[p.paymentMethod] || p.paymentMethod}</TableCell>

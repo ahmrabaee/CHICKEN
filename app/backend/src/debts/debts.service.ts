@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { createPaginatedResult } from '../common';
 import { PdfService } from '../pdf/pdf.service';
@@ -159,12 +159,13 @@ export class DebtsService {
 
   async getSummary() {
     const receivables = await this.prisma.debt.aggregate({
-      where: { direction: 'receivable', status: { not: 'paid' } },
+      // Exclude both paid AND written-off — written-off debts are forgiven, not collectible
+      where: { direction: 'receivable', status: { notIn: ['paid', 'written_off'] } },
       _sum: { totalAmount: true, amountPaid: true },
     });
 
     const payables = await this.prisma.debt.aggregate({
-      where: { direction: 'payable', status: { not: 'paid' } },
+      where: { direction: 'payable', status: { notIn: ['paid', 'written_off'] } },
       _sum: { totalAmount: true, amountPaid: true },
     });
 
@@ -184,7 +185,8 @@ export class DebtsService {
         direction: 'receivable',
         partyType: 'customer',
         partyId: customerId,
-        status: { not: 'paid' },
+        // Exclude written-off — they are forgiven, should not count as owed
+        status: { notIn: ['paid', 'written_off'] },
       },
     });
 
@@ -203,7 +205,8 @@ export class DebtsService {
         direction: 'payable',
         partyType: 'supplier',
         partyId: supplierId,
-        status: { not: 'paid' },
+        // Exclude written-off — they are forgiven, should not count as owed
+        status: { notIn: ['paid', 'written_off'] },
       },
     });
 
@@ -223,7 +226,7 @@ export class DebtsService {
     const ninetyDaysAgo = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
 
     const debts = await this.prisma.debt.findMany({
-      where: { direction, status: { not: 'paid' } },
+      where: { direction, status: { notIn: ['paid', 'written_off'] } },
     });
 
     const aging = {
@@ -235,13 +238,14 @@ export class DebtsService {
 
     for (const debt of debts) {
       const outstanding = debt.totalAmount - debt.amountPaid;
-      const createdAt = new Date(debt.createdAt);
+      // WK-03: Use dueDate for aging (fall back to createdAt if no dueDate set)
+      const referenceDate = debt.dueDate ? new Date(debt.dueDate) : new Date(debt.createdAt);
 
-      if (createdAt > thirtyDaysAgo) {
+      if (referenceDate > thirtyDaysAgo) {
         aging.current += outstanding;
-      } else if (createdAt > sixtyDaysAgo) {
+      } else if (referenceDate > sixtyDaysAgo) {
         aging.thirtyDays += outstanding;
-      } else if (createdAt > ninetyDaysAgo) {
+      } else if (referenceDate > ninetyDaysAgo) {
         aging.sixtyDays += outstanding;
       } else {
         aging.ninetyPlus += outstanding;
@@ -256,7 +260,8 @@ export class DebtsService {
 
     const overdueDebts = await this.prisma.debt.findMany({
       where: {
-        status: { not: 'paid' },
+        // Exclude written-off — a forgiven debt cannot be overdue
+        status: { notIn: ['paid', 'written_off'] },
         dueDate: { lt: today },
       },
       orderBy: { dueDate: 'asc' },
@@ -291,18 +296,36 @@ export class DebtsService {
       });
     }
 
+    if (debt.status === 'written_off') {
+      throw new BadRequestException({
+        code: 'ALREADY_WRITTEN_OFF',
+        message: 'This debt has already been written off',
+        messageAr: 'تم شطب هذا الدين مسبقاً',
+      });
+    }
+
+    const remaining = debt.totalAmount - debt.amountPaid;
+
     return this.prisma.$transaction(async (tx) => {
       await tx.debt.update({
         where: { id },
         data: { status: 'written_off', notes: reason },
       });
 
+      // WK-11: Decrement customer balance for the written-off remainder
+      if (debt.partyType === 'customer' && debt.partyId && remaining > 0) {
+        await tx.customer.update({
+          where: { id: debt.partyId },
+          data: { currentBalance: { decrement: remaining } },
+        });
+      }
+
       await tx.auditLog.create({
         data: {
           entityType: 'debt',
           entityId: id,
           action: 'write_off',
-          changes: JSON.stringify({ reason, previousStatus: debt.status }),
+          changes: JSON.stringify({ reason, previousStatus: debt.status, remainingWrittenOff: remaining }),
           userId,
           username: 'system',
           ipAddress: '127.0.0.1',
@@ -316,7 +339,8 @@ export class DebtsService {
   async getReceivablesPdf(query: PdfQueryDto) {
     const language = query.language || 'en';
     const debts = await this.prisma.debt.findMany({
-      where: { direction: 'receivable', status: { not: 'paid' } },
+      // Exclude written-off — they should not appear as outstanding in the PDF report
+      where: { direction: 'receivable', status: { notIn: ['paid', 'written_off'] } },
       orderBy: { totalAmount: 'desc' },
     });
 
@@ -357,7 +381,8 @@ export class DebtsService {
   async getPayablesPdf(query: PdfQueryDto) {
     const language = query.language || 'en';
     const debts = await this.prisma.debt.findMany({
-      where: { direction: 'payable', status: { not: 'paid' } },
+      // Exclude written-off — they should not appear as outstanding in the PDF report
+      where: { direction: 'payable', status: { notIn: ['paid', 'written_off'] } },
       orderBy: { totalAmount: 'desc' },
     });
 

@@ -68,6 +68,10 @@ export const useVoidSale = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['sales'] });
             queryClient.invalidateQueries({ queryKey: ['inventory'] });
+            // UI-02: Also refresh debts, payments, customers since void affects all of them
+            queryClient.invalidateQueries({ queryKey: ['debts'] });
+            queryClient.invalidateQueries({ queryKey: ['payments'] });
+            queryClient.invalidateQueries({ queryKey: ['customers'] });
             toast({ title: 'تم إلغاء الفاتورة بنجاح' });
         },
         onError: (error: any) => {

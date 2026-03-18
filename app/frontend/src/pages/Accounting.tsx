@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, Loader2, CheckCircle, Plus, Search, ChevronsUpDown, Download, FileText, RotateCcw, ArrowDownToLine, ArrowUpFromLine, Wallet, AlertTriangle } from "lucide-react";
+import { Eye, Loader2, CheckCircle, Plus, Search, ChevronsUpDown, Download, FileText, RotateCcw, ArrowDownToLine, ArrowUpFromLine, Wallet, AlertTriangle, Printer } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -405,7 +405,8 @@ export default function Accounting() {
         type: string;
         title: string;
         params: object;
-    }>({ open: false, type: "", title: "", params: {} });
+        autoPrint: boolean;
+    }>({ open: false, type: "", title: "", params: {}, autoPrint: false });
 
     const getAccountingPdfParams = (type: "balance" | "income" | "trial") => {
         const n = new Date();
@@ -415,8 +416,8 @@ export default function Accounting() {
         return { asOfDate: asOf, language: "ar" as const };
     };
 
-    const openPdfDialog = (type: string, title: string, params: object) => {
-        setAccountingPdfDialog({ open: true, type, title, params });
+    const openPdfDialog = (type: string, title: string, params: object, print = false) => {
+        setAccountingPdfDialog({ open: true, type, title, params, autoPrint: print });
     };
 
     const { data: accountsData, isLoading: accountsLoading, refetch: refetchAccounts } = useAccounts();
@@ -555,7 +556,7 @@ export default function Accounting() {
                     <h1 className="text-2xl font-bold text-foreground">المحاسبة</h1>
                     <p className="text-muted-foreground mt-1">دليل الحسابات وقيود اليومية</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                     <Button
                         variant="outline"
                         size="sm"
@@ -564,6 +565,14 @@ export default function Accounting() {
                     >
                         <FileText className="w-4 h-4" />
                         قائمة المركز المالي
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => openPdfDialog("balance-sheet", "طباعة قائمة المركز المالي", getAccountingPdfParams("balance"), true)}
+                    >
+                        <Printer className="w-4 h-4" />
                     </Button>
                     <Button
                         variant="outline"
@@ -578,10 +587,26 @@ export default function Accounting() {
                         variant="outline"
                         size="sm"
                         className="gap-2"
+                        onClick={() => openPdfDialog("income-statement", "طباعة قائمة الدخل", getAccountingPdfParams("income"), true)}
+                    >
+                        <Printer className="w-4 h-4" />
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
                         onClick={() => openPdfDialog("trial-balance", "ميزان المراجعة PDF", getAccountingPdfParams("trial"))}
                     >
                         <Download className="w-4 h-4" />
                         ميزان المراجعة
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => openPdfDialog("trial-balance", "طباعة ميزان المراجعة", getAccountingPdfParams("trial"), true)}
+                    >
+                        <Printer className="w-4 h-4" />
                     </Button>
                 </div>
             </div>
@@ -881,10 +906,11 @@ export default function Accounting() {
             {accountingPdfDialog.open && (
                 <PdfPreviewDialog
                     open={accountingPdfDialog.open}
-                    onOpenChange={(open) => !open && setAccountingPdfDialog((p) => ({ ...p, open: false }))}
+                    onOpenChange={(open) => !open && setAccountingPdfDialog((p) => ({ ...p, open: false, autoPrint: false }))}
                     reportType={accountingPdfDialog.type}
                     params={accountingPdfDialog.params}
                     title={accountingPdfDialog.title}
+                    autoPrint={accountingPdfDialog.autoPrint}
                 />
             )}
         </div>

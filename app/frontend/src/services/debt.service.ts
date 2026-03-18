@@ -28,4 +28,9 @@ export const debtService = {
         const response = await axiosInstance.get<ApiResponse<Debt>>(`/debts/${id}`);
         return response.data.data;
     },
+
+    async writeOffDebt(id: number, reason: string): Promise<{ success: boolean }> {
+        const response = await axiosInstance.post<ApiResponse<{ success: boolean }>>(`/debts/${id}/write-off`, { reason });
+        return response.data.data;
+    },
 };

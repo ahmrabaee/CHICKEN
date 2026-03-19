@@ -1,12 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { StockReconciliationService } from '../inventory/stock-ledger/stock-reconciliation.service';
+import { PdfService } from '../pdf/pdf.service';
+import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
+import { buildReportPdfOptions } from '../pdf/templates/report.template';
+import { formatDateForHeader } from '../pdf/pdf.helpers';
 
 @Injectable()
 export class ReportsService {
   constructor(
     private prisma: PrismaService,
     private stockReconciliationService: StockReconciliationService,
+    private pdfService: PdfService,
   ) {}
 
   async getDashboard() {
@@ -67,10 +72,13 @@ export class ReportsService {
   }
 
   async getSalesReport(startDate: string, endDate: string) {
+    const start = new Date(startDate); start.setUTCHours(0, 0, 0, 0);
+    const end = new Date(endDate); end.setUTCHours(23, 59, 59, 999);
     const sales = await this.prisma.sale.findMany({
       where: {
-        saleDate: { gte: new Date(startDate), lte: new Date(endDate) },
+        saleDate: { gte: start, lte: end },
         isVoided: false,
+        docstatus: 1,
       },
       include: {
         saleLines: { include: { item: true } },
@@ -116,9 +124,11 @@ export class ReportsService {
   }
 
   async getPurchasesReport(startDate: string, endDate: string) {
+    const start = new Date(startDate); start.setUTCHours(0, 0, 0, 0);
+    const end = new Date(endDate); end.setUTCHours(23, 59, 59, 999);
     const purchases = await this.prisma.purchase.findMany({
       where: {
-        purchaseDate: { gte: new Date(startDate), lte: new Date(endDate) },
+        purchaseDate: { gte: start, lte: end },
       },
       include: {
         purchaseLines: { include: { item: true } },
@@ -194,9 +204,11 @@ export class ReportsService {
   }
 
   async getWastageReport(startDate: string, endDate: string) {
+    const start = new Date(startDate); start.setUTCHours(0, 0, 0, 0);
+    const end = new Date(endDate); end.setUTCHours(23, 59, 59, 999);
     const records = await this.prisma.wastageRecord.findMany({
       where: {
-        wastageDate: { gte: new Date(startDate), lte: new Date(endDate) },
+        wastageDate: { gte: start, lte: end },
       },
       include: { item: true, recordedBy: true },
       orderBy: { wastageDate: 'desc' },
@@ -234,9 +246,11 @@ export class ReportsService {
   }
 
   async getExpenseReport(startDate: string, endDate: string) {
+    const start = new Date(startDate); start.setUTCHours(0, 0, 0, 0);
+    const end = new Date(endDate); end.setUTCHours(23, 59, 59, 999);
     const expenses = await this.prisma.expense.findMany({
       where: {
-        expenseDate: { gte: new Date(startDate), lte: new Date(endDate) },
+        expenseDate: { gte: start, lte: end },
       },
       include: { category: true, createdBy: true },
       orderBy: { expenseDate: 'desc' },
@@ -271,11 +285,13 @@ export class ReportsService {
   }
 
   async getProfitLossReport(startDate: string, endDate: string) {
-    const dateRange = { gte: new Date(startDate), lte: new Date(endDate) };
+    const start = new Date(startDate); start.setUTCHours(0, 0, 0, 0);
+    const end = new Date(endDate); end.setUTCHours(23, 59, 59, 999);
+    const dateRange = { gte: start, lte: end };
 
     const [salesAgg, purchasesAgg, expensesAgg] = await Promise.all([
       this.prisma.sale.aggregate({
-        where: { saleDate: dateRange, isVoided: false },
+        where: { saleDate: dateRange, isVoided: false, docstatus: 1 },
         _sum: { totalAmount: true, totalCost: true, discountAmount: true },
       }),
       this.prisma.purchase.aggregate({
@@ -308,5 +324,181 @@ export class ReportsService {
 
   async getStockVsGLReport(asOfDate: Date, branchId?: number) {
     return this.stockReconciliationService.generateStockVsGLReport(asOfDate, branchId);
+  }
+
+  // ─── PDF Generation ───────────────────────────────────────────────────────────
+
+  async getWastageReportPdf(query: PdfQueryDto): Promise<Buffer> {
+    const language = query.language || 'ar';
+    const start = query.startDate ? new Date(query.startDate) : new Date(new Date().setDate(1));
+    const end = query.endDate ? new Date(query.endDate) : new Date();
+
+    const records = await this.prisma.wastageRecord.findMany({
+      where: { wastageDate: { gte: start, lte: end } },
+      include: { item: true },
+      orderBy: { wastageDate: 'asc' },
+    });
+
+    const wastageReasonLabels: Record<string, string> = {
+      expired: language === 'ar' ? 'منتهي الصلاحية' : 'Expired',
+      damaged: language === 'ar' ? 'تالف' : 'Damaged',
+      spoiled: language === 'ar' ? 'فاسد' : 'Spoiled',
+      processing_loss: language === 'ar' ? 'فقد تصنيع' : 'Processing Loss',
+      other: language === 'ar' ? 'أخرى' : 'Other',
+    };
+
+    const rows = records.map((r) => ({
+      date: r.wastageDate.toISOString().split('T')[0],
+      item: r.item.name,
+      type: r.wastageType,
+      reason: wastageReasonLabels[r.reason ?? ''] ?? r.reason ?? '—',
+      weight: (r.weightGrams / 1000).toFixed(3),
+      cost: r.estimatedCostValue,
+    }));
+
+    const totalCost = records.reduce((s, r) => s + r.estimatedCostValue, 0);
+    const totalWeight = records.reduce((s, r) => s + r.weightGrams, 0);
+
+    const meta = await this.pdfService.getStoreMeta(this.prisma, language);
+    const options = buildReportPdfOptions(meta as any, {
+      title: 'Wastage Report',
+      titleAr: 'تقرير الهدر',
+      subtitle: `${formatDateForHeader(start)} — ${formatDateForHeader(end)}`,
+      subtitleAr: `${formatDateForHeader(start)} — ${formatDateForHeader(end)}`,
+      columns: [
+        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto', format: 'date' },
+        { header: 'Item', headerAr: 'الصنف', field: 'item', width: '*' },
+        { header: 'Type', headerAr: 'النوع', field: 'type', width: 'auto' },
+        { header: 'Reason', headerAr: 'السبب', field: 'reason', width: 'auto' },
+        { header: 'Weight (kg)', headerAr: 'الوزن (كغ)', field: 'weight', width: 'auto' },
+        { header: 'Est. Cost', headerAr: 'التكلفة التقديرية', field: 'cost', width: 'auto', format: 'currency' },
+      ],
+      rows,
+      summaryItems: [
+        { label: 'Total Weight (kg)', labelAr: 'إجمالي الوزن (كغ)', value: totalWeight / 1000, format: 'number' },
+        { label: 'Total Est. Cost', labelAr: 'إجمالي التكلفة', value: totalCost, format: 'currency', bold: true },
+      ],
+    });
+
+    return this.pdfService.generate(options);
+  }
+
+  async getVatReportPdf(query: PdfQueryDto): Promise<Buffer> {
+    const language = query.language || 'ar';
+    const start = query.startDate ? new Date(query.startDate) : new Date(new Date().getFullYear(), 0, 1);
+    const end = query.endDate ? new Date(query.endDate) : new Date();
+
+    // Fetch VAT accounts and their GL lines (same logic as VatReportService)
+    const accounts = await this.prisma.account.findMany({
+      where: { accountType: { in: ['Tax', 'Tax Receivable'] } },
+    });
+    const accountIds = accounts.map((a) => a.id);
+    const codeMap = new Map(accounts.map((a) => [a.id, { code: a.code, name: a.name }]));
+
+    const lines = await this.prisma.journalEntryLine.findMany({
+      where: {
+        accountId: { in: accountIds },
+        journalEntry: { entryDate: { gte: start, lte: end }, isReversed: false },
+      },
+    });
+
+    const byAccount: Record<number, { output: number; input: number }> = {};
+    for (const a of accountIds) byAccount[a] = { output: 0, input: 0 };
+    for (const line of lines) {
+      const acc = byAccount[line.accountId];
+      if (!acc) continue;
+      const account = accounts.find((a) => a.id === line.accountId);
+      if (account?.accountType === 'Tax') {
+        acc.output += line.creditAmount ?? 0;
+        acc.input += line.debitAmount ?? 0;
+      } else {
+        acc.input += line.debitAmount ?? 0;
+        acc.output += line.creditAmount ?? 0;
+      }
+    }
+
+    const byAccountList = Object.entries(byAccount).map(([idStr, v]) => {
+      const id = parseInt(idStr, 10);
+      const info = codeMap.get(id) ?? { code: '', name: '' };
+      return { accountCode: info.code, accountName: info.name, output: v.output, input: v.input, net: v.output - v.input };
+    });
+
+    const outputVat = byAccountList.reduce((s, a) => s + a.output, 0);
+    const inputVat = byAccountList.reduce((s, a) => s + a.input, 0);
+
+    const rows = byAccountList.map((a) => ({
+      code: a.accountCode,
+      account: a.accountName,
+      output: a.output,
+      input: a.input,
+      net: a.net,
+    }));
+
+    const meta = await this.pdfService.getStoreMeta(this.prisma, language);
+    const options = buildReportPdfOptions(meta as any, {
+      title: 'VAT Report',
+      titleAr: 'تقرير ضريبة القيمة المضافة',
+      subtitle: `${formatDateForHeader(start)} — ${formatDateForHeader(end)}`,
+      subtitleAr: `${formatDateForHeader(start)} — ${formatDateForHeader(end)}`,
+      columns: [
+        { header: 'Account Code', headerAr: 'كود الحساب', field: 'code', width: 'auto' },
+        { header: 'Account Name', headerAr: 'اسم الحساب', field: 'account', width: '*' },
+        { header: 'Output VAT', headerAr: 'Output VAT', field: 'output', width: 'auto', format: 'currency' },
+        { header: 'Input VAT', headerAr: 'Input VAT', field: 'input', width: 'auto', format: 'currency' },
+        { header: 'Net', headerAr: 'صافي', field: 'net', width: 'auto', format: 'currency' },
+      ],
+      rows,
+      summaryItems: [
+        { label: 'Total Output VAT', labelAr: 'إجمالي ضريبة المخرجات', value: outputVat, format: 'currency' },
+        { label: 'Total Input VAT', labelAr: 'إجمالي ضريبة المدخلات', value: inputVat, format: 'currency' },
+        { label: 'Net VAT Payable', labelAr: 'صافي المستحق', value: outputVat - inputVat, format: 'currency', bold: true },
+      ],
+    });
+
+    return this.pdfService.generate(options);
+  }
+
+  async getStockVsGLReportPdf(query: PdfQueryDto): Promise<Buffer> {
+    const language = query.language || 'ar';
+    const asOfDate = query.asOfDate ? new Date(query.asOfDate) : new Date();
+    const branchId = query.branchId ? parseInt(query.branchId, 10) : undefined;
+
+    const report = await this.stockReconciliationService.generateStockVsGLReport(asOfDate, branchId);
+
+    const rows = report.rows.map((r: any) => ({
+      type: r.voucherType,
+      voucher: r.voucherId,
+      date: typeof r.postingDate === 'string' ? r.postingDate.slice(0, 10) : new Date(r.postingDate).toISOString().slice(0, 10),
+      stockValue: r.stockValue,
+      accountValue: r.accountValue,
+      difference: r.difference,
+      source: r.ledgerType,
+    }));
+
+    const asOfLabel = formatDateForHeader(asOfDate);
+    const meta = await this.pdfService.getStoreMeta(this.prisma, language);
+    const options = buildReportPdfOptions(meta as any, {
+      title: 'Stock vs GL Report',
+      titleAr: 'المخزون مقابل الدفاتر',
+      subtitle: `As of: ${asOfLabel}`,
+      subtitleAr: `بتاريخ: ${asOfLabel}`,
+      columns: [
+        { header: 'Type', headerAr: 'النوع', field: 'type', width: 'auto' },
+        { header: 'Voucher', headerAr: 'رقم المستند', field: 'voucher', width: 'auto' },
+        { header: 'Date', headerAr: 'التاريخ', field: 'date', width: 'auto', format: 'date' },
+        { header: 'Stock Value', headerAr: 'قيمة المخزون', field: 'stockValue', width: 'auto', format: 'currency' },
+        { header: 'GL Value', headerAr: 'قيمة الدفاتر', field: 'accountValue', width: 'auto', format: 'currency' },
+        { header: 'Difference', headerAr: 'الفرق', field: 'difference', width: 'auto', format: 'currency' },
+        { header: 'Source', headerAr: 'المصدر', field: 'source', width: 'auto' },
+      ],
+      rows,
+      summaryItems: [
+        { label: 'Total Stock Value', labelAr: 'إجمالي قيمة المخزون', value: report.summary.totalStockValue, format: 'currency' },
+        { label: 'Total GL Value', labelAr: 'إجمالي قيمة الدفاتر', value: report.summary.totalAccountValue, format: 'currency' },
+        { label: 'Total Difference', labelAr: 'إجمالي الفرق', value: report.summary.totalDifference, format: 'currency', bold: true },
+      ],
+    });
+
+    return this.pdfService.generate(options);
   }
 }

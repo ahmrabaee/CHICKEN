@@ -35,7 +35,7 @@ import { creditNoteService } from "@/services/credit-note.service";
 import { CreditNoteCreateDialog } from "@/components/credit-note/CreditNoteCreateDialog";
 import { Sale } from "@/types/sales";
 import { toast } from "@/hooks/use-toast";
-import { downloadReportPdf } from "@/services/pdf.service";
+import { downloadReportPdf, fetchPdfBlob, createPdfObjectUrl, revokePdfObjectUrl } from "@/services/pdf.service";
 
 /** Format minor units (fils/cents) to display currency */
 function formatCurrency(minorUnits: number): string {
@@ -96,6 +96,49 @@ function SaleDetailCard({ saleId, open, onClose }: { saleId: number; open: boole
     }
   };
 
+  const [printLoading, setPrintLoading] = useState(false);
+
+  const handlePrintInvoicePdf = async () => {
+    setPrintLoading(true);
+    try {
+      const blob = await fetchPdfBlob("sale-invoice", { id: saleId, language: "ar" });
+      const url = createPdfObjectUrl(blob);
+      
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "none";
+      iframe.src = url;
+      document.body.appendChild(iframe);
+
+      iframe.onload = () => {
+        setTimeout(() => {
+          try {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+          } catch {
+            // fallback if print fails
+          }
+        }, 500);
+      };
+
+      // Cleanup iframe and revoke object URL
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+        }
+        revokePdfObjectUrl(url);
+      }, 60000);
+    } catch {
+      toast({ variant: "destructive", title: "فشل الطباعة", description: "تعذر إنشاء الفاتورة للطباعة" });
+    } finally {
+      setPrintLoading(false);
+    }
+  };
+
   const { data: outstandingData } = useQuery({
     queryKey: ["reconciliation", "outstanding", "sale", saleId],
     queryFn: async () => {
@@ -120,7 +163,7 @@ function SaleDetailCard({ saleId, open, onClose }: { saleId: number; open: boole
   });
 
   const outstanding = outstandingData ?? (sale ? sale.totalAmount - sale.amountPaid : 0);
-  const linkedCreditNotes = creditNotesData?.items ?? [];
+  const linkedCreditNotes = (creditNotesData as any)?.items ?? [];
 
   if (!open) return null;
 
@@ -139,16 +182,28 @@ function SaleDetailCard({ saleId, open, onClose }: { saleId: number; open: boole
               )}
             </DialogTitle>
             {sale && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 shrink-0"
-                onClick={handleDownloadInvoicePdf}
-                disabled={pdfLoading}
-              >
-                {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                تحميل PDF
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 shrink-0"
+                  onClick={handlePrintInvoicePdf}
+                  disabled={printLoading}
+                >
+                  {printLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
+                  طباعة
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 shrink-0"
+                  onClick={handleDownloadInvoicePdf}
+                  disabled={pdfLoading}
+                >
+                  {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                  تحميل PDF
+                </Button>
+              </div>
             )}
           </div>
         </DialogHeader>

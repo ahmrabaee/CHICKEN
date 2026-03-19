@@ -41,7 +41,7 @@ const REPORT_NEEDS_DATE_RANGE = [
   'supplier-statement',
   'customer-statement',
 ];
-const REPORT_NEEDS_AS_OF_DATE = ['balance-sheet', 'trial-balance', 'inventory-report'];
+const REPORT_NEEDS_AS_OF_DATE = ['balance-sheet', 'trial-balance', 'inventory-report', 'stock-vs-gl-report'];
 
 interface PdfPreviewDialogProps {
   open: boolean;

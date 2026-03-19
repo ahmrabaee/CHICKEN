@@ -100,6 +100,21 @@ const REPORT_PDF_MAP: Record<
     title: "تصدير قائمة الدخل PDF",
     getParams: (r) => ({ startDate: r.startDate, endDate: r.endDate }),
   },
+  "/reports/wastage": {
+    type: "wastage-report",
+    title: "تصدير تقرير الهدر PDF",
+    getParams: (r) => ({ startDate: r.startDate, endDate: r.endDate }),
+  },
+  "/reports/vat": {
+    type: "vat-report",
+    title: "تصدير تقرير ضريبة القيمة المضافة PDF",
+    getParams: (r) => ({ startDate: r.startDate, endDate: r.endDate }),
+  },
+  "/reports/stock-vs-gl": {
+    type: "stock-vs-gl-report",
+    title: "تصدير تقرير المخزون مقابل الدفاتر PDF",
+    getParams: (_r, stockDate) => ({ asOfDate: stockDate }),
+  },
 };
 
 const ALL_REPORT_LINKS = [

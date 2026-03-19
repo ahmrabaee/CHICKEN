@@ -1,7 +1,10 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, Res } from '@nestjs/common';
+import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ReportsService } from './reports.service';
 import { Roles, RolesGuard } from '../common';
+import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
+import { getPdfContentDisposition } from '../pdf/pdf.helpers';
 
 @ApiTags('reports')
 @ApiBearerAuth('JWT-auth')
@@ -90,5 +93,49 @@ export class ReportsController {
       asOfDate ? new Date(asOfDate) : new Date(),
       branchId ? parseInt(branchId, 10) : undefined,
     );
+  }
+
+  // ─── PDF Endpoints ───────────────────────────────────────────────────────────
+
+  @Get('wastage/pdf')
+  @ApiOperation({ summary: 'Download wastage report PDF' })
+  @ApiQuery({ name: 'startDate', required: false })
+  @ApiQuery({ name: 'endDate', required: false })
+  async getWastageReportPdf(@Query() query: PdfQueryDto, @Res() res: Response) {
+    const buffer = await this.reportsService.getWastageReportPdf(query);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': getPdfContentDisposition('wastage-report.pdf', query.inline),
+      'Content-Length': buffer.length.toString(),
+    });
+    res.end(buffer);
+  }
+
+  @Get('vat/pdf')
+  @ApiOperation({ summary: 'Download VAT report PDF' })
+  @ApiQuery({ name: 'startDate', required: false })
+  @ApiQuery({ name: 'endDate', required: false })
+  async getVatReportPdf(@Query() query: PdfQueryDto, @Res() res: Response) {
+    const buffer = await this.reportsService.getVatReportPdf(query);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': getPdfContentDisposition('vat-report.pdf', query.inline),
+      'Content-Length': buffer.length.toString(),
+    });
+    res.end(buffer);
+  }
+
+  @Get('stock-vs-gl/pdf')
+  @ApiOperation({ summary: 'Download stock vs GL report PDF' })
+  @ApiQuery({ name: 'asOfDate', required: false })
+  @ApiQuery({ name: 'branchId', required: false })
+  async getStockVsGLReportPdf(@Query() query: PdfQueryDto, @Res() res: Response) {
+    const buffer = await this.reportsService.getStockVsGLReportPdf(query);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': getPdfContentDisposition('stock-vs-gl-report.pdf', query.inline),
+      'Content-Length': buffer.length.toString(),
+    });
+    res.end(buffer);
   }
 }

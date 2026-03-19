@@ -140,9 +140,7 @@ const navigation: NavItem[] = [
     title: "Accounting",
     titleAr: "المحاسبة",
     icon: BookOpen,
-    children: [
-      { title: "Journal Entries", titleAr: "قيود اليومية", href: "/accounting", icon: FileText },
-    ],
+    href: "/accounting",
   },
   {
     title: "Audit",

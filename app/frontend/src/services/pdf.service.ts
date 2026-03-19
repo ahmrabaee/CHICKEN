@@ -75,6 +75,18 @@ const PDF_REPORT_ENDPOINTS: Record<
     buildUrl: (p) => `/payments/${p.id}/pdf?${toQuery(p)}`,
     filename: (p: PdfParams) => `سند-دفع-${p.id}.pdf`,
   },
+  'wastage-report': {
+    buildUrl: (p) => `/reports/wastage/pdf?${toQuery(p)}`,
+    filename: 'تقرير-الهدر.pdf',
+  },
+  'vat-report': {
+    buildUrl: (p) => `/reports/vat/pdf?${toQuery(p)}`,
+    filename: 'تقرير-ضريبة-القيمة-المضافة.pdf',
+  },
+  'stock-vs-gl-report': {
+    buildUrl: (p) => `/reports/stock-vs-gl/pdf?${toQuery(p)}`,
+    filename: 'تقرير-المخزون-مقابل-الدفاتر.pdf',
+  },
 };
 
 function toQuery(p: PdfQueryParams & { id?: number; accountCode?: string }): string {

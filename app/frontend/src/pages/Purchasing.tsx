@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Plus, Download, Eye, Loader2, Package, CreditCard, Receipt, FileText, Pencil, Trash2 } from "lucide-react";
+import { Search, Plus, Download, Eye, Loader2, Package, CreditCard, Receipt, FileText, Pencil, Trash2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,7 +23,7 @@ import { usePurchases, usePurchase, useDeletePurchase } from "@/hooks/use-purcha
 import { Purchase } from "@/types/purchases";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
-import { downloadReportPdf } from "@/services/pdf.service";
+import { downloadReportPdf, fetchPdfBlob, createPdfObjectUrl, revokePdfObjectUrl } from "@/services/pdf.service";
 import { reconciliationService } from "@/services/reconciliation.service";
 import { creditNoteService } from "@/services/credit-note.service";
 import { CreditNoteCreateDialog } from "@/components/credit-note/CreditNoteCreateDialog";
@@ -79,6 +79,48 @@ function PurchaseDetailCard({ purchaseId, open, onClose, onRequestDelete }: { pu
       toast({ variant: "destructive", title: "فشل التحميل", description: "تعذر تحميل ملف PDF" });
     } finally {
       setPdfLoading(false);
+    }
+  };
+
+  const [printLoading, setPrintLoading] = useState(false);
+
+  const handlePrintOrderPdf = async () => {
+    setPrintLoading(true);
+    try {
+      const blob = await fetchPdfBlob("purchase-order", { id: purchaseId, language: "ar" });
+      const url = createPdfObjectUrl(blob);
+
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "none";
+      iframe.src = url;
+      document.body.appendChild(iframe);
+
+      iframe.onload = () => {
+        setTimeout(() => {
+          try {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+          } catch {
+            // fallback if print fails
+          }
+        }, 500);
+      };
+
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+        }
+        revokePdfObjectUrl(url);
+      }, 60000);
+    } catch {
+      toast({ variant: "destructive", title: "فشل الطباعة", description: "تعذر إنشاء أمر الشراء للطباعة" });
+    } finally {
+      setPrintLoading(false);
     }
   };
 
@@ -153,6 +195,22 @@ function PurchaseDetailCard({ purchaseId, open, onClose, onRequestDelete }: { pu
                 >
                   <Trash2 className="w-4 h-4" />
                   <span className="hidden sm:inline">حذف</span>
+                </Button>
+              )}
+              {purchase && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-1.5 px-3"
+                  onClick={handlePrintOrderPdf}
+                  disabled={printLoading}
+                  title="طباعة"
+                >
+                  {printLoading
+                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                    : <Printer className="w-4 h-4" />
+                  }
+                  <span className="hidden sm:inline">طباعة</span>
                 </Button>
               )}
               {purchase && (

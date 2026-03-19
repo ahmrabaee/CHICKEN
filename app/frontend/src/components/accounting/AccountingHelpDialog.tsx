@@ -18,38 +18,38 @@ interface AccountingHelpDialogProps {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-2">
-      <h3 className="text-base font-bold text-foreground border-b pb-1">{title}</h3>
-      <div className="text-sm text-muted-foreground leading-relaxed space-y-2">{children}</div>
+    <div className="space-y-2 text-right" dir="rtl">
+      <h3 className="text-base font-bold text-foreground border-b border-slate-200 dark:border-slate-700 pb-1">{title}</h3>
+      <div className="text-sm text-muted-foreground leading-relaxed space-y-2 text-right">{children}</div>
     </div>
   );
 }
 
 function Step({ n, text }: { n: number; text: React.ReactNode }) {
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 text-right" dir="rtl">
       <span className="font-bold text-primary shrink-0">{n}.</span>
-      <span>{text}</span>
+      <span className="flex-1">{text}</span>
     </div>
   );
 }
 
-function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
+function HelpTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
   return (
-    <div className="overflow-x-auto rounded-lg border my-2">
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 my-2" dir="rtl">
+      <table className="w-full text-sm text-right" dir="rtl">
         <thead className="bg-muted/50">
           <tr>
             {headers.map((h, i) => (
-              <th key={i} className="text-right p-2 font-semibold">{h}</th>
+              <th key={i} className="text-right p-3 font-semibold">{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i} className="border-t">
+            <tr key={i} className="border-t border-slate-200 dark:border-slate-700">
               {r.map((c, j) => (
-                <td key={j} className="p-2">{c}</td>
+                <td key={j} className="p-3 text-right">{c}</td>
               ))}
             </tr>
           ))}
@@ -62,17 +62,20 @@ function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
 export function AccountingHelpDialog({ open, onOpenChange }: AccountingHelpDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90dvh] p-0" dir="rtl">
-        <DialogHeader className="p-6 pb-2">
+      <DialogContent
+        className="max-w-2xl max-h-[90dvh] p-0 [&>button]:right-auto [&>button]:left-4"
+        dir="rtl"
+      >
+        <DialogHeader className="p-6 pb-2 text-right">
           <DialogTitle className="text-xl font-bold">دليل المستخدم — صفحة المحاسبة</DialogTitle>
           <p className="text-sm text-muted-foreground">دليل تفصيلي لاستخدام كل وظيفة في نظام المحاسبة</p>
         </DialogHeader>
-        <ScrollArea className="h-[calc(90dvh-120px)] px-6">
-          <div className="space-y-6 pb-6">
+        <ScrollArea className="h-[calc(90dvh-120px)] px-6" dir="rtl">
+          <div className="space-y-6 pb-6 text-right" dir="rtl">
 
             <Section title="نظرة عامة">
               <p>صفحة المحاسبة تحتوي على ثلاثة تبويبات رئيسية:</p>
-              <Table
+              <HelpTable
                 headers={["التبويب", "الوظيفة"]}
                 rows={[
                   ["دليل الحسابات", "عرض وإنشاء وتعديل الحسابات المحاسبية"],
@@ -89,7 +92,7 @@ export function AccountingHelpDialog({ open, onOpenChange }: AccountingHelpDialo
               <p><strong>البحث:</strong> اكتب كود أو اسم الحساب في شريط البحث.</p>
               <p><strong>فتح/إغلاق الكل:</strong> لفتح أو طي جميع المستويات الهرمية.</p>
               <p><strong>إضافة حساب:</strong> انقر «إضافة حساب» واملأ:</p>
-              <ul className="list-disc list-inside mr-4 space-y-1">
+              <ul className="list-disc list-inside pr-6 space-y-1 text-right">
                 <li>كود الحساب (لا يُغيّر لاحقاً)</li>
                 <li>اسم الحساب</li>
                 <li>نوع الحساب (بنك، نقد، ذمم مدينة، مصروف، إيراد، إلخ)</li>

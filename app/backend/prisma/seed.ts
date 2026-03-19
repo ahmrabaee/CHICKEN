@@ -245,18 +245,18 @@ async function seedItems(): Promise<void> {
   const catId = freshParts?.id ?? freshWhole?.id ?? 1;
 
   const items = [
-    { code: 'CHK-RAW-01', name: 'دجاج خام', nameEn: 'Raw Chicken', defaultSalePrice: 0, defaultPurchasePrice: 1800, categoryId: chickenRaw?.id ?? catId },
-    { code: 'CHK-WHOLE-01', name: 'فروج كامل', nameEn: 'Whole Chicken', defaultSalePrice: 2200, defaultPurchasePrice: 1800, categoryId: freshWhole?.id ?? catId },
-    { code: 'CHK-BREAST-01', name: 'صدور دجاج', nameEn: 'Chicken Breast', defaultSalePrice: 3500, defaultPurchasePrice: 2800, categoryId: catId },
-    { code: 'CHK-THIGH-01', name: 'أفخاذ دجاج', nameEn: 'Chicken Thighs', defaultSalePrice: 2800, defaultPurchasePrice: 2200, categoryId: catId },
-    { code: 'CHK-WING-01', name: 'أجنحة دجاج', nameEn: 'Chicken Wings', defaultSalePrice: 2600, defaultPurchasePrice: 2000, categoryId: catId },
-    { code: 'CHK-SKEWER-01', name: 'شيش طاووق', nameEn: 'Chicken Shish', defaultSalePrice: 3000, defaultPurchasePrice: 2400, categoryId: catId },
+    { code: 'CHK-RAW-01', name: 'دجاج خام', nameEn: 'Raw Chicken', defaultSalePrice: 0, defaultPurchasePrice: 1800, categoryId: chickenRaw?.id ?? catId, minStockLevelGrams: null as number | null },
+    { code: 'CHK-WHOLE-01', name: 'فروج كامل', nameEn: 'Whole Chicken', defaultSalePrice: 2200, defaultPurchasePrice: 1800, categoryId: freshWhole?.id ?? catId, minStockLevelGrams: 60000 }, // 60 kg
+    { code: 'CHK-BREAST-01', name: 'صدور دجاج', nameEn: 'Chicken Breast', defaultSalePrice: 3500, defaultPurchasePrice: 2800, categoryId: catId, minStockLevelGrams: 30000 }, // 30 kg
+    { code: 'CHK-THIGH-01', name: 'أفخاذ دجاج', nameEn: 'Chicken Thighs', defaultSalePrice: 2800, defaultPurchasePrice: 2200, categoryId: catId, minStockLevelGrams: 25000 }, // 25 kg
+    { code: 'CHK-WING-01', name: 'أجنحة دجاج', nameEn: 'Chicken Wings', defaultSalePrice: 2600, defaultPurchasePrice: 2000, categoryId: catId, minStockLevelGrams: 20000 }, // 20 kg
+    { code: 'CHK-SKEWER-01', name: 'شيش طاووق', nameEn: 'Chicken Shish', defaultSalePrice: 3000, defaultPurchasePrice: 2400, categoryId: catId, minStockLevelGrams: 40000 }, // 40 kg
   ];
 
   for (const it of items) {
     await prisma.item.upsert({
       where: { code: it.code },
-      update: {},
+      update: it.minStockLevelGrams != null ? { minStockLevelGrams: it.minStockLevelGrams } : {},
       create: {
         code: it.code,
         name: it.name,
@@ -266,6 +266,7 @@ async function seedItems(): Promise<void> {
         categoryId: it.categoryId,
         requiresScale: true,
         allowNegativeStock: false,
+        minStockLevelGrams: it.minStockLevelGrams ?? undefined,
       },
     });
   }

@@ -76,6 +76,6 @@ export const inventoryService = {
      */
     async getLowStock(): Promise<any[]> {
         const response = await axiosInstance.get<ApiResponse<any[]>>('/inventory/low-stock');
-        return response.data.data;
+        return (response.data as any)?.data ?? response.data ?? [];
     },
 };

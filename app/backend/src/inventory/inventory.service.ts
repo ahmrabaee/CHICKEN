@@ -155,14 +155,13 @@ export class InventoryService {
   }
 
   /**
-   * Get items below minimum stock level
+   * Get items below minimum stock level (or out of stock)
+   * Includes: 1) items with minStockLevel set where current < min
+   *           2) items with 0 stock (نفذ) even if min not set
    */
   async getLowStock() {
     const items = await this.prisma.item.findMany({
-      where: {
-        isActive: true,
-        minStockLevelGrams: { not: null },
-      },
+      where: { isActive: true },
       include: {
         inventory: { include: { branch: true } },
         category: true
@@ -172,16 +171,18 @@ export class InventoryService {
     const lowStockItems = items.filter((item) => {
       const currentQty = item.inventory?.currentQuantityGrams ?? 0;
       const minQty = item.minStockLevelGrams ?? 0;
-      return currentQty < minQty;
+      const hasMinSet = item.minStockLevelGrams != null && item.minStockLevelGrams > 0;
+      return currentQty === 0 || (hasMinSet && currentQty < minQty);
     });
 
     return lowStockItems.map((item) => this.toInventoryResponseDto({
-      ...item.inventory,
+      ...(item.inventory ?? {}),
+      itemId: item.id,
       item: item,
-      branchId: item.inventory?.branchId || 0,
-      currentQuantityGrams: item.inventory?.currentQuantityGrams || 0,
-      reservedQuantityGrams: item.inventory?.reservedQuantityGrams || 0,
-      totalValue: item.inventory?.totalValue || 0,
+      branchId: item.inventory?.branchId ?? 0,
+      currentQuantityGrams: item.inventory?.currentQuantityGrams ?? 0,
+      reservedQuantityGrams: item.inventory?.reservedQuantityGrams ?? 0,
+      totalValue: item.inventory?.totalValue ?? 0,
     }));
   }
 

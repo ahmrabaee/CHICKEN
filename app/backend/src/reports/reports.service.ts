@@ -50,7 +50,7 @@ export class ReportsService {
 
     // Filter low stock items where current < min
     const lowStockCount = lowStockItems.filter((inv) => {
-      const minStock = (inv.item as any)?.minStockGrams ?? 0;
+      const minStock = (inv.item as any)?.minStockLevelGrams ?? 0;
       return inv.currentQuantityGrams < minStock;
     }).length;
 

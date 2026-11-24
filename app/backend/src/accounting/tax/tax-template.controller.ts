@@ -1,11 +1,12 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Query, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Query, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { TaxTemplateService } from './tax-template.service';
 import { VatReportService } from './vat-report.service';
-import { Roles } from '../../common';
+import { Roles, RolesGuard } from '../../common';
 
 @ApiTags('tax')
 @ApiBearerAuth('JWT-auth')
+@UseGuards(RolesGuard) // fix C-6: @Roles('admin') on write endpoints was inert without this
 @Controller('tax')
 export class TaxTemplateController {
   constructor(

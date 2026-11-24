@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccountingService } from '../accounting/accounting.service';
+import { StockLedgerService } from '../inventory/stock-ledger/stock-ledger.service';
+import { StockAccountMapperService } from '../inventory/stock-ledger/stock-account-mapper.service';
 import { createPaginatedResult, PaginationQueryDto } from '../common';
 
 @Injectable()
@@ -8,6 +10,8 @@ export class WastageService {
   constructor(
     private prisma: PrismaService,
     private accountingService: AccountingService,
+    private stockLedgerService: StockLedgerService,
+    private stockAccountMapperService: StockAccountMapperService,
   ) { }
 
   async findAll(pagination: PaginationQueryDto) {
@@ -156,12 +160,32 @@ export class WastageService {
         },
       });
 
+      // fix H-4: write a Stock Ledger Entry like every other stock movement, so
+      // the SLE totals reconcile to the GL/inventory (previously wastage wrote none).
+      const valuationRate = weightGrams > 0 ? Math.round((estimatedCostValue * 1000) / weightGrams) : 0;
+      await this.stockLedgerService.createSLE(tx, {
+        itemId,
+        branchId,
+        voucherType: 'wastage',
+        voucherId: record.id,
+        voucherDetailNo: 'wastage',
+        qtyChange: -weightGrams,
+        valuationRate,
+        stockValueDifference: -estimatedCostValue,
+        postingDate: new Date(),
+        remarks: reason,
+      });
+
+      // fix H-4: credit the branch's own stock account (derived branchId), not
+      // the raw dto.branchId / default 1131.
+      const stockAccountCode = await this.stockAccountMapperService.getStockAccountCode(branchId);
       await this.accountingService.createWastageJournalEntry(
         tx,
         record.id,
-        dto.branchId != null ? Number(dto.branchId) : null,
+        branchId,
         recordedById,
         estimatedCostValue,
+        stockAccountCode,
       );
 
       return record;

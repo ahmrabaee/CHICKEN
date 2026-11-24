@@ -132,6 +132,18 @@ export interface VoidSaleDto {
     reason: string;
 }
 
+export interface ReturnSaleLineDto {
+    itemId: number;
+    quantityGrams: number;
+    condition: 'resellable' | 'damaged';
+}
+
+export interface ReturnSaleDto {
+    lines: ReturnSaleLineDto[];
+    refundMethod?: 'cash' | 'credit';
+    reason?: string;
+}
+
 export interface AddPaymentDto {
     amount: number;
     paymentMethod: 'cash' | 'card' | 'bank_transfer' | 'mobile' | 'check';

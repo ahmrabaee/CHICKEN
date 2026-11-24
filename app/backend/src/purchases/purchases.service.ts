@@ -503,6 +503,7 @@ export class PurchasesService {
             stockAccountCode,
             paymentMethod: (dto.paymentMethod as string) ?? 'cash',
             bankAccountId: dto.bankAccountId ?? null,
+            taxAmount, // fix H-1: post input VAT (DR 1125) so a paid VAT purchase balances
           },
         );
       }

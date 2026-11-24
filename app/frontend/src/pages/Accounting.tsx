@@ -561,6 +561,25 @@ export default function Accounting() {
     const journalPagination = journalsData?.pagination;
     const trialBalance = trialData || [];
 
+    // Net balance (debit - credit) per account code, from the trial balance,
+    // aggregated up the tree so group accounts show the sum of their children.
+    // This lets the chart of accounts reflect the posted journal entries live.
+    const balanceById = useMemo(() => {
+        const byCode = new Map<string, number>();
+        for (const t of (trialData || []) as TrialBalanceEntry[]) {
+            if (t.accountCode) byCode.set(t.accountCode, (t.debit ?? 0) - (t.credit ?? 0));
+        }
+        const agg = new Map<number, number>();
+        const walk = (node: AccountWithChildren): number => {
+            let sum = byCode.get(node.code) ?? 0;
+            for (const c of (node._children ?? [])) sum += walk(c as AccountWithChildren);
+            agg.set(node.id, sum);
+            return sum;
+        };
+        for (const root of accountTree) walk(root);
+        return agg;
+    }, [trialData, accountTree]);
+
     return (
         <div className="space-y-6" dir="rtl">
             <div className="flex flex-wrap items-center justify-between gap-4">
@@ -684,7 +703,8 @@ export default function Accounting() {
                                         <TableHead className="text-center">اسم الحساب</TableHead>
                                         <TableHead className="text-center">النوع</TableHead>
                                         <TableHead className="text-center">التقرير</TableHead>
-                                        <TableHead className="text-center">النوع</TableHead>
+                                        <TableHead className="text-center">التصنيف</TableHead>
+                                        <TableHead className="text-center">الرصيد</TableHead>
                                         <TableHead className="text-center">الحالة</TableHead>
                                         <TableHead className="text-center w-32">إجراءات</TableHead>
                                     </TableRow>
@@ -694,6 +714,7 @@ export default function Accounting() {
                                         <AccountTreeRow
                                             key={root.id}
                                             account={root}
+                                            balanceById={balanceById}
                                             expandedIds={accountSearch ? new Set([...expandedIds, ...allGroupIds]) : expandedIds}
                                             onToggle={handleToggleExpand}
                                             onView={handleViewAccount}

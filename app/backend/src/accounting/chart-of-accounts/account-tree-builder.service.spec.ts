@@ -1,4 +1,3 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AccountTreeBuilderService } from './account-tree-builder.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -7,25 +6,20 @@ describe('AccountTreeBuilderService', () => {
     let service: AccountTreeBuilderService;
     let prisma: PrismaService;
 
-    beforeEach(async () => {
-        const module: TestingModule = await Test.createTestingModule({
-            providers: [
-                AccountTreeBuilderService,
-                {
-                    provide: PrismaService,
-                    useValue: {
-                        account: {
-                            findMany: vi.fn(),
-                            update: vi.fn(),
-                        },
-                        $transaction: vi.fn(),
-                    },
-                },
-            ],
-        }).compile();
+    beforeEach(() => {
+        // Instantiate directly with a mocked PrismaService. Nest's DI container
+        // relies on emitted `design:paramtypes` metadata which is not available
+        // under this test transform (no global reflect-metadata setup), so a
+        // direct `new` is the robust way to inject the mock here.
+        prisma = {
+            account: {
+                findMany: vi.fn(),
+                update: vi.fn(),
+            },
+            $transaction: vi.fn(),
+        } as unknown as PrismaService;
 
-        service = module.get<AccountTreeBuilderService>(AccountTreeBuilderService);
-        prisma = module.get<PrismaService>(PrismaService);
+        service = new AccountTreeBuilderService(prisma);
     });
 
     describe('deriveRootAndReportType', () => {

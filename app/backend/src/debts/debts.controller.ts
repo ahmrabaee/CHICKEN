@@ -94,7 +94,7 @@ export class DebtsController {
   }
 
   @Post(':id/write-off')
-  @Roles('admin', 'accountant')
+  @Roles('admin') // fix C-6: write-off is destructive & admin-only (seed: debts.write_off), was allowing accountant
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'شطب الدين (Write off bad debt)' })
   writeOff(

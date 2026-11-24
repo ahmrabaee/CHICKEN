@@ -28,6 +28,7 @@ import {
 
   ArrowLeftRight,
   RefreshCw,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -169,6 +170,12 @@ const navigation: NavItem[] = [
     icon: Users,
     href: "/users",
     adminOnly: true,
+  },
+  {
+    title: "User Guide",
+    titleAr: "دليل المستخدم",
+    icon: HelpCircle,
+    href: "/help",
   },
 ];
 

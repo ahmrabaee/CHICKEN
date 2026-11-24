@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, Plus, Download, Eye, Ban, CreditCard, Printer, Loader2, Package, Receipt, FileText } from "lucide-react";
+import { Search, Plus, Download, Eye, Ban, CreditCard, Printer, Loader2, Package, Receipt, FileText, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,7 +28,7 @@ import {
 import { StatusBadge } from "@/components/ui/status-badge";
 import { DocumentStatusBadge } from "@/components/posting";
 import { useNavigate } from "react-router-dom";
-import { useSales, useSale, useVoidSale } from "@/hooks/use-sales";
+import { useSales, useSale, useVoidSale, useReturnSale } from "@/hooks/use-sales";
 import { useQuery } from "@tanstack/react-query";
 import { reconciliationService } from "@/services/reconciliation.service";
 import { creditNoteService } from "@/services/credit-note.service";
@@ -82,6 +82,7 @@ function getPaymentMethodLabel(method: string) {
 function SaleDetailCard({ saleId, open, onClose }: { saleId: number; open: boolean; onClose: () => void }) {
   const { data: sale, isLoading } = useSale(saleId);
   const [showCreditNoteDialog, setShowCreditNoteDialog] = useState(false);
+  const [showReturn, setShowReturn] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
 
   const handleDownloadInvoicePdf = async () => {
@@ -203,6 +204,17 @@ function SaleDetailCard({ saleId, open, onClose }: { saleId: number; open: boole
                   {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                   تحميل PDF
                 </Button>
+                {!sale.isVoided && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 shrink-0"
+                    onClick={() => setShowReturn(true)}
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    مرتجع
+                  </Button>
+                )}
               </div>
             )}
           </div>
@@ -289,6 +301,8 @@ function SaleDetailCard({ saleId, open, onClose }: { saleId: number; open: boole
               originalInvoiceType="sale"
               originalInvoiceId={saleId}
             />
+
+            {sale && <ReturnSaleDialog sale={sale} open={showReturn} onClose={() => setShowReturn(false)} />}
 
             {/* Cost & Profit (Admin) */}
             <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4">
@@ -421,6 +435,117 @@ function InfoItem({
   );
 }
 
+
+// ─── Return (مرتجع) Dialog ─────────────────────────────────
+
+function ReturnSaleDialog({ sale, open, onClose }: { sale: Sale; open: boolean; onClose: () => void }) {
+  const returnSale = useReturnSale();
+  const lines = (sale as any).saleLines ?? [];
+  const [rows, setRows] = useState<Record<number, { qtyKg: string; condition: "resellable" | "damaged" }>>({});
+  const [refundMethod, setRefundMethod] = useState<"cash" | "credit">("cash");
+  const [reason, setReason] = useState("");
+
+  const setRow = (itemId: number, patch: Partial<{ qtyKg: string; condition: "resellable" | "damaged" }>) =>
+    setRows((prev) => ({ ...prev, [itemId]: { qtyKg: "", condition: "resellable", ...prev[itemId], ...patch } }));
+
+  const handleSubmit = () => {
+    const outLines = lines
+      .map((l: any) => {
+        const r = rows[l.itemId];
+        const qtyGrams = Math.round(parseFloat(r?.qtyKg || "0") * 1000);
+        return qtyGrams > 0 ? { itemId: l.itemId, quantityGrams: qtyGrams, condition: r?.condition ?? "resellable" } : null;
+      })
+      .filter(Boolean);
+    if (outLines.length === 0) {
+      toast({ variant: "destructive", title: "حدّد كمية مرتجعة لصنف واحد على الأقل" });
+      return;
+    }
+    returnSale.mutate(
+      { id: sale.id, data: { lines: outLines as any, refundMethod, reason: reason || undefined } },
+      { onSuccess: () => { onClose(); setRows({}); setReason(""); } }
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto" dir="rtl">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold">مرتجع من الفاتورة {sale.saleNumber}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <p className="text-sm text-amber-700 bg-amber-50 p-3 rounded-lg border border-amber-200">
+            حدّد الكمية المرتجعة لكل صنف وحالتها: <strong>صالح</strong> يرجع للمخزون للبيع، و<strong>تالف</strong> يُسجَّل كخسارة ولا يرجع للمخزون. يُرَدّ المبلغ نقداً أو يُخصم من دين العميل.
+          </p>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-right">الصنف</TableHead>
+                <TableHead className="text-right">المُباع (كجم)</TableHead>
+                <TableHead className="text-right">المرتجع (كجم)</TableHead>
+                <TableHead className="text-right">الحالة</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {lines.map((l: any) => (
+                <TableRow key={l.itemId}>
+                  <TableCell className="font-medium">{l.itemName}</TableCell>
+                  <TableCell>{(l.weightGrams / 1000).toFixed(2)}</TableCell>
+                  <TableCell>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      max={(l.weightGrams / 1000).toString()}
+                      placeholder="0"
+                      value={rows[l.itemId]?.qtyKg ?? ""}
+                      onChange={(e) => setRow(l.itemId, { qtyKg: e.target.value })}
+                      className="w-24"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={rows[l.itemId]?.condition ?? "resellable"}
+                      onValueChange={(v) => setRow(l.itemId, { condition: v as "resellable" | "damaged" })}
+                    >
+                      <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="resellable">صالح</SelectItem>
+                        <SelectItem value="damaged">تالف</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium">طريقة الرد</label>
+              <Select value={refundMethod} onValueChange={(v) => setRefundMethod(v as "cash" | "credit")}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">نقداً</SelectItem>
+                  <SelectItem value="credit">خصم من دين العميل</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">السبب (اختياري)</label>
+              <Input placeholder="سبب المرتجع..." value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose} className="flex-1">إلغاء</Button>
+            <Button onClick={handleSubmit} className="flex-1" disabled={returnSale.isPending}>
+              {returnSale.isPending ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : null}
+              تأكيد المرتجع
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 // ─── Void Confirmation Dialog ─────────────────────────────────
 

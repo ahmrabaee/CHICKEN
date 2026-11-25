@@ -1,0 +1,5 @@
+journal_mode before wal
+import 201 {"success":true,"data":{"message":"Backup imported successfully","messageAr":"Backup imported successfully","backupId":1,"filename":"backup_manual_import_1795644105466.tar.gz","restored":false},"meta"
+restore 201
+journal_mode after restoring pre-WAL archive delete (file header)
+GET /sales 200

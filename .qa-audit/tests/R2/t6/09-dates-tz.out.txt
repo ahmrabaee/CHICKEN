@@ -1,0 +1,13 @@
+server process TZ offset (this machine) = 2 h; Intl: Asia/Hebron
+storage sample: [{"sale_number":"SAL-SEED-0005","sale_date":1771485300000,"t":"integer","utc":"2026-02-19 07:15:00","jerusalem":"2026-02-19 09:15:00"}]
+1) GET /sales?startDate=2026-11-25&endDate=2026-11-25 → 200 totalItems=0; DB has 0 non-voided sales today
+   GET /reports/sales same range → 200 {"grossRevenue":0,"discounts":0,"tax":0,"netRevenue":0,"cost":0,"profit":0,"count":0}
+   GET /expenses?startDate=endDate=2026-11-25 → 200 totalItems=3 (list ignores startDate/endDate?); DB has 0 expenses today
+2) created expenses ["400 INSUFFICIENT_BALANCE undefined","400 INSUFFICIENT_BALANCE undefined","400 INSUFFICIENT_BALANCE undefined"]
+   GET /reports/expenses?startDate=endDate=2026-11-25 (a Jerusalem business day) → 200; includes: 12:00-local-Nov25=false 23:30-local-Nov25=false 00:30-local-Nov26(should be EXCLUDED)=false
+   report total: {"totalAmount":0,"count":0}
+   GET /expenses list same day → includes e1=false e2=false e3=false
+3) expenseDate "2026-11-20" stored as undefined (= Invalid Date Jerusalem); JE entry_date: []
+DST note: 2026-03-27T00:30:00.000Z is 27/03/2026, 03:30:00 Jerusalem but UTC date 2026-03-27
+DST note: 2026-10-24T22:30:00.000Z is 25/10/2026, 01:30:00 Jerusalem but UTC date 2026-10-24
+   GET /reports/expenses for local day 2026-11-26 → {"summary":{"totalAmount":0,"count":0},"byType":[],"expenses":[]} (00:30 local Nov-26 expense should be here)

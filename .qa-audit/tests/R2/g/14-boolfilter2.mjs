@@ -1,0 +1,12 @@
+import { connect, BASE } from './lib.mjs';
+const a = await connect(BASE, 'admin', 'Hacked12345');
+const n = (r)=> (Array.isArray(r.data)?r.data:(r.data.items||[])).map(x=>x.name+':'+x.isActive);
+console.log('customers default      ', JSON.stringify(n(await a.get('/customers?pageSize=100'))));
+console.log('customers isActive=false', JSON.stringify(n(await a.get('/customers?pageSize=100&isActive=false'))));
+console.log('customers isActive=     ', JSON.stringify(n(await a.get('/customers?pageSize=100&isActive='))));
+console.log('items isActive=false   ', JSON.stringify(n(await a.get('/items?pageSize=100&isActive=false'))));
+console.log('items isActive=        ', JSON.stringify(n(await a.get('/items?pageSize=100&isActive='))));
+console.log('users default', JSON.stringify((await a.get('/users')).data.map(u=>u.username+':'+u.isActive)));
+console.log('users isActive=false', JSON.stringify((await a.get('/users?isActive=false')).data.map(u=>u.username+':'+u.isActive)));
+console.log('suppliers default', JSON.stringify(n(await a.get('/suppliers?pageSize=100'))));
+console.log('branches includeInactive=false', (await a.get('/branches?includeInactive=false')).data.branches.length, 'true', (await a.get('/branches?includeInactive=true')).data.branches.length);

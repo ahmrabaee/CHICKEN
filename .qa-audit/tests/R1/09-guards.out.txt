@@ -1,0 +1,12 @@
+  accountant GET /system/backups: 200 OK
+  accountant GET /system/backup/config: 200 OK
+  accountant POST /system/backup (create): 201 OK
+  accountant POST /system/backups/:id/download-link: 400 VALIDATION_ERROR
+  accountant POST /accounting/accounts: 403 FORBIDDEN
+  accountant POST /reconciliation/apply: 400 VALIDATION_ERROR
+  accountant POST /credit-notes (role allowed? ): 400 EXCEEDS_OUTSTANDING
+  accountant GET /accounting/trial-balance: 200 OK
+  accountant GET /reports/stock-vs-gl: 200 OK
+  accountant GET /purchases: 403 FORBIDDEN
+  accountant GET /suppliers: 403 FORBIDDEN
+  accountant POST /wastage no body: 400 VALIDATION_ERROR

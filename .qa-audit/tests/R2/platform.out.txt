@@ -1,0 +1,5 @@
+GET /api/docs unauth 200 | /api/docs-json 200 paths 145
+JE 9e15 -> 500 A database error occurred (P2023)
+JE date 2026-02-30 -> 201 {"id":1,"entryNumber":"JE-000001","entryDate":"2026-03-02T00:00:00.000Z","description":"x","sourceType":null,"sourceId":null,"isPosted":fals
+200KB body -> 500 INTERNAL_ERROR
+price 2147483647 -> 403

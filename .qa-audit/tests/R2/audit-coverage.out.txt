@@ -1,0 +1,39 @@
+calls 39 success 30 failed 9 | audit rows added 35
+call statuses: user create=201; user update=200; user reset pw=200; settings put=200; settings bulk=500; backup config=400; backup run=201; tax create=201; category create=201; item create=201; item update=200; customer create=201; customer update=200; supplier create=201; purchase create=201; purchase update=200; sale create=201; sale credit=201; sale payment=201; payments/sale=201; sale return=200; sale void=200; adjustment=201; wastage=201; expense create=201; manual JE=400; credit note=201; page access bulk=200; branch create=201; customer delete=400; purchase delete=400; item delete=200; user delete=204; FAIL validation sale=201; FAIL 404 void=404; FAIL 403 acc create tax=403; accountant sale=201; LARGE body 900KB=500; LARGE body 2MB=500
+--- rows
+2 1 admin create users 2 ::1 br=1 ua=node cl=109 | {"method":"POST","path":"/v1/users","body":{"username":"r2aud","password":"***","fullName":"Aud","roleId":2}}
+3 1 admin update users 2 ::1 br=1 ua=node cl=64 | {"method":"PUT","path":"/v1/users/2","body":{"fullName":"Aud2"}}
+4 1 admin reset_password users 2 ::1 br=1 ua=node cl=82 | {"method":"POST","path":"/v1/users/2/reset-password","body":{"newPassword":"***"}}
+5 1 admin company settings 1 ::1 br=1 ua=node cl=70 | {"method":"PUT","path":"/v1/settings/company","body":{"name":"R2 Co"}}
+6 1 admin backup system null ::1 br=1 ua=node cl=54 | {"method":"POST","path":"/v1/system/backup","body":{}}
+7 1 admin templates tax 3 ::1 br=1 ua=node cl=168 | {"method":"POST","path":"/v1/tax/templates","body":{"name":"R2 tax","type":"sales","items":[{"accountId":18,"rate":1000,"chargeTyp
+8 1 admin create categories 8 ::1 br=1 ua=node cl=81 | {"method":"POST","path":"/v1/categories","body":{"code":"R2CAT","name":"r2 cat"}}
+9 1 admin create items 7 ::1 br=1 ua=node cl=144 | {"method":"POST","path":"/v1/items","body":{"code":"R2-IT","name":"r2 item","categoryId":1,"defaultSalePrice":3000,"defaultPurchas
+10 1 admin update items 7 ::1 br=1 ua=node cl=70 | {"method":"PUT","path":"/v1/items/7","body":{"defaultSalePrice":3100}}
+11 1 admin update customers 4 ::1 br=1 ua=node cl=62 | {"method":"PUT","path":"/v1/customers/4","body":{"notes":"x"}}
+12 1 admin create suppliers 3 ::1 br=1 ua=node cl=65 | {"method":"POST","path":"/v1/suppliers","body":{"name":"R2 sup"}}
+13 1 admin create purchases 4 ::1 br=1 ua=node cl=125 | {"method":"POST","path":"/v1/purchases","body":{"supplierId":1,"lines":[{"itemId":7,"weightGrams":20000,"pricePerKg":1000}]}}
+14 1 admin update purchases 4 ::1 br=1 ua=node cl=64 | {"method":"PUT","path":"/v1/purchases/4","body":{"notes":"upd"}}
+15 1 admin create sales 6 ::1 br=1 ua=node cl=175 | {"method":"POST","path":"/v1/sales","body":{"saleType":"cash","lines":[{"itemId":7,"weightGrams":1000,"pricePerKg":3100}],"payment
+16 1 admin create sales 7 ::1 br=1 ua=node cl=140 | {"method":"POST","path":"/v1/sales","body":{"saleType":"credit","customerId":4,"lines":[{"itemId":7,"weightGrams":1000,"pricePerKg
+17 1 admin payments sales 7 ::1 br=1 ua=node cl=93 | {"method":"POST","path":"/v1/sales/7/payments","body":{"amount":1000,"paymentMethod":"cash"}}
+18 1 admin sale payments 6 ::1 br=1 ua=node cl=100 | {"method":"POST","path":"/v1/payments/sale","body":{"saleId":7,"amount":500,"paymentMethod":"cash"}}
+19 1 admin return Sale 6 null br=null ua= cl=124 | {"lines":[{"itemId":7,"quantityGrams":100,"condition":"resellable"}],"refundGross":310,"resellableCost":100,"damagedCost":0}
+20 1 admin return sales 6 ::1 br=1 ua=node cl=144 | {"method":"POST","path":"/v1/sales/6/return","body":{"lines":[{"itemId":7,"quantityGrams":100,"condition":"resellable"}],"refundMe
+21 1 admin void Sale 6 null br=null ua= cl=15 | {"reason":"r2"}
+22 1 admin void sales 6 ::1 br=1 ua=node cl=66 | {"method":"POST","path":"/v1/sales/6/void","body":{"reason":"r2"}}
+23 1 admin create customers 4 ::1 br=1 ua=node cl=87 | {"method":"POST","path":"/v1/customers","body":{"name":"R2 cust","phone":"0591234567"}}
+24 1 admin adjustment Inventory 7 null br=null ua= cl=83 | {"before":19100,"after":18600,"valueBefore":19100,"valueAfter":18600,"reason":"r2"}
+25 1 admin adjustments inventory null ::1 br=1 ua=node cl=134 | {"method":"POST","path":"/v1/inventory/adjustments","body":{"itemId":7,"adjustmentType":"decrease","quantityGrams":500,"reason":"r
+26 1 admin create wastage 1 ::1 br=1 ua=node cl=96 | {"method":"POST","path":"/v1/wastage","body":{"lotId":7,"quantityGrams":300,"reason":"spoiled"}}
+27 1 admin create expenses 4 ::1 br=1 ua=node cl=118 | {"method":"POST","path":"/v1/expenses","body":{"categoryId":1,"description":"r2","amount":100,"paymentMethod":"cash"}}
+28 1 admin create credit-notes 1 ::1 br=1 ua=node cl=130 | {"method":"POST","path":"/v1/credit-notes","body":{"originalInvoiceType":"sale","originalInvoiceId":7,"amount":100,"reason":"r2"}}
+29 1 admin bulk page-access null ::1 br=1 ua=node cl=66 | {"method":"PUT","path":"/v1/page-access/bulk","body":{"items":[]}}
+30 1 admin create branches 2 ::1 br=1 ua=node cl=80 | {"method":"POST","path":"/v1/branches","body":{"name":"R2 branch","code":"R2B"}}
+31 1 admin delete items 7 ::1 br=1 ua=node cl=50 | {"method":"DELETE","path":"/v1/items/7","body":{}}
+32 1 admin delete users 2 ::1 br=1 ua=node cl=50 | {"method":"DELETE","path":"/v1/users/2","body":{}}
+33 1 admin create sales 8 ::1 br=1 ua=node cl=74 | {"method":"POST","path":"/v1/sales","body":{"saleType":"cash","lines":[]}}
+34 1 admin create users 3 ::1 br=1 ua=node cl=110 | {"method":"POST","path":"/v1/users","body":{"username":"r2aud2","password":"***","fullName":"Aud","roleId":2}}
+35 3 r2aud2 login User 3 localhost br=null ua=API cl=12 | {"ip":"::1"}
+36 3 r2aud2 create sales 9 ::1 br=null ua=node cl=173 | {"method":"POST","path":"/v1/sales","body":{"saleType":"cash","lines":[{"itemId":5,"weightGrams":100,"pricePerKg":3000}],"payments
+plaintext SecretPw123 in audit: false | NewSecret999: false

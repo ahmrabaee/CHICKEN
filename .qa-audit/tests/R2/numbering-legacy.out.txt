@@ -1,0 +1,8 @@
+post fund 201
+purchases 201 PUR-000005 201 PUR-000006 201 PUR-000007
+delete p1 (non-last) 200
+purchase after deleting a non-last one -> 409 DUPLICATE_ENTRY
+and again -> 409 DUPLICATE_ENTRY
+expenses 201 EXP-000004 201 EXP-000005 201 EXP-000006
+delete e1 200
+expense after delete -> 409 DUPLICATE_ENTRY

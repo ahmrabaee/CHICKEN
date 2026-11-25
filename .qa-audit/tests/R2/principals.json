@@ -1,0 +1,430 @@
+{
+  "admin": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlcyI6WyJhZG1pbiJdLCJwZXJtaXNzaW9ucyI6WyJkYXNoYm9hcmQudmlldyIsInNhbGVzLmNyZWF0ZSIsInNhbGVzLnZpZXciLCJzYWxlcy52b2lkIiwic2FsZXMuZGlzY291bnQudW5saW1pdGVkIiwicHVyY2hhc2VzLmNyZWF0ZSIsInB1cmNoYXNlcy52aWV3IiwicHVyY2hhc2VzLmFwcHJvdmUiLCJwdXJjaGFzZXMudm9pZCIsImludmVudG9yeS52aWV3IiwiaW52ZW50b3J5LmFkanVzdCIsImludmVudG9yeS50cmFuc2ZlciIsIndhc3RhZ2UuY3JlYXRlIiwid2FzdGFnZS52aWV3Iiwid2FzdGFnZS5hcHByb3ZlIiwiY3VzdG9tZXJzLmNyZWF0ZSIsImN1c3RvbWVycy52aWV3IiwiY3VzdG9tZXJzLmVkaXQiLCJjdXN0b21lcnMuZGVsZXRlIiwic3VwcGxpZXJzLmNyZWF0ZSIsInN1cHBsaWVycy52aWV3Iiwic3VwcGxpZXJzLmVkaXQiLCJzdXBwbGllcnMuZGVsZXRlIiwiZGVidHMudmlldyIsImRlYnRzLmNvbGxlY3QiLCJkZWJ0cy5wYXkiLCJkZWJ0cy53cml0ZV9vZmYiLCJleHBlbnNlcy5jcmVhdGUiLCJleHBlbnNlcy52aWV3IiwiZXhwZW5zZXMuYXBwcm92ZSIsInJlcG9ydHMuc2FsZXMiLCJyZXBvcnRzLmludmVudG9yeSIsInJlcG9ydHMuZmluYW5jaWFsIiwicmVwb3J0cy5leHBvcnQiLCJzZXR0aW5ncy52aWV3Iiwic2V0dGluZ3MuZWRpdCIsInVzZXJzLmNyZWF0ZSIsInVzZXJzLnZpZXciLCJ1c2Vycy5lZGl0IiwidXNlcnMuZGVhY3RpdmF0ZSIsImF1ZGl0LnZpZXciXSwiYnJhbmNoSWQiOjEsImFsbG93ZWRQYWdlcyI6WyIqIl0sInR5cGUiOiJhY2Nlc3MiLCJpYXQiOjE3OTU2NDMzOTgsImV4cCI6MTc5NTY0NDI5OH0.ehU6-g77UQl31z1vjmiHGrY5gyUb7qgZxqifvccj5-E",
+    "user": {
+      "id": 1,
+      "username": "admin",
+      "fullName": "مدير النظام",
+      "fullNameEn": "System Admin",
+      "role": "admin",
+      "permissions": [
+        "dashboard.view",
+        "sales.create",
+        "sales.view",
+        "sales.void",
+        "sales.discount.unlimited",
+        "purchases.create",
+        "purchases.view",
+        "purchases.approve",
+        "purchases.void",
+        "inventory.view",
+        "inventory.adjust",
+        "inventory.transfer",
+        "wastage.create",
+        "wastage.view",
+        "wastage.approve",
+        "customers.create",
+        "customers.view",
+        "customers.edit",
+        "customers.delete",
+        "suppliers.create",
+        "suppliers.view",
+        "suppliers.edit",
+        "suppliers.delete",
+        "debts.view",
+        "debts.collect",
+        "debts.pay",
+        "debts.write_off",
+        "expenses.create",
+        "expenses.view",
+        "expenses.approve",
+        "reports.sales",
+        "reports.inventory",
+        "reports.financial",
+        "reports.export",
+        "settings.view",
+        "settings.edit",
+        "users.create",
+        "users.view",
+        "users.edit",
+        "users.deactivate",
+        "audit.view"
+      ],
+      "defaultBranchId": 1,
+      "preferredLanguage": "ar",
+      "allowedPages": [
+        "*"
+      ]
+    }
+  },
+  "accountant": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInVzZXJuYW1lIjoidDVhY2MiLCJyb2xlcyI6WyJhY2NvdW50YW50Il0sInBlcm1pc3Npb25zIjpbImRhc2hib2FyZC52aWV3Iiwic2FsZXMuY3JlYXRlIiwic2FsZXMudmlldyIsInNhbGVzLmRpc2NvdW50LmxpbWl0ZWQiLCJwdXJjaGFzZXMudmlldyIsImludmVudG9yeS52aWV3Iiwid2FzdGFnZS5jcmVhdGUiLCJ3YXN0YWdlLnZpZXciLCJjdXN0b21lcnMuY3JlYXRlIiwiY3VzdG9tZXJzLnZpZXciLCJkZWJ0cy52aWV3IiwiZGVidHMuY29sbGVjdCIsInJlcG9ydHMuc2FsZXMiXSwiYWxsb3dlZFBhZ2VzIjpbIi8iLCIvaW52ZW50b3J5IiwiL3NhbGVzIiwiL3NhbGVzL25ldyIsIi9jdXN0b21lcnMiLCIvcGF5bWVudHMiLCIvcmVjb25jaWxpYXRpb24iLCIvY3JlZGl0LW5vdGVzIiwiL2FjY291bnRpbmciLCIvcmVwb3J0cy9zYWxlcyIsIi9yZXBvcnRzL2ludmVudG9yeSIsIi9yZXBvcnRzL3B1cmNoYXNlcyIsIi9yZXBvcnRzL3dhc3RhZ2UiLCIvc3RvY2stdHJhbnNmZXIiXSwidHlwZSI6ImFjY2VzcyIsImlhdCI6MTc5NTY0MzM5OCwiZXhwIjoxNzk1NjQ0Mjk4fQ.gvEBOc8SFWI-991etJvezFKI2eaxh7Q5Ljd3rpW5KIY",
+    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzk1NjQzMzk4LCJleHAiOjE3OTYyNDgxOTh9.5OdeTTqIlZnVkQDwnMJAPTuCeEsxhTUlaX1gt0NXLwA",
+    "user": {
+      "id": 2,
+      "username": "t5acc",
+      "fullName": "T5 Accountant",
+      "role": "accountant",
+      "permissions": [
+        "dashboard.view",
+        "sales.create",
+        "sales.view",
+        "sales.discount.limited",
+        "purchases.view",
+        "inventory.view",
+        "wastage.create",
+        "wastage.view",
+        "customers.create",
+        "customers.view",
+        "debts.view",
+        "debts.collect",
+        "reports.sales"
+      ],
+      "preferredLanguage": "ar",
+      "allowedPages": [
+        "/",
+        "/inventory",
+        "/sales",
+        "/sales/new",
+        "/customers",
+        "/payments",
+        "/reconciliation",
+        "/credit-notes",
+        "/accounting",
+        "/reports/sales",
+        "/reports/inventory",
+        "/reports/purchases",
+        "/reports/wastage",
+        "/stock-transfer"
+      ]
+    },
+    "id": 2
+  },
+  "_pageAccessShape": {
+    "success": true,
+    "data": {
+      "pages": [
+        {
+          "id": 1,
+          "key": "dashboard",
+          "path": "/",
+          "titleAr": "لوحة التحكم",
+          "sortOrder": 0,
+          "allowed": true
+        },
+        {
+          "id": 2,
+          "key": "inventory",
+          "path": "/inventory",
+          "titleAr": "المخزون",
+          "groupKey": "inventory",
+          "sortOrder": 10,
+          "allowed": true
+        },
+        {
+          "id": 3,
+          "key": "inventory-new",
+          "path": "/inventory/new",
+          "titleAr": "إضافة صنف",
+          "groupKey": "inventory",
+          "sortOrder": 11,
+          "allowed": false
+        },
+        {
+          "id": 4,
+          "key": "inventory-adjustments",
+          "path": "/inventory/adjustments",
+          "titleAr": "تسوية المخزون",
+          "groupKey": "inventory",
+          "sortOrder": 12,
+          "allowed": false
+        },
+        {
+          "id": 5,
+          "key": "sales",
+          "path": "/sales",
+          "titleAr": "البيع",
+          "groupKey": "sales",
+          "sortOrder": 20,
+          "allowed": true
+        },
+        {
+          "id": 6,
+          "key": "sales-pos",
+          "path": "/sales/new",
+          "titleAr": "نقطة البيع",
+          "groupKey": "sales",
+          "sortOrder": 21,
+          "allowed": true
+        },
+        {
+          "id": 7,
+          "key": "customers",
+          "path": "/customers",
+          "titleAr": "الزبائن",
+          "sortOrder": 30,
+          "allowed": true
+        },
+        {
+          "id": 8,
+          "key": "payments",
+          "path": "/payments",
+          "titleAr": "المدفوعات",
+          "sortOrder": 40,
+          "allowed": true
+        },
+        {
+          "id": 9,
+          "key": "reconciliation",
+          "path": "/reconciliation",
+          "titleAr": "مطابقة الدفعات",
+          "sortOrder": 41,
+          "allowed": true
+        },
+        {
+          "id": 10,
+          "key": "credit-notes",
+          "path": "/credit-notes",
+          "titleAr": "الإشعارات الدائنة",
+          "sortOrder": 42,
+          "allowed": true
+        },
+        {
+          "id": 11,
+          "key": "accounting",
+          "path": "/accounting",
+          "titleAr": "المحاسبة",
+          "sortOrder": 50,
+          "allowed": true
+        },
+        {
+          "id": 12,
+          "key": "reports-sales",
+          "path": "/reports/sales",
+          "titleAr": "تقارير المبيعات",
+          "groupKey": "reports",
+          "sortOrder": 60,
+          "allowed": true
+        },
+        {
+          "id": 13,
+          "key": "reports-holdings",
+          "path": "/reports/inventory",
+          "titleAr": "تقارير المخزون",
+          "groupKey": "reports",
+          "sortOrder": 61,
+          "allowed": true
+        },
+        {
+          "id": 14,
+          "key": "reports-purchases",
+          "path": "/reports/purchases",
+          "titleAr": "تقارير المشتريات",
+          "groupKey": "reports",
+          "sortOrder": 62,
+          "allowed": true
+        },
+        {
+          "id": 15,
+          "key": "reports-wastage",
+          "path": "/reports/wastage",
+          "titleAr": "تقارير الهدر",
+          "groupKey": "reports",
+          "sortOrder": 63,
+          "allowed": true
+        },
+        {
+          "id": 16,
+          "key": "traders",
+          "path": "/traders",
+          "titleAr": "التجار",
+          "sortOrder": 70,
+          "allowed": false
+        },
+        {
+          "id": 17,
+          "key": "expenses",
+          "path": "/expenses",
+          "titleAr": "المصروفات",
+          "sortOrder": 80,
+          "allowed": false
+        },
+        {
+          "id": 18,
+          "key": "debts",
+          "path": "/debts",
+          "titleAr": "الديون",
+          "sortOrder": 90,
+          "allowed": false
+        },
+        {
+          "id": 19,
+          "key": "wastage",
+          "path": "/wastage",
+          "titleAr": "الهدر",
+          "sortOrder": 100,
+          "allowed": false
+        },
+        {
+          "id": 20,
+          "key": "stock-transfer",
+          "path": "/stock-transfer",
+          "titleAr": "تحويل المخزون",
+          "sortOrder": 105,
+          "allowed": true
+        },
+        {
+          "id": 21,
+          "key": "purchasing",
+          "path": "/purchasing",
+          "titleAr": "الشراء",
+          "sortOrder": 110,
+          "allowed": false
+        },
+        {
+          "id": 22,
+          "key": "reports-expenses",
+          "path": "/reports/expenses",
+          "titleAr": "تقارير المصروفات",
+          "groupKey": "reports",
+          "sortOrder": 120,
+          "allowed": false
+        },
+        {
+          "id": 23,
+          "key": "reports-financial",
+          "path": "/reports/financial",
+          "titleAr": "التقارير المالية",
+          "groupKey": "reports",
+          "sortOrder": 121,
+          "allowed": false
+        },
+        {
+          "id": 24,
+          "key": "reports-profit-loss",
+          "path": "/reports/profit-loss",
+          "titleAr": "قائمة الدخل",
+          "groupKey": "reports",
+          "sortOrder": 122,
+          "allowed": false
+        },
+        {
+          "id": 25,
+          "key": "reports-stock-vs-gl",
+          "path": "/reports/stock-vs-gl",
+          "titleAr": "المخزون مقابل الدفاتر",
+          "groupKey": "reports",
+          "sortOrder": 123,
+          "allowed": false
+        },
+        {
+          "id": 26,
+          "key": "reports-tax",
+          "path": "/reports/tax",
+          "titleAr": "تقارير الضرائب",
+          "groupKey": "reports",
+          "sortOrder": 124,
+          "allowed": false
+        },
+        {
+          "id": 27,
+          "key": "reports-vat",
+          "path": "/reports/vat",
+          "titleAr": "ضريبة القيمة المضافة",
+          "groupKey": "reports",
+          "sortOrder": 125,
+          "allowed": false
+        },
+        {
+          "id": 28,
+          "key": "audit",
+          "path": "/audit",
+          "titleAr": "سجل المراجعة",
+          "sortOrder": 130,
+          "allowed": false
+        },
+        {
+          "id": 29,
+          "key": "branches",
+          "path": "/branches",
+          "titleAr": "الفروع",
+          "sortOrder": 140,
+          "allowed": false
+        },
+        {
+          "id": 30,
+          "key": "settings",
+          "path": "/settings",
+          "titleAr": "الإعدادات",
+          "sortOrder": 150,
+          "allowed": false
+        },
+        {
+          "id": 31,
+          "key": "users",
+          "path": "/users",
+          "titleAr": "المستخدمين",
+          "sortOrder": 160,
+          "allowed": false
+        }
+      ]
+    },
+    "meta": {
+      "timestamp": "2026-11-25T21:49:58.895Z"
+    }
+  },
+  "_bulkRevokeResult": {
+    "status": 400,
+    "body": {
+      "success": false,
+      "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "property userId should not exist; property pages should not exist; items must be an array",
+        "messageAr": "property userId should not exist؛ property pages should not exist؛ items must be an array",
+        "details": [
+          "property userId should not exist",
+          "property pages should not exist",
+          "items must be an array"
+        ]
+      },
+      "meta": {
+        "timestamp": "2026-11-25T21:49:58.899Z",
+        "path": "/v1/page-access/bulk"
+      }
+    }
+  },
+  "revoked": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsInVzZXJuYW1lIjoidDVyZXYiLCJyb2xlcyI6WyJhY2NvdW50YW50Il0sInBlcm1pc3Npb25zIjpbImRhc2hib2FyZC52aWV3Iiwic2FsZXMuY3JlYXRlIiwic2FsZXMudmlldyIsInNhbGVzLmRpc2NvdW50LmxpbWl0ZWQiLCJwdXJjaGFzZXMudmlldyIsImludmVudG9yeS52aWV3Iiwid2FzdGFnZS5jcmVhdGUiLCJ3YXN0YWdlLnZpZXciLCJjdXN0b21lcnMuY3JlYXRlIiwiY3VzdG9tZXJzLnZpZXciLCJkZWJ0cy52aWV3IiwiZGVidHMuY29sbGVjdCIsInJlcG9ydHMuc2FsZXMiXSwiYWxsb3dlZFBhZ2VzIjpbXSwidHlwZSI6ImFjY2VzcyIsImlhdCI6MTc5NTY0MzQwMSwiZXhwIjoxNzk1NjQ0MzAxfQ.25POvXqvcCtZesmTWHnXgyqATgchB1BVtLBwoWEz4cc",
+    "user": {
+      "id": 3,
+      "username": "t5rev",
+      "fullName": "T5 Revoked",
+      "role": "accountant",
+      "permissions": [
+        "dashboard.view",
+        "sales.create",
+        "sales.view",
+        "sales.discount.limited",
+        "purchases.view",
+        "inventory.view",
+        "wastage.create",
+        "wastage.view",
+        "customers.create",
+        "customers.view",
+        "debts.view",
+        "debts.collect",
+        "reports.sales"
+      ],
+      "preferredLanguage": "ar",
+      "allowedPages": []
+    },
+    "id": 3
+  },
+  "deactivated": {
+    "id": 4,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQsInVzZXJuYW1lIjoidDVkZWFjdCIsInJvbGVzIjpbImFjY291bnRhbnQiXSwicGVybWlzc2lvbnMiOlsiZGFzaGJvYXJkLnZpZXciLCJzYWxlcy5jcmVhdGUiLCJzYWxlcy52aWV3Iiwic2FsZXMuZGlzY291bnQubGltaXRlZCIsInB1cmNoYXNlcy52aWV3IiwiaW52ZW50b3J5LnZpZXciLCJ3YXN0YWdlLmNyZWF0ZSIsIndhc3RhZ2UudmlldyIsImN1c3RvbWVycy5jcmVhdGUiLCJjdXN0b21lcnMudmlldyIsImRlYnRzLnZpZXciLCJkZWJ0cy5jb2xsZWN0IiwicmVwb3J0cy5zYWxlcyJdLCJhbGxvd2VkUGFnZXMiOlsiLyIsIi9pbnZlbnRvcnkiLCIvc2FsZXMiLCIvc2FsZXMvbmV3IiwiL2N1c3RvbWVycyIsIi9wYXltZW50cyIsIi9yZWNvbmNpbGlhdGlvbiIsIi9jcmVkaXQtbm90ZXMiLCIvYWNjb3VudGluZyIsIi9yZXBvcnRzL3NhbGVzIiwiL3JlcG9ydHMvaW52ZW50b3J5IiwiL3JlcG9ydHMvcHVyY2hhc2VzIiwiL3JlcG9ydHMvd2FzdGFnZSIsIi9zdG9jay10cmFuc2ZlciJdLCJ0eXBlIjoiYWNjZXNzIiwiaWF0IjoxNzk1NjQzMzk5LCJleHAiOjE3OTU2NDQyOTl9.AaCOgKpaTi27VYnUejF1fqNG76K6UzflbdsGt3KnKXs",
+    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzk1NjQzMzk5LCJleHAiOjE3OTYyNDgxOTl9.4hDx7BwtQ9obgYeQ3rd4R8PGsYdZm9E01PT3vEIR-8U"
+  },
+  "_deactivateResult": 204,
+  "accountantRoleId": 2
+}

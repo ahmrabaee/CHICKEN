@@ -1,0 +1,33 @@
+backup run 1 success backup_manual_20261125_235113.tar.gz 33753 B in 223 ms 
+fingerprint changed during backup itself? {"audit_logs":{"backup":{"n":1,"h":"a74605f46050"},"now":{"n":2,"h":"aeba710e77c9"}}}
+post-backup sale SAL-20261125-0001
+post-backup sale SAL-20261125-0002
+post-backup sale SAL-20261125-0003
+post-backup expense 
+restore 1 → 201 {"message":"Backup restored successfully","messageAr":"Backup restored successfully","restoredFrom":"backup_manual_20261125_235113.tar.gz"} in 51 ms
+sales before restore 8, after 5
+DIFF backup-state vs restored DB (system_settings backup.* and updated_at excluded): {
+ "audit_logs": {
+  "backup": {
+   "n": 2,
+   "h": "aeba710e77c9"
+  },
+  "now": {
+   "n": 3,
+   "h": "c0278a4af01d"
+  }
+ }
+}
+GET /sales with pre-restore token → 200
+POST /sales after restore → 201 SAL-20261125-0001
+(info) refresh endpoint → 400
+files left in db dir: ["app.db.before-restore-1795643473857.bak"]
+staging leftovers: []
+backup run 2 success backup_manual_20261125_235114.tar.gz 35792 B in 211 ms 
+burst: 20/20 sales OK, statuses [201,201,201,201,201,201,201,201,201,201,201,201,201,201,201,201,201,201,201,201]
+archive entries: ["db","db\\app.db"]
+archived DB integrity_check: [{"integrity_check":"ok"}]
+archived DB has burst sales: 2 of 20
+archived DB checker FAIL ids (compare with live): ["INV-01"] | live: ["INV-01"]
+archived sale-without-JE / JE-without-sale: [{"n":0}] [{"n":0}]
+runs: ["2:manual:success:backup_manual_20261125_235114.tar.gz","1:manual:success:backup_manual_20261125_235113.tar.gz"]

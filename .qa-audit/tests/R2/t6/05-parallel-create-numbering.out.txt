@@ -1,0 +1,16 @@
+purchases x5: {"201":1,"409 DUPLICATE_ENTRY":4} ["PUR-000004"]
+  lots created: ["LOT-20261125-006"]
+expenses x5: {"400 INSUFFICIENT_BALANCE":5} []
+source lot {"id":6,"lot_number":"LOT-20261125-006","r":10000}
+transfers x5 of 6000 g each from lot with 10000 g: {"201":1,"409 DUPLICATE_ENTRY":4}
+  source lot after: {"r":4000} consumed 6000 g of 10000 → OVER-CONSUMED 0 g
+  delta:
+GL delta: Dr 0.00 / Cr 0.00 (balanced)
+Item deltas:
+  2@1 CHK-WHOLE-01 {"code":"CHK-WHOLE-01","qty":-6000,"value":-9000}
+  3@1 CHK-BREAST-01 {"code":"CHK-BREAST-01","qty":6000,"value":9000}
+  2@-  {"lotQty":-6000,"lotValue":-9000}
+  3@-  {"lotQty":6000,"lotValue":9000}
+Row count deltas: {"inventory_lots":1,"stock_movements":2,"stock_ledger_entries":2,"stock_transfers":1,"audit_logs":1}
+advance payments x5: {"201":5} ["PAY-000001","PAY-000005","PAY-000004","PAY-000002","PAY-000003"]
+NUM duplicates: []

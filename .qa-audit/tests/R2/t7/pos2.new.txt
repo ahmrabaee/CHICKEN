@@ -1,0 +1,38 @@
+=== G discount
+  panel with discount 100 on subtotal 15.00: {"subtotal":"15.00","tax":null,"total":"0.00","net":null}
+  panel with discount -5: {"subtotal":"15.00","tax":null,"total":"20.00","net":null}
+  panel discount 5: {"subtotal":"15.00","tax":null,"total":"10.00","net":null}
+  POST 201 req={"saleType":"cash","discountAmount":500,"lines":[{"itemId":6,"weightGrams":500,"pricePerKg":3000}],"payments":[{"amount":1000,"paymentMethod":"cash"}]} res={"success":true,"data":{"id":13,"saleNumber":"SAL-20261125-0008","saleDate":"2026-11-25T22:08:16.689Z","saleType":"cash","custome
+
+=== K4-006 double submit
+  synchronous triple click -> 3 POST /sales: 201 "saleNumber":"SAL-20261125-0009" | 201 "saleNumber":"SAL-20261125-0010" | 201 "saleNumber":"SAL-20261125-0011"
+  dblclick -> 2 POST /sales: 201 "saleNumber":"SAL-20261125-0012" | 201 "saleNumber":"SAL-20261125-0013"
+  Enter x2 -> 1 POST /sales: 201 "saleNumber":"SAL-20261125-0014"
+  sales count before=undefined after=undefined
+
+=== K4-005 print
+  print calls: [{"printed":true,"imgs":1,"text":"========================================\n        ملحمة الفروج الذهبي\n========================================\nالتاريخ: 11/26/2026, 12:08:33 AM\nالزبون: \nالهاتف: 0599000111\n--------------------------------------
+  injected script executed: xss=1 tokenPrefixRead="eyJhbGciOiJIUzI1NiIsInR5c"
+  preview dialog text: "معاينة الفاتورة ملحمة الفروج الذهبي التاريخ: 11/26/2026, 12:08:33 AM الزبون: <img src=x onerror=\"window.top.__xss=(window.top.__xss||0)+1;window.top.__stolen=localStorage.getItem('access_token')\"> الهاتف: 0599000111 الصن
+  saved: 201 "saleNumber":"SAL-20261125-0015" "totalAmount":4060 "amountPaid":4025
+  print button enabled after completion: false
+
+=== K4-004 weight edit
+  after add 0.255: {"subtotal":"5.61","tax":null,"total":"5.61","net":null}
+  dialog initial value: ⚖️ فروج كامل ₪22.00 / كجم 0.255 كجم 0.26 كغم المجموع: ₪5.61 250 غ 500 غ 750 غ 1 كجم 1.5 كجم 2 كجم −½ −¼ +¼ +½ 7 8 9 4 5 
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('dialog').getByRole('button', { name: '⌫', exact: true })[22m
+
+    at E:\DEV\Chicken FMS\.qa-audit\tests\R2\t7\pos2.mjs:97:87 {
+  log: [
+    "  - waiting for getByRole('dialog').getByRole('button', { name: '⌫', exact: true })"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v24.15.0

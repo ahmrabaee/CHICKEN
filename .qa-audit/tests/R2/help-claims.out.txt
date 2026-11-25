@@ -1,0 +1,4 @@
+guide: "cannot waste more than available": lot 1 remaining 34190 -> waste 39190 g: 400 INSUFFICIENT_STOCK
+guide: "purchase price must be lower than sale price": item sale 1000 purchase 5000 -> 201 ok
+guide: "credit sale needs a customer": -> 400 CUSTOMER_REQUIRED
+guide (POS step): payment choices "cash / credit" only; card/bank_transfer are also accepted by API (see methods-inactive)

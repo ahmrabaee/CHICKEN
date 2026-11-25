@@ -1,0 +1,93 @@
+   [invariants baseline] FAIL: INV-01:{"gl_inventory":"0.00","inventory_totalValue":"5600.00","lots_remaining_x_cost":"5600.00","stock_ledger_value":"0.00"}
+=== R1 resellable partial return, cash refund: sale 4kg@50 (cost 20/kg), return 1kg
+return 1kg OK {"saleId":6,"saleNumber":"SAL-20261125-0001","returnRevenue":5000,"returnTax":0,"refundGross":5000,"resellableCost":2000,"damagedCost":0}
+   JE ["4110 D5000","1111 C5000","1131 D2000","5100 C2000"] GL {"1111":-5000,"1131":2000,"4110":5000,"5100":-2000}
+   sale row after {"t":20000,"p":20000,"s":"paid","v":0,"tc":8000,"d":0,"tx":0,"tta":0,"nt":null} (unchanged totals; no returned marker)
+  [item 7 after return (expect inv 7kg)] inv 7000g/14000 avg 2000 | lots 7000g/14000 | SLE 7000g/14000 | mov 7000g | lots=6:LOT-20261125-006:6000/10000@2000 7:LOT-RET-7-791005:1000/1000@2000  OK
+   GET /sales/:id shows returns? ["id","saleNumber","saleDate","saleType","customerId","customerName","grossTotalAmount","discountAmount","taxAmount","totalAmount","totalCost","totalProfit","paymentStatus","amountPaid","amountDue","isVoided","voidReason","notes","createdAt","lines","payments"]
+return another 1kg OK
+return 2kg (total 4 > sold? exactly 4) OK
+return 1g more (over-return) 400 EXCEEDS_SOLD_QTY
+  [item 7 after all returns (expect inv 10kg)] inv 10000g/20000 avg 2000 | lots 10000g/20000 | SLE 10000g/20000 | mov 10000g | lots=6:LOT-20261125-006:6000/10000@2000 7:LOT-RET-7-791005:1000/1000@2000 8:LOT-RET-7-791025:1000/1000@2000 9:LOT-RET-7-791039:2000/2000@2000  OK
+   total refunded cash 20000 (sale total 20000)
+   void after full return OK
+  [item 7 after void-after-return (expect still 10kg; BUG if 14kg)] inv 14000g/28000 avg 2000 | lots 14000g/28000 | SLE 14000g/28000 | mov 14000g | lots=6:LOT-20261125-006:10000/10000@2000 7:LOT-RET-7-791005:1000/1000@2000 8:LOT-RET-7-791025:1000/1000@2000 9:LOT-RET-7-791039:2000/2000@2000  OK
+   GL net sale+returns+void {"1111":-40000,"1131":16000,"4110":40000,"5100":-16000}
+   [invariants after R1] FAIL: INV-01:{"gl_inventory":"280.00","inventory_totalValue":"5880.00","lots_remaining_x_cost":"5880.00","stock_ledger_value":"280.00"} ; CASH-03:"-200.00"
+=== R2 damaged return
+damaged 1kg OK JE ["4110 D5000","1111 C5000","5300 D2000","5100 C2000"] GL {"1111":-5000,"4110":5000,"5100":-2000,"5300":2000}
+  [item 8 after damaged return (inventory unchanged 6kg)] inv 6000g/12000 avg 2000 | lots 6000g/12000 | SLE 6000g/12000 | mov 7000g | lots=10:LOT-20261125-010:6000/10000@2000  <<movQty 7000 != invQty 6000
+   SLE rows for return 0  movements [{"m":"return_damaged","g":1000}]
+   damaged then wastage report? [{"n":0}]
+   [invariants after R2] FAIL: INV-01:{"gl_inventory":"400.00","inventory_totalValue":"6000.00","lots_remaining_x_cost":"6000.00","stock_ledger_value":"400.00"} ; CASH-03:"-250.00"
+=== R3 void-then-return, return-then-void
+return after void 400 SALE_VOIDED
+full return then void OK void GL {"1111":-20000,"1131":8000,"4110":20000,"5100":-8000} NET since sale {"1111":-40000,"1131":16000,"4110":40000,"5100":-16000} (net since pre-return: cash/rev/cogs should net 0 after both)
+  [item 9 after] inv 14000g/28000 avg 2000 | lots 14000g/28000 | SLE 14000g/28000 | mov 14000g | lots=11:LOT-20261125-011:10000/10000@2000 12:LOT-RET-9-791236:4000/4000@2000  OK
+   [invariants after R3] FAIL: INV-01:{"gl_inventory":"680.00","inventory_totalValue":"6280.00","lots_remaining_x_cost":"6280.00","stock_ledger_value":"680.00"} ; CASH-03:"-450.00"
+=== R4 credit sale unpaid, return cash vs credit
+credit sale 20000 UNPAID, return 1kg with CASH refund OK GL {"1111":-5000,"1131":2000,"4110":5000,"5100":-2000} => cash paid out for goods never paid for
+   customer balance 20000 debt [{"status":"open","t":20000,"p":0}]
+return 1kg credit refund OK GL {"1120":-5000,"1131":2000,"4110":5000,"5100":-2000}
+   customer balance 15000 debt [{"status":"open","t":20000,"p":5000}] sale row {"t":20000,"p":0,"s":"unpaid","v":0,"tc":8000,"d":0,"tx":0,"tta":0,"nt":null}
+   GL AR for this sale 15000 vs customer balance + ... (cash refund left AR 20000 although cash was refunded)
+customer then pays full 20000 on the (partly returned) invoice OK => overcollection vs 10000 goods kept
+credit refund with no customer (walk-in cash sale)
+    OK GL {"1111":-5000,"1131":2000,"4110":5000,"5100":-2000}
+   [invariants after R4] FAIL: AR-01:{"gl_ar":"-50.00","customers_currentBalance":"-50.00","open_receivable_debts":"0.00","ple_customer":"0.00","sales_total_minus_paid":"0.00"} ; AR-02:"1 customers differ" ; DEBT-01:undefined ; INV-01:{"gl_inventory":"840.00","inventory_totalValue":"6440.00","lots_remaining_x_cost":"6440.00","stock_ledger_value":"840.00"} ; CASH-03:"-550.00"
+=== R5 partially paid credit sale; return credit > remaining due
+sale 20000 paid 18000 due 2000 OK
+return all 4kg credit OK JE ["4110 D20000","1120 C20000","1131 D8000","5100 C8000"] GL {"1120":-20000,"1131":8000,"4110":20000,"5100":-8000}
+   customer balance -18000 (customer paid 18000 got goods back: should be owed 18000 => balance -18000 ok?) debt [{"status":"open","t":2000,"p":2000}] sale {"t":20000,"p":18000,"s":"partial","v":0,"tc":8000,"d":0,"tx":0,"tta":0,"nt":null}
+   void after (admin) OK cust bal -20000
+   [invariants after R5] FAIL: AR-01:{"gl_ar":"-250.00","customers_currentBalance":"-250.00","open_receivable_debts":"0.00","ple_customer":"0.00","sales_total_minus_paid":"0.00"} ; AR-02:"2 customers differ" ; DEBT-01:undefined ; INV-01:{"gl_inventory":"1120.00","inventory_totalValue":"6720.00","lots_remaining_x_cost":"6720.00","stock_ledger_value":"1120.00"} ; CASH-03:"-550.00"
+=== R6 taxed sale (15%) return, default mode
+taxed sale OK {"t":23000,"p":23000,"s":"paid","v":0,"tc":8000,"d":0,"tx":3000,"tta":3000,"nt":20000}
+return 1kg OK {"saleId":13,"saleNumber":"SAL-20261125-0008","returnRevenue":5000,"returnTax":750,"refundGross":5750,"resellableCost":2000,"damagedCost":0} JE ["4110 D5000","2120 D750","1111 C5750","1131 D2000","5100 C2000"] GL {"1111":-5750,"1131":2000,"2120":750,"4110":5000,"5100":-2000} (expect 4110 +5000, 2120 +750, 1111 -5750)
+return remaining 3kg OK {"saleId":13,"saleNumber":"SAL-20261125-0008","returnRevenue":15000,"returnTax":2250,"refundGross":17250,"resellableCost":6000,"damagedCost":0} NET GL since sale-return {"1111":-23000,"1131":8000,"2120":3000,"4110":20000,"5100":-8000} (total refunded should be 23000; 2120 net back to 0)
+   [invariants after R6] FAIL: AR-01:{"gl_ar":"-250.00","customers_currentBalance":"-250.00","open_receivable_debts":"0.00","ple_customer":"0.00","sales_total_minus_paid":"0.00"} ; AR-02:"2 customers differ" ; DEBT-01:undefined ; INV-01:{"gl_inventory":"1320.00","inventory_totalValue":"6920.00","lots_remaining_x_cost":"6920.00","stock_ledger_value":"1320.00"} ; CASH-03:"-780.00"
+=== R7 header-discount sale return
+sale 20000 - 2000 discount = 18000 paid; full return OK {"saleId":14,"saleNumber":"SAL-20261125-0009","returnRevenue":20000,"returnTax":0,"refundGross":20000,"resellableCost":8000,"damagedCost":0} GL since sale {"1111":-20000,"1131":8000,"4110":20000,"5100":-8000}
+   cash given back vs received: refund 20000 vs paid 18000 => shop loses 2000; 4900 residual 
+   [invariants after R7] FAIL: AR-01:{"gl_ar":"-250.00","customers_currentBalance":"-250.00","open_receivable_debts":"0.00","ple_customer":"0.00","sales_total_minus_paid":"0.00"} ; AR-02:"2 customers differ" ; DEBT-01:undefined ; INV-01:{"gl_inventory":"1520.00","inventory_totalValue":"7120.00","lots_remaining_x_cost":"7120.00","stock_ledger_value":"1520.00"} ; CASH-03:"-980.00"
+=== R8 line-discount + rounding: 3333g @ 29.99, return 1111g x3
+sale total 9996 cost 6666 ; after 3 returns: GL {"1111":-9996,"1131":6666,"4110":9996,"5100":-6666} (cash refunded 9996 vs sale total 9996 )
+  [item 14 after] inv 20000g/40000 avg 2000 | lots 20000g/40000 | SLE 20000g/40000 | mov 20000g | lots=24:LOT-20261125-024:16667/20000@2000 25:LOT-RET-14-791677:1111/1111@2000 26:LOT-RET-14-791692:1111/1111@2000 27:LOT-RET-14-791706:1111/1111@2000  OK
+777g sale total 2330 7 partial returns refunded cash 2331 rev reversal 2331
+   [invariants after R8] FAIL: AR-01:{"gl_ar":"-250.00","customers_currentBalance":"-250.00","open_receivable_debts":"0.00","ple_customer":"0.00","sales_total_minus_paid":"0.00"} ; AR-02:"2 customers differ" ; DEBT-01:undefined ; INV-01:{"gl_inventory":"1920.00","inventory_totalValue":"7520.00","lots_remaining_x_cost":"7520.00","stock_ledger_value":"1920.00"} ; CASH-03:"-1103.27"
+=== R9 two lines of same item in the original sale
+sale 2kg@50 + 2kg@60 OK
+return 4kg (all) 400 EXCEEDS_SOLD_QTY {"success":false,"error":{"code":"EXCEEDS_SOLD_QTY","message":"Return qty exceeds remaining returnable (2000g) for item 15","messageAr":"الكمية المرتجعة تتجاوز المتاح للإرجاع (2000 جرام)"},"meta":{"timestamp":"2026-11-25T21:56:31.896Z","path":"/v1/sales/17/return"}}
+return 2kg OK {"saleId":17,"saleNumber":"SAL-20261125-0012","returnRevenue":10000,"returnTax":0,"refundGross":10000,"resellableCost":4000,"damagedCost":0} GL {"1111":-10000,"1131":4000,"4110":10000,"5100":-4000} (second line @60 => refund should be up to 12000 for the 2kg@60 line)
+=== R10 same item twice in one return request + validation
+2 lines same item 1kg+1kg in one request OK
+  [item 16 after] inv 8000g/16000 avg 2000 | lots 8000g/16000 | SLE 8000g/16000 | mov 8000g | lots=37:LOT-20261125-037:6000/10000@2000 38:LOT-RET-16-791950:1000/1000@2000 39:LOT-RET-16-791953:1000/1000@2000  OK
+lots LOT-RET [{"lot_number":"LOT-RET-16-791950","g":1000},{"lot_number":"LOT-RET-16-791953","g":1000}]
+negative qty 400 VALIDATION_ERROR
+fraction qty 400 VALIDATION_ERROR
+bad condition 400 VALIDATION_ERROR
+empty lines 400 VALIDATION_ERROR
+no refundMethod OK
+item not in sale 400 ITEM_NOT_IN_SALE
+unknown sale 404 NOT_FOUND
+accountant may return (roles admin, accountant) OK
+accountant refund w/o limit; cashier role absent here
+audit rows for return 52 ; all audit actions [{"action":"create","n":36},{"action":"journal_entries","n":1},{"action":"login","n":2},{"action":"post","n":1},{"action":"return","n":52},{"action":"sale","n":1},{"action":"void","n":8}]
+   [invariants after R10] FAIL: AR-01:{"gl_ar":"-250.00","customers_currentBalance":"-250.00","open_receivable_debts":"0.00","ple_customer":"0.00","sales_total_minus_paid":"0.00"} ; AR-02:"2 customers differ" ; DEBT-01:undefined ; INV-01:{"gl_inventory":"2444.00","inventory_totalValue":"8044.00","lots_remaining_x_cost":"8044.00","stock_ledger_value":"2444.00"} ; CASH-03:"-1313.27"
+=== R11 concurrent returns of the same full quantity
+4 parallel full returns OK | OK | OK | OK
+  [item 17 after (expect inv 10kg; BUG if >10kg)] inv 22000g/44000 avg 2000 | lots 22000g/44000 | SLE 22000g/44000 | mov 22000g | lots=42:LOT-20261125-042:6000/10000@2000 43:LOT-RET-17-792581:4000/4000@2000 44:LOT-RET-17-792601:4000/4000@2000 45:LOT-RET-17-792616:4000/4000@2000 46:LOT-RET-17-792632:4000/4000@2000  OK
+   GL {"1111":-80000,"1131":32000,"4110":80000,"5100":-32000}
+return 3 + damaged 3 + void in parallel OK | OK | OK
+  [item 18 after] inv 13000g/26000 avg 2000 | lots 13000g/26000 | SLE 13000g/26000 | mov 16000g | lots=47:LOT-20261125-047:10000/10000@2000 48:LOT-RET-18-792699:3000/3000@2000  <<movQty 16000 != invQty 13000
+   [invariants after R11] FAIL: AR-01:{"gl_ar":"-250.00","customers_currentBalance":"-250.00","open_receivable_debts":"0.00","ple_customer":"0.00","sales_total_minus_paid":"0.00"} ; AR-02:"2 customers differ" ; DEBT-01:undefined ; INV-01:{"gl_inventory":"3144.00","inventory_totalValue":"8744.00","lots_remaining_x_cost":"8744.00","stock_ledger_value":"3144.00"} ; CASH-03:"-2413.27"
+=== R12 credit note then return; return after payment cancel
+after full-value CN, return all 4kg credit OK GL {"1120":-20000,"1131":8000,"4110":20000,"5100":-8000} customer bal 0 (refund twice: CN 20000 + return 20000)
+   [invariants after R12] FAIL: AR-01:{"gl_ar":"-450.00","customers_currentBalance":"-250.00","open_receivable_debts":"0.00","ple_customer":"0.00","sales_total_minus_paid":"200.00"} ; AR-02:"2 customers differ" ; DEBT-01:undefined ; INV-01:{"gl_inventory":"3344.00","inventory_totalValue":"8944.00","lots_remaining_x_cost":"8944.00","stock_ledger_value":"3344.00"} ; CASH-03:"-2413.27"
+=== R13 period lock / old sale date
+(not executed: needs period management API; none exists, see QA-032)
+=== R14 returns reports: sales report, profit-loss, stock-vs-gl, dashboard reflect returns?
+profit-loss page keys ["revenue","discounts","costOfGoodsSold","grossProfit","expenses","netProfit","grossMargin","netMargin"] revenue 180326 cogs 74220 netProfit 106106
+GL 4110 revenue -104001 sum(sales.total_amount non-void) 230326 GL COGS -42400 sum(sales.total_cost) 74220 (returns reduce GL but not sales rows)
+JE unbalanced []
+   [invariants final] FAIL: AR-01:{"gl_ar":"-450.00","customers_currentBalance":"-250.00","open_receivable_debts":"0.00","ple_customer":"0.00","sales_total_minus_paid":"200.00"} ; AR-02:"2 customers differ" ; DEBT-01:undefined ; INV-01:{"gl_inventory":"3344.00","inventory_totalValue":"8944.00","lots_remaining_x_cost":"8944.00","stock_ledger_value":"3344.00"} ; CASH-03:"-2413.27"

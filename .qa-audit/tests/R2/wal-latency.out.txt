@@ -1,0 +1,10 @@
+journal_mode [{"journal_mode":"wal"}] files [
+  'app.db',
+  'app.db-shm',
+  'app.db-wal',
+  'app.db.before-restore-1795643473857.bak'
+]
+no-backup {"n":607,"status":{"201":607},"p50":26,"p95":99,"p99":1667,"max":4160,"backups":0}
+sales created 607 audit rows added 604
+with-backup {"n":478,"status":{"201":478},"p50":31,"p95":483,"p99":3725,"max":5382,"backups":21}
+sales created 478 audit rows added (includes backup POSTs) 498 JE integrity [{"integrity_check":"ok"}]

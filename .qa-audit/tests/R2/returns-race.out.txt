@@ -1,0 +1,3 @@
+statuses [200,200,200,200,200] | sold 1000 g for 30.00
+cash delta -15000 (refunded; should be -3000 max) | inventory delta g 5000 | lots delta g 5000 (should be +1000 max)
+debt for credit-sale 535 after 1kg returned on credit [{"t":6000,"p":3000,"status":"open"}]

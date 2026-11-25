@@ -1,0 +1,7 @@
+[admin] POST /system/backup -> 201
+[accountant] GET /system/backups -> 200 | runs: {"items":[{"id":1,"type":"manual","status":"success","startedAt":"2026-11-25T21:
+target backupId = 1 | row: {"id":1,"type":"manual","status":"success","startedAt":"2026-11-25T21:50:02.106Z","finishedAt":"2026-11-25T21:50:02.136Z","filename":"backup_manual_20261125_235
+[accountant] POST download-link -> 201 | url: {"url":"http://localhost:3125/v1/system/backups/1/download?token=eyJiYWNrdXBJZCI6MSwiZXhwIjoxNzk1NjQzNzA1fQ.V9W4wqhNWuefQc8gyL_GAfimcoENsNEoVsfBaa0hAno","expire
+[UNAUTH+forged token] GET download -> 200 | content-type: application/gzip | bytes: 36277
+  >>> EXFIL SUCCESS: downloaded 36277 bytes, gzip magic= 1f8b (1f8b = gzip)
+[control: wrong-secret token] -> 401 (expect 401)

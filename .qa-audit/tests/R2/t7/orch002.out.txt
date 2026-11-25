@@ -1,0 +1,6 @@
+bank accounts in DB: []
+method=بطاقة: pageErrors=["Link is not defined"] bodyLen=0 formStillVisible=false screenshot=shots/orch002-card.png
+  body excerpt: 
+method=تحويل بنكي: pageErrors=["Link is not defined"] bodyLen=0 formStillVisible=false screenshot=shots/orch002-transfer.png
+  body excerpt: 
+console errors: ["ReferenceError: Link is not defined\n    at c3 (http://localhost:5173/assets/index-CidIk0LT.js:765:157958)\n    at Rk (http://localhost:5173/assets/index-CidIk0LT.js:38:17018)\n    at DS (http://localhos","ReferenceError: Link is not defined\n    at c3 (http://localhost:5173/assets/index-CidIk0LT.js:765:157958)\n    at Rk (http://localhost:5173/assets/index-CidIk0LT.js:38:17018)\n    at DS (http://localhos"]

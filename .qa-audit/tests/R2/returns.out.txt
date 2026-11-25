@@ -1,0 +1,38 @@
+
+== A: 2kg@30.00=60.00, discount 6.00, paid 54.00 cash; return all 2kg resellable, refund cash
+ sale 201 ok gross=6000 disc=600 tax=0 total=5400 paid=5400
+ return 200 ok {"saleId":532,"saleNumber":"SAL-20261125-0527","returnRevenue":6000,"returnTax":0,"refundGross":6000,"resellableCost":4800,"damagedCost":0}
+  GL delta (minor units): {"1111":-6000,"1131":4800,"4110":6000,"5100":-4800} | cust bal null -> - | inventory {"g":44000,"v":105600} -> {"g":46000,"v":110400}
+
+== B: 1kg@100.00 + 15% VAT (paid 115.00); return all, refund cash
+ sale 201 ok gross=10000 disc=0 tax=1500 total=11500 paid=11500
+ return 200 ok {"saleId":533,"saleNumber":"SAL-20261125-0528","returnRevenue":10000,"returnTax":1500,"refundGross":11500,"resellableCost":2400,"damagedCost":0}
+  GL delta (minor units): {"1111":-11500,"1131":2400,"2120":1500,"4110":10000,"5100":-2400} | cust bal null -> - | inventory {"g":45000,"v":108000} -> {"g":46000,"v":110400}
+
+== C: credit sale 2kg@30.00 unpaid; return 1kg refund CASH
+ sale 201 ok gross=6000 disc=0 tax=0 total=6000 paid=0
+ return 200 ok {"saleId":534,"saleNumber":"SAL-20261125-0529","returnRevenue":3000,"returnTax":0,"refundGross":3000,"resellableCost":2400,"damagedCost":0}
+  GL delta (minor units): {"1111":-3000,"1131":2400,"4110":3000,"5100":-2400} | cust bal 7100 -> 7100 | inventory {"g":44000,"v":105600} -> {"g":45000,"v":108000}
+
+== D: credit sale 2kg@30.00 unpaid; return 1kg refund CREDIT
+ sale 201 ok gross=6000 disc=0 tax=0 total=6000 paid=0
+ return 200 ok {"saleId":535,"saleNumber":"SAL-20261125-0530","returnRevenue":3000,"returnTax":0,"refundGross":3000,"resellableCost":2400,"damagedCost":0}
+  GL delta (minor units): {"1120":-3000,"1131":2400,"4110":3000,"5100":-2400} | cust bal 13100 -> 10100 | inventory {"g":43000,"v":103200} -> {"g":44000,"v":105600}
+
+== E: 1kg sale; return 1kg ok
+ sale 201 ok gross=3000 disc=0 tax=0 total=3000 paid=3000
+ return 200 ok {"saleId":536,"saleNumber":"SAL-20261125-0531","returnRevenue":3000,"returnTax":0,"refundGross":3000,"resellableCost":2400,"damagedCost":0}
+  GL delta (minor units): {"1111":-3000,"1131":2400,"4110":3000,"5100":-2400} | cust bal null -> - | inventory {"g":43000,"v":103200} -> {"g":44000,"v":105600}
+ E-extra again 1kg (over-return) 400 EXCEEDS_SOLD_QTY Return qty exceeds remaining returnable (0g) for item 6
+ E-extra 1 g after full return 400 EXCEEDS_SOLD_QTY Return qty exceeds remaining returnable (0g) for item 6
+ E-extra negative qty 400 VALIDATION_ERROR lines has invalid value
+ E-extra 0 qty 400 VALIDATION_ERROR lines has invalid value
+ E-extra other item not in sale 400 ITEM_NOT_IN_SALE Item 5 was not in this sale
+ E-extra damaged 400 EXCEEDS_SOLD_QTY Return qty exceeds remaining returnable (0g) for item 6
+
+== F: return on a VOIDED sale 400 SALE_VOIDED Cannot return a voided sale
+== G: same item twice in one request 700g + 700g on 1000g sold 400 EXCEEDS_SOLD_QTY Return qty exceeds remaining returnable (300g) for item 6
+== H: 5 concurrent full returns of the same 1kg: [200,200,200,200,200]
+
+invariants (unbalanced JEs): {"n":0}
+sale_return rows: []

@@ -1,0 +1,10 @@
+N=1 wall=40ms maxLatency=20ms tally={"201":1} dSales=1 dJE=1
+N=2 wall=62ms maxLatency=42ms tally={"201":2} dSales=2 dJE=2
+N=3 wall=90ms maxLatency=71ms tally={"201":3} dSales=3 dJE=3
+N=4 wall=106ms maxLatency=85ms tally={"201":4} dSales=4 dJE=4
+N=5 wall=182ms maxLatency=161ms tally={"201":5} dSales=5 dJE=5
+N=6 wall=206ms maxLatency=186ms tally={"201":6} dSales=6 dJE=6
+N=8 wall=306ms maxLatency=287ms tally={"201":8} dSales=8 dJE=8
+N=10 wall=372ms maxLatency=352ms tally={"201":10} dSales=10 dJE=10
+N=12 wall=696ms maxLatency=675ms tally={"201":12} dSales=12 dJE=12
+N=15 wall=1033ms maxLatency=1012ms tally={"201":15} dSales=15 dJE=15

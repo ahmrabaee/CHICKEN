@@ -1,0 +1,11 @@
+item 6 stock before prep = 50000 g, price/kg=3000
+prep sale 201 SAL-20261125-0001
+stock now 1000 g; lots: [{"id":5,"lot_number":"LOT-SEED-CHK-SKEWER-01","r":1000}]
+fired 10 parallel 1kg sales in 279 ms
+result tally: {"201 OK":1,"400 INSUFFICIENT_STOCK":9}
+successful sale numbers: ["SAL-20261125-0002"]
+GL/count deltas: {"cash":3000,"inv":-2400,"rev":3000,"cogs":2400,"sales":1,"payments":1,"je":1}
+inventory after: {"q":0,"v":0}
+lots after: [{"id":5,"lot_number":"LOT-SEED-CHK-SKEWER-01","r":0}]
+OVERSOLD grams = 0 (sold 1000 g of 1000 g available)
+invariants: []

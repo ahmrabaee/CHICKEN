@@ -1,0 +1,29 @@
+can-delete 1111: {"canDelete":false,"hasEntries":true,"hasChildren":false}
+DELETE 1111 (has entries): 400 {"code":"VALIDATION_ERROR","message":"Cannot delete account with ledger entries","messageAr":"فشل التحقق من البيانات"}
+DELETE 4120 (unused leaf): 200 
+DELETE 1110 (group with children): 400 {"code":"VALIDATION_ERROR","message":"Delete child accounts first","messageAr":"فشل التحقق من البيانات"}
+
+deactivate 1111 (cash, balance 321750 ): 200 
+  cash sale with 1111 inactive: 400 {"code":"POSTING_TO_DISABLED_ACCOUNT","message":"Cannot post to disabled accounts: 1111","messageAr":"لا يمكن القيد على حسابات معطلة: النقد في الصندوق
+  reactivate: 200
+
+change 5400 Other Expenses rootType Expense->Income (balance 53100 ): 200 
+  TB 5400 before/after: Expense:53100 -> Income:53100
+  invariants GL-05: []
+  revert: 200
+
+change 1112-001 (bank, balance 310000 ) rootType Asset->Liability: 200  {"id":6,"code":"1112-001","root_type":"Asset","account_type":"Other","is_group":0,"is_active":1,"parent_id":5}
+
+change code 4110 -> 4111 (hard-coded SALES_REVENUE): 200 
+  cash sale after code change: 201 
+  JE lines of that sale: [{"code":"1111","dr":250,"cr":0},{"code":"4110","dr":0,"cr":250},{"code":"5100","dr":150,"cr":0},{"code":"1131","dr":0,"cr":150}]
+
+make 5320 (balance 3250 ) a GROUP: 400 {"code":"VALIDATION_ERROR","message":"Cannot convert to group: has ledger entries","messageAr":"فشل التحقق من البيانات"} {"id":42,"code":"5320","root_type":"Expense","account_type":"Stock Adju
+  invariants GL-04: []
+  adjustment while 5320 is group: 201 
+
+move 1131 Inventory under 2100 Current Liabilities (parent root mismatch): 200  {"id":10,"code":"1131","root_type":"Asset","account_type":"Stock","is_group":0,"is_active":1,"parent_id":16}
+
+create duplicate code 1111: 400 {"code":"VALIDATION_ERROR","message":"Account with code 1111 already exists","messageAr":"فشل التحقق
+create child under leaf 1111 (which has entries): 400 {"code":"VALIDATION_ERROR","message":"Parent must be a group account","messageAr":"فشل التحقق من البيانات"} {"id":4,"code":"1111","root_type":"Asset","account_type":"Cash","is_g
+final invariants: []

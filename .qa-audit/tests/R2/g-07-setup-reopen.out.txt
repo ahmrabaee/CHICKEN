@@ -1,0 +1,16 @@
+setup while completed                                      400 {"success":false,"error":{"code":"SETUP_ALREADY_COMPLETE","message":"Initial setup has already been completed","messageAr":"تم إكمال الإعداد الأولي
+set setup_completed=false                                  403 {"success":false,"error":{"code":"FORBIDDEN","message":"Insufficient permissions","messageAr":"صلاحيات غير كافية"},"meta":{"timestamp":"2026-11-25T22:03
+UNAUTH setup reuse of existing admin username              400 {"success":false,"error":{"code":"SETUP_ALREADY_COMPLETE","message":"Initial setup has already been completed","messageAr":"تم إكمال الإعداد الأولي
+login admin/admin123                                       200 {"success":true,"data":{"accessToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlcyI6WyJhY2NvdW50YW50Il0sInBlcm1pc3Npb25zIjpbImR
+login with attacker pw 401
+old admin token still valid                                200 {"success":true,"data":{"id":1,"username":"admin","fullName":"مدير النظام","fullNameEn":"System Admin","role":"accountant","permissions":["dashboard.view","s
+file:///E:/DEV/Chicken%20FMS/.qa-audit/harness/client.mjs:26
+  if (!r.ok) throw new Error(`login failed for ${username}: ${r.status} ${JSON.stringify(r.body)}`);
+                   ^
+
+Error: login failed for admin: 401 {"success":false,"error":{"code":"INVALID_CREDENTIALS","message":"Invalid username or password","messageAr":"اسم المستخدم أو كلمة المرور غير صحيحة"},"meta":{"timest
+    at connect (file:///E:/DEV/Chicken%20FMS/.qa-audit/harness/client.mjs:26:20)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///E:/DEV/Chicken%20FMS/.qa-audit/tests/R2/g/07-setup-reopen.mjs:10:34
+
+Node.js v24.15.0

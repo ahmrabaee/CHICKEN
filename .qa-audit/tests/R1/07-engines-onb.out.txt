@@ -1,0 +1,26 @@
+set engines 200 200
+[ON] cash sale 10000 OK GL {"1111":10000,"1131":-4000,"4110":-10000,"5100":4000}
+[ON] taxed 15% 10000 -> 11500 OK GL {"1111":11500,"1131":-4000,"2120":-1500,"4110":-10000,"5100":4000}
+   sale row {"t":11500,"tx":1500,"nt":10000,"gt":11500,"p":7500,"tc":4000}
+[ON] taxed + header discount 1000 (K3-020; orig 400 UNBALANCED) OK GL {"1111":10350,"1131":-4000,"2120":-1350,"4110":-10000,"4900":1000,"5100":4000}
+[ON] taxed + discount 20 (small: orig rounded away) OK GL {"1111":11477,"1131":-4000,"2120":-1497,"4110":-10000,"4900":20,"5100":4000}
+[ON] discount only 500 (no tax) OK GL {"1111":9500,"1131":-4000,"4110":-10000,"4900":500,"5100":4000}
+[ON] mixed tender 5000 cash + 5000 bank OK GL {"1111":10000,"1131":-4000,"4110":-10000,"5100":4000}
+[ON] credit sale 10000 customer 1 OK GL {"1120":10000,"1131":-4000,"4110":-10000,"5100":4000}
+   pay 4000 cash OK GL {"1111":4000,"1120":-4000}
+   void (QA-014 in ON mode) OK GL {"1111":-8000,"1120":-2000,"1131":4000,"4110":10000,"5100":-4000}
+[ON] void taxed OK GL {"1111":-11500,"1131":4000,"2120":1500,"4110":10000,"5100":-4000}
+[ON] void taxed+disc OK GL {"1111":-10350,"1131":4000,"2120":1350,"4110":10000,"4900":-1000,"5100":-4000}
+[ON] void discount OK GL {"1111":-9500,"1131":4000,"4110":10000,"4900":-500,"5100":-4000}
+[ON] void mixed OK GL {"1111":-10000,"1131":4000,"4110":10000,"5100":-4000}
+[ON] taxed purchase 10000+1500 credit (QA-019 in ON mode) OK GL {"1131":10000,"2110":-10000}
+[ON] taxed purchase paid 11500 bank 400 UNBALANCED_ENTRY GL {}
+[ON] expense 1000 bank_transfer OK GL {"5400":1000,"1112-001":-1000}
+[ON] wastage 2kg OK GL {"1131":-4000,"5300":4000}
+[ON] adjustment decrease 1kg OK GL {"1131":-2000}
+[ON] sale for return: taxed 15% + discount 1000, 4kg@50 OK {"t":21850,"tx":2850,"nt":19000,"gt":21850,"tta":2850,"d":1000}
+[ON] return 1kg resellable (taxed+discount) OK GL {"1111":-5750,"1131":2000,"2120":750,"4110":5000,"5100":-2000}
+[ON] return remaining 3kg OK GL {"1111":-17250,"1131":6000,"2120":2250,"4110":15000,"5100":-6000}
+   total JE for sale+returns of this sale [{"source_type":"sale","entry_number":"JE-000024","d":30850,"c":30850},{"source_type":"sale_return","entry_number":"JE-000025","d":7750,"c":7750},{"source_type":"sale_return","entry_number":"JE-000026","d":23250,"c":23250}]
+JE numbering: duplicates [] unbalanced []
+numbering: last JE numbers ["JE-000026","JE-000025","JE-000024"]

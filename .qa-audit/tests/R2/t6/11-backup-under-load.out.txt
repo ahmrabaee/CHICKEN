@@ -1,0 +1,15 @@
+backup run 3 success backup_manual_20261125_235116.tar.gz 70293 B in 211 ms 
+{"run":3,"file":"backup_manual_20261125_235116.tar.gz","integrity":"ok","sales":85,"saleNoJE":0,"jeNoSale":0,"saleNoLines":0}
+backup run 4 success backup_manual_20261125_235119.tar.gz 138490 B in 1685 ms 
+{"run":4,"file":"backup_manual_20261125_235119.tar.gz","integrity":"ok","sales":222,"saleNoJE":0,"jeNoSale":0,"saleNoLines":0}
+backup run 5 success backup_manual_20261125_235121.tar.gz 180663 B in 436 ms 
+{"run":5,"file":"backup_manual_20261125_235121.tar.gz","integrity":"ok","sales":296,"saleNoJE":0,"jeNoSale":0,"saleNoLines":0}
+backup run 6 success backup_manual_20261125_235124.tar.gz 259788 B in 1858 ms 
+{"run":6,"file":"backup_manual_20261125_235124.tar.gz","integrity":"ok","sales":462,"saleNoJE":0,"jeNoSale":0,"saleNoLines":0}
+backup run 7 success backup_manual_20261125_235127.tar.gz 335595 B in 2317 ms 
+{"run":7,"file":"backup_manual_20261125_235127.tar.gz","integrity":"ok","sales":624,"saleNoJE":0,"jeNoSale":0,"saleNoLines":0}
+backup run 8 success backup_manual_20261125_235129.tar.gz 358618 B in 214 ms 
+{"run":8,"file":"backup_manual_20261125_235129.tar.gz","integrity":"ok","sales":691,"saleNoJE":0,"jeNoSale":0,"saleNoLines":0}
+backup run 9 success backup_manual_20261125_235152.tar.gz 753079 B in 426 ms 
+{"run":9,"file":"backup_manual_20261125_235152.tar.gz","integrity":"ok","sales":1742,"saleNoJE":0,"jeNoSale":0,"saleNoLines":0}
+writers: 1721 sales OK, failures {"500":3}

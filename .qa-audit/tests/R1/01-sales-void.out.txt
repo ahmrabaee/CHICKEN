@@ -1,0 +1,37 @@
+=== A. QA-014: credit sale 10000, pay 4000 cash separately, void
+sale delta {"1120":10000,"1131":-6000,"4110":-10000,"5100":6000}
+pay 4000 OK
+GL delta pay {"1111":4000,"1120":-4000}
+void OK
+GL delta VOID only {"1111":-8000,"1120":-2000,"1131":6000,"4110":10000,"5100":-6000} (orig bug: cash -4000 double refund, AR +4000 phantom)
+NET delta whole life (expect {} ) {"1111":-4000,"1120":4000}
+customer balance 0 debt [{"status":"written_off","total_amount":10000,"amount_paid":4000}]
+=== A2. payment by bank
+pay 4000 bank OK
+GL delta pay {"1120":-4000,"1112-001":4000}
+void OK
+GL delta VOID {"1111":-4000,"1120":-2000,"1131":6000,"4110":10000,"5100":-6000,"1112-001":-4000}  NET since before pay {"1111":-4000,"1120":-6000,"1131":6000,"4110":10000,"5100":-6000}
+=== A3. POS sale with payments[] 3000 + later payment 2000, void
+pay 2000 OK
+void OK
+GL delta VOID {"1111":-7000,"1120":-3000,"1131":6000,"4110":10000,"5100":-6000} (orig: cash -7000 vs -5000 expected)
+=== A4. POST /sales/:id/payments (QA-015)
+POST /sales/:id/payments 3000 OK GL delta {}
+JE for that payment 0
+=== B. QA-016 mixed tender 5000 cash + 5000 bank
+mixed sale OK GL delta {"1111":10000,"1131":-6000,"4110":-10000,"5100":6000}
+void mixed OK {"1111":-10000,"1131":6000,"4110":10000,"5100":-6000}
+mixed bank-first 6000 bank + 4000 cash OK {"1131":-6000,"4110":-10000,"5100":6000,"1112-001":10000}
+=== C. taxed sale (template 1 = 15%), default mode: net 10000
+taxed sale OK {"total":11500,"tax":1500,"profit":5500,"cost":6000}
+GL delta (expect 1111 +11500, 4110 -10000, 2120 -1500, 1131 -6000, 5100 +6000) {"1111":11500,"1131":-6000,"2120":-1500,"4110":-10000,"5100":6000}
+vat-report {"outputVat":1500,"inputVat":0,"netVatPayable":1500,"byAccount":[{"accountId":8,"accountCode":"1125","accountName":"ضريبة القيمة المضافة القابلة للاسترداد","output":0,"input":0},{"accountId":18,"accountCode":"2120","accountName":"ضريبة القيمة المضافة المستحقة","output":1500,"input":0}],"byRate":[{"rate":1500,"output":1500,"input":0}]}
+void taxed OK {"1111":-11500,"1131":6000,"2120":1500,"4110":10000,"5100":-6000}
+NET after void (expect {}) {}
+=== C2. taxed + header discount 1000 (default mode)
+taxed+disc OK {"total":10350,"tax":1350,"disc":1000}
+GL delta {"1111":10350,"1131":-6000,"2120":-1350,"4110":-10000,"4900":1000,"5100":6000}
+void OK {"1111":-10350,"1131":6000,"2120":1350,"4110":10000,"4900":-1000,"5100":-6000} NET {}
+=== D. untaxed discount sale: discount account
+disc sale OK {"1111":9500,"1131":-6000,"4110":-10000,"4900":500,"5100":6000}
+JE unbalanced entries: []

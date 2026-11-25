@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+import { connect } from 'file:///E:/DEV/Chicken%20FMS/.qa-audit/harness/client.mjs';
+import { DatabaseSync } from 'node:sqlite';
+const m = JSON.parse(fs.readFileSync('E:/DEV/Chicken FMS/.qa-audit/envs/r2/meta.json','utf8'));
+const a = await connect(m.baseUrl,'admin','admin123');
+const q=(sql)=>{const d=new DatabaseSync(m.db,{readOnly:true});try{return d.prepare(sql).all();}finally{d.close();}};
+const cash=()=>q(`select sum(l.debit_amount)-sum(l.credit_amount) b from journal_entry_lines l join accounts a on a.id=l.account_id join journal_entries e on e.id=l.journal_entry_id where a.code='1111' and e.is_posted=1`)[0].b;
+const inv=()=>q('select sum(current_quantity_grams) g from inventory where item_id=6')[0].g;
+const lots=()=>q('select sum(remaining_quantity_grams) g from inventory_lots where item_id=6')[0].g;
+const s=await a.post('/sales',{saleType:'cash',lines:[{itemId:6,weightGrams:1000,pricePerKg:3000}],payments:[{paymentMethod:'cash',amount:3000}]});
+const c0=cash(),i0=inv(),l0=lots();
+const rs=await Promise.all(Array.from({length:5},()=>a.post(`/sales/${s.data.id}/return`,{lines:[{itemId:6,quantityGrams:1000,condition:'resellable'}],refundMethod:'cash'})));
+console.log('statuses',JSON.stringify(rs.map(r=>r.status)),'| sold 1000 g for 30.00');
+console.log('cash delta',cash()-c0,'(refunded; should be -3000 max) | inventory delta g',inv()-i0,'| lots delta g',lots()-l0,'(should be +1000 max)');
+const d=q(`select d.total_amount t,d.amount_paid p,d.status from debts d where d.source_type='sale' and d.source_id=535`); console.log('debt for credit-sale 535 after 1kg returned on credit',JSON.stringify(d));

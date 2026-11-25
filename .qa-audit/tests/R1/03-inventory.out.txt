@@ -1,0 +1,80 @@
+=== QA-042 same item two lines in one sale (10kg stock, 6+6 kg)
+sale 6kg+6kg on 10kg 400 INSUFFICIENT_STOCK
+  [item 7 dup] inv 10000g/20000 avg 2000 | lots 10000g/20000 | SLE 10000g/20000 | mov 10000g | lots=6:LOT-20261125-006:10000/10000@2000  OK
+  GL [dup] {}
+3x4kg on remaining 400 INSUFFICIENT_STOCK
+  [item 7 dup after] inv 10000g/20000 avg 2000 | lots 10000g/20000 | SLE 10000g/20000 | mov 10000g | lots=6:LOT-20261125-006:10000/10000@2000  OK
+=== QA-043 adjustments
+A1: buy 10kg@18; decrease 4kg; sell 6kg
+decrease 4kg OK
+  GL [dec] {"1131":-7200,"5320":7200}
+  [item 8 after dec (orig: lots untouched 10kg)] inv 6000g/10800 avg 1800 | lots 6000g/10800 | SLE 6000g/10800 | mov 6000g | lots=7:LOT-20261125-007:6000/10000@1800  OK
+sell 6kg OK COGS 10800
+  GL [sale] {"1111":30000,"1131":-10800,"4110":-30000,"5100":10800}
+  [item 8 after sale] inv 0g/0 avg 1800 | lots 0g/0 | SLE 0g/0 | mov 0g | lots=7:LOT-20261125-007:0/10000@1800  OK
+sell 1kg more (should be INSUFFICIENT) 400 INSUFFICIENT_STOCK
+A2: increase +5kg with NO unit cost on item with stock (orig: no lot -> unsellable)
+increase 5kg no cost OK
+  GL [inc] {"1131":10000,"5320":-10000}
+  [item 9 after inc] inv 15000g/30000 avg 2000 | lots 10000g/20000 | SLE 15000g/30000 | mov 15000g | lots=8:LOT-20261125-008:10000/10000@2000  <<invQty 15000 != lotQty 10000; invVal 30000 != lotVal 20000
+sell all 15kg 400 INSUFFICIENT_STOCK
+increase 3kg unitCost 0 OK
+  [item 9 after inc cost0] inv 18000g/30000 avg 1667 | lots 10000g/20000 | SLE 15000g/30000 | mov 18000g | lots=8:LOT-20261125-008:10000/10000@2000  <<invQty 18000 != lotQty 10000; invVal 30000 != lotVal 20000; sleQty 15000 != invQty 18000
+increase 3kg unitCost -1500 OK
+  [item 9 after inc neg] inv 21000g/25500 avg 1214 | lots 10000g/20000 | SLE 15000g/30000 | mov 21000g | lots=8:LOT-20261125-008:10000/10000@2000  <<invQty 21000 != lotQty 10000; invVal 25500 != lotVal 20000; sleQty 15000 != invQty 21000; sleVal 30000 != invVal 25500
+A3: two lots @18 and @30, decrease 12kg spanning lots then sell
+decrease 12kg OK
+  GL [dec12] {"1131":-24000,"5320":24000}
+  expected 5320 = 10*1800+2*3000 = 24000
+  [item 10 after] inv 8000g/24000 avg 3000 | lots 8000g/24000 | SLE 8000g/24000 | mov 8000g | lots=9:LOT-20261125-009:0/10000@1800 10:LOT-20261125-010:8000/10000@3000  OK
+adjustment with lotId of another item (second lot), decrease 1kg 400 FOREIGN_KEY_ERROR
+  [item 10 after bogus lotId] inv 8000g/24000 avg 3000 | lots 8000g/24000 | SLE 8000g/24000 | mov 8000g | lots=9:LOT-20261125-009:0/10000@1800 10:LOT-20261125-010:8000/10000@3000  OK
+A4: adjustment after sales; partial lots (sale 3kg of 10kg, then decrease 8kg > available lots? )
+decrease 8kg of 7kg (should be refused) 400 INSUFFICIENT_STOCK
+decrease 7kg OK
+  GL [dec7] {"1131":-12600,"5320":12600}
+  [item 11 after] inv 0g/0 avg 0 | lots 0g/0 | SLE 0g/0 | mov 0g | lots=11:LOT-20261125-011:0/10000@1800  OK
+A5: legacy skew: allow-negative-stock item
+decrease 5kg of 2kg (allowNegative) OK
+  [item 12 after] inv -3000g/0 avg 0 | lots 0g/0 | SLE -3000g/-6000 | mov -3000g | lots=12:LOT-20261125-012:0/2000@2000  <<invQty -3000 != lotQty 0; sleVal -6000 != invVal 0
+=== QA-051 parallel adjustments (5 x decrease 1000g on 50kg) and adjustments parallel with sales
+5 parallel decrease 1000g -> 201,201,201,201,201
+  [item 13 after parallel (expected inv 45000)] inv 49000g/98000 avg 2000 | lots 45000g/90000 | SLE 45000g/90000 | mov 45000g | lots=13:LOT-20261125-013:45000/50000@2000  <<invQty 49000 != lotQty 45000; invVal 98000 != lotVal 90000; sleQty 45000 != invQty 49000; sleVal 90000 != invVal 98000; movQty 45000 != invQty 49000
+  GL [par] {"1131":-10000,"5320":10000}
+4 adj + 4 sales parallel -> 201,201,201,201,201,201,201,201
+  [item 13 after mixed (expected 37000 if all 8 succeeded)] inv 48000g/96000 avg 2000 | lots 37000g/74000 | SLE 37000g/74000 | mov 37000g | lots=13:LOT-20261125-013:37000/50000@2000  <<invQty 48000 != lotQty 37000; invVal 96000 != lotVal 74000; sleQty 37000 != invQty 48000; sleVal 74000 != invVal 96000; movQty 37000 != invQty 48000
+  GL [mix] {"1111":20000,"1131":-16000,"4110":-20000,"5100":8000,"5320":8000}
+=== QA-046 wastage
+waste 2kg OK value 4000
+  GL [waste] {"1131":-4000,"5300":4000}
+  [item 14 after waste] inv 8000g/16000 avg 2000 | lots 8000g/16000 | SLE 8000g/16000 | mov 8000g | lots=14:LOT-20261125-014:8000/10000@2000  OK
+SLE wastage rows 1
+DELETE/cancel route 404 404
+  [item 15 adjusted to zero] inv 0g/0 avg 0 | lots 0g/0 | SLE 0g/0 | mov 0g | lots=15:LOT-20261125-015:0/5000@2000  OK
+waste 5kg of lot already adjusted away 400 INSUFFICIENT_STOCK
+  [item 15 after] inv 0g/0 avg 0 | lots 0g/0 | SLE 0g/0 | mov 0g | lots=15:LOT-20261125-015:0/5000@2000  OK
+waste sale-after-C2: lot consumption after waste then adjust 
+adjust decrease 7kg then 1kg more OK 400 INSUFFICIENT_STOCK
+  [item 16 after] inv 0g/0 avg 0 | lots 0g/0 | SLE 0g/0 | mov 0g | lots=16:LOT-20261125-016:0/10000@2000  OK
+wastage JE lines [{"code":"5300","d":6000,"c":0},{"code":"1131","d":0,"c":6000}]
+=== QA-048 opening stock
+create item opening 8kg@10.00 OK
+  GL [open] {"1131":8000,"3100":-8000}
+  [item 17 opening] inv 8000g/8000 avg 1000 | lots 8000g/8000 | SLE 0g/0 | mov 8000g | lots=17:LOT-OP-17-614489:8000/8000@1000  <<sleQty 0 != invQty 8000; sleVal 0 != invVal 8000
+JE [{"entry_number":"JE-000036","code":"1131","d":8000,"c":0},{"entry_number":"JE-000036","code":"3100","d":0,"c":8000}]
+sell all 8kg OK
+  GL [sale] {"1111":40000,"1131":-8000,"4110":-40000,"5100":8000}
+edit item (PUT) with initial qty 400 VALIDATION_ERROR
+  [item 17 after PUT] inv 0g/0 avg 1000 | lots 0g/0 | SLE -8000g/-8000 | mov 0g | lots=17:LOT-OP-17-614489:0/8000@1000  <<sleQty -8000 != invQty 0; sleVal -8000 != invVal 0
+  GL [put] {}
+delete item OK
+opening JE remain 1 item active 0
+opening qty 5kg no cost OK
+  GL [nocost] {}
+  [item 18 nocost] inv 5000g/0 avg 0 | lots 5000g/0 | SLE 0g/0 | mov 5000g | lots=18:LOT-OP-18-614537:5000/5000@0  <<sleQty 0 != invQty 5000
+opening 3333g@19.99 OK
+  GL [frac] {"1131":6663,"3100":-6663}
+  [item 19 frac] inv 3333g/6663 avg 1999 | lots 3333g/6663 | SLE 0g/0 | mov 3333g | lots=19:LOT-OP-19-614545:3333/3333@1999  <<sleQty 0 != invQty 3333; sleVal 0 != invVal 6663
+JE for 3333g@19.99 amount [{"d":6663}] inventory.total_value 6663
+SLE rows for opening item (orig none) 1
+JE unbalanced []

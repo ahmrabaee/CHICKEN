@@ -1,0 +1,16 @@
+acc pct 500 (5%) [expect allow]                                201 total=3800 disc=200 profit=1400
+acc pct 501 [expect block]                                     400 CUSTOMER_REQUIRED
+acc header amount 200/4000 (5%) [allow]                        201 total=3800 disc=200 profit=1400
+acc header amount 400/4000 (10%) [block]                       403 DISCOUNT_LIMIT_EXCEEDED
+acc header amount 2000/4000 (50%) [block]                      403 DISCOUNT_LIMIT_EXCEEDED
+acc line discount 3900/4000 [block]                            403 DISCOUNT_LIMIT_EXCEEDED
+acc line 150 + header 100 (6.25% combined) [block]             403 DISCOUNT_LIMIT_EXCEEDED
+acc two lines, one -2000 and one +2000 line disc (net 0) [?]   400 VALIDATION_ERROR
+acc pricePerKg 1 agora x 10kg [price override]                 201 total=10 disc=0 profit=-23990
+acc pricePerKg 100 (1.00/kg vs list ~?) 5kg                    400 CUSTOMER_REQUIRED
+acc pricePerKg 0 [?]                                           400 VALIDATION_ERROR
+acc pricePerKg 1 + discountAmount 0.. 100% via 2 lines: line A price 1 weight 1g 201 total=0 disc=0 profit=-2
+acc 100% pct 10000 [block]                                     403 DISCOUNT_LIMIT_EXCEEDED
+acc fractional weight 0.4g gross 0 + disc 99999 [?]            400 VALIDATION_ERROR
+acc: header discount on a zero-priced cheap line + other line  403 DISCOUNT_LIMIT_EXCEEDED
+admin 100% pct 10000 [admin unlimited]                         201 total=0 disc=4000 profit=-2400

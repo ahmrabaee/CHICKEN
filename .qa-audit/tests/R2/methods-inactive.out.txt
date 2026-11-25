@@ -1,0 +1,12 @@
+sale paymentMethod cash            201 1111:300/0 4110:0/300 5100:200/0 1131:0/200
+sale paymentMethod card            201 1111:300/0 4110:0/300 5100:200/0 1131:0/200
+sale paymentMethod bank_transfer   201 1111:300/0 4110:0/300 5100:200/0 1131:0/200
+sale paymentMethod check           201 1111:300/0 4110:0/300 5100:200/0 1131:0/200
+sale paymentMethod cheque          400 VALIDATION_ERROR payments has invalid value
+sale paymentMethod mobile_payment  400 VALIDATION_ERROR payments has invalid value
+sale paymentMethod bitcoin         400 VALIDATION_ERROR payments has invalid value
+soft delete item 200 is_active 0
+sale of INACTIVE item -> 201 SAL-20261125-0009
+inventory list shows inactive item? false | lots remaining 9000
+purchase of INACTIVE item -> 201 PUR-000005
+branch on new lots [{"branch_id":null,"n":2},{"branch_id":1,"n":5}]

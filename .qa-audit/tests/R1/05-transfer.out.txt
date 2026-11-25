@@ -1,0 +1,33 @@
+=== T1 UI-default client costs (28/22/20) 4+3+2 kg from 10kg@18.00
+T1: OK status=completed totalCostValue=16200
+   source consumed 9000g value 16200; destination value created 16200; delta 0; GL {}
+   dest lots [{"item_id":7,"r":4000,"p":2081},{"item_id":8,"r":3000,"p":1635},{"item_id":9,"r":2000,"p":1486}] source lot rem 1000
+   raw inventory {"q":10000,"v":18000} -> {"q":1000,"v":1800}
+=== T2 all costs 0
+T2: OK status=completed totalCostValue=16200
+   source consumed 9000g value 16200; destination value created 16200; delta 0; GL {}
+   dest lots [{"item_id":7,"r":4000,"p":1800},{"item_id":8,"r":5000,"p":1800}] source lot rem 1000
+   raw inventory {"q":11000,"v":19800} -> {"q":2000,"v":3600}
+=== T3 costs 99.99 (9999)
+T3: OK status=completed totalCostValue=16200
+   source consumed 9000g value 16200; destination value created 16200; delta 0; GL {}
+   dest lots [{"item_id":7,"r":4000,"p":1800},{"item_id":8,"r":5000,"p":1800}] source lot rem 1000
+   raw inventory {"q":12000,"v":21600} -> {"q":3000,"v":5400}
+=== T4 odd weights 333g+333g+334g from 1kg @ 18.01 (rounding)
+T4: OK status=completed totalCostValue=1801
+   source consumed 1000g value 1801; destination value created 1801; delta 0; GL {}
+   dest lots [{"item_id":7,"r":333,"p":1802},{"item_id":8,"r":333,"p":1802},{"item_id":9,"r":334,"p":1799}] source lot rem 0
+   raw inventory {"q":4000,"v":7201} -> {"q":3000,"v":5400}
+=== T5 source lot cost 0 (free stock) -> dest
+transfer 5kg of zero-cost lot with client cost 28.00 OK dest lot price [{"p":0}] GL {}
+=== T6 same-item transfer (source item = destination)
+same-item, client cost 40.00 OK [{"item_id":1,"p":1800}]
+  [item 1 raw] inv 13000g/23400 avg 1800 | lots 13000g/23400 | SLE 13000g/23400 | mov 13000g | lots=6:LOT-20261125-006:1000/10000@1800 10:LOT-20261125-010:1000/10000@1800 13:LOT-20261125-013:1000/10000@1800 16:LOT-20261125-016:0/1000@1801 22:LOT-20261125-022:5000/10000@1800 23:LOT-20261125-023:5000/5000@1800  OK
+=== T7 sale profit after transfer: sell 4kg breast sale price 30; true cost?
+9kg of 10kg raw -> breast; sell 9kg OK COGS 16200 (= 16200 source cost of 9kg @18) ; 1kg remains in raw lot 1000
+=== T8 concurrent transfers from same lot
+two parallel 8kg transfers from 10kg lot OK | 409 DUPLICATE_ENTRY source rem 2000
+=== T9 numbering after transfer delete (is there a delete?)
+transfers [{"id":6,"transfer_number":"ST-000006"},{"id":7,"transfer_number":"ST-000007"},{"id":8,"transfer_number":"ST-000008"}]
+delete route 404
+JE unbalanced []

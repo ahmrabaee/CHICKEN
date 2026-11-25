@@ -1,0 +1,6 @@
+TB asOf 2020-01-01 200 keys 0,1,2,3,4,5,6,7,8,9,10,11 totals "" rows 0
+TB asOf 2026-11-25 200 keys 0,1,2,3,4,5,6,7,8,9,10,11 totals "" rows 0
+TB asOf 2027-01-01 200 keys 0,1,2,3,4,5,6,7,8,9,10,11 totals "" rows 0
+TB 2020-01-01 row1111 {"accountId":4,"accountCode":"1111","name":"النقد في الصندوق","nameAr":"النقد في الصندوق","accountName":"النقد في الصندوق","accountType":"Cash","rootType":"Asset","openingDebit":0,"openingCredit":0,"periodDebit":537000,"periodCredit":225000,"endingDebit":31200
+TB 2026-11-25 row1111 {"accountId":4,"accountCode":"1111","name":"النقد في الصندوق","nameAr":"النقد في الصندوق","accountName":"النقد في الصندوق","accountType":"Cash","rootType":"Asset","openingDebit":0,"openingCredit":0,"periodDebit":537000,"periodCredit":225000,"endingDebit":31200
+TB 2027-01-01 row1111 {"accountId":4,"accountCode":"1111","name":"النقد في الصندوق","nameAr":"النقد في الصندوق","accountName":"النقد في الصندوق","accountType":"Cash","rootType":"Asset","openingDebit":312000,"openingCredit":0,"periodDebit":0,"periodCredit":0,"endingDebit":312000,"en

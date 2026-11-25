@@ -1,0 +1,14 @@
+backups 20 bad 3 [{"i":2,"run":26,"status":"success","integrity":"wrong # of entries in index audit_logs_user_id_idx","sales":2881,"saleNoJE":0,"unbalJE":4,"walInArchive":"app.db,app.db-shm,app.db-wal"},{"i":15,"run":39,"status":"success","integrity":"wrong # of entries in index audit_logs_user_id_idx","sales":4151,"saleNoJE":39,"unbalJE":0,"walInArchive":"app.db,app.db-shm,app.db-wal"},{"i":16,"err":"no run"}]
+sample {"i":0,"run":24,"status":"success","integrity":"ok","sales":2847,"saleNoJE":0,"unbalJE":0,"walInArchive":"app.db,app.db-shm,app.db-wal"} {"i":19,"run":42,"status":"success","integrity":"ok","sales":5005,"saleNoJE":0,"unbalJE":0,"walInArchive":"app.db,app.db-shm,app.db-wal"}
+restore under live writes -> 500 {"success":false,"error":{"code":"INTERNAL_ERROR","message":"\nInvalid `this.prisma.systemSetting.upsert()` invocation in\nE:\\DEV\\Chicken FMS\\app\\backend\\d 5699 ms
+writer statuses {"201":2173,"400":6141,"500":1530}
+live integrity [{"integrity_check":"ok"}] journal_mode [{"journal_mode":"wal"}]
+post-restore sales in live 5005 (backup had 5005 )
+files [
+  'app.db',
+  'app.db-shm',
+  'app.db-wal',
+  'app.db.before-restore-1795643473857.bak',
+  'app.db.before-restore-1795643673151.bak'
+]
+GET /sales after 500

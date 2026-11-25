@@ -1,0 +1,68 @@
+## Phase A: back-dated documents (no lock) — compare document date with JE entry_date
+expense expenseDate=2026-10-15 -> 201 doc=2026-10-15T00:00:00.000Z JE date=2026-11-25T22:05:09.332Z
+purchase purchaseDate=2026-10-15 -> 201 doc=2026-10-15T00:00:00.000Z JE date=2026-11-25T22:05:09.353Z
+sale payment paymentDate=2026-10-15 (for a sale dated today!) -> 201  doc=2026-10-15T00:00:00.000Z JE date=2026-11-25T22:05:09.394Z
+
+set accounting_freeze_date=2026-11-26: 200  stored: {"value":"2026-11-26"}
+
+## Phase B: accounting_freeze_date=2026-11-26 (everything dated today/yesterday is frozen)
+  ALLOWED [201] create cash sale (today)  newJEs=1
+  BLOCKED [400] void sale FREEZE_DATE newJEs=0
+  BLOCKED [400] cancel payment FREEZE_DATE newJEs=0
+  ALLOWED [201] sale payment dated yesterday  newJEs=1
+  BLOCKED [400] create expense dated yesterday INSUFFICIENT_BALANCE newJEs=0 (blocked for other reason: {"code":"INSUFFICIENT_BALANCE","message":"Insufficient balance in النقد في الصندوق. Available: 0.00 ₪, required: 1.00 ₪.)
+  ALLOWED [200] update expense amount  newJEs=0
+  ALLOWED [200] delete expense  newJEs=0
+  ALLOWED [201] create purchase dated yesterday  newJEs=1
+  BLOCKED [409] update purchase (re-post) DUPLICATE_ENTRY newJEs=0 (blocked for other reason: {"code":"DUPLICATE_ENTRY","message":"A record with this lot_number already exists","messageAr":"يوجد سجل بهذا lot_number)
+  ALLOWED [200] delete purchase (hard delete JE)  newJEs=0
+  BLOCKED [400] credit note create+submit FREEZE_DATE newJEs=0
+  ALLOWED [201] wastage  newJEs=1
+  ALLOWED [201] stock adjustment  newJEs=1
+  ALLOWED [201] manual JE dated yesterday + post  newJEs=1
+  ALLOWED [200] debt write-off  newJEs=0
+  ALLOWED [201] advance payment customer  newJEs=1
+remove freeze date 200 
+
+period_lock_enabled=true 200  closed period 2026-11-01T00:00:00.000Z .. 2026-11-30T23:59:59.999Z (company_id NULL)
+
+## Phase C: current month CLOSED + period_lock_enabled
+  ALLOWED [201] create cash sale (today)  newJEs=1
+  BLOCKED [400] void sale PERIOD_LOCKED newJEs=0
+  BLOCKED [400] cancel payment PERIOD_LOCKED newJEs=0
+  ALLOWED [201] sale payment dated yesterday  newJEs=1
+  BLOCKED [409] create expense dated yesterday DUPLICATE_ENTRY newJEs=0 (blocked for other reason: {"code":"DUPLICATE_ENTRY","message":"A record with this expense_number already exists","messageAr":"يوجد سجل بهذا expens)
+  ALLOWED [200] update expense amount  newJEs=0
+  ALLOWED [200] delete expense  newJEs=0
+  BLOCKED [409] create purchase dated yesterday DUPLICATE_ENTRY newJEs=0 (blocked for other reason: {"code":"DUPLICATE_ENTRY","message":"A record with this purchase_number already exists","messageAr":"يوجد سجل بهذا purch)
+  ALLOWED [200] update purchase (re-post)  newJEs=1
+  ALLOWED [200] delete purchase (hard delete JE)  newJEs=0
+  BLOCKED [400] credit note create+submit PERIOD_LOCKED newJEs=0
+  ALLOWED [201] wastage  newJEs=1
+  ALLOWED [201] stock adjustment  newJEs=1
+  ALLOWED [201] manual JE dated yesterday + post  newJEs=1
+  ALLOWED [200] debt write-off  newJEs=0
+  ALLOWED [201] advance payment customer  newJEs=1
+
+## Phase D: same closed period but company_id=1 (guard is called with companyId null/undefined?)
+  ALLOWED [201] create cash sale (today)  newJEs=1
+  ALLOWED [200] void sale  newJEs=1
+  ALLOWED [200] cancel payment  newJEs=1
+  ALLOWED [201] sale payment dated yesterday  newJEs=1
+  BLOCKED [400] create expense dated yesterday INSUFFICIENT_BALANCE newJEs=0 (blocked for other reason: {"code":"INSUFFICIENT_BALANCE","message":"Insufficient balance in النقد في الصندوق. Available: 0.00 ₪, required: 1.00 ₪.)
+  ALLOWED [200] update expense amount  newJEs=0
+  ALLOWED [200] delete expense  newJEs=0
+  BLOCKED [409] create purchase dated yesterday DUPLICATE_ENTRY newJEs=0 (blocked for other reason: {"code":"DUPLICATE_ENTRY","message":"A record with this purchase_number already exists","messageAr":"يوجد سجل بهذا purch)
+  BLOCKED [400] update purchase (re-post) VALIDATION_ERROR newJEs=0 (blocked for other reason: {"code":"VALIDATION_ERROR","message":"Validation failed (numeric string is expected)","messageAr":"فشل التحقق من البيانا)
+  BLOCKED [400] delete purchase (hard delete JE) VALIDATION_ERROR newJEs=0 (blocked for other reason: {"code":"VALIDATION_ERROR","message":"Validation failed (numeric string is expected)","messageAr":"فشل التحقق من البيانا)
+  ALLOWED [201] credit note create+submit  newJEs=1
+  ALLOWED [201] wastage  newJEs=1
+  ALLOWED [201] stock adjustment  newJEs=1
+  ALLOWED [201] manual JE dated yesterday + post  newJEs=1
+  ALLOWED [200] debt write-off  newJEs=0
+  ALLOWED [201] advance payment customer  newJEs=1
+
+SUMMARY freeze: create cash sale (today) | sale payment dated yesterday | update expense amount | delete expense | create purchase dated yesterday | delete purchase (hard delete JE) | wastage | stock adjustment | manual JE dated yesterday + post | de
+SUMMARY closed period (company NULL): create cash sale (today) | sale payment dated yesterday | update expense amount | delete expense | update purchase (re-post) | delete purchase (hard delete JE) | wastage | stock adjustment | manual JE dated yeste
+SUMMARY closed period (company 1): create cash sale (today) | void sale | cancel payment | sale payment dated yesterday | update expense amount | delete expense | credit note create+submit | wastage | stock adjustment | manual JE dated yesterday + po
+invariants: ["AR-01:{\"gl_ar\":\"274.00\",\"customers_currentBalance\":\"207.00\",\"open_receivable_debts\":\"207.00\",\"ple_customer\":\"274.00\",\"sales_total_minus_paid\":\"282.00\"}","AR-02:1 customers differ","AP-01:{\"gl_ap\":\"1125.00\",\"supp

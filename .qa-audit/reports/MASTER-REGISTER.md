@@ -1,3 +1,5 @@
+> **Update 26 Nov 2026:** statuses below describe commit 4dfee68. After the merge of teammate commit 6cc6d56, see section 9 of `FINAL-QA-REPORT.md` and the re-test findings in `findings/R1.md` and `findings/R2.md` (1 problem fixed, 13 partly, 43 not fixed; new defects R1-001..016, R2-001..010).
+
 # MASTER REGISTER - QA audit of the butcher-shop POS / inventory / accounting system
 
 Consolidator: agent C, 2026-11-25. Inputs read in full: `findings/*.md` (K1-K4, ORCH, T1-T8 + coverage files, V1, V2, G, G-coverage-matrix), `knowledge/decision-log.md` (D-01..D-37, F-01..F-23, R-01..R-14), `bulletin/*.md`. No new tests were run; every number below is copied from a findings file or a saved test output named there.

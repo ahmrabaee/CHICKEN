@@ -1,0 +1,23 @@
+// R1-09: remaining guard gaps after C-6 (backup, accounts, reconciliation, settings reads) - run against running r1 instance (08 already created r1acc)
+import { connect } from 'file:///E:/DEV/Chicken%20FMS/.qa-audit/harness/client.mjs';
+import { writeFileSync } from 'node:fs';
+const base = 'http://localhost:3123/v1';
+const acc = await connect(base, 'r1acc', 'Password@123');
+const adm = await connect(base, 'admin', 'admin123');
+const out = [];
+const t = async (l, r) => { const s = `  ${l}: ${r.status} ${r.ok ? 'OK' : (r.body?.error?.code ?? '')}`; console.log(s); out.push(s); return r; };
+await t('accountant GET /system/backups', await acc.get('/system/backups'));
+await t('accountant GET /system/backup/config', await acc.get('/system/backup/config'));
+const b = await t('accountant POST /system/backup (create)', await acc.post('/system/backup', {}));
+const list = await adm.get('/system/backups');
+const bid = (list.data?.items ?? list.data ?? [])[0]?.id;
+await t('accountant POST /system/backups/:id/download-link', await acc.post(`/system/backups/${bid}/download-link`, {}));
+await t('accountant POST /accounting/accounts', await acc.post('/accounting/accounts', { code: '9998', name: 'x', rootType: 'Asset', accountType: 'Cash' }));
+await t('accountant POST /reconciliation/apply', await acc.post('/reconciliation/apply', {}));
+await t('accountant POST /credit-notes (role allowed? )', await acc.post('/credit-notes', { originalInvoiceType: 'sale', originalInvoiceId: 1, amount: 1, reason: 'x' }));
+await t('accountant GET /accounting/trial-balance', await acc.get('/accounting/trial-balance'));
+await t('accountant GET /reports/stock-vs-gl', await acc.get('/reports/stock-vs-gl'));
+await t('accountant GET /purchases', await acc.get('/purchases'));
+await t('accountant GET /suppliers', await acc.get('/suppliers'));
+await t('accountant POST /wastage no body', await acc.post('/wastage', {}));
+writeFileSync('E:/DEV/Chicken FMS/.qa-audit/tests/R1/09-guards.out.txt', out.join('\n'));

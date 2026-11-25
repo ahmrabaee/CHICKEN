@@ -1,0 +1,8 @@
+fake 4 backup_manual_import_1795644069187.tar.gz good 10
+restore fake -> 500 {"success":false,"error":{"code":"INTERNAL_ERROR","message":"\nInvalid `this.prisma.systemSetting.upsert()` invocation in\nE:\\DEV\\Chicken FMS\\app\\backend\\dist\\settings\\settings.service.js:60:42
+ GET /sales?pageSize=1 500
+ GET /items 500
+ GET /users/me 500
+ login -> login failed for admin: 500 {"success":false,"error":{"code":"INTERNAL_ERROR","message":"\nInvalid `
+recovery via API restore good -> 500
+ GET /sales after recovery 500

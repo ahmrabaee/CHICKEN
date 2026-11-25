@@ -1,0 +1,11 @@
+create acc1/Acc12345: 201 {"success":true,"data":{"id":2,"username":"acc1","fullName":"محاسب اختبار","fullNameEn":null,"email":null,"phone":null,"preferredLanguage":"ar","defaultBranchId":null,"isActive":true,"roles":["accountant"],"createdAt":"2
+   toasts=["تم إنشاء المستخدم بنجاح"] formErrors=[]
+create acc1/Acc12345: 409 {"success":false,"error":{"code":"DUPLICATE_ENTRY","message":"Username already exists","messageAr":"اسم المستخدم موجود بالفعل"},"meta":{"timestamp":"2026-11-25T22:10:16.021Z","path":"/v1/users"}}
+   toasts=["خطأ في إنشاء المستخدم\nحدث خطأ غير متوقع"] formErrors=[]
+create acc2/password: 201 {"success":true,"data":{"id":3,"username":"acc2","fullName":"كلمة ضعيفة","fullNameEn":null,"email":null,"phone":null,"preferredLanguage":"ar","defaultBranchId":null,"isActive":true,"roles":["accountant"],"createdAt":"202
+   toasts=["تم إنشاء المستخدم بنجاح"] formErrors=[]
+create acc3/12345678: 201 {"success":true,"data":{"id":4,"username":"acc3","fullName":"<b>bold</b>","fullNameEn":null,"email":null,"phone":null,"preferredLanguage":"ar","defaultBranchId":null,"isActive":true,"roles":["accountant"],"createdAt":"20
+   toasts=["تم إنشاء المستخدم بنجاح"] formErrors=[]
+accountant sidebar links: ["/ لوحة التحكم","/inventory المخزون","/sales/new نقطة البيع","/sales سجل المبيعات","/customers الزبائن","/accounting المحاسبة","/help دليل المستخدم"]
+wrong password: login error text=["Request failed with status code 401"] api=["401 {\"success\":false,\"error\":{\"code\":\"INVALID_CREDENTIALS\",\"message\":\"Invalid username or password\",\"messageAr\":\"اسم المستخدم أو كلمة المرور غير صحيحة\"},\"meta\":{\"timestamp\":\"2026-11-25T22:10:27.162Z\",\"path\":\"/v1/auth/login\"}}"]
+after 7 wrong attempts: login error text=["Request failed with status code 401"] last api=["401 {\"success\":false,\"error\":{\"code\":\"INVALID_CREDENTIALS\",\"message\":\"Invalid username or password\",\"messageAr\":\"اسم المستخدم أو كلمة المرور غير صحيحة\"},\"meta\":{\"timestamp\":\"2026-11-25T22:10:45.256Z\",\"path\":\"/v1/auth/login\"}}"]

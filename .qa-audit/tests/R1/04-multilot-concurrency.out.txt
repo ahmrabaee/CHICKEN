@@ -1,0 +1,34 @@
+=== multi-lot same item in two lines: lots 10kg@20 and 10kg@30, cart 6kg + 6kg (12 <= 20 available)
+sale 6+6 on 20kg in two lots 400 INSUFFICIENT_STOCK 
+  [item 7 after] inv 20000g/50000 avg 2500 | lots 20000g/50000 | SLE 20000g/50000 | mov 20000g | lots=6:LOT-20261125-006:10000/10000@2000 7:LOT-20261125-007:10000/10000@3000  OK
+same 12kg as ONE line OK
+  [item 7 after one-line] inv 8000g/24000 avg 3000 | lots 8000g/24000 | SLE 8000g/24000 | mov 8000g | lots=6:LOT-20261125-006:0/10000@2000 7:LOT-20261125-007:8000/10000@3000  OK
+two 1kg lines (4kg avail?) OK COGS 6000
+  [item 7 end] inv 6000g/18000 avg 3000 | lots 6000g/18000 | SLE 6000g/18000 | mov 6000g | lots=6:LOT-20261125-006:0/10000@2000 7:LOT-20261125-007:6000/10000@3000  OK
+=== same item two lines, SINGLE lot, fits (4+4 on 10) -> allowed?
+4+4 on 10kg single lot OK
+  [item 8 after] inv 2000g/4000 avg 2000 | lots 2000g/4000 | SLE 2000g/4000 | mov 2000g | lots=8:LOT-20261125-008:2000/10000@2000  OK
+=== QA-052 burst of concurrent sales (item with 500kg)
+N=10 wall=467ms maxLat=466ms tally={"201":10} newSales=10
+  [item 9 N=10] inv 499000g/998000 avg 2000 | lots 499000g/998000 | SLE 499000g/998000 | mov 499000g | lots=9:LOT-20261125-009:499000/500000@2000  OK
+N=15 wall=1012ms maxLat=1011ms tally={"201":15} newSales=15
+  [item 9 N=15] inv 497500g/995000 avg 2000 | lots 497500g/995000 | SLE 497500g/995000 | mov 497500g | lots=9:LOT-20261125-009:497500/500000@2000  OK
+N=20 wall=5676ms maxLat=5674ms tally={"201":3,"500 DATABASE_ERROR":17} newSales=3
+  [item 9 N=20] inv 497200g/994400 avg 2000 | lots 497200g/994400 | SLE 497200g/994400 | mov 497200g | lots=9:LOT-20261125-009:497200/500000@2000  OK
+N=30 wall=7141ms maxLat=7137ms tally={"201":14,"500 DATABASE_ERROR":16} newSales=14
+  [item 9 N=30] inv 495800g/991600 avg 2000 | lots 495800g/991600 | SLE 495800g/991600 | mov 495800g | lots=9:LOT-20261125-009:495800/500000@2000  OK
+N=50 wall=12274ms maxLat=12270ms tally={"201":16,"500 DATABASE_ERROR":34} newSales=16
+  [item 9 N=50] inv 494200g/988400 avg 2000 | lots 494200g/988400 | SLE 494200g/988400 | mov 494200g | lots=9:LOT-20261125-009:494200/500000@2000  OK
+journal_mode [{"journal_mode":"wal"}]
+=== parallel sales oversell race: 10kg item, 5 parallel x 4kg
+statuses 201,400:INSUFFICIENT_STOCK,400:INSUFFICIENT_STOCK,201,400:INSUFFICIENT_STOCK
+  [item 10 after] inv 2000g/4000 avg 2000 | lots 2000g/4000 | SLE 2000g/4000 | mov 2000g | lots=10:LOT-20261125-010:2000/10000@2000  OK
+=== QA-050 concurrent voids / payments
+4 parallel voids 200,200,200,200 GL {"1120":-40000,"1131":16000,"4110":40000,"5100":-16000} (single void should reverse once: 1120 -10000 etc)
+  [item 11 after voids] inv 106000g/212000 avg 2000 | lots 106000g/212000 | SLE 106000g/212000 | mov 106000g | lots=11:LOT-20261125-011:106000/100000@2000  OK
+customer balance -30000
+5 parallel payments of 4000 on 10000 invoice 201,201,201,201,201 collected 20000
+2 parallel credit notes 6000 on 10000 OK | 409 DUPLICATE_ENTRY
+=== QA-053 idempotency: same sale posted twice with same Idempotency-Key
+3 sales same key 201,201,201 new sales 3
+JE unbalanced []

@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+import { connect } from 'file:///E:/DEV/Chicken%20FMS/.qa-audit/harness/client.mjs';
+import { DatabaseSync } from 'node:sqlite';
+const m = JSON.parse(fs.readFileSync('E:/DEV/Chicken FMS/.qa-audit/envs/r2/meta.json','utf8'));
+const a = await connect(m.baseUrl,'admin','admin123');
+const q=(sql)=>{const d=new DatabaseSync(m.db,{readOnly:true});try{return d.prepare(sql).all();}finally{d.close();}};
+const sh=(r)=>`${r.status} ${r.ok?'ok':r.body?.error?.code}`;
+const lot=q('select id,remaining_quantity_grams r from inventory_lots where remaining_quantity_grams>0 limit 1')[0];
+console.log('guide: "cannot waste more than available": lot',lot.id,'remaining',lot.r,'-> waste',lot.r+5000,'g:',sh(await a.post('/wastage',{lotId:lot.id,quantityGrams:lot.r+5000,reason:'spoiled'})));
+console.log('guide: "purchase price must be lower than sale price": item sale 1000 purchase 5000 ->',sh(await a.post('/items',{code:'R2-PP',name:'bad price',categoryId:1,defaultSalePrice:1000,defaultPurchasePrice:5000})));
+console.log('guide: "credit sale needs a customer": ->',sh(await a.post('/sales',{saleType:'credit',lines:[{itemId:6,weightGrams:100,pricePerKg:3000}]})));
+console.log('guide (POS step): payment choices "cash / credit" only; card/bank_transfer are also accepted by API (see methods-inactive)');
+const g=await a.get('/inventory/'+lot.id); 

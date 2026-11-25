@@ -1,0 +1,30 @@
+=== negative discount -5 submit
+  panel: {"subtotal":"15.00","tax":null,"total":"20.00","net":null}
+  complete enabled: true
+  POST 400 req={"saleType":"cash","discountAmount":-500,"lines":[{"itemId":6,"weightGrams":500,"pricePerKg":3000}],"payments":[{"amount":2000,"paymentMethod":"cash"}]} res="messageAr":"discountAmount must not be less than 0"
+  toasts: ["خطأ في إنشاء الفاتورة\ndiscountAmount must not be less than 0"]
+
+=== 100% discount, pay 0.01
+  panel: {"subtotal":"15.00","tax":null,"total":"0.00","net":null}
+  complete enabled: true
+  POST 201 req={"saleType":"cash","discountAmount":1500,"lines":[{"itemId":6,"weightGrams":500,"pricePerKg":3000}]} res="saleNumber":"SAL-20261125-0016" "discountAmount":1500 "totalAmount":0 "paymentStatus":"paid" "amountPaid":0 "discountAmount":0
+  toasts: ["تم إنشاء الفاتورة بنجاح"]
+
+=== K4-004 weight edit 0.255 via dialog re-open
+  cart after add: {"subtotal":"5.61","tax":null,"total":"5.61","net":null}
+  cart after re-confirm same 0.255: {"subtotal":"5.72","tax":null,"total":"5.72","net":null}
+  POST 201 req={"saleType":"cash","lines":[{"itemId":2,"weightGrams":260,"pricePerKg":2200}],"payments":[{"amount":572,"paymentMethod":"cash"}]} res="saleNumber":"SAL-20261125-0017" "discountAmount":0 "totalAmount":572 "paymentStatus":"paid" "amountPaid":572 "discountAmount":0
+
+=== paid input: Arabic digits, decimal comma, paste, huge
+  typed "٢٢" -> input.value="" badInput=false completeEnabled=false warn=1
+  typed "22,00" -> input.value="2200" badInput=false completeEnabled=false warn=0
+  typed "1e3" -> input.value="1e3" badInput=false completeEnabled=false warn=0
+  typed "99999999999999999" -> input.value="99999999999999999" badInput=false completeEnabled=false warn=0
+  insertText "٢٢٫٥٠" -> value=""
+  discount insertText "٥" -> value="" panel={"subtotal":"22.00","tax":null,"total":"22.00","net":null}
+  weight dialog 99999999 kg: ⚖️ فروج كامل ₪22.00 / كجم 99999999 كجم 99999999.00 كغم المجموع: ₪2199999978.00 250 غ 500 غ
+  panel: {"subtotal":"2199999978.00","tax":null,"total":"2199999978.00","net":null}
+  POST 400 req={"saleType":"cash","lines":[{"itemId":2,"weightGrams":99999999000,"pricePerKg":2200}],"payments":[{"amount":219999997800,"paymentMethod":"cash"}]} res="messageAr":"المخزون غير كاف لـ فروج كامل. المتوفر: 40740 جرام"
+  toasts: ["خطأ في إنشاء الفاتورة\nالمخزون غير كاف لـ فروج كامل. المتوفر: 40740 جرام"]
+
+page errors: []

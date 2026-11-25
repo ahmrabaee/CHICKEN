@@ -1,0 +1,58 @@
+=== QA-019 purchase VAT
+1 credit taxed 10kg@20.00 +30.00 tax (expect 1131 +20000, 1125 +3000, 2110 -23000) OK GL {"1125":3000,"1131":20000,"2110":-23000} supBal d 23000
+2 fully-paid taxed 23000 cash (orig: 400 UNBALANCED) OK GL {"1111":-23000,"1125":3000,"1131":20000} supBal d 0
+2b paid net 20000 only, tax 3000 OK GL {"1111":-20000,"1125":3000,"1131":20000,"2110":-3000} supBal d 3000
+2c fully-paid taxed by bank 23000 OK GL {"1125":3000,"1131":20000,"1112-001":-23000} supBal d 0
+3a pay P1 10000 cash OK GL {"1111":-10000,"2110":10000} supBal d 0
+3b pay P1 13000 cash (settles) OK GL {"1111":-13000,"2110":13000} supBal d 0
+   GL 2110 balance after settled P1 (net of other purchases) / debt status [{"status":"paid","total_amount":23000,"amount_paid":23000}]
+3c cancel first payment OK GL {"1111":10000,"2110":-10000} supBal d 0
+   P1 afterwards {"grand_total":23000,"amount_paid":13000,"payment_status":"partial"}
+   AP (2110, includes dev seed 0) -13000 | open debts payable 13000 | supplier balances 26000
+=== QA-030 paid-at-creation purchase correction
+creation-time payment JE count 0
+cancel creation payment 404 JOURNAL_ENTRY_NOT_FOUND
+=== QA-017/018 expenses by bank/card
+expense cash 20000 OK JE ["5400 D20000 C0","1111 D0 C20000"] GL {"1111":-20000,"5400":20000}
+expense bank_transfer 20000 OK JE ["5400 D20000 C0","1111 D0 C20000"] GL {"1111":-20000,"5400":20000}
+expense card no bank 20000 OK JE ["5400 D20000 C0","1111 D0 C20000"] GL {"1111":-20000,"5400":20000}
+categories [{"id":1,"name":"مصروفات تشغيلية","account_code":"5200"},{"id":2,"name":"إيجار","account_code":"5210"},{"id":3,"name":"مرافق","account_code":"5220"},{"id":4,"name":"كهرباء","account_code":"5221"},{"id":5,"name":"مياه","account_code":"5222"},{"id":6,"name":"رواتب","account_code":"5230"},{"id":7,"name":"صيانة","account_code":"5240"},{"id":8,"name":"توصيل","account_code":"5250"},{"id":9,"name":"مصروفات أخرى","account_code":"5400"}]
+cat 1 5200 OK ["5400 D1000 C0","1111 D0 C1000"]
+cat 2 5210 OK ["5400 D1000 C0","1111 D0 C1000"]
+cat 3 5220 OK ["5400 D1000 C0","1111 D0 C1000"]
+cat 4 5221 OK ["5400 D1000 C0","1111 D0 C1000"]
+expense with taxAmount 1500 OK ["5400 D11500 C0","1111 D0 C11500"]
+personal expense OK ["5400 D7000 C0","1111 D0 C7000"]
+edit expense 5000->9999 OK JE ["5400 D5000 C0","1111 D0 C5000"]
+delete OK JE left ["5400 D5000 C0","1111 D0 C5000"]
+=== QA-040 validation
+purchase neg weight OK {}
+purchase neg price OK {}
+purchase empty lines OK {}
+purchase neg paid 400 UNBALANCED_ENTRY {}
+purchase neg tax 400 UNBALANCED_ENTRY {}
+purchase fraction grams OK {"1131":2468,"2110":-2468}
+purchase unknown item OK {}
+expense neg expense OK
+expense zero expense OK
+expense fraction expense OK
+neg advance OK
+=== QA-029 numbering after delete / H-3
+three purchases [[14,"PUR-000014"],[15,"PUR-000015"],[16,"PUR-000016"]]
+count 16 max PUR-SEED-0003
+delete the FIRST of the three OK
+create after delete #1 409 DUPLICATE_ENTRY 
+create after delete #2 409 DUPLICATE_ENTRY 
+delete a middle one, create again
+ del OK
+ create OK PUR-000015
+--- expenses numbering
+three expenses [[17,"EXP-000016"],[18,"EXP-000017"],[19,"EXP-000018"]]
+delete first OK
+create after delete 409 DUPLICATE_ENTRY 
+create after delete #2 409 DUPLICATE_ENTRY 
+--- stock-transfer numbering after delete: see script 04
+--- lot numbering same day after purchase delete (lot_number unique?)
+ create 409 DUPLICATE_ENTRY
+lots numbers ["LOT-20261125-015","LOT-20261125-016","LOT-20261125-013","LOT-20261125-012","LOT-20261125-011","LOT-20261125-010"]
+JE unbalanced []

@@ -1,7 +1,7 @@
 # Independent QA Audit — Chicken FMS (butcher-shop POS, inventory and accounting)
 
 Audited: repository `ahmrabaee/CHICKEN` at commit `4dfee68` (19 March 2026), 89 commits, three developers plus AI-assisted planning.
-> **Note:** every test ran against commit `4dfee68`, before `fix/critical-high-qa-and-returns` (6cc6d56) was merged into main. That commit fixes some of the problems below (for example stock-adjustment lots, transfer value conservation, role guards, VAT posting, atomic numbering). It has NOT been re-tested against this audit; re-run the scripts in `tests/` and `harness/invariants.mjs` to confirm which clusters are closed.
+> **Update 26 Nov 2026:** the original tests ran against commit `4dfee68`. Your teammate's branch `fix/critical-high-qa-and-returns` (6cc6d56, merged as 49b1d0f) was then re-tested against every claim and every affected problem (section 9). Result: **1 of 68 problems fixed, 13 partly fixed, 43 not fixed**, and the new sales-return feature added 3 new critical defects. The verdict in section 1 is unchanged.
 
 Audit run: 24–25 November 2026, entirely inside `E:\DEV\Chicken FMS\.qa-audit\`. No application code, document, lockfile or developer database was changed.
 Detailed evidence: `reports/MASTER-REGISTER.md` (68 root-cause clusters, each with sources, reproduction script, impact, history, fix), `findings/*.md` (raw per-agent findings), `tests/*` (every executed script with its saved output), `knowledge/*` (requirements, decision log, architecture, posting map).
@@ -114,77 +114,140 @@ Historical context matters here. The development history shows the ×1000→×10
 
 ---
 
+---
+
+## 9. Comparison with the teammate's QA review and fixes (added 26 Nov 2026)
+
+**His review** (`QA_TESTING/`, dated 20 Nov): 5 reviewers, code reading plus API tests, about 11 critical and high items, no concurrency, simulation, security or UI testing. All 11 overlap with problems in this audit (lots after adjustments, cutting value, opening stock, wastage, VAT, numbering, role guards, discount cap, audit log). **His review did not find** the public backup download, accountant backup access, double refund on void, payments that post nothing, bank-paid expenses taken from cash, mixed-tender routing, concurrent voids and payments, duplicate sales, negative amounts, expired-stock sales, the balance-sheet and date bugs, or any POS/UI defect. **His fixes** (commit 6cc6d56) were then re-tested by two agents running my reproduction scripts plus the edge cases his happy-path tests skipped (`findings/R1.md`, `findings/R2.md`; scripts in `tests/R1` and `tests/R2`).
+
+### 9.1 Status of the 68 problems after the merge
+
+1 fixed, 13 partly fixed, 1 changed (still wrong), 43 not fixed, 9 not re-run because the commit does not touch their code, 1 informational. Of the 12 critical problems: 1 fixed (QA-044, cutting), 4 partly fixed (QA-002, 019, 042, 043), 7 not fixed (QA-001, 014, 015, 017, 029, 050, 051). The per-problem status is the fourth column of the appendix.
+
+### 9.2 His claims, checked
+
+| Claim | Verdict | What the test showed |
+|---|---|---|
+| C-4 stock transfer conserves value | **TRUE** | Value created equals value consumed for UI-default, zero and 99.99 costs, odd weights and same-item transfers. |
+| H-2 taxed and discounted sale balanced | **TRUE** | Default and GL-engine paths balanced. |
+| H-4 wastage writes a stock-ledger row | **TRUE** | Also uses the branch stock account. There is still no cancel route. |
+| H-5 sale VAT to 2120, void reverses it | **TRUE** | But the sale's `totalProfit` still includes VAT (5,500 vs 4,000). |
+| M3 discounts to 4900 | **TRUE** | Expenses still all post to 5400. |
+| C-2 adjustment decrease consumes lots | **TRUE for decreases** | Increases without a cost still create no lot; cost 0 and −1,500 are still accepted. |
+| C-6 roles | **PARTLY TRUE** | Tax-template writes, account creation, debt write-off and the total discount cap are now enforced. Backup config/import/restore, credit notes, reconciliation, wastage and `POST /sales/:id/payments` are still open to the accountant, and a price of 1 agora per kg still bypasses the cap. |
+| C-5 audit log | **PARTLY TRUE** | 30 successful changes produced 35 rows with user, entity, IP and masked passwords. But failed or denied calls leave no row, insert errors are swallowed (3 of 1,046 sales lost their row under load), bodies over 4,000 characters are cut into invalid JSON, and the IP can be spoofed. |
+| C-3 opening stock posts to the ledger | **PARTLY TRUE** | Dr 1131 / Cr 3100 now posts, but there is no stock-ledger row, and nothing at all when the cost is 0. |
+| H-1 purchase VAT posted | **PARTLY TRUE** | Default path only. With the GL engine on, tax is omitted and a fully paid taxed purchase is still rejected. The supplier balance still never falls. |
+| C-1 WAL, busy timeout, guarded lot decrements | **PARTLY TRUE, with new harm** | WAL is on and 15 parallel sales succeed; single-lot oversell is stopped. But 20 parallel sales gave 3 successes and 17 server errors (before the fix: 8 and 12), parallel adjustments still overwrite each other, and a valid same-item sale is now falsely rejected when its stock sits in two lots. |
+| H-3 atomic max+1 numbering | **MOSTLY FALSE** | Only GL-engine entry numbers changed. Purchase, expense, lot, transfer, credit-note and payment numbers are still count-based; deleting a non-last row still blocks new ones for good. |
+
+### 9.3 New defects introduced by the merged code
+
+Found by the re-tests (IDs in `findings/R1.md` and `findings/R2.md`).
+
+**Critical**
+* **Return then void reverses the sale twice.** Stock went from 10 kg to 14 kg and the shop paid out 40,000 on a 20,000 sale (R1-001).
+* **Concurrent returns all succeed.** Four parallel full returns left 22 kg of stock after buying 10 and cash at −80,000. Five parallel 1 kg returns refunded 150.00 on a 30.00 sale (R1-002, R2-007).
+* **Backups taken while sales are being posted are silently corrupt but marked successful.** The WAL setting makes a plain file copy unsafe: 3 of 20 archives were bad with 5 concurrent writers and 7 of 20 with 3 (R2-001).
+
+**High**
+* A return on a discounted sale refunds the gross amount (60.00 refunded on a 54.00 payment) and does not reverse the discount (R1-003, R2-006).
+* A cash refund is allowed on an unpaid credit sale: the cash goes out, the debt stays, and the customer can still pay in full (R1-004, R2-007).
+* A credit note plus a credit-refund return credits the customer twice (R1-005).
+* Restoring while the API is serving requests leaves the database connection dead: every endpoint, including login, returns 500 until a restart (R2-002).
+
+**Medium and Low (summary):**
+* Credit-refund bookkeeping leaves the debt "open" and the customer balance at −18,000.
+* A return matches only the first line of a repeated item.
+* A damaged return writes no stock-ledger row or wastage record.
+* The audit page shows raw English names and cannot filter the new rows.
+* Restoring a pre-WAL archive silently switches the live database out of WAL until the next restart.
+* The in-app guide states rules that are not enforced (purchase price below sale price, tax from shop settings, disabling accounts) and omits sales returns.
+* Returns are open to the accountant while void is admin-only.
+* Per-return rounding can over-refund by 1 agora.
+* String-ordered numbering and millisecond-based lot numbers can collide (code review only).
+
+### 9.4 Reading the two reviews together
+
+Both reviews agree on the core accounting weaknesses, and his fixes are real progress on stock value, VAT posting and role checks (77 of 77 backend tests now pass, one more than before). Where they differ: his review stopped at the happy path, so several "fixed" items still fail under concurrency, deletes or the GL-engine mode. The new sales-return feature shipped with the same class of defect the audit found elsewhere: checks outside the transaction, gross refunds and no idempotency. None of the security holes in this audit were in his list or were fixed.
+
+The recommended order in section 6 stands, with two changes. The return-then-void and concurrent-return defects join the P0 stock-integrity group. WAL-safe backups (using the database's own backup mechanism instead of copying the file) join the backup group.
+
+### 9.5 Not re-tested after the merge
+
+Five problems whose code the commit does not touch (QA-023, 024, 025, 027, 038), and the return feature under period lock, with branch-specific stock accounts, in PDFs and in the UI return dialog.
+
 ## Appendix — All 68 clusters
 
-Status: 2+ = reproduced by two or more agents, 1 = one agent, IBR = deliberate decision that is still risky.
+Evidence: 2+ = reproduced by two or more agents, 1 = one agent, IBR = deliberate decision that is still risky. After merge: result of the 26 Nov re-test of commit 6cc6d56.
 
-| ID | Severity | Status | Title |
-|---|---|---|---|
-| QA-001 | Critical | 2+ | Unauthenticated download of the whole database via a forgeable backup token |
-| QA-002 | Critical | 2+ | Role checks not enforced on many controllers: an accountant can restore, import, download databases and edit tax rates |
-| QA-014 | Critical | 2+ | Voiding a sale after a separate payment refunds the money twice (cash short, AR phantom) |
-| QA-015 | Critical | 2+ | `POST /sales/:id/payments` records a payment with no journal entry, so it cannot be cancelled |
-| QA-017 | Critical | 2+ | Expenses paid by bank transfer or card are taken from the cash drawer |
-| QA-019 | Critical | 2+ | Purchase tax missing from the ledger; payables disagree four ways; supplier balance never decreases |
-| QA-029 | Critical | 2+ | Count-based document numbers plus hard deletes permanently block purchases, expenses, lots and transfers |
-| QA-042 | Critical | 2+ | Two lines of the same item in one sale oversell the same lot (negative stock) |
-| QA-043 | Critical | 2+ | Stock adjustments ignore lots and use average cost, so lots, inventory and ledger drift apart |
-| QA-044 | Critical | 2+ | Stock transfer (cutting) creates or destroys inventory value with no journal entry |
-| QA-050 | Critical | 2+ | Concurrent voids, payments and credit notes all succeed (checks happen outside the transaction) |
-| QA-051 | Critical | 2+ | Lost updates: stock adjustments overwrite concurrent sales' decrements |
-| QA-003 | High | 2+ | Restore/import validates nothing and cannot roll back: one bad archive bricks the system |
-| QA-004 | High | 2+ | Backup files overwrite each other; retention can delete the newest backup; backups unencrypted, plaintext .bak left behind |
-| QA-005 | High | 1 | Hard-coded fallback for the login signing secret |
-| QA-006 | High | 2+ | Login lifecycle weaknesses: tokens survive logout/password change, refresh replayable, no lockout, weak passwords, IP not recorded |
-| QA-007 | High | 2+ | Authorization lives in the UI, not the API (accountant sees cost/profit/supplier prices; page revocation ineffective) |
-| QA-008 | High | 2+ | Discount cap, price override and approval controls not enforced |
-| QA-009 | High | 1 | Sole admin can demote himself; setup can be re-opened and admin reset anonymously; settings API unvalidated |
-| QA-013 | High | 1 | Tokens and passwords exposed on the client; script injection through the POS receipt |
-| QA-016 | High | 2+ | Mixed-tender sale posts the whole paid amount to the first tender's account |
-| QA-020 | High | 2+ | Credit notes only adjust the ledger: invoice, debt and balance unchanged, customer can still pay in full |
-| QA-021 | High | IBR | Debt write-off posts nothing to the ledger; payables write-off leaves supplier untouched |
-| QA-022 | High | 2+ | Closed documents still accept payments; void and write-off each decrement the customer balance |
-| QA-023 | High | 2+ | Allocating an advance or reconciliation changes only the ledger; invoice stays unpaid and can be collected again |
-| QA-024 | High | 2+ | Several parallel sources of truth for receivables; dashboard counts voided and written-off debts |
-| QA-026 | High | 2+ | VAT is booked as revenue and counted as profit; VAT report shows 0 |
-| QA-027 | High | 2+ | Printed tax invoice has no VAT line, no tax number and ignores credit notes |
-| QA-028 | High | 2+ | GL/tax engine mode (flag ON) breaks postings: numbering collisions, taxed discounted sales rejected, silent round-off |
-| QA-030 | High | IBR | Purchase edit/delete rewrites posted history; paid-at-creation purchases can never be corrected |
-| QA-031 | High | 2+ | Manual journal entries accept invalid or unbalanced data and cannot be corrected |
-| QA-032 | High | 2+ | Period lock/freeze barely enforced; no API to manage periods; journal dates differ from document dates |
-| QA-033 | High | 2+ | Balance sheet and trial balance wrong: equity sign, as-of date used as start date |
-| QA-034 | High | 1 | No year-end close or retained earnings; account ledger ignores opening balance |
-| QA-035 | High | 2+ | "Profit and Loss" page disagrees with the ledger income statement |
-| QA-036 | High | 2+ | Stock-vs-GL reconciliation report is unreliable and cannot detect real drift |
-| QA-037 | High | 1 | Account mapping not validated: bank can point to revenue/AP/cash; accounts reclassifiable with history; some edits silently ignored |
-| QA-038 | High | IBR | Insufficient-cash guard (D-14) blocks legitimate work and is bypassable |
-| QA-040 | High | 2+ | Negative, zero and fractional amounts accepted across purchases, expenses, payments, advances, adjustments |
-| QA-045 | High | 1 | Cutting has no yield/loss concept; batch date and expiry not preserved |
-| QA-047 | High | 2+ | Expired lots are sold and transferred; alerts and due dates are missing |
-| QA-048 | High | 2+ | No opening balances or cash operations; opening stock has no journal |
-| QA-052 | High | 2+ | Burst of concurrent sales causes 500 errors after a 6-second freeze |
-| QA-053 | High | 2+ | No idempotency: double-click, retry or aborted request creates duplicate sales ("ghost sales") |
-| QA-054 | High | 2+ | Date handling: reports shift a day in the shop's timezone and end dates are excluded |
-| QA-055 | High | 2+ | POS tax estimate hard-coded at 15% regardless of the selected template |
-| QA-056 | High | 2+ | Scale-barcode sales: label total discarded, some labels unsellable, line edits affect all lines of the item |
-| QA-057 | High | 2+ | POS and payment form silently drop records beyond a page limit |
-| QA-059 | High | 2+ | Number inputs treat a comma as decimal: "1,250.00" saves as 1.25 |
-| QA-060 | High | 1 | Payment form crashes the whole app; accountants cannot read bank accounts; no error boundary |
-| QA-064 | High | 2+ | No automated tests for financial logic; build does not type-check |
-| QA-010 | Medium | 1 | Inactive records cannot be listed or re-enabled |
-| QA-011 | Medium | 2+ | Audit trail covers only a few actions |
-| QA-012 | Medium | 2+ | Platform hardening: public API docs, leaked internals, vulnerable dependencies, 500 on bad input |
-| QA-018 | Medium | 2+ | Expense posting defects: all categories and discounts go to 5400; expense edit/delete leaves the journal untouched |
-| QA-025 | Medium | 2+ | Customer statement changes its computation depending on whether the period has entries |
-| QA-039 | Medium | IBR | Payment methods are free text; cheque/mobile and card-with-no-bank post to the cash box |
-| QA-041 | Medium | 2+ | Sale-level validation gaps and 1-agora residues |
-| QA-046 | Medium | 2+ | Wastage: no stock-ledger row, cannot be corrected, can create phantom stock, reachable by any user |
-| QA-049 | Medium | 1 | Inactive items sellable and invisible in lists; per-branch inventory not implemented |
-| QA-058 | Medium | 1 | POS weight rounding and discount input defects |
-| QA-061 | Medium | 1 | Real backend error reasons hidden in about 50 UI call sites |
-| QA-062 | Medium | 2+ | Purchase form totals computed in floats: "pay in full" fails or leaves 0.01 debts |
-| QA-065 | Medium | 1 | Dead or misleading settings and unvalidated configuration |
-| QA-067 | Medium | 1 | Requirements not implemented and master-data validation gaps |
-| QA-063 | Low | 1 | Minor UI defects: stale PDF dialog parameters, dead code, mislabels, cache invalidation |
-| QA-066 | Low | 1 | Repository, documentation and currency hygiene |
-| QA-068 | Info | 2+ | Test-data and harness facts (Info) |
+| ID | Severity | Evidence | After merge of 6cc6d56 | Title |
+|---|---|---|---|---|
+| QA-001 | Critical | 2+ | NOT FIXED | Unauthenticated download of the whole database via a forgeable backup token |
+| QA-002 | Critical | 2+ | PARTLY FIXED | Role checks not enforced on many controllers: an accountant can restore, import, download databases and edit tax rates |
+| QA-014 | Critical | 2+ | NOT FIXED | Voiding a sale after a separate payment refunds the money twice (cash short, AR phantom) |
+| QA-015 | Critical | 2+ | NOT FIXED | `POST /sales/:id/payments` records a payment with no journal entry, so it cannot be cancelled |
+| QA-017 | Critical | 2+ | NOT FIXED | Expenses paid by bank transfer or card are taken from the cash drawer |
+| QA-019 | Critical | 2+ | PARTLY FIXED | Purchase tax missing from the ledger; payables disagree four ways; supplier balance never decreases |
+| QA-029 | Critical | 2+ | NOT FIXED | Count-based document numbers plus hard deletes permanently block purchases, expenses, lots and transfers |
+| QA-042 | Critical | 2+ | PARTLY FIXED | Two lines of the same item in one sale oversell the same lot (negative stock) |
+| QA-043 | Critical | 2+ | PARTLY FIXED | Stock adjustments ignore lots and use average cost, so lots, inventory and ledger drift apart |
+| QA-044 | Critical | 2+ | FIXED | Stock transfer (cutting) creates or destroys inventory value with no journal entry |
+| QA-050 | Critical | 2+ | NOT FIXED | Concurrent voids, payments and credit notes all succeed (checks happen outside the transaction) |
+| QA-051 | Critical | 2+ | NOT FIXED | Lost updates: stock adjustments overwrite concurrent sales' decrements |
+| QA-003 | High | 2+ | NOT FIXED | Restore/import validates nothing and cannot roll back: one bad archive bricks the system |
+| QA-004 | High | 2+ | NOT FIXED | Backup files overwrite each other; retention can delete the newest backup; backups unencrypted, plaintext .bak left behind |
+| QA-005 | High | 1 | NOT FIXED | Hard-coded fallback for the login signing secret |
+| QA-006 | High | 2+ | NOT FIXED | Login lifecycle weaknesses: tokens survive logout/password change, refresh replayable, no lockout, weak passwords, IP not recorded |
+| QA-007 | High | 2+ | NOT FIXED | Authorization lives in the UI, not the API (accountant sees cost/profit/supplier prices; page revocation ineffective) |
+| QA-008 | High | 2+ | PARTLY FIXED | Discount cap, price override and approval controls not enforced |
+| QA-009 | High | 1 | NOT FIXED | Sole admin can demote himself; setup can be re-opened and admin reset anonymously; settings API unvalidated |
+| QA-013 | High | 1 | NOT FIXED | Tokens and passwords exposed on the client; script injection through the POS receipt |
+| QA-016 | High | 2+ | NOT FIXED | Mixed-tender sale posts the whole paid amount to the first tender's account |
+| QA-020 | High | 2+ | CHANGED, still wrong | Credit notes only adjust the ledger: invoice, debt and balance unchanged, customer can still pay in full |
+| QA-021 | High | IBR | PARTLY FIXED | Debt write-off posts nothing to the ledger; payables write-off leaves supplier untouched |
+| QA-022 | High | 2+ | NOT FIXED | Closed documents still accept payments; void and write-off each decrement the customer balance |
+| QA-023 | High | 2+ | not re-run (code untouched) | Allocating an advance or reconciliation changes only the ledger; invoice stays unpaid and can be collected again |
+| QA-024 | High | 2+ | not re-run (code untouched) | Several parallel sources of truth for receivables; dashboard counts voided and written-off debts |
+| QA-026 | High | 2+ | PARTLY FIXED | VAT is booked as revenue and counted as profit; VAT report shows 0 |
+| QA-027 | High | 2+ | not re-run (code untouched) | Printed tax invoice has no VAT line, no tax number and ignores credit notes |
+| QA-028 | High | 2+ | PARTLY FIXED | GL/tax engine mode (flag ON) breaks postings: numbering collisions, taxed discounted sales rejected, silent round-off |
+| QA-030 | High | IBR | NOT FIXED | Purchase edit/delete rewrites posted history; paid-at-creation purchases can never be corrected |
+| QA-031 | High | 2+ | NOT FIXED | Manual journal entries accept invalid or unbalanced data and cannot be corrected |
+| QA-032 | High | 2+ | NOT FIXED | Period lock/freeze barely enforced; no API to manage periods; journal dates differ from document dates |
+| QA-033 | High | 2+ | NOT FIXED | Balance sheet and trial balance wrong: equity sign, as-of date used as start date |
+| QA-034 | High | 1 | NOT FIXED | No year-end close or retained earnings; account ledger ignores opening balance |
+| QA-035 | High | 2+ | NOT FIXED | "Profit and Loss" page disagrees with the ledger income statement |
+| QA-036 | High | 2+ | NOT FIXED | Stock-vs-GL reconciliation report is unreliable and cannot detect real drift |
+| QA-037 | High | 1 | NOT FIXED | Account mapping not validated: bank can point to revenue/AP/cash; accounts reclassifiable with history; some edits silently ignored |
+| QA-038 | High | IBR | not re-run (code untouched) | Insufficient-cash guard (D-14) blocks legitimate work and is bypassable |
+| QA-040 | High | 2+ | NOT FIXED | Negative, zero and fractional amounts accepted across purchases, expenses, payments, advances, adjustments |
+| QA-045 | High | 1 | NOT FIXED | Cutting has no yield/loss concept; batch date and expiry not preserved |
+| QA-047 | High | 2+ | NOT FIXED | Expired lots are sold and transferred; alerts and due dates are missing |
+| QA-048 | High | 2+ | PARTLY FIXED | No opening balances or cash operations; opening stock has no journal |
+| QA-052 | High | 2+ | NOT FIXED | Burst of concurrent sales causes 500 errors after a 6-second freeze |
+| QA-053 | High | 2+ | NOT FIXED | No idempotency: double-click, retry or aborted request creates duplicate sales ("ghost sales") |
+| QA-054 | High | 2+ | NOT FIXED | Date handling: reports shift a day in the shop's timezone and end dates are excluded |
+| QA-055 | High | 2+ | NOT FIXED | POS tax estimate hard-coded at 15% regardless of the selected template |
+| QA-056 | High | 2+ | NOT FIXED | Scale-barcode sales: label total discarded, some labels unsellable, line edits affect all lines of the item |
+| QA-057 | High | 2+ | NOT FIXED | POS and payment form silently drop records beyond a page limit |
+| QA-059 | High | 2+ | NOT FIXED | Number inputs treat a comma as decimal: "1,250.00" saves as 1.25 |
+| QA-060 | High | 1 | NOT FIXED | Payment form crashes the whole app; accountants cannot read bank accounts; no error boundary |
+| QA-064 | High | 2+ | not re-run (code untouched) | No automated tests for financial logic; build does not type-check |
+| QA-010 | Medium | 1 | NOT FIXED | Inactive records cannot be listed or re-enabled |
+| QA-011 | Medium | 2+ | PARTLY FIXED | Audit trail covers only a few actions |
+| QA-012 | Medium | 2+ | NOT FIXED | Platform hardening: public API docs, leaked internals, vulnerable dependencies, 500 on bad input |
+| QA-018 | Medium | 2+ | PARTLY FIXED | Expense posting defects: all categories and discounts go to 5400; expense edit/delete leaves the journal untouched |
+| QA-025 | Medium | 2+ | not re-run (code untouched) | Customer statement changes its computation depending on whether the period has entries |
+| QA-039 | Medium | IBR | NOT FIXED | Payment methods are free text; cheque/mobile and card-with-no-bank post to the cash box |
+| QA-041 | Medium | 2+ | NOT FIXED | Sale-level validation gaps and 1-agora residues |
+| QA-046 | Medium | 2+ | PARTLY FIXED | Wastage: no stock-ledger row, cannot be corrected, can create phantom stock, reachable by any user |
+| QA-049 | Medium | 1 | NOT FIXED | Inactive items sellable and invisible in lists; per-branch inventory not implemented |
+| QA-058 | Medium | 1 | NOT FIXED | POS weight rounding and discount input defects |
+| QA-061 | Medium | 1 | NOT FIXED | Real backend error reasons hidden in about 50 UI call sites |
+| QA-062 | Medium | 2+ | NOT FIXED | Purchase form totals computed in floats: "pay in full" fails or leaves 0.01 debts |
+| QA-065 | Medium | 1 | not re-run (code untouched) | Dead or misleading settings and unvalidated configuration |
+| QA-067 | Medium | 1 | not re-run (code untouched) | Requirements not implemented and master-data validation gaps |
+| QA-063 | Low | 1 | not re-run (code untouched) | Minor UI defects: stale PDF dialog parameters, dead code, mislabels, cache invalidation |
+| QA-066 | Low | 1 | PARTLY FIXED | Repository, documentation and currency hygiene |
+| QA-068 | Info | 2+ | info | Test-data and harness facts (Info) |

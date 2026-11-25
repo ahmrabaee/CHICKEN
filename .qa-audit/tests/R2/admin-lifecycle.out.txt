@@ -1,0 +1,8 @@
+items isActive=false         200 rows 6 inactive among them 0
+customers isActive=false     200 rows 3 inactive among them 0
+users isActive=false         200 rows 1 inactive among them 0
+after soft-deleting item 7 : isActive=false list contains it? false | rows 6
+self-demote sole admin PUT /users/1 {roleId:accountant} -> 200 {"success":true,"data":{"id":1,"username":"admin","fullName":"مدير النظام","fullNameEn":"System Admin","email":"admin@chickenshop.
+admin relogin roles "accountant"
+GET /users as demoted -> 403
+PUT /settings/arbitrary_key -> 403 {"success":false,"error":{"code":"FORBIDDEN","message":"Insufficient permissions","messageAr":"صلاحيات غير كافية"},"meta":{"timest

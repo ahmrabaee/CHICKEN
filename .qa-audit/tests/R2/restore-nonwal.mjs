@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+import { connect } from 'file:///E:/DEV/Chicken%20FMS/.qa-audit/harness/client.mjs';
+import { DatabaseSync } from 'node:sqlite';
+const m = JSON.parse(fs.readFileSync('E:/DEV/Chicken FMS/.qa-audit/envs/r2/meta.json','utf8'));
+const c = await connect(m.baseUrl,'admin','admin123');
+const jm=()=>{const d=new DatabaseSync(m.db,{readOnly:true});try{return d.prepare('pragma journal_mode').get().journal_mode}finally{d.close()}};
+console.log('journal_mode before',jm());
+const fd=new FormData(); fd.append('file',new Blob([fs.readFileSync('E:/DEV/Chicken FMS/.qa-audit/tests/R2/_old/old.tar.gz')]),'old.tar.gz');
+const imp=await fetch(`${m.baseUrl}/system/backups/import`,{method:'POST',headers:{Authorization:'Bearer '+c.token},body:fd}); const j=await imp.json(); console.log('import',imp.status,JSON.stringify(j).slice(0,200));
+const id=j.data?.backupId; const r=await c.post(`/system/backups/${id}/restore`,{}); console.log('restore',r.status);
+console.log('journal_mode after restoring pre-WAL archive',jm(),'(file header)');
+console.log('GET /sales',(await c.get('/sales?pageSize=1')).status);

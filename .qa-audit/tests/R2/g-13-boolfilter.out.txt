@@ -1,0 +1,10 @@
+file:///E:/DEV/Chicken%20FMS/.qa-audit/harness/client.mjs:26
+  if (!r.ok) throw new Error(`login failed for ${username}: ${r.status} ${JSON.stringify(r.body)}`);
+                   ^
+
+Error: login failed for admin: 401 {"success":false,"error":{"code":"INVALID_CREDENTIALS","message":"Invalid username or password","messageAr":"اسم المستخدم أو كلمة المرور غير صحيحة"},"meta":{"timest
+    at connect (file:///E:/DEV/Chicken%20FMS/.qa-audit/harness/client.mjs:26:20)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///E:/DEV/Chicken%20FMS/.qa-audit/tests/R2/g/13-boolfilter.mjs:2:11
+
+Node.js v24.15.0

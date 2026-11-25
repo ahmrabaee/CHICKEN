@@ -1,0 +1,41 @@
+POST /users weak pw                                        201 {"success":true,"data":{"id":2,"username":"gg1","fullName":"G one","fullNameEn":null,"email":null,"phone":null,"preferredLanguage":"ar","defaultBranchId":null,"isActiv
+POST /users short pw                                       400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"password must be longer than or equal to 8 characters","messageAr":"password must be longer than or equa
+POST /users dup username                                   409 {"success":false,"error":{"code":"DUPLICATE_ENTRY","message":"Username already exists","messageAr":"اسم المستخدم موجود بالفعل"},"meta":{"timestam
+POST /users dup username CASE                              201 {"success":true,"data":{"id":3,"username":"GG1","fullName":"G one","fullNameEn":null,"email":null,"phone":null,"preferredLanguage":"ar","defaultBranchId":null,"isActiv
+POST /users roleId 999                                     404 {"success":false,"error":{"code":"NOT_FOUND","message":"Role not found","messageAr":"الدور غير موجود"},"meta":{"timestamp":"2026-11-25T22:03:52.273Z","pat
+POST /users no email dup                                   201 {"success":true,"data":{"id":4,"username":"gg3","fullName":"G3","fullNameEn":null,"email":"x@y.com","phone":null,"preferredLanguage":"ar","defaultBranchId":null,"isAct
+POST /users dup email                                      409 {"success":false,"error":{"code":"DUPLICATE_ENTRY","message":"Email already exists","messageAr":"البريد الإلكتروني موجود بالفعل"},"meta":{"t
+POST /users 2nd admin                                      201 {"success":true,"data":{"id":5,"username":"gadm","fullName":"G adm","fullNameEn":null,"email":null,"phone":null,"preferredLanguage":"ar","defaultBranchId":null,"isActi
+POST /users bad branch                                     400 {"success":false,"error":{"code":"FOREIGN_KEY_ERROR","message":"Related record does not exist: User","messageAr":"السجل المرتبط غير موجود: User"},"
+5:gadm:true:admin | 4:gg3:true:accountant | 3:GG1:true:accountant | 2:gg1:true:accountant | 1:admin:true:admin
+PUT g1 roleId 999                                          400 {"success":false,"error":{"code":"FOREIGN_KEY_ERROR","message":"Related record does not exist: UserRole","messageAr":"السجل المرتبط غير موجود: User
+g1 after {"id":2,"username":"gg1","fullName":"G one","fullNameEn":null,"email":null,"phone":null,"preferredLanguage":"ar","defaultBranchId":null,"isActive":true,"roles":[],"createdAt":"2026-11-25T22:03:52.033Z","workStartDate":"20
+g1 login (no role?)                                        200 {"success":true,"data":{"accessToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInVzZXJuYW1lIjoiZ2cxIiwicm9sZXMiOltdLCJwZXJtaXNzaW9ucyI6W10sImFsbG93ZWRQYWdlcyI
+PUT g1 roleId 2 restore                                    200 {"success":true,"data":{"id":2,"username":"gg1","fullName":"G one","fullNameEn":null,"email":null,"phone":null,"preferredLanguage":"ar","defaultBranchId":null,"isActiv
+DELETE gadm (2 admins)                                     204 null
+active admins 1
+DELETE gadm again (already inactive)                       403 {"success":false,"error":{"code":"FORBIDDEN","message":"Cannot deactivate the last admin user","messageAr":"لا يمكن إلغاء تفعيل آخر مسؤول"},"me
+PUT gadm roleId 2 (demote inactive)                        200 {"success":true,"data":{"id":5,"username":"gadm","fullName":"G adm","fullNameEn":null,"email":null,"phone":null,"preferredLanguage":"ar","defaultBranchId":null,"isActi
+PUT gadm isActive true (reactivate?)                       400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"property isActive should not exist","messageAr":"property isActive should not exist","details":["propert
+login deactivated gadm                                     401 {"success":false,"error":{"code":"USER_INACTIVE","message":"User account is inactive","messageAr":"حساب المستخدم غير نشط"},"meta":{"timestamp":"2026-
+PUT g1 password 1char                                      400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"password must be longer than or equal to 8 characters","messageAr":"password must be longer than or equa
+PUT g1 password 8chars                                     200 {"success":true,"data":{"id":2,"username":"gg1","fullName":"G one","fullNameEn":null,"email":null,"phone":null,"preferredLanguage":"ar","defaultBranchId":null,"isActiv
+PUT username to admin (dup)                                409 {"success":false,"error":{"code":"DUPLICATE_ENTRY","message":"Username already exists","messageAr":"اسم المستخدم موجود بالفعل"},"meta":{"timestam
+PUT username ""                                            400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"username must be longer than or equal to 3 characters, username should not be empty","messageAr":"userna
+reset-password empty                                       400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"newPassword must be longer than or equal to 8 characters","messageAr":"newPassword must be longer than o
+reset-password 8                                           200 {"success":true,"data":{"message":"Password reset successfully","messageAr":"تم إعادة تعيين كلمة المرور بنجاح"},"meta":{"timestamp":"2026-11
+reset-password unknown user                                404 {"success":false,"error":{"code":"NOT_FOUND","message":"User not found","messageAr":"المستخدم غير موجود"},"meta":{"timestamp":"2026-11-25T22:03:53.835Z
+admin resets g1 pw again                                   200 {"success":true,"data":{"message":"Password reset successfully","messageAr":"تم إعادة تعيين كلمة المرور بنجاح"},"meta":{"timestamp":"2026-11
+old access token after admin reset                         200 {"success":true,"data":{"id":2,"username":"gg1","fullName":"G one","role":"accountant","permissions":["dashboard.view","sales.create","sales.view","sales.discount.limi
+old refresh after admin reset                              401 {"success":false,"error":{"code":"INVALID_TOKEN","message":"User not found or token revoked","messageAr":"المستخدم غير موجود أو الرمز ملغى"}
+change-pw wrong current                                    400 {"success":false,"error":{"code":"INVALID_CREDENTIALS","message":"Current password is incorrect","messageAr":"كلمة المرور الحالية غير صحيحة"},
+change-pw same as old                                      200 {"success":true,"data":{"message":"Password changed successfully","messageAr":"تم تغيير كلمة المرور بنجاح"},"meta":{"timestamp":"2026-11-25T22:03
+change-pw weak                                             400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"newPassword must be longer than or equal to 8 characters","messageAr":"newPassword must be longer than o
+change-pw ok                                               200 {"success":true,"data":{"message":"Password changed successfully","messageAr":"تم تغيير كلمة المرور بنجاح"},"meta":{"timestamp":"2026-11-25T22:03
+login w/ old                                               401 {"success":false,"error":{"code":"INVALID_CREDENTIALS","message":"Invalid username or password","messageAr":"اسم المستخدم أو كلمة المرور غير 
+PUT /users/me w/ extra fields                              200 {"success":true,"data":{"id":2,"username":"gg1","fullName":"Renamed","fullNameEn":null,"email":null,"phone":null,"preferredLanguage":"ar","defaultBranchId":null,"isAct
+GET /auth/me after                                         200 {"success":true,"data":{"id":2,"username":"gg1","fullName":"Renamed","role":"accountant","permissions":["dashboard.view","sales.create","sales.view","sales.discount.li
+--- LAST ADMIN
+PUT admin roleId 2 (SOLE ADMIN DEMOTES SELF)               200 {"success":true,"data":{"id":1,"username":"admin","fullName":"مدير النظام","fullNameEn":"System Admin","email":"admin@chickenshop.local","phone":"+966-50-000
+active admins now 403
+DELETE g1                                                  403 {"success":false,"error":{"code":"FORBIDDEN","message":"Insufficient permissions","messageAr":"صلاحيات غير كافية"},"meta":{"timestamp":"2026-11-25T22:03

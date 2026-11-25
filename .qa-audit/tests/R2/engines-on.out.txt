@@ -1,0 +1,23 @@
+tax templates [{"id":1,"name":"VAT 15% Sales","type":"sales","rate":1500},{"id":2,"name":"VAT 15% Purchases","type":"purchases","rate":1500}]
+purchase A (legacy)                                                    201 PUR-000004
+purchase B (legacy)                                                    201 PUR-000005
+delete purchase A (JE removed from middle)                             200 ok
+latest JE numbers before engine ["JE-000003","JE-000001"]
+--- ENGINES ON
+gl_engine_enabled=true                                                 200 ok
+tax_engine_enabled=true                                                200 ok
+sale cash (engine on)                                                  201 SAL-20261125-0001
+sale credit (engine on)                                                201 SAL-20261125-0002
+sale with 15% tax (engine on)                                          201 SAL-20261125-0003
+sale with tax + header discount 1000 (engine on) [H-2 claim]           201 SAL-20261125-0004
+sale with tax + discount 0.30 (engine on)                              400 OVERPAYMENT Paid amount exceeds total. المبلغ المدفوع أكبر من الإجمالي
+void taxed sale                                                        200 SAL-20261125-0003
+purchase with purchase tax template, paid in full (engine on)          409 DUPLICATE_ENTRY A record with this purchase_number already exists
+purchase no tax (engine on)                                            409 DUPLICATE_ENTRY A record with this purchase_number already exists
+expense (engine on)                                                    201 EXP-000004
+wastage (engine on)                                                    201 ok
+--- manual JE numbering after deletes
+JE numbers ["JE-000010","JE-000009","JE-000008","JE-000007","JE-000006","JE-000005","JE-000004","JE-000003"]
+duplicate JE numbers []
+2120 balance (credit-debit) [{"b":1350}]
+1125 balance (debit-credit) [{"b":0}]

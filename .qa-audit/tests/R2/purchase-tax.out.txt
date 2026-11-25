@@ -1,0 +1,6 @@
+[engine OFF] credit purchase net 10000+15% -> 201 PUR-000004 total 11500 tax 1500 dGL {"cash":0,"vatIn":1500,"ap":-11500,"inv":10000}
+[engine OFF] paid-in-full purchase -> 201 PUR-000005 dGL {"cash":-11500,"vatIn":1500,"ap":0,"inv":10000}
+[engine OFF] unbalanced JEs 0
+[engine ON ] credit purchase net 10000+15% -> 201 PUR-000006 total 11500 tax 1500 dGL {"cash":0,"vatIn":0,"ap":-10000,"inv":10000}
+[engine ON ] paid-in-full purchase -> 400 UNBALANCED_ENTRY dGL {"cash":0,"vatIn":0,"ap":0,"inv":0}
+[engine ON ] unbalanced JEs 0

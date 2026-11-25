@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+import { connect } from 'file:///E:/DEV/Chicken%20FMS/.qa-audit/harness/client.mjs';
+import { DatabaseSync } from 'node:sqlite';
+const m = JSON.parse(fs.readFileSync('E:/DEV/Chicken FMS/.qa-audit/envs/r2/meta.json','utf8'));
+const c = await connect(m.baseUrl,'admin','admin123');
+const q=(sql)=>{const d=new DatabaseSync(m.db,{readOnly:true});try{return d.prepare(sql).all();}finally{d.close();}};
+const b=q('select max(id) m from audit_logs')[0].m;
+const fd=new FormData(); fd.append('file',new Blob([fs.readFileSync('E:/DEV/Chicken FMS/.qa-audit/tests/R2/_old/old.tar.gz')]),'old.tar.gz');
+const t=Date.now(); const r=await fetch(`${m.baseUrl}/system/backups/import`,{method:'POST',headers:{Authorization:'Bearer '+c.token},body:fd}); console.log('multipart import',r.status,Date.now()-t,'ms',(await r.text()).slice(0,80));
+await new Promise(r=>setTimeout(r,800));
+console.log('audit rows for upload:',JSON.stringify(q(`select action,entity_type,entity_id,length(changes) cl,substr(changes,1,120) ch from audit_logs where id>${b}`)));
+const d=await fetch(`${m.baseUrl}/sales/report/pdf`,{headers:{Authorization:'Bearer '+c.token}}); console.log('GET pdf',d.status,'audit rows after GET:',q(`select count(*) n from audit_logs where id>${b}`)[0].n);

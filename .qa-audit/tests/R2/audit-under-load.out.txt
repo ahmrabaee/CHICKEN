@@ -1,0 +1,3 @@
+sales 201: 1046 failures {"500":4} | sales rows added 1046 | audit sales/create rows added 1043 | LOST audit rows 3
+120-line sale -> 201
+last audit row len 4000 valid JSON false

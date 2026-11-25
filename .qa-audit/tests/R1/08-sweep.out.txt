@@ -1,0 +1,67 @@
+=== C-6 RolesGuard: accountant against previously open endpoints (QA-002) and discount cap (QA-008)
+  POST /tax/templates (was 201): 403 FORBIDDEN
+  GET /tax/templates: OK
+  POST /credit-notes: 400 EXCEEDS_OUTSTANDING
+  GET /accounts: 404 NOT_FOUND
+  POST /accounts: 404 NOT_FOUND
+  GET /reconciliation/outstanding/party: OK
+  GET /system/backups (QA-002): OK
+  POST /system/backups (QA-002): 404 NOT_FOUND
+  GET /settings: 403 FORBIDDEN
+  POST /users (create admin?): 403 FORBIDDEN
+  GET /reports/profit-loss (accountant): OK
+  GET /items/ cost visible: OK
+  accountant debt write-off (admin-only claimed): 403 FORBIDDEN
+  accountant discountAmount 2000 on 5000 (40%): 403 DISCOUNT_LIMIT_EXCEEDED
+  accountant line discount 4000 on 5000: 403 DISCOUNT_LIMIT_EXCEEDED
+  accountant discountPct 600: 403 DISCOUNT_LIMIT_EXCEEDED
+  accountant discount 4.9% (245) OK expected: OK
+  accountant combined 3% line + 3% header: 403 DISCOUNT_LIMIT_EXCEEDED
+  accountant price override pricePerKg 1: OK
+  accountant 100% price via discount in 100 tiny lines (split-line bypass) x20 lines each 5% off: OK
+  accountant wastage: OK
+  accountant adjustment: 403 FORBIDDEN
+  accountant sale void: 403 FORBIDDEN
+=== C-5 audit interceptor coverage
+  POST /users OK -> audit rows + 1
+  PUT /settings/pos.x OK -> audit rows + 1
+  POST /purchases OK -> audit rows + 1
+  POST /expenses OK -> audit rows + 1
+  POST /system/backups 404 NOT_FOUND -> audit rows + 0
+  POST /tax/templates OK -> audit rows + 1
+  POST /accounting/journal-entries OK -> audit rows + 1
+  POST /customers OK -> audit rows + 1
+  PUT /users/:id password change OK -> audit rows + 1
+  denied attempt (accountant POST /users) audited? 22
+  403/400 attempt audit rows + 0
+  sale void audit rows + 2 (service row + interceptor row)
+  latest rows [{"action":"void","entity_type":"sales","entity_id":6,"username":"admin","ip":"::1","ch":"{\"method\":\"POST\",\"path\":\"/v1/sales/6/void\",\"body\":{\"reason\":\"dupe-audit\"}}"},{"action":"void","entity_type":"Sale","entity_id":6,"username":"admin","ip":null,"ch":"{\"reason\":\"dupe-audit\"}"},{"action":"update","entity_type":"users","entity_id":3,"username":"admin","ip":"::1","ch":"{\"method\":\"PUT\",\"path\":\"/v1/users/3\",\"body\":{\"fullName\":\"aud2\"}}"},{"action":"create","entity_type":"customers","entity_id":5,"username":"admin","ip":"::1","ch":"{\"method\":\"POST\",\"path\":\"/v1/customers\",\"body\":{\"name\":\"aud cust\",\"phone\":\"0599000111\"}}"},{"action":"journal_entries","entity_type":"accounting","entity_id":10,"username":"admin","ip":"::1","ch":"{\"method\":\"POST\",\"path\":\"/v1/accounting/journal-entries\",\"body\":{\"description\":\"aud\",\"entryDate\":\"2026-11-25T2"},{"action":"templates","entity_type":"tax","entity_id":3,"username":"admin","ip":"::1","ch":"{\"method\":\"POST\",\"path\":\"/v1/tax/templates\",\"body\":{\"name\":\"aud tmpl\",\"type\":\"sales\",\"items\":[{\"accountId\":18,"}]
+  password in audit? 0
+  X-Forwarded-For spoof recorded as ip: 6.6.6.6
+  audit rows before/after setting change contain old value? 1 {"changes":"{\"method\":\"PUT\",\"path\":\"/v1/settings/pos.max_discount\",\"body\":{\"value\":\"7\"}}"}
+=== QA-020 credit note vs invoice/debt
+submit OK
+  GL {"1120":-4000,"4900":4000} (orig: 5400 +4000 / AR -4000) | sale {"t":10000,"p":0,"s":"unpaid"} cust bal 10000
+  customer then pays full 10000 OK
+=== QA-021 / QA-022 write-off, payment after void
+write-off by admin OK GL {} (orig: no GL) cust bal 0
+payment after write-off OK
+payment on voided sale OK
+POST /sales/:id/payments on voided sale OK
+=== QA-041 sale validation
+empty lines sale OK
+100% discount sale OK
+overpay by 1 agora 400 UNBALANCED_ENTRY
+credit sale 10000 vs limit 5000 OK
+=== QA-047 expired lot sold
+sell 3kg from lot expired 2026-11-01 OK
+=== QA-031 manual JE validation
+fractional 1.6+0.4 vs 2 OK
+negative amounts OK
+empty lines OK
+date 2030 OK
+=== QA-036 stock-vs-gl report; QA-035 P&L page vs GL
+stock-vs-gl asOf today {"asOfDate":"2026-11-25T00:00:00.000Z","rows":[],"summary":{"totalStockValue":0,"totalAccountValue":0,"totalDifference":0}}
+P&L page {"revenue":59265,"discounts":5245,"costOfGoodsSold":46000,"grossProfit":13265,"expenses":1000,"netProfit":12265,"grossMargin":22.382519193453135,"netMargin":20.69518265418038}
+GL: revenue(4110) 64510 discount(4900) 9245 COGS 5100 46000 wastage 5300 200 adjust 5320 -10000 other exp 5400 1000 VAT 2120 0
+JE unbalanced [{"id":25,"n":"JE-000025","d":1,"c":2}]

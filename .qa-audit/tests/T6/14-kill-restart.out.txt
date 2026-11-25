@@ -1,0 +1,12 @@
+killing backend pid 2100 after 1.5 s of load (acked so far {"sale":45,"pur":4})
+client errors during/after kill: {"ECONNRESET":3,"ECONNREFUSED":39}
+env dir after kill (hot journal present?):
+-rw-r--r-- 1 mohdb 197611 2637824 Nov 25 13:26 app.db
+-rw-r--r-- 1 mohdb 197611  966656 Nov 25 13:24 app.db.before-restore-1795605861758.bak
+restart: [t6] ready {"name":"t6","port":3111,"baseUrl":"http://localhost:3111/v1","db":"E:/DEV/Chicken FMS/.qa-audit/envs/t6/app.db","log":"E:/DEV/Chicken FMS/.qa-audit/logs/t6.log","pid":20256}
+rows: sales +45 (acked 45), purchases +5 (acked 4), JE +50, sale_lines +90 (expect 2/sale)
+integrity_check: [{"integrity_check":"ok"}]
+sale without JE / JE without doc / sale lines≠2 (T6 kill): 0 0 0 purchase without lot: 0
+checker FAIL ids before: ["GL-02","AR-01","AR-02","AP-01","DEBT-01","INV-01","INV-02","INV-03","INV-04","CASH-03","DOC-01","DOC-02","DOC-03","DOC-04"] after: ["GL-02","AR-01","AR-02","AP-01","DEBT-01","INV-01","INV-02","INV-03","INV-04","CASH-03","DOC-01","DOC-02","DOC-03","DOC-04"] NEW: []
+post-restart sale: 201
+backup status after restart: {"running":false,"last_success_at":"2026-11-25T11:25:57.984Z","last_failure_at":null,"last_error":"","next_run_at":"2027-01-01T01:00:00.000Z","auto_enabled":true}

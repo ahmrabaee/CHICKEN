@@ -1,0 +1,13 @@
+[t8b] stopped
+[t8b] ready {"name":"t8b","port":3114,"baseUrl":"http://localhost:3114/v1","db":"E:/DEV/Chicken FMS/.qa-audit/envs/t8b/app.db","log":"E:/DEV/Chicken FMS/.qa-audit/logs/t8b.log","pid":9668}
+day 1 2026-10-01 sales=41 cashΔ=-6000.00 bankΔ=6000.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-401.42 NIΔ=-401.42 err=0
+day 2 2026-10-02 sales=36 cashΔ=-6000.00 bankΔ=6000.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-960.18 NIΔ=-960.18 err=0
+day 3 2026-10-03 sales=36 cashΔ=-6000.00 bankΔ=6000.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-1141.59 NIΔ=-1141.59 err=0
+day 4 2026-10-04 sales=41 cashΔ=-6000.00 bankΔ=6000.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-1384.85 NIΔ=-1384.85 err=0
+day 5 2026-10-05 sales=42 cashΔ=-6000.00 bankΔ=6000.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-1754.07 NIΔ=-1754.07 err=0
+day 6 2026-10-06 sales=20 cashΔ=-6000.00 bankΔ=6000.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-2054.58 NIΔ=-2054.58 err=0
+day 7 2026-10-07 sales=32 cashΔ=-6000.00 bankΔ=6000.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-2233.00 NIΔ=-2233.00 err=0
+day 8 2026-10-08 sales=27 cashΔ=-6000.00 bankΔ=6000.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-2564.00 NIΔ=-2564.00 err=0
+day 9 2026-10-09 sales=68 cashΔ=-6000.00 bankΔ=6000.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-3093.53 NIΔ=-3093.53 err=1
+day 10 2026-10-10 sales=29 cashΔ=-12550.00 bankΔ=12550.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-3613.21 NIΔ=-3613.21 err=1
+DONE {"sales":374,"voided":2,"jes":455,"purchases":14,"payments":376,"transfers":10,"wastage":14,"expenses":14} errors 2

@@ -1,0 +1,244 @@
+
+### K3-001: credit sale 100.00 -> /payments/sale 40.00 -> void (expect net zero everywhere)
+  info: {"pay":201,"void":200,"doubleVoid":"400 {\"code\":\"ALREADY_VOIDED\",\"message\":\"Sale is already voided\",\"messageAr\":\"عملية ا","saleJE":[9],"voidJE":[12],"mirror":{"mirror":false,"orig":{"1120":10000,"1131":-5000,"4110":-10000,"5100":5000},"rev":{"1111":-4000,"1120":-6000,"1131":5000,"4110":10000,"5100":-5000}}}
+  GL delta: Dr 380.00 / Cr 380.00 (balanced)
+    1111      Cash in Drawer             Dr        40.00 Cr        80.00 net       -40.00
+    1120      Accounts Receivable        Dr       140.00 Cr       100.00 net        40.00
+    1131      Fresh Chicken Inventory    Dr        50.00 Cr        50.00 net         0.00
+    4110      Fresh Chicken Sales        Dr       100.00 Cr       100.00 net         0.00
+    5100      Cost of Goods Sold         Dr        50.00 Cr        50.00 net         0.00
+  Metric deltas (money in currency units, qty in grams):
+    gl_cash                  -40.00
+    gl_ar                    40.00
+    gl_total_dr              380.00
+    gl_total_cr              380.00
+  Row count deltas: {"journal_entries":4,"journal_entry_lines":13,"sales":1,"sale_lines":1,"payments":1,"debts":1,"payment_ledger_entries":2,"stock_movements":2,"stock_ledger_entries":2,"audit_logs":1}
+
+### K3-002: credit sale 100.00 -> POST /sales/:id/payments 30.00 (expect cash +30, AR -30)
+  info: {"saleId":2,"addPayment":201,"glDeltaOfPaymentOnly":{},"subledgerDelta":{"customers_balance":-3000,"debts_receivable_open":-3000,"ple_customer":-3000},"cancelThatPayment":"404 {\"code\":\"JOURNAL_ENTRY_NOT_FOUND\",\"message\":\"No journal entry found for payment #2\",\"messageAr\":\"لم "}
+  GL delta: Dr 150.00 / Cr 150.00 (balanced)
+    1120      Accounts Receivable        Dr       100.00 Cr         0.00 net       100.00
+    1131      Fresh Chicken Inventory    Dr         0.00 Cr        50.00 net       -50.00
+    4110      Fresh Chicken Sales        Dr         0.00 Cr       100.00 net      -100.00
+    5100      Cost of Goods Sold         Dr        50.00 Cr         0.00 net        50.00
+  Metric deltas (money in currency units, qty in grams):
+    gl_ar                    100.00
+    gl_inventory             -50.00
+    gl_total_dr              150.00
+    gl_total_cr              150.00
+    customers_balance        70.00
+    debts_receivable_open    70.00
+    ple_customer             70.00
+    inventory_qty            -2500 g
+    inventory_value          -50.00
+    lots_qty                 -2500 g
+    lots_value               -50.00
+    sle_value                -50.00
+    sle_qty                  -2500 g
+  Item deltas:
+    1@- IA {"code":"IA","qty":-2500,"value":-5000,"lotQty":-2500,"lotValue":-5000}
+  Row count deltas: {"journal_entries":1,"journal_entry_lines":4,"sales":1,"sale_lines":1,"payments":1,"debts":1,"payment_ledger_entries":2,"stock_movements":1,"stock_ledger_entries":1}
+
+### K3-003: cash sale 100.00 paid 50 cash + 50 bank (expect 1111 +50, 1112-001 +50)
+  info: {"status":201,"saleId":3,"void":200}
+  GL delta: Dr 300.00 / Cr 300.00 (balanced)
+    1111      Cash in Drawer             Dr       100.00 Cr       100.00 net         0.00
+    1131      Fresh Chicken Inventory    Dr        50.00 Cr        50.00 net         0.00
+    4110      Fresh Chicken Sales        Dr       100.00 Cr       100.00 net         0.00
+    5100      Cost of Goods Sold         Dr        50.00 Cr        50.00 net         0.00
+  Metric deltas (money in currency units, qty in grams):
+    gl_total_dr              300.00
+    gl_total_cr              300.00
+  Row count deltas: {"journal_entries":2,"journal_entry_lines":8,"sales":1,"sale_lines":1,"payments":2,"stock_movements":2,"stock_ledger_entries":2,"audit_logs":1}
+
+### K3-004a: credit purchase 20.00 + tax 3.00 (expect AP -23, VAT receivable +3)
+  info: {"status":201,"grandTotal":2300}
+  GL delta: Dr 20.00 / Cr 20.00 (balanced)
+    1131      Fresh Chicken Inventory    Dr        20.00 Cr         0.00 net        20.00
+    2110      Accounts Payable           Dr         0.00 Cr        20.00 net       -20.00
+  Metric deltas (money in currency units, qty in grams):
+    gl_ap                    20.00
+    gl_inventory             20.00
+    gl_total_dr              20.00
+    gl_total_cr              20.00
+    suppliers_balance        23.00
+    debts_payable_open       23.00
+    ple_supplier             -23.00
+    inventory_qty            1000 g
+    inventory_value          20.00
+    lots_qty                 1000 g
+    lots_value               20.00
+    sle_value                20.00
+    sle_qty                  1000 g
+  Item deltas:
+    3@- IC {"code":"IC","qty":1000,"value":2000,"lotQty":1000,"lotValue":2000}
+  Row count deltas: {"journal_entries":1,"journal_entry_lines":2,"purchases":1,"debts":1,"payment_ledger_entries":1,"inventory_lots":1,"stock_movements":1,"stock_ledger_entries":1}
+
+### K3-004b: same purchase fully paid cash 23.00
+  info: {"status":400,"err":"{\"code\":\"UNBALANCED_ENTRY\",\"message\":\"Unbalanced entry: Debit=2000, Credit=2300\",\"messageAr\":\"القيد غير متوازن\"}"}
+  GL delta: Dr 0.00 / Cr 0.00 (balanced)
+
+### K3-007: supplier payment 5.00 on the credit purchase (expect supplier.currentBalance -5)
+  info: {"pay":201,"supplierBalance":[632300,632300,632300],"cancel":200,"cancelTwice":"400 {\"code\":\"ALREADY_CANCELLED\",\"message\":\"Document is already cancelled\",\"messageAr","reversalMirror":{"mirror":true}}
+  GL delta: Dr 10.00 / Cr 10.00 (balanced)
+    1111      Cash in Drawer             Dr         5.00 Cr         5.00 net         0.00
+    2110      Accounts Payable           Dr         5.00 Cr         5.00 net         0.00
+  Metric deltas (money in currency units, qty in grams):
+    gl_total_dr              10.00
+    gl_total_cr              10.00
+    debts_payable_open       -23.00
+  Row count deltas: {"journal_entries":2,"journal_entry_lines":4,"payments":1,"payment_ledger_entries":1,"audit_logs":1}
+
+### K3-005/006: create 3 purchases, delete middle, create next (numbering) + JE of deleted purchase
+  info: {"created":["PUR-000004","PUR-000005","PUR-000006"],"delete":200,"jeLeftForDeleted":0,"next":"409 {\"code\":\"DUPLICATE_ENTRY\",\"message\":\"A record with this purchase_number already ","next2":"409 {\"code\":\"DUPLICATE_ENTRY\",\"message\":\"A record with this purc"}
+  GL delta: Dr 20.00 / Cr 20.00 (balanced)
+    1131      Fresh Chicken Inventory    Dr        20.00 Cr         0.00 net        20.00
+    2110      Accounts Payable           Dr         0.00 Cr        20.00 net       -20.00
+  Metric deltas (money in currency units, qty in grams):
+    gl_ap                    20.00
+    gl_inventory             20.00
+    gl_total_dr              20.00
+    gl_total_cr              20.00
+    suppliers_balance        20.00
+    debts_payable_open       20.00
+    ple_supplier             -20.00
+    inventory_qty            2000 g
+    inventory_value          20.00
+    lots_qty                 2000 g
+    lots_value               20.00
+    sle_value                20.00
+    sle_qty                  2000 g
+  Item deltas:
+    3@- IC {"code":"IC","qty":2000,"value":2000,"lotQty":2000,"lotValue":2000}
+  Row count deltas: {"journal_entries":2,"journal_entry_lines":4,"purchases":2,"debts":2,"payment_ledger_entries":2,"inventory_lots":2,"stock_movements":2,"stock_ledger_entries":2}
+
+### K3-008: sale with 2 lines same item exceeding stock (item C has ~102kg; sell 60kg+60kg)
+  info: {"before":103000,"status":201,"err":"","after":-17000,"lots":[{"id":3,"r":-50000},{"id":6,"r":30000},{"id":7,"r":1000},{"id":8,"r":1000},{"id":10,"r":1000}]}
+  GL delta: Dr 7240.00 / Cr 7240.00 (balanced)
+    1111      Cash in Drawer             Dr      4800.00 Cr         0.00 net      4800.00
+    1131      Fresh Chicken Inventory    Dr         0.00 Cr      2440.00 net     -2440.00
+    4110      Fresh Chicken Sales        Dr         0.00 Cr      4800.00 net     -4800.00
+    5100      Cost of Goods Sold         Dr      2440.00 Cr         0.00 net      2440.00
+  Metric deltas (money in currency units, qty in grams):
+    gl_cash                  4800.00
+    gl_inventory             -2440.00
+    gl_total_dr              7240.00
+    gl_total_cr              7240.00
+    inventory_qty            -120000 g
+    inventory_value          -2440.00
+    lots_qty                 -120000 g
+    lots_value               -2440.00
+    sle_value                -2440.00
+    sle_qty                  -120000 g
+  Item deltas:
+    3@- IC {"code":"IC","qty":-120000,"value":-244000,"lotQty":-120000,"lotValue":-244000}
+  Row count deltas: {"journal_entries":1,"journal_entry_lines":4,"sales":1,"sale_lines":2,"payments":1,"stock_movements":2,"stock_ledger_entries":2}
+
+### K3-009: adjustment decrease 2kg item B (expect lots -2kg, value at FIFO lot cost)
+  info: {"status":201}
+  GL delta: Dr 42.00 / Cr 42.00 (balanced)
+    1131      Fresh Chicken Inventory    Dr         0.00 Cr        42.00 net       -42.00
+    5320      Inventory Adjustment       Dr        42.00 Cr         0.00 net        42.00
+  Metric deltas (money in currency units, qty in grams):
+    gl_inventory             -42.00
+    gl_total_dr              42.00
+    gl_total_cr              42.00
+    inventory_qty            -2000 g
+    inventory_value          -42.00
+    sle_value                -42.00
+    sle_qty                  -2000 g
+  Item deltas:
+    2@- IB {"code":"IB","qty":-2000,"value":-4200}
+  Row count deltas: {"journal_entries":1,"journal_entry_lines":2,"stock_movements":1,"stock_ledger_entries":1,"audit_logs":1}
+
+### K3-011: expense 10.00 bank_transfer (expect 1112-001 -10)
+  info: {"status":400,"err":"{\"code\":\"INSUFFICIENT_BALANCE\",\"message\":\"Insufficient balance in حساب بنكي عام. Available: 0.00 ₪, required: 10.00 ₪. S"}
+  GL delta: Dr 0.00 / Cr 0.00 (balanced)
+
+### K2-001: credit sale 50.00 then debt write-off (expect AR -50, bad-debt expense +50)
+  info: {"writeOff":200,"deltaOfWriteOffOnly":{"gl":{},"metrics":{"customers_balance":-5000,"debts_receivable_open":-5000}}}
+  GL delta: Dr 75.00 / Cr 75.00 (balanced)
+    1120      Accounts Receivable        Dr        50.00 Cr         0.00 net        50.00
+    1131      Fresh Chicken Inventory    Dr         0.00 Cr        25.00 net       -25.00
+    4110      Fresh Chicken Sales        Dr         0.00 Cr        50.00 net       -50.00
+    5100      Cost of Goods Sold         Dr        25.00 Cr         0.00 net        25.00
+  Metric deltas (money in currency units, qty in grams):
+    gl_ar                    50.00
+    gl_inventory             -25.00
+    gl_total_dr              75.00
+    gl_total_cr              75.00
+    ple_customer             50.00
+    inventory_qty            -1250 g
+    inventory_value          -25.00
+    lots_qty                 -1250 g
+    lots_value               -25.00
+    sle_value                -25.00
+    sle_qty                  -1250 g
+  Item deltas:
+    2@- IB {"code":"IB","qty":-1250,"value":-2500,"lotQty":-1250,"lotValue":-2500}
+  Row count deltas: {"journal_entries":1,"journal_entry_lines":4,"sales":1,"sale_lines":1,"debts":1,"payment_ledger_entries":1,"stock_movements":1,"stock_ledger_entries":1,"audit_logs":1}
+
+### VOID-disc: cash sale 2.5kg@40 with 5.00 discount -> void (expect exact mirror, net 0)
+  info: {"void":200,"mirror":{"mirror":true}}
+  GL delta: Dr 300.00 / Cr 300.00 (balanced)
+    1111      Cash in Drawer             Dr        95.00 Cr        95.00 net         0.00
+    1131      Fresh Chicken Inventory    Dr        50.00 Cr        50.00 net         0.00
+    4110      Fresh Chicken Sales        Dr       100.00 Cr       100.00 net         0.00
+    5100      Cost of Goods Sold         Dr        50.00 Cr        50.00 net         0.00
+    5400      Other Expenses             Dr         5.00 Cr         5.00 net         0.00
+  Metric deltas (money in currency units, qty in grams):
+    gl_total_dr              300.00
+    gl_total_cr              300.00
+  Row count deltas: {"journal_entries":2,"journal_entry_lines":10,"sales":1,"sale_lines":1,"payments":1,"stock_movements":2,"stock_ledger_entries":2,"audit_logs":1}
+
+### VOID-partial: partial sale 100.00 paid 30 at creation (customer) -> /payments/sale 20 -> cancel that payment -> void
+  info: {"cancelLater":200,"cancelEmbedded":"404 {\"code\":\"JOURNAL_ENTRY_NOT_FOUND\",\"message\":\"No journal entry found for payment ","void":200,"mirror":{"mirror":true}}
+  GL delta: Dr 340.00 / Cr 340.00 (balanced)
+    1111      Cash in Drawer             Dr        30.00 Cr        30.00 net         0.00
+    1120      Accounts Receivable        Dr        90.00 Cr        90.00 net         0.00
+    1131      Fresh Chicken Inventory    Dr        50.00 Cr        50.00 net         0.00
+    4110      Fresh Chicken Sales        Dr       100.00 Cr       100.00 net         0.00
+    5100      Cost of Goods Sold         Dr        50.00 Cr        50.00 net         0.00
+    1112-001  General Bank Account       Dr        20.00 Cr        20.00 net         0.00
+  Metric deltas (money in currency units, qty in grams):
+    gl_total_dr              340.00
+    gl_total_cr              340.00
+  Row count deltas: {"journal_entries":4,"journal_entry_lines":14,"sales":1,"sale_lines":1,"payments":2,"debts":1,"payment_ledger_entries":3,"stock_movements":2,"stock_ledger_entries":2,"audit_logs":2}
+
+### VOID-bank: bank sale 100.00 (bank) -> void (refund must leave bank, not cash)
+  info: {"void":200,"mirror":{"mirror":true}}
+  GL delta: Dr 300.00 / Cr 300.00 (balanced)
+    1131      Fresh Chicken Inventory    Dr        50.00 Cr        50.00 net         0.00
+    4110      Fresh Chicken Sales        Dr       100.00 Cr       100.00 net         0.00
+    5100      Cost of Goods Sold         Dr        50.00 Cr        50.00 net         0.00
+    1112-001  General Bank Account       Dr       100.00 Cr       100.00 net         0.00
+  Metric deltas (money in currency units, qty in grams):
+    gl_total_dr              300.00
+    gl_total_cr              300.00
+  Row count deltas: {"journal_entries":2,"journal_entry_lines":8,"sales":1,"sale_lines":1,"payments":1,"stock_movements":2,"stock_ledger_entries":2,"audit_logs":1}
+
+### VOID-cn: credit sale 100 -> credit note 40 submitted -> void sale
+  info: {"cn":201,"submit":201,"void":"200 ","customerBalance":0}
+  GL delta: Dr 340.00 / Cr 340.00 (balanced)
+    1120      Accounts Receivable        Dr       100.00 Cr       140.00 net       -40.00
+    1131      Fresh Chicken Inventory    Dr        50.00 Cr        50.00 net         0.00
+    4110      Fresh Chicken Sales        Dr       100.00 Cr       100.00 net         0.00
+    5100      Cost of Goods Sold         Dr        50.00 Cr        50.00 net         0.00
+    5400      Other Expenses             Dr        40.00 Cr         0.00 net        40.00
+  Metric deltas (money in currency units, qty in grams):
+    gl_ar                    -40.00
+    gl_total_dr              340.00
+    gl_total_cr              340.00
+    ple_customer             -40.00
+  Row count deltas: {"journal_entries":3,"journal_entry_lines":10,"sales":1,"sale_lines":1,"debts":1,"payment_ledger_entries":2,"stock_movements":2,"stock_ledger_entries":2,"credit_notes":1,"audit_logs":1}
+
+#### invariants after scenarios
+[FAIL] AR-01 {"e":"150.00","a":{"gl_ar":"150.00","customers_currentBalance":"70.00","open_receivable_debts":"70.00","ple_customer":"80.00","sales_total_minus_paid":"120.00"},"det":{"note":"sales_total_minus_paid includes walk-in due (≤1 minor) and is informational"}}
+[FAIL] AR-02 {"a":"1 customers differ","det":[{"id":1,"customer_number":"CUST0001","name":"C1","bal":0,"debt":0,"ple":1000}]}
+[FAIL] AP-01 {"e":"6340.00","a":{"gl_ap":"6340.00","suppliers_currentBalance":"6343.00","open_payable_debts":"6320.00","ple_supplier_neg":"6343.00","purchases_grand_minus_paid":"6343.00"},"det":{"note":"open_payable_debts also includes credit expenses (no PLE)"}}
+[FAIL] AP-02 {"a":"1 suppliers differ","det":[{"id":1,"supplier_number":"SUP-0001","name":"S1","bal":634300,"debt":632000,"ple":634300}]}
+[FAIL] INV-01 {"e":"3783.00","a":{"gl_inventory":"3783.00","inventory_totalValue":"3783.00","lots_remaining_x_cost":"3825.00","stock_ledger_value":"3783.00"}}
+[FAIL] INV-02 {"a":"1 items","det":[{"item_id":2,"code":"IB","branch_id":null,"q":96750,"v":203300,"lq":98750,"lv":207500}]}
+[FAIL] INV-03 {"a":"1 items","det":[{"item_id":2,"code":"IB","branch_id":null,"q":96750,"v":203300,"lq":98750,"lv":207500}]}
+[FAIL] INV-04 {"a":"1 inventory rows, 1 lots","det":{"inventory":[{"item_id":3,"branch_id":null,"current_quantity_grams":-17000,"total_value":-30000}],"lots":[{"id":3,"lot_number":"LOT-20261125-003","item_id":3,"remaining_quantity_grams":-50000,"total_quantity_grams":50000}]}}
+[FAIL] CASH-03 {"e":"4830.00","a":"4760.00","d":"-70.00","det":{"payIn":"4830.00","payOut":"0.00","expensesPaid":"0.00","manualJeCash":"1115.70"}}

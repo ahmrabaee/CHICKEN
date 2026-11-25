@@ -1,0 +1,212 @@
+/ -> / denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/inventory -> /inventory denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/inventory?tab=categories -> /inventory?tab=categories denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/inventory?tab=stock-transfer -> /inventory?tab=stock-transfer denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/inventory/new -> /inventory/new denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/inventory/1 -> /inventory/1 denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/sales/new -> /sales/new denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/sales -> /sales denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/sales/1 -> /sales/1 denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/purchasing -> /purchasing denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/purchasing/1 -> /purchasing/1 denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/purchasing/new -> /purchasing/new denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/purchasing/1/edit -> /purchasing/1/edit denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/customers -> /customers denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/customers/new -> /customers/new denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/customers/1 -> /customers/1 denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/traders -> /traders denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/traders/new -> /traders/new denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/traders/1 -> /traders/1 denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/payments -> /payments denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/payments/new -> /payments/new denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/payments/1 -> /payments/1 denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/reconciliation -> /reconciliation denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/credit-notes -> /credit-notes denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/credit-notes/new -> /credit-notes/new denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/expenses -> /expenses denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/expenses/new -> /expenses/new denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/expenses/1 -> /expenses/1 denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/debts -> /debts denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/wastage -> /wastage denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/wastage/new -> /wastage/new denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/stock-transfer/new -> /stock-transfer/new denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/reports -> /reports denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/reports/sales -> /reports/sales denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/reports/purchases -> /reports/purchases denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/reports/inventory -> /reports/inventory denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/reports/expenses -> /reports/expenses denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/reports/profit-loss -> /reports/profit-loss denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/reports/wastage -> /reports/wastage denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/reports/vat -> /reports/vat denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/reports/stock-vs-gl -> /reports/stock-vs-gl denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/accounting -> /accounting denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/accounting/journal/new -> /accounting/journal/new denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/audit -> /audit denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/settings -> /settings denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/users -> /users denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/branches -> /branches denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/branches/new -> /branches/new denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/branches/1 -> /branches/1 denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/categories -> /inventory?tab=categories denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/adjustments -> /inventory denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/stock-transfer -> /inventory?tab=stock-transfer denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/nonexistent -> /nonexistent denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(1): ["404 Error: User attempted to access non-existent route: /nonexistent"]

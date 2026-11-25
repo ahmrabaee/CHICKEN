@@ -1,0 +1,22 @@
+banks {"بنك فلسطين":1,"بنك القدس":2,"بنك الاستثمار":3,"bank-on-AP":4,"bank-on-group":5,"bank-on-revenue":6,"bank-on-cash":7,"bank-after-delete":9}
+zero-amount advance JE (R8) lines: [{"entry_number":"JE-000028","n":2,"d":0}]
+
+## N1. purchase payment bank_transfer bankAccountId=999
+  resp: {"status":400,"err":"BANK_ACCOUNT_NOT_FOUND"}
+  GLΔ: {} je 0
+
+## N2. customer advance (receipt, no guard) 100.00 into bank-on-revenue (4110)
+  resp: {"status":201}
+  GLΔ: {"1120":-10000,"4110":10000} je 1
+
+## N3. customer advance 100.00 into bank-on-group (1112 group)
+  resp: {"status":400,"err":"POSTING_TO_GROUP_ACCOUNT"}
+  GLΔ: {} je 0
+
+## N4. customer advance 100.00 into bank-on-AP (2110)
+  resp: {"status":201}
+  GLΔ: {"1120":-10000,"2110":10000} je 1
+
+## N5. now supplier payment 50.00 via bank-on-AP (AP balance shifted)
+  resp: {"status":400,"err":"INSUFFICIENT_BALANCE"}
+  GLΔ: {} je 0

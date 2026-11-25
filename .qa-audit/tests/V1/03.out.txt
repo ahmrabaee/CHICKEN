@@ -1,0 +1,8 @@
+fund cash                                      ["201","201"]
+fund bank                                      ["201","201"]
+balances cash/bank                             [98000,110000]
+expense bank create                            201
+expense bank GL delta (exp bank -20000 cash 0) {"1111":-20000,"5400":20000}
+expense cash                                   ["201",{"1111":-1000,"5400":1000}]
+expense rows                                   [{"id":5,"amount":1000,"m":"cash","b":null},{"id":4,"amount":20000,"m":"bank_transfer","b":1}]
+expense card w/ bank                           ["201",{"1111":-500,"5400":500}]

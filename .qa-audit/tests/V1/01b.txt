@@ -1,0 +1,11 @@
+S3 addPayment                                  201
+S3 JEs created                                 0
+S3 GL delta (exp cash+3000, AR-3000)           {}
+S3 sale row                                    {"id":13,"t":10000,"p":3000,"ps":"partial","v":0,"c":5600,"pr":4400}
+S3 customer bal (exp 7000)                     7000
+S3 payment row                                 {"id":13,"amount":3000,"m":"cash","b":null}
+S3 cancel that payment                         404 "JOURNAL_ENTRY_NOT_FOUND"
+S4 bank create                                 201
+S4 payments rows                               [{"amount":5000,"m":"cash","b":null},{"amount":5000,"m":"bank_transfer","b":1}]
+S4 sale (no bankAccountId)                     [14]
+S4 GL delta (exp cash+5000 bank+5000)          {"1111":10000,"1131":-5600,"4110":-10000,"5100":5600}

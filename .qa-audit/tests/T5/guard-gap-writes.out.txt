@@ -1,0 +1,8 @@
+[accountant] PUT backup config path_vps -> 200 | persisted path_vps = C:/t5-attacker-controlled-path *** GUARD GAP: ACCOUNTANT WROTE BACKUP PATH ***
+[accountant] POST tax template -> 201 *** GUARD GAP: created id=3 rate=9900bps ***
+[accountant] DELETE tax template -> 200 (cleanup; also a guard gap)
+[accountant] POST /accounting/accounts (admin-only) -> 403 (blocked by guarded AccountingController)
+[accountant] POST /reconciliation/apply -> 400 (guard PASSED - accountant can allocate)
+[accountant] POST /credit-notes -> 400 (guard PASSED)
+[accountant] POST /wastage -> 400 (guard PASSED - any user can post wastage: stock+GL write)
+[revoked-pages accountant] POST /sales -> 400 (guard PASSED - no page gate on sales create)

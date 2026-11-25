@@ -1,0 +1,14 @@
+--- I-28 displayed cost
+no stock: {"effectiveCostPrice":4000,"inv":{"qty":0}}
+after purchase 10kg@50 (default 40): {"effectiveCostPrice":5000,"inv":{"qty":10000}}
+after selling all: {"effectiveCostPrice":4000,"inv":{"qty":0}} (expect default price 4000 when qty=0)
+--- I-27 live bird
+live bird purchase w/ gross/net fields                     400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"lines has invalid value","messageAr":"lines has invalid value","details":["lines has invalid value"]},"meta":{"timestamp":"2026-11-25T16:43:08.295Z","path":"/v1/purchases"}}
+live bird flag only                                        201 {"success":true,"data":{"id":8,"purchaseNumber":"PUR-000008","purchaseDate":"2026-11-25T16:43:08.298Z","supplierId":1,"supplierName":"مورد الدواجن المتحدة","supplierInvoiceNumber":null,"totalAmount":50000,"taxAmount":0,
+lot [{"id":10,"total_quantity_grams":10000,"unit_purchase_price":5000}]
+--- I-25 wastage value
+lot {"id":10,"remaining_quantity_grams":10000,"unit_purchase_price":5000}
+wastage 2kg                                                201 {"success":true,"data":{"id":1,"itemId":10,"lotId":10,"branchId":1,"weightGrams":2000,"wastageType":"spoiled","reason":"spoiled","estimatedCostValue":10000,"photoUrl":null,"recordedById":1,"approvedById":null,"approvedAt":null,"wastageDa
+wastage rec [{"weight_grams":2000,"estimated_cost_value":10000,"wastage_type":"spoiled"}] expected value 10000
+wastage JE lines [{"code":"5300","d":10000,"c":0},{"code":"1131","d":0,"c":10000}]
+--- I-24 transfer

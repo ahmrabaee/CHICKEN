@@ -1,0 +1,8 @@
+JE branch_id by source_type: [{"source_type":null,"br":"NULL","n":2},{"source_type":"adjustment","br":"NULL","n":1},{"source_type":"expense","br":"NULL","n":2},{"source_type":"journal_entry","br":"NULL","n":3},{"source_type":"payment","br":1,"n":2},{"source_type":"purchase","br":"NULL","n":3},{"source_type":"reversal","br":1,"n":2},{"source_type":"sale","br":1,"n":7},{"source_type":"sale_void","br":1,"n":3},{"source_type":"wastage","br":"NULL","n":1}]
+SLE branch_id: [{"voucher_type":"adjustment","br":"NULL","n":1,"v":-1554},{"voucher_type":"purchase","br":"NULL","n":4,"v":303000},{"voucher_type":"sale","br":1,"n":7,"v":-32222},{"voucher_type":"sale_void","br":1,"n":3,"v":15000}]
+inventory/lots branch: [{"t":"inv","br":"NULL","n":2},{"t":"lot","br":"NULL","n":4}]
+stock-vs-gl asOfDate=2026-11-26: 200 {"totalStockValue":284224,"totalAccountValue":583558,"totalDifference":-299334}
+stock-vs-gl asOfDate=2026-11-26&branchId=1: 200 {"totalStockValue":-17222,"totalAccountValue":-17222,"totalDifference":0}
+raw GL 1131: 283558  inventory.total_value: 283558  SLE total: 284224
+create branch 2: 201 {"id":2,"code":"BR2","name":"فرع 2","nameEn":"Branch 2","address":null,"phone":null,"isMainBranch":false,"isActive":true,"stockAccountId":null,"userCount":0,"createdAt":"2026-11-25T16:12:50.919Z"}
+Sale DTO accepts branchId? no (CreateSaleDto has no branchId; branch taken from user/default) — multi-branch posting not reachable via API for sales

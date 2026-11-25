@@ -1,0 +1,151 @@
+# T4-02 bank/cash 2026-11-25T11:18:07.789Z
+bank_accounts rows: {"n":0}
+
+## A1. NO bank accounts: purchase payment bank_transfer 100.00 (ED-01)
+  resp: {"status":201} id=10
+  GLΔ: {"1111":-10000,"2110":10000} supΔ {} debtΔ {"2":-10000} je 1
+
+## A2. purchase payment method=check 100.00 (cheque)
+  resp: {"status":201} id=11
+  GLΔ: {"1111":-10000,"2110":10000} supΔ {} debtΔ {"2":-10000} je 1
+
+## A3. purchase payment method="bitcoin" (free string) 100.00
+  resp: {"status":201} id=12
+  GLΔ: {"1111":-10000,"2110":10000} supΔ {} debtΔ {"2":-10000} je 1
+
+## A4. purchase payment method="credit" 1.00 on same purchase
+  resp: {"status":400,"err":"OVERPAYMENT"} 
+  GLΔ: {} supΔ {} debtΔ {} je 0
+  payments methods stored: [{"payment_number":"PAY-000012","payment_method":"bitcoin","amount":10000},{"payment_number":"PAY-000011","payment_method":"check","amount":10000},{"payment_number":"PAY-000010","payment_method":"bank_transfer","amount":10000}]
+
+BA-03 GET /bank-accounts (empty): {"status":200} []
+
+## BA-08/09a. POST /bank-accounts name only (auto GL account)
+  resp: {"status":201} id=1
+  GLΔ: {} supΔ {} debtΔ {} je 0
+  created: BANK-001 {"id":44,"code":"1112-002","name":"بنك فلسطين"}
+
+## BA-09b. POST /bank-accounts with accountId=1112-001 (seed leaf, type Other), isDefault
+  resp: {"status":201} id=2
+  GLΔ: {} supΔ {} debtΔ {} je 0
+
+## BA-11. second default bank (auto GL)
+  resp: {"status":201} id=3
+  GLΔ: {} supΔ {} debtΔ {} je 0
+  defaults: [{"id":1,"code":"BANK-001","name":"بنك فلسطين","account_id":44,"is_default":0,"is_active":1},{"id":2,"code":"BANK-002","name":"بنك القدس","account_id":6,"is_default":0,"is_active":1},{"id":3,"code":"BANK-003","name":"بنك الاستثمار","account_id":45,"is_default":1,"is_active":1}]
+  GL accounts under 1112: [{"id":5,"code":"1112","name":"النقد في البنك","account_type":"Bank","is_group":1},{"id":6,"code":"1112-001","name":"حساب بنكي عام","account_type":"Other","is_group":0},{"id":44,"code":"1112-002","name":"بنك فلسطين","account_type":"Bank","is_group":0},{"id":45,"code":"1112-003","name":"بنك الاستثمار","account_type":"Bank","is_group":0}]
+  bank -> GL code: {"B1":"1112-002","B2":"1112-001","B3":"1112-003"}
+funded 1112-002 = 300000
+
+## R1. purchase payment bank_transfer bankAccountId=B1 200.00
+  resp: {"status":201} id=13
+  GLΔ: {"2110":20000,"1112-002":-20000} supΔ {} debtΔ {"2":-20000} je 1
+
+## R2. purchase payment bank_transfer, no bankAccountId (default=B3 has 0 balance)
+  resp: {"status":400,"err":"INSUFFICIENT_BALANCE"} 
+  GLΔ: {} supΔ {} debtΔ {} je 0
+
+## R3. purchase payment method=cash but bankAccountId=B1
+  resp: {"status":201} id=14
+  GLΔ: {"1111":-10000,"2110":10000} supΔ {} debtΔ {"2":-10000} je 1
+  last payment row: [{"payment_number":"PAY-000014","payment_method":"cash","bank_account_id":1,"amount":10000}]
+
+## R4. purchase fully paid at creation by bank_transfer B1 100.00
+  resp: {"status":201} id=13
+  GLΔ: {"1131":10000,"1112-002":-10000} supΔ {} debtΔ {} je 1
+  last payment row (creation, full): [{"payment_number":"PAY-000015","payment_method":"bank_transfer","bank_account_id":null,"amount":10000}]
+
+## R5. purchase partially paid at creation by card B1 50.00 of 100.00
+  resp: {"status":201} id=14
+  GLΔ: {"1131":10000,"2110":-5000,"1112-002":-5000} supΔ {"2":5000} debtΔ {"2":5000} je 1
+  last payment row (creation, partial): [{"payment_number":"PAY-000016","payment_method":"card","bank_account_id":1,"amount":5000}]
+
+## R6. supplier advance bank_transfer B1 50.00
+  resp: {"status":201} id=17
+  GLΔ: {"2110":5000,"1112-002":-5000} supΔ {} debtΔ {} je 1
+
+## R7. supplier advance NEGATIVE amount -500.00 cash
+  resp: {"status":201} id=18
+  GLΔ: {"1111":50000,"2110":-50000} supΔ {} debtΔ {} je 1
+  last JE lines: [{"entry_number":"JE-000027","code":"2110","d":-50000,"c":0},{"entry_number":"JE-000027","code":"1111","d":0,"c":-50000}]
+
+## R8. supplier advance 0 amount
+  resp: {"status":201} id=19
+  GLΔ: {} supΔ {} debtΔ {} je 1
+
+## R9. bank_transfer with non-existent bankAccountId 999
+  resp: {"status":400,"err":"OVERPAYMENT"} 
+  GLΔ: {} supΔ {} debtΔ {} je 0
+
+## W1. POST /bank-accounts accountId=2110 (AP!)
+  resp: {"status":201} id=4
+  GLΔ: {} supΔ {} debtΔ {} je 0
+
+## W2. POST /bank-accounts accountId=1112 (group)
+  resp: {"status":201} id=5
+  GLΔ: {} supΔ {} debtΔ {} je 0
+
+## W3. POST /bank-accounts accountId=4110 (revenue)
+  resp: {"status":201} id=6
+  GLΔ: {} supΔ {} debtΔ {} je 0
+
+## W4. POST /bank-accounts accountId=1111 (cash box)
+  resp: {"status":201} id=7
+  GLΔ: {} supΔ {} debtΔ {} je 0
+
+## W1b. pay supplier via bank-on-AP 100.00
+  resp: {"status":400,"err":"INSUFFICIENT_BALANCE"} 
+  GLΔ: {} supΔ {} debtΔ {} je 0
+
+## W4b. pay supplier via bank-on-cash bank_transfer 100.00
+  resp: {"status":201} id=20
+  GLΔ: {"1111":-10000,"2110":10000} supΔ {} debtΔ {"2":-10000} je 1
+
+## BA-14. PUT B1 accountId -> B3 GL account (B1 has balance)
+  resp: {"status":200} id=1
+  GLΔ: {} supΔ {} debtΔ {} je 0
+  old GL 1112-002? balance stays 260000  B1 now maps to 1112-003
+
+## BA-14b. revert B1 mapping
+  resp: {"status":200} id=1
+  GLΔ: {} supΔ {} debtΔ {} je 0
+
+## ED-04. deactivate B1 (balance 260000)
+  resp: {"status":200} id=1
+  GLΔ: {} supΔ {} debtΔ {} je 0
+  GET /bank-accounts after deactivate: ["BANK-002:true","BANK-003:true","BANK-004:true","BANK-005:true","BANK-006:true","BANK-007:true"]
+
+## ED-04b. pay supplier with INACTIVE bank B1
+  resp: {"status":201} id=21
+  GLΔ: {"2110":10000,"1112-002":-10000} supΔ {} debtΔ {"2":-10000} je 1
+
+## ED-04c. re-activate B1
+  resp: {"status":200} id=1
+  GLΔ: {} supΔ {} debtΔ {} je 0
+
+## BA-19. delete B1 (used by payments)
+  resp: {"status":400,"err":"BANK_ACCOUNT_IN_USE"} 
+  GLΔ: {} supΔ {} debtΔ {} je 0
+
+## D1. full-paid-at-creation purchase via bank b5 100.00
+  resp: {"status":201} id=18
+  GLΔ: {"1131":10000,"1112-004":-10000} supΔ {} debtΔ {} je 1
+
+## D2. delete bank b5 (GL account has movements)
+  resp: {"status":200} id=8
+  GLΔ: {} supΔ {} debtΔ {} je 0
+  GL balance of deleted bank account 1112-004 = 40000  bank row exists: 0
+
+## D3. create next bank account after delete (count-based BANK-nnn code)
+  resp: {"status":201} id=9
+  GLΔ: {} supΔ {} debtΔ {} je 0
+  bank codes: [{"id":1,"code":"BANK-001","name":"بنك فلسطين"},{"id":2,"code":"BANK-002","name":"بنك القدس"},{"id":3,"code":"BANK-003","name":"بنك الاستثمار"},{"id":4,"code":"BANK-004","name":"bank-on-AP"},{"id":5,"code":"BANK-005","name":"bank-on-group"},{"id":6,"code":"BANK-006","name":"bank-on-revenue"},{"id":7,"code":"BANK-007","name":"bank-on-cash"},{"id":9,"code":"BANK-008","name":"bank-after-delete"}]
+
+## G1. pay via B2 with 0 balance (guard per bank)
+  resp: {"status":400,"err":"INSUFFICIENT_BALANCE"} 
+  GLΔ: {} supΔ {} debtΔ {} je 0
+
+AC-04 trial balance resp: {"status":200} [{"accountId":4,"accountCode":"1111","name":"النقد في الصندوق","nameAr":"النقد في الصندوق","accountName":"النقد في الصندوق","accountType":"Cash","rootType":"Asset","openingDebit":0,"openingCredit":0,"periodDebit":1015000,"periodCredit":68000,"endingDebit":947000,"endingCredit":0,"debit":1015000,"cre
+AC-06 ledger 1112-002 {"status":200} [{"id":40,"entryDate":"2026-11-25T11:18:08.278Z","entryNumber":"JE-000019","description":"QA T4 funding","descriptionAr":"","debit":300000,"credit":0,"balance":300000,"partyName":null,"partyType":null,"transactionType":null,"transactionTypeAr":"","referenceNumber":null},{"id":45,"entryDate":"2026-11
+
+FINAL GL cash/bank: {"1111":947000,"1112-002":250000,"1112-004":40000}

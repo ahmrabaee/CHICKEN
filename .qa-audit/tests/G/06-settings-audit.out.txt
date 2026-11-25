@@ -1,0 +1,62 @@
+=== A. are settings honoured?
+set pos.allow_credit_sale=false                            200 {"success":true,"data":{"id":33,"key":"pos.allow_credit_sale","value":"false","description":"Allow credit sales","dataType":"boolean","settingGroup":"pos","isSystem":false,"createdAt":"2026-11-24T20:56:54.195Z","updatedAt":"2026-11-25T16:38:34.108Z"},"meta":{"
+credit sale with allow_credit_sale=false                   201 {"success":true,"data":{"id":15,"saleNumber":"SAL-20261125-0010","saleDate":"2026-11-25T16:38:34.117Z","saleType":"credit","customerId":1,"customerName":"مطعم أ","grossTotalAmount":3000,"discountAmount":0,"taxAmount":0,"totalAmount":3000,"totalCost":1800,"tota
+set pos.require_customer=true                              200 {"success":true,"data":{"id":32,"key":"pos.require_customer","value":"true","description":"Require customer for all sales","dataType":"boolean","settingGroup":"pos","isSystem":false,"createdAt":"2026-11-24T20:56:54.183Z","updatedAt":"2026-11-25T16:38:34.153Z"}
+walk-in sale with require_customer=true                    201 {"success":true,"data":{"id":16,"saleNumber":"SAL-20261125-0011","saleDate":"2026-11-25T16:38:34.162Z","saleType":"cash","customerId":null,"customerName":null,"grossTotalAmount":3000,"discountAmount":0,"taxAmount":0,"totalAmount":3000,"totalCost":1800,"totalPr
+set pos.accountant_max_discount_pct=100 (1%)               200 {"success":true,"data":{"id":34,"key":"pos.accountant_max_discount_pct","value":"100","description":"Max discount for accountant (basis points: 500 = 5%)","dataType":"number","settingGroup":"pos","isSystem":false,"createdAt":"2026-11-24T20:56:54.203Z","updated
+accountant 4% discount while cap setting=1%                201 {"success":true,"data":{"id":17,"saleNumber":"SAL-20261125-0012","saleDate":"2026-11-25T16:38:34.864Z","saleType":"cash","customerId":null,"customerName":null,"grossTotalAmount":3000,"discountAmount":120,"taxAmount":0,"totalAmount":2880,"totalCost":1800,"total
+set inventory.allow_negative_stock=true                    200 {"success":true,"data":{"id":14,"key":"inventory.allow_negative_stock","value":"true","description":"Allow selling when stock is zero","dataType":"boolean","settingGroup":"inventory","isSystem":false,"createdAt":"2026-11-24T20:56:54.012Z","updatedAt":"2026-11-
+oversell item 2 (stock ~46kg) 500kg                        400 {"success":false,"error":{"code":"INSUFFICIENT_STOCK","message":"Insufficient stock for فروج كامل. Available: 43000g","messageAr":"المخزون غير كاف لـ فروج كامل. المتوفر: 43000 جرام"},"meta":{"timestamp":"2026-11-25T16:38:34.903Z","path":"/v1/sales"}}
+set tax.default_rate=0 / prices_include_tax=false          200 {"success":true,"data":{"id":9,"key":"tax.default_rate","value":"0","description":"Default VAT rate (basis points: 1500 = 15%)","dataType":"number","settingGroup":"tax","isSystem":true,"createdAt":"2026-11-24T20:56:53.961Z","updatedAt":"2026-11-25T16:38:34.913
+set inventory.fifo_enabled=false                           200 {"success":true,"data":{"id":15,"key":"inventory.fifo_enabled","value":"false","description":"Use FIFO for cost calculation","dataType":"boolean","settingGroup":"inventory","isSystem":true,"createdAt":"2026-11-24T20:56:54.019Z","updatedAt":"2026-11-25T16:38:34
+set numbering.sale_prefix=XYZ-                             200 {"success":true,"data":{"id":16,"key":"numbering.sale_prefix","value":"XYZ-","description":"Sale invoice prefix","dataType":"string","settingGroup":"numbering","isSystem":false,"createdAt":"2026-11-24T20:56:54.032Z","updatedAt":"2026-11-25T16:38:34.926Z"},"met
+sale number after prefix change: SAL-20261125-0013
+set numbering.sale_next=999999                             200 {"success":true,"data":{"id":17,"key":"numbering.sale_next","value":"999999","description":"Next sale invoice number","dataType":"number","settingGroup":"numbering","isSystem":false,"createdAt":"2026-11-24T20:56:54.039Z","updatedAt":"2026-11-25T16:38:34.962Z"}
+sale number after sale_next: SAL-20261125-0014
+=== B. settings validation
+SET currency.decimals="abc"                        200 
+SET currency.decimals=-3                           200 
+SET tax.default_rate="banana"                      200 
+SET tax.default_rate=999999                        200 
+SET barcode.total_length="abc"                     200 
+SET barcode.weight_start=-5                        200 
+SET backup.frequency_hours=0                       200 
+SET backup.frequency_hours="x"                     200 
+SET backup.retention_days=-1                       200 
+SET app.timezone="Mars/Phobos"                     200 
+SET app.default_language="xx"                      200 
+SET scale.baud_rate="fast"                         200 
+SET gl_debit_credit_tolerance=-100                 200 
+SET pos.receipt_copies=-1                          200 
+SET totally.new.key="x"                            200 
+SET setup_completed=false                          200 
+stored setup_completed [{"value":"false"}] check-setup: {"success":true,"data":{"setupCompleted":false},"meta":{"timestamp":"2026-11-25T16:38:35.111Z"}}
+bulk update w/ non-array                                   500 {"success":false,"error":{"code":"INTERNAL_ERROR","message":"settings is not iterable","messageAr":"حدث خطأ غير متوقع"},"meta":{"timestamp":"2026-11-25T16:38:35.121Z","path":"/v1/settings/bulk"}}
+bulk update w/ missing key                                 500 {"success":false,"error":{"code":"INTERNAL_ERROR","message":"settings is not iterable","messageAr":"حدث خطأ غير متوقع"},"meta":{"timestamp":"2026-11-25T16:38:35.124Z","path":"/v1/settings/bulk"}}
+DELETE setting                                             500 {"success":false,"error":{"code":"INTERNAL_ERROR","message":"Cannot delete system settings","messageAr":"حدث خطأ غير متوقع"},"meta":{"timestamp":"2026-11-25T16:38:35.127Z","path":"/v1/settings/app.name"}}
+DELETE setting unknown                                     404 {"success":false,"error":{"code":"NOT_FOUND","message":"Setting 'nope' not found","messageAr":"الإعداد 'nope' غير موجود"},"meta":{"timestamp":"2026-11-25T16:38:35.129Z","path":"/v1/settings/nope"}}
+company update with weird                                  400 {"success":false,"error":{"code":"FOREIGN_KEY_ERROR","message":"Related record does not exist: Company","messageAr":"السجل المرتبط غير موجود: Company"},"meta":{"timestamp":"2026-11-25T16:38:35.135Z","path":"/v1/settings/company"}}
+settings after barcode.total_length=abc:
+barcode config                                             200 {"success":true,"data":{"customEnabled":true,"totalLength":"abc","itemCodeStart":1,"itemCodeLength":6,"weightStart":-5,"weightLength":5,"totalPriceStart":12,"totalPriceLength":7,"priceStart":19,"priceLength":5},"meta":{"timestamp":"2026-11-25T16:38:35.139Z"}}
+barcode lookup                                             404 {"success":false,"error":{"code":"NOT_FOUND","message":"Item not found","messageAr":"المنتج غير موجود"},"meta":{"timestamp":"2026-11-25T16:38:35.144Z","path":"/v1/barcode/lookup?barcode=1234567890123"}}
+backup.path_vps garbage                                    400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"property path should not exist; property backupPath should not exist","messageAr":"property path should not exist؛ property backupPath should not exist","details":["property path should not exist",
+=== C. audit log
+GET /audit                                                 200 {"success":true,"data":[{"id":6,"timestamp":"2026-11-25T16:38:34.853Z","userId":2,"username":"gacc","action":"login","entityType":"User","entityId":2,"changes":"{\"ip\":\"::1\"}","ipAddress":"localhost","userAgent":"API","branchId":null,"user":{"username":"gac
+GET /audit/counts                                          200 {"success":true,"data":[{"action":"login","count":5},{"action":"void","count":1}],"meta":{"timestamp":"2026-11-25T16:38:35.184Z"}}
+audit actions by entity: [{"entity_type":"Sale","action":"void","c":1},{"entity_type":"User","action":"login","c":5}]
+audit row sample: [{"id":6,"timestamp":1795624714853,"user_id":2,"username":"gacc","action":"login","entity_type":"User","entity_id":2,"changes":"{\"ip\":\"::1\"}","ip_address":"localhost","user_agent":"API","branch_id":null},{"id":5,"timestamp":1795624714093,"user_id":1,"username":"admin","action":"login","entity_type":"User","entity_id":1,"changes":"{\"ip\":\"::1\"}","ip_address":"localhost","user_agent":"API","bra
+AUDIT filter entityType=sale                          200 0
+AUDIT filter action=void                              200 1
+AUDIT filter userId=1                                 200 5
+AUDIT filter startDate=2020-01-01&endDate=2030-01-01  200 6
+AUDIT filter search=x                                 400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"property search s
+audit as accountant                                        403 {"success":false,"error":{"code":"FORBIDDEN","message":"Insufficient permissions","messageAr":"صلاحيات غير كافية"},"meta":{"timestamp":"2026-11-25T16:38:35.206Z","path":"/v1/audit"}}
+DELETE /audit/1                                            404 {"success":false,"error":{"code":"NOT_FOUND","message":"Cannot DELETE /v1/audit/1","messageAr":"غير موجود"},"meta":{"timestamp":"2026-11-25T16:38:35.207Z","path":"/v1/audit/1"}}
+PUT /audit/1                                               404 {"success":false,"error":{"code":"NOT_FOUND","message":"Cannot PUT /v1/audit/1","messageAr":"غير موجود"},"meta":{"timestamp":"2026-11-25T16:38:35.208Z","path":"/v1/audit/1"}}
+audit has voids? [{"c":1}] sales voided: [{"c":1}]
+audit covers:  [{"entity_type":"Sale","action":"void"},{"entity_type":"User","action":"login"}]
+=== D. expense approval / threshold
+accountant creates expense                                 403 {"success":false,"error":{"code":"FORBIDDEN","message":"Insufficient permissions - page access required","messageAr":"صلاحيات غير كافية - يلزم صلاحية الوصول للصفحة"},"meta":{"timestamp":"2026-11-25T16:38:35.214Z","path":"/v1/expenses"}}
+expense                                                    201 {"success":true,"data":{"id":5,"expenseNumber":"EXP-000005","expenseDate":"2026-11-25T16:38:35.218Z","expenseType":"operational","categoryId":1,"amount":50,"taxAmount":0,"description":"big","supplierId":null,"paymentMethod":"cash","bankAccountId":null,"referen
+=== E. cashier role?
+roles                                                      200 {"success":true,"data":[{"id":1,"name":"admin","nameAr":"مدير النظام","description":"Full system access with all permissions"},{"id":2,"name":"accountant","nameAr":"محاسب","description":"POS operations with limited administrative access"}],"meta":{"timestamp":

@@ -1,0 +1,22 @@
+RAW sales (non-voided, API-created)                        {"n":14,"total":132836,"tax":12866,"disc":3030,"cost":30999,"profit":101837}
+RAW submitted sale credit notes                            1150
+GL: revenue 4110 cr / VAT 2120 cr / COGS 5100 / 5400 (discount+CN+roundoff) {"rev":129760,"vat":6076,"cogs":30999,"x5400":4150}
+GL gross margin (4110 - 5100 - 5400)                       94611
+/reports/sales summary                                     {"grossRevenue":123000,"discounts":3030,"tax":12866,"netRevenue":132836,"cost":30999,"profit":101837,"count":14}
+  Σ byItem revenue vs summary grossRevenue                 {"byItem":123000,"gross":123000}
+/reports/profit-loss                                       {"revenue":132836,"discounts":3030,"costOfGoodsSold":30999,"grossProfit":101837,"expenses":0,"netProfit":101837,"grossMargin":76.66370562196995,"netMargin":76.66370562196995}
+/reports/dashboard today                                   ["sales","inventory","receivables","payables"]
+/accounting/reports/income-statement (JSON) status         404 "NOT_FOUND"
+/accounting/trial-balance totals                           200
+invoice PDF SAL-20261125-0014 (g=10000 d=0 t=1500 tot=11500) 200 has total 115.00: true; has tax 15.00: true; SAR/ر.س: false; ₪/شيكل/ILS: false
+  invoice PDF text sample                                  الصنف الوزن السعر اإلجمايل دجاج أفخاذ 1.000 kg 100.00 100.00 100.00 الفرعي المجموع 0.00 الخصم 115.00 اإلجمايل 115.00 المدفوع 0.00 المتـبقي 25-11-2026 : التاريخ الدجاج متجر v1.0.0 الدجاج متجر 1 1 / الدجاج متجر 
+  invoice PDF (en) text sample                             Item Qty (kg) Price Total أفخاذ دجاج 1.000 kg 100.00 100.00 Subtotal 100.00 Discount 0.00 Total 115.00 Paid 115.00 Balance 0.00 Chicken Shop POS v1.0.0 Date: 25-11-2026 Chicken Shop POS 1 / 1 متجر الدجاج 
+voided sale invoice PDF marks VOID?                        200 true
+invoice PDF of sale with credit note mentions CN / net due? false sample=Item Qty (kg) Price Total صدور دجاج 1.000 kg 100.00 100.00 Subtotal 100.00 Discount 0.00 Total 115.00 Paid 50.00 Balance 65.00 Chicken Shop POS v1.0.0 Date: 25-11-2026 Chicken Shop POS 1 / 1 متجر الدجاج 
+sales report PDF 2026-11-25..2026-11-25                    200 rows=0 (non-voided today=14, incl voided=15)
+sales report PDF 2026-11-25..2026-11-26                    200 rows=14 (non-voided today=14, incl voided=15)
+VAT PDF 2026-11-25..2026-11-25                             200 sample=Account Code Account Name Output VAT Input VAT Net 1125 رضيبة القيمة المضافة القابلة لالسرتداد 0.00 0.00 0.00 2120 رضيبة القيمة المضافة المستحقة 0.00 0.00 0.00 Total Output VAT 0.00 Total Input VAT 0.00 Net VAT Payable 0.00 Chicken Shop POS v1.0.0 Date: 25-11-2026 Chicken Shop POS 1 / 1 متجر الدجاج 
+VAT PDF 2026-11-25..2026-11-26                             200 sample=Account Code Account Name Output VAT Input VAT Net 1125 رضيبة القيمة المضافة القابلة لالسرتداد 0.00 0.00 0.00 2120 رضيبة القيمة المضافة المستحقة 75.76 15.00 60.76 Total Output VAT 75.76 Total Input VAT 15.00 Net VAT Payable 60.76 Chicken Shop POS v1.0.0 Date: 25-11-2026 Chicken Shop POS 1 / 1 متجر ا
+receipt JSON                                               {"storeName":"Chicken Shop","total":11500,"tax":1500,"payments":[{"method":"cash","amount":11500,"date":"2026-11-25T11:21:56.769Z"}]}
+settings currency                                          [{"key":"currency.code","value":"SAR"},{"key":"currency.symbol","value":"ر.س"},{"key":"currency.decimals","value":"2"}]
+customer 2 statement PDF sample                            200 Customer: Hotel B Customer No: C- SEED-002 Phone: 0507654321 Address: Jeddah Period: 01-01-2026 — 25-11-2026 Issue Date: 25-11-2026 Date Ref Type Description Debit Credit Bala 01-01-2026 - Opening Balance Opening Balance 0.00 0.00 25-11-2026 Sale #14 Sale Sale #14 115.00 0.00 25-11-2026 Payment #16 Payment Payment against Sale #14 0.00 50.00 25-11-2026 Credit Note #1 Credit Note Credit Note #CN-00000 1 against Sale #14 0.00 11.50 Opening Balance 0.00 Total Debits 115.00 Total Credits 61.50 Closi

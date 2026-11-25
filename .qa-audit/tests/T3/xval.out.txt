@@ -1,0 +1,82 @@
+setup bankId                                               1
+restock item2 200kg credit purchase                        201
+restock item3 200kg credit purchase                        201
+restock item4 200kg credit purchase                        201
+restock item5 200kg credit purchase                        201
+restock item6 200kg credit purchase                        201
+K3-001 credit 10000 + pay 4000 cash + void                 201 201 200
+  GL net delta (expect {})                                 {"1111":-4000,"1120":4000}
+  customer1 views delta                                    {"before":{"custBalance":0,"debtsOpen":0,"pleSum":0},"after":{"custBalance":0,"debtsOpen":0,"pleSum":0}}
+K3-001b credit 10000 + pay 4000 BANK + void                201 201 200
+  GL net delta (expect {})                                 {"1111":-4000,"1120":4000}
+K3-002 /sales/:id/payments 3000                            201
+  GL delta (expect cash +3000, AR -3000)                   {}
+  JE for payment                                           {"n":0}
+  by ACCOUNTANT too?                                       201
+  cancel that payment                                      404 "JOURNAL_ENTRY_NOT_FOUND"
+  /sales/:id/payments bank_transfer+bankAccountId          400 "VALIDATION_ERROR"
+K3-003 mixed cash5000+bank5000                             201
+  GL delta (expect 1111 +5000, 1112-001 +5000)             {"1111":10000,"1131":-4400,"4110":-10000,"5100":4400}
+  void mixed sale                                          200
+  GL delta of void                                         {"1111":-10000,"1131":4400,"4110":10000,"5100":-4400}
+K3-003b bank first then cash                               201
+  GL delta (expect 1111 +5000, 1112-001 +5000)             {"1131":-4400,"4110":-10000,"5100":4400,"1112-001":10000}
+F-13 POS card with bankAccountId                           201
+  GL delta (expect 1112-001 +4000)                         {"1131":-2000,"4110":-4000,"5100":2000,"1112-001":4000}
+F-13 POS bank_transfer with bankAccountId                  201
+  GL delta (expect 1112-001 +4000)                         {"1131":-2000,"4110":-4000,"5100":2000,"1112-001":4000}
+F-13 POS card WITHOUT bankAccountId (bank exists, default) 201
+  GL delta                                                 {"1131":-2000,"4110":-4000,"5100":2000,"1112-001":4000}
+D-15 POS check                                             201
+  GL delta                                                 {"1111":4000,"1131":-2000,"4110":-4000,"5100":2000}
+D-15 POS mobile                                            201
+  GL delta                                                 {"1111":4000,"1131":-2000,"4110":-4000,"5100":2000}
+POS bank_transfer bankAccountId=999 (nonexistent)          400 "FOREIGN_KEY_ERROR"
+POS cash with bankAccountId set                            201 sale.bank_account_id=1
+K3-013 /payments/sale on VOIDED sale                       201
+  GL delta                                                 {"1111":1000,"1120":-1000}
+  cust3                                                    {"before":{"custBalance":0,"debtsOpen":0,"pleSum":0},"after":{"custBalance":-1000,"debtsOpen":4000,"pleSum":-1000}}
+  /sales/:id/payments on VOIDED sale                       201
+  debt row after                                           {"total_amount":5000,"amount_paid":2000,"status":"partial"}
+K2-001 write-off 5000                                      200
+  GL delta (expect AR -5000, bad-debt +5000)               {}
+  cust3 db views                                           {"before":{"custBalance":3000,"debtsOpen":8000,"pleSum":3000},"after":{"custBalance":-2000,"debtsOpen":3000,"pleSum":3000}}
+  cust3 api views                                          {"before":{"apiCustomerBalance":3000,"apiDebtsRemaining":0,"apiPartyOutstanding":3000},"after":{"apiCustomerBalance":-2000,"apiDebtsRemaining":0,"apiPartyOutstanding":3000}}
+  sale outstanding (reconciliation)                        5000
+  sale paymentStatus                                       {"payment_status":"unpaid","amount_paid":0}
+  write-off twice (accountant)                             400 "ALREADY_WRITTEN_OFF"
+  pay 2000 after write-off                                 201
+  cust3 db views after pay                                 {"custBalance":-4000,"debtsOpen":6000,"pleSum":1000}
+  debt row                                                 {"total_amount":5000,"amount_paid":2000,"status":"partial"}
+K3-021 sale 10000 + VAT15% (engines OFF)                   201 total=11500 tax=1500 profit=9700 cost=1800
+  GL delta (expect 4110 -10000, 2120 -1500)                {"1111":11500,"1131":-1800,"4110":-11500,"5100":1800}
+K3-022 CN 4000 on credit sale 10000                        201 201
+  GL delta (expect 4110 +4000 [or 4900], AR -4000; COGS/stock if goods returned) {"1120":-4000,"5400":4000}
+  cust2 db views                                           {"before":{"custBalance":16900,"debtsOpen":16900,"pleSum":16900},"after":{"custBalance":16900,"debtsOpen":16900,"pleSum":12900}}
+  cust2 api views                                          {"before":{"apiCustomerBalance":16900,"apiDebtsRemaining":0,"apiPartyOutstanding":16900},"after":{"apiCustomerBalance":16900,"apiDebtsRemaining":0,"apiPartyOutstanding":12900}}
+  sale amountPaid/status/due                               {"amountPaid":0,"amountDue":10000,"paymentStatus":"unpaid"}
+  inventory item2 unchanged?                               {"before":{"q":244000,"v":439200},"after":{"q":244000,"v":439200}}
+  pay FULL 10000 after CN 4000                             201
+  cust2 after full pay                                     {"custBalance":6900,"debtsOpen":6900,"pleSum":2900}
+  sale outstanding (PLE)                                   0
+D-12 partial walk-in no customer 8000 paid 5000            400 "CUSTOMER_REQUIRED"
+F-09 partial name+phone 8000 paid 5000                     201 customerId=4
+  auto customer views                                      {"custBalance":3000,"debtsOpen":3000,"pleSum":3000}
+  GL delta                                                 {"1111":5000,"1120":3000,"1131":-4000,"4110":-8000,"5100":4000}
+C-30 walk-in paid total-1 (8000/7999)                      201 status=partial due=1
+second partial same phone -> reuses customer?              201 customerId=4
+  unowned AR (AR lines on sales without customer)          {"s":1}
+cash sale with NO payments (paid 0, walk-in)               400 "CUSTOMER_REQUIRED"
+cash sale with NO payments, customer 1                     201 status=unpaid
+void by ACCOUNTANT                                         403 "FORBIDDEN"
+void by admin                                              200
+void twice                                                 400 "ALREADY_VOIDED"
+void without reason                                        400 "VALIDATION_ERROR"
+void seeded fixture sale #1 (no original JE)               404 "NOT_FOUND"
+  GL delta of voiding a sale that never posted             {}
+F-08 credit 10000, pay 4000, cancel                        201 200
+  cust1 views                                              {"c0":{"custBalance":14000,"debtsOpen":14000,"pleSum":14000},"afterPay":{"custBalance":10000,"debtsOpen":10000,"pleSum":10000},"afterCancel":{"custBalance":14000,"debtsOpen":14000,"pleSum":14000}}
+cancel POS payment (created with the sale)                 404 "JOURNAL_ENTRY_NOT_FOUND"
+statement pdf customer1                                    200
+INVARIANT unbalanced JEs                                   []
+INVARIANT Σcustomer.current_balance vs GL AR               {"custSum":26900,"debtsOpen":36900,"pleSum":27900,"glAR":40001}

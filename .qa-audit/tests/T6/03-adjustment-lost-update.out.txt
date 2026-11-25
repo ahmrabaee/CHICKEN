@@ -1,0 +1,29 @@
+A) item 3 before {"q":50000,"v":140000} lots 50000 adjJE {"n":0,"cr":0}
+A) statuses ["201","201","201","201","201"]
+A) responses previous->new ["50000->49000","50000->49000","50000->49000","50000->49000","50000->49000"]
+A) after {"q":49000,"v":137200} adjJE {"n":5,"cr":14000} => qty removed 1000 g (expected 5000); GL inventory credited 14000; inventory.total_value dropped 2800
+A) stock movements sum (adjustment_out): {"s":-5000,"n":5}
+B) item 2 before {"q":50000,"v":90000} lots 50000
+B) statuses ["sale:201","adj:201","sale:201","adj:201","sale:201","adj:201","sale:201","adj:201","sale:201","adj:201"]
+B) after inventory {"q":49000,"v":88200} lots 47500; ok sales=5 ok adj=5; expected inventory qty = 45000; actual 49000; DRIFT 4000 g
+B) delta (T1 snapshot):
+GL delta: Dr 145.00 / Cr 145.00 (balanced)
+  1111      Cash in Drawer             Dr        55.00 Cr         0.00 net        55.00
+  1131      Fresh Chicken Inventory    Dr         0.00 Cr        90.00 net       -90.00
+  4110      Fresh Chicken Sales        Dr         0.00 Cr        55.00 net       -55.00
+  5100      Cost of Goods Sold         Dr        45.00 Cr         0.00 net        45.00
+  5320      Inventory Adjustment       Dr        45.00 Cr         0.00 net        45.00
+Metric deltas (money in currency units, qty in grams):
+  gl_cash                  55.00
+  gl_inventory             -90.00
+  gl_total_dr              145.00
+  gl_total_cr              145.00
+  inventory_qty            -1000 g
+  inventory_value          -18.00
+  lots_qty                 -2500 g
+  lots_value               -45.00
+  sle_value                -90.00
+  sle_qty                  -5000 g
+Item deltas:
+  2@1 CHK-WHOLE-01 {"code":"CHK-WHOLE-01","qty":-1000,"value":-1800,"lotQty":-2500,"lotValue":-4500}
+Row count deltas: {"journal_entries":10,"journal_entry_lines":30,"sales":5,"sale_lines":5,"payments":5,"stock_movements":10,"stock_ledger_entries":10,"audit_logs":5}

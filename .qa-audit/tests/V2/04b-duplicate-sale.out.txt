@@ -1,0 +1,4 @@
+T6-005a: parallel sale #1 201 {"success":true,"data":{"id":6,"saleNumber":"SAL-20261125-0001","saleDate":"2026-11-25T16:41:31.906Z","saleType":"cash","customerId":null,"customerName":null,"grossTotalAmount":200,"discountAmount":0,"taxAmount":0,"totalAmount":200,"totalCost":280,"t
+T6-005b: parallel sale #2 (same body + same Idempotency-Key header) 201 {"success":true,"data":{"id":7,"saleNumber":"SAL-20261125-0002","saleDate":"2026-11-25T16:41:31.945Z","saleType":"cash","customerId":null,"customerName":null,"grossTotalAmount":200,"discountAmount":0,"taxAmount":0,"totalAmount":200,"totalCost":280,"t
+T6-005c: sequential "retry" same key 201 {"success":true,"data":{"id":8,"saleNumber":"SAL-20261125-0003","saleDate":"2026-11-25T16:41:31.971Z","saleType":"cash","customerId":null,"customerName":null,"grossTotalAmount":200,"discountAmount":0,"taxAmount":0,"totalAmount":200,"totalCost":280,"t
+DONE

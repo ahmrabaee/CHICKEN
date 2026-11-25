@@ -1,0 +1,34 @@
+# T4-04 guard/dates 2026-11-25T11:19:46.584Z cash 0
+
+## G1. today cash 500.00; expense 100.00 dated 2026-11-01
+  resp: {"status":400,"err":"INSUFFICIENT_BALANCE"}  cash 1111 now = 50000
+
+## G1b. same expense dated today
+  resp: {"status":201}  cash 1111 now = 40000
+
+cash after 2nd funding (dated 2026-11-01): 140000
+
+## G2a. pay supplier 1400.00 cash today (all cash)
+  resp: {"status":201}  cash 1111 now = 0
+
+## G2b. purchase payment 1.00 now (current-balance guard)
+  resp: {"status":400,"err":"INSUFFICIENT_BALANCE"}  cash 1111 now = 0
+
+## G2c. expense 900.00 dated 2026-11-02 (as-of balance 1000.00)
+  resp: {"status":201}  cash 1111 now = -90000
+
+## G2d. purchase paid at creation 800.00 cash, purchaseDate 2026-11-02
+  resp: {"status":201}  cash 1111 now = -170000
+
+## G2e. supplier advance 500.00 dated 2026-11-02
+  resp: {"status":201}  cash 1111 now = -220000
+
+## G2f. future-dated expense 2027-01-01 100.00
+  resp: {"status":400,"err":"INSUFFICIENT_BALANCE"}  cash 1111 now = -220000
+
+JE date vs expense date: [{"n":"EXP-000005","expenseDate":"2026-11-02T00:00:00.000Z","jeDate":"2026-11-25T11:19:46.846Z"},{"n":"EXP-000004","expenseDate":"2026-11-25T11:19:46.665Z","jeDate":"2026-11-25T11:19:46.671Z"}]
+JE date vs purchase date: [{"n":"PUR-000006","purchaseDate":"2026-11-02T00:00:00.000Z","jeDate":"2026-11-25T11:19:46.875Z"}]
+Trial balance to 2026-11-02, 5400: {"d":100000,"c":0}  vs /reports/profit-loss 2026-11-02 expenses: 90000
+Trial balance to 2026-11-01, 1111: 0
+
+FINAL cash 1111 = -220000 (negative => guard bypassed)

@@ -1,0 +1,50 @@
+=== T1: raw 10kg @18.00 -> breast 4kg@28 + thigh 3kg@22 + wing 2kg@20 (UI-default costs), 1kg bone loss not entered
+  GL delta [purchase raw] {"1131":18000,"2110":-18000}
+  source lot {"id":6,"expiry_date":null,"received_at":1795605487731,"rem":10000}
+transfer 201 ST-000001 status=completed totalCostValue=21800
+  GL delta [transfer T1] {}
+  [item 1 raw] inv 1000g/1800 avg 1800 | lots 1000g/1800 | SLE 1000g/1800 | mov 1000g | lots=6:LOT-20261125-006:1000/10000@1800  OK
+  [item 7 breast] inv 4000g/11200 avg 2800 | lots 4000g/11200 | SLE 4000g/11200 | mov 4000g | lots=7:LOT-20261125-007:4000/4000@2800  OK
+  [item 8 thigh] inv 3000g/6600 avg 2200 | lots 3000g/6600 | SLE 3000g/6600 | mov 3000g | lots=8:LOT-20261125-008:3000/3000@2200  OK
+  [item 9 wing] inv 2000g/4000 avg 2000 | lots 2000g/4000 | SLE 2000g/4000 | mov 2000g | lots=9:LOT-20261125-009:2000/2000@2000  OK
+  JE for transfer: 0
+  source lot received_at 2026-11-25T11:18:07.731Z expiry null
+  dest lots [{"id":7,"item_id":7,"received_at":"2026-11-25T11:18:07.762Z","expiry_date":"2026-12-02T11:18:07.760Z","unit_purchase_price":2800},{"id":8,"item_id":8,"received_at":"2026-11-25T11:18:07.765Z","expiry_date":"2026-12-02T11:18:07.760Z","unit_purchase_price":2200},{"id":9,"item_id":9,"received_at":"2026-11-25T11:18:07.768Z","expiry_date":"2026-12-02T11:18:07.760Z","unit_purchase_price":2000}]
+  value consumed from source 16200; value created in destinations 21800; created-from-nothing 5600; 1kg loss remains in source lot (rem 1000g)
+sell 4kg breast: COGS 11200
+  GL delta [sale breast] {"1111":14000,"1131":-11200,"4110":-14000,"5100":11200}
+=== T2: conservation-respecting transfer (allocate 18000 over 9kg = 2000/kg) still leaves 1kg loss at cost in raw lot
+transfer 10kg-lot -> 7kg thigh @25.71 (whole bird cost / 7kg) 201 consumed only 7kg; raw lot rem 3000g
+  GL delta [transfer T2 (yield)] {"1131":18000,"2110":-18000}
+  [item 1 raw] inv 4000g/7200 avg 1800 | lots 4000g/7200 | SLE 4000g/7200 | mov 4000g | lots=6:LOT-20261125-006:1000/10000@1800 10:LOT-20261125-010:3000/10000@1800  OK
+=== T3: over-transfer and concurrent transfers from the same lot
+transfer 10001g from 10000g lot 400 INSUFFICIENT_QUANTITY
+concurrent 2x8kg from 10kg lot: 201  409 DUPLICATE_ENTRY
+  raw lot remaining now 2000
+  GL delta [T3] {"1131":18000,"2110":-18000}
+  [item 1 raw] inv 6000g/10800 avg 1800 | lots 6000g/10800 | SLE 6000g/10800 | mov 6000g | lots=6:LOT-20261125-006:1000/10000@1800 10:LOT-20261125-010:3000/10000@1800 12:LOT-20261125-012:2000/10000@1800  OK
+=== T4: chain breast -> skewer at unitCost 0 (value destroyed), and transfer to the SAME item at higher cost (revaluation)
+breast 2kg -> skewer @0 201 
+breast 3kg -> breast @99.99 201 
+  GL delta [T4] {"1131":14000,"2110":-14000}
+  [item 7 breast] inv 3000g/29997 avg 9999 | lots 3000g/29997 | SLE 3000g/29997 | mov 3000g | lots=7:LOT-20261125-007:0/4000@2800 14:LOT-20261125-014:0/5000@2800 16:LOT-20261125-016:3000/3000@9999  OK
+  [item 10 skewer] inv 2000g/0 avg 0 | lots 2000g/0 | SLE 2000g/0 | mov 2000g | lots=15:LOT-20261125-015:2000/2000@0  OK
+=== T5: delete / edit the source purchase after transfer
+delete source purchase 400 PURCHASE_STOCK_ALREADY_USED
+edit source purchase price 400 PURCHASE_STOCK_ALREADY_USED
+=== T6: transfer to inactive item, to non-existent item, to non-existent branch
+deactivate item 200 isActive= 0
+transfer -> inactive item 201 ACCEPTED
+sell inactive item 201 ACCEPTED
+transfer -> item 99999 400 FOREIGN_KEY_ERROR
+transfer branchId 999 400 FOREIGN_KEY_ERROR
+stock-vs-gl summary {"totalStockValue":93294,"totalAccountValue":66300,"totalDifference":26994}
+stock-vs-gl transfer rows [{"voucherType":"transfer","voucherId":6,"postingDate":"2026-11-25T11:18:08.123Z","stockValue":-1800,"accountValue":0,"difference":-1800,"ledgerType":"Stock Ledger Entry"},{"voucherType":"transfer","voucherId":6,"postingDate":"2026-11-25T11:18:08.120Z","stockValue":1800,"accountValue":0,"difference":1800,"ledgerType":"Stock Ledger Entry"},{"voucherType":"transfer","voucherId":5,"postingDate":"2026-11-25T11:18:08.008Z","stockValue":-8400,"accountValue":0,"difference":-8400,"ledgerType":"Stock Ledger Entry"},{"voucherType":"transfer","voucherId":5,"postingDate":"2026-11-25T11:18:08.005Z","stockValue":29997,"accountValue":0,"difference":29997,"ledgerType":"Stock Ledger Entry"},{"voucherType":"transfer","voucherId":4,"postingDate":"2026-11-25T11:18:07.985Z","stockValue":-5600,"accountValue":0,"difference":-5600,"ledgerType":"Stock Ledger Entry"},{"voucherType":"transfer","voucherId":4,"postingDate":"2026-11-25T11:18:07.982Z","stockValue":0,"accountValue":0,"difference":0,"ledgerType":"Stock Ledger Entry"},{"voucherType":"transfer","voucherId":3,"postingDate":"2026-11-25T11:18:07.919Z","stockValue":-14400,"accountValue":0,"difference":-14400,"ledgerType":"Stock Ledger Entry"},{"voucherType":"transfer","voucherId":3,"postingDate":"2026-11-25T11:18:07.916Z","stockValue":14400,"accountValue":0,"difference":14400,"ledgerType":"Stock Ledger Entry"},{"voucherType":"transfer","voucherId":2,"postingDate":"2026-11-25T11:18:07.862Z","stockValue":-12600,"accountValue":0,"difference":-12600,"ledgerType":"Stock Ledger Entry"},{"voucherType":"transfer","voucherId":2,"postingDate":"2026-11-25T11:18:07.859Z","stockValue":17997,"accountValue":0,"difference":17997,"ledgerType":"Stock Ledger Entry"},{"voucherType":"transfer","voucherId":1,"postingDate":"2026-11-25T11:18:07.772Z","stockValue":-16200,"accountValue":0,"difference":-16200,"ledgerType":"Stock Ledger Entry"},{"voucherType":"transfer","voucherId":1,"postingDate":"2026-11-25T11:18:07.770Z","stockValue":4000,"accountValue":0,"difference":4000,"ledgerType":"Stock Ledger Entry"},{"voucherType":"transfer","voucherId":1,"postingDate":"2026-11-25T11:18:07.767Z","stockValue":6600,"accountValue":0,"difference":6600,"ledgerType":"Stock Ledger Entry"},{"voucherType":"transfer","voucherId":1,"postingDate":"2026-11-25T11:18:07.765Z","stockValue":11200,"accountValue":0,"difference":11200,"ledgerType":"Stock Ledger Entry"}]
+transfers [{"transfer_number":"ST-000001","status":"completed","total_weight_grams":9000,"total_cost_value":21800},{"transfer_number":"ST-000002","status":"completed","total_weight_grams":7000,"total_cost_value":17997},{"transfer_number":"ST-000003","status":"completed","total_weight_grams":8000,"total_cost_value":14400},{"transfer_number":"ST-000004","status":"completed","total_weight_grams":2000,"total_cost_value":0},{"transfer_number":"ST-000005","status":"completed","total_weight_grams":3000,"total_cost_value":29997},{"transfer_number":"ST-000006","status":"completed","total_weight_grams":1000,"total_cost_value":1800}]
+FINAL GL 1131 66300 | Σinventory.total_value 93294 | Σlot value 93294
+  [item 1] inv 10000g/18000 avg 1800 | lots 10000g/18000 | SLE 10000g/18000 | mov 10000g | lots=6:LOT-20261125-006:1000/10000@1800 10:LOT-20261125-010:3000/10000@1800 12:LOT-20261125-012:2000/10000@1800 18:LOT-20261125-018:4000/5000@1800  OK
+  [item 7] inv 3000g/29997 avg 9999 | lots 3000g/29997 | SLE 3000g/29997 | mov 3000g | lots=7:LOT-20261125-007:0/4000@2800 14:LOT-20261125-014:0/5000@2800 16:LOT-20261125-016:3000/3000@9999  OK
+  [item 8] inv 10000g/24597 avg 2460 | lots 10000g/24597 | SLE 10000g/24597 | mov 10000g | lots=8:LOT-20261125-008:3000/3000@2200 11:LOT-20261125-011:7000/7000@2571  OK
+  [item 9] inv 10000g/18400 avg 1840 | lots 10000g/18400 | SLE 10000g/18400 | mov 10000g | lots=9:LOT-20261125-009:2000/2000@2000 13:LOT-20261125-013:8000/8000@1800  OK
+  [item 10] inv 2000g/0 avg 0 | lots 2000g/0 | SLE 2000g/0 | mov 2000g | lots=15:LOT-20261125-015:2000/2000@0  OK
+  [item 11] inv 1500g/2300 avg 1533 | lots 1500g/2300 | SLE 1500g/2300 | mov 1500g | lots=17:LOT-ADJ-11-1795605488052:500/1000@1000 19:LOT-20261125-019:1000/1000@1800  OK

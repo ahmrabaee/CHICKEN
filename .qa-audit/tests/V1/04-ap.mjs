@@ -1,0 +1,22 @@
+import * as L from './lib.mjs';
+const a = await L.admin();
+const SUP = 2;
+const view = (tag) => {
+  const gl = -L.glOf('2110');
+  const debts = L.one(`select coalesce(sum(total_amount-amount_paid),0) s, coalesce(sum(total_amount),0) t from debts where direction='payable' and party_type='supplier' and party_id=?`, SUP);
+  const ple = L.one(`select coalesce(sum(amount),0) s from payment_ledger_entries where party_type='supplier' and party_id=? and delinked=0`, SUP);
+  const sup = L.one(`select current_balance b from suppliers where id=?`, SUP).b;
+  L.say(tag, { GL2110_total_credit: gl, debtOutstanding: debts.s, debtTotal: debts.t, PLE: ple.s, supplier_current_balance: sup, GL1125: L.glOf('1125') });
+};
+const gl0 = -L.glOf('2110');
+view('baseline');
+const g0 = L.snap();
+const p = await a.post('/purchases', { supplierId: SUP, lines: [{ itemId: 1, weightGrams: 10000, pricePerKg: 2000 }], taxAmount: 3000 });
+L.say('purchase', [L.st(p), { total: p.data?.totalAmount, tax: p.data?.taxAmount, grand: p.data?.grandTotal }]);
+L.say('GL delta on purchase (exp AP credit 23000 or inv20000+VAT3000)', L.delta(g0, L.snap()));
+view('after credit purchase');
+const g1 = L.snap();
+const pay = await a.post('/payments/purchase', { purchaseId: p.data.id, amount: 23000, paymentMethod: 'cash' });
+L.say('pay full 23000', L.st(pay)); L.say('GL delta on pay', L.delta(g1, L.snap()));
+view('after full payment (exp all 0)');
+L.say('purchase row', L.one(`select total_amount t, amount_paid p, payment_status s from purchases where id=?`, p.data.id));

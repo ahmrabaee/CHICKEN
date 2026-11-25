@@ -1,0 +1,17 @@
+enable gl engine 200 {"id":51,"key":"gl_engine_enabled","value":"true","description":"Use new GL Engine (Phase 02)","dataType":"boolean","settingGroup":"accounting","isSys | db value true
+  GL delta [purchase 10kg@20] {"1131":20000,"2110":-20000} 
+  GL delta [purchase 10kg@30] {"1131":30000,"2110":-30000} 
+sale 201 
+  GL delta [sale 12kg (FIFO 24000)] {"1111":48000,"1131":-26000,"4110":-48000,"5100":26000} 
+adj 201 
+  GL delta [adjust -1kg] {"1131":-3000,"5320":3000} 
+adj+ 201 
+  GL delta [adjust +1kg @25] {"1131":2500,"5320":-2500} 
+wastage 201 
+  GL delta [wastage 1kg] {"1131":-3000,"5300":3000} 
+transfer 201 
+  GL delta [transfer 1kg @50] {} 
+void 200 
+  GL delta [void sale] {"1111":-48000,"1131":26000,"4110":48000,"5100":-26000} 
+JE sources [{"source_type":"adjustment","n":2,"p":1},{"source_type":"purchase","n":2,"p":1},{"source_type":"sale","n":1,"p":1},{"source_type":"sale_void","n":1,"p":1},{"source_type":"wastage","n":1,"p":1}]
+  [item 7] inv 18000g/43500 avg 2917 | lots 19000g/46500 | SLE 19000g/46500 | mov 18000g | lots=6:LOT-20261125-006:10000/10000@2000 7:LOT-20261125-007:8000/10000@3000 8:LOT-ADJ-7-1795605719516:1000/1000@2500  <<invQty 18000 != lotQty 19000; invVal 43500 != lotVal 46500; sleQty 19000 != invQty 18000; sleVal 46500 != invVal 43500

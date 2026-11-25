@@ -1,0 +1,29 @@
+create accountant                              201
+ACC discountPct 600 (cap path)                 403 "DISCOUNT_LIMIT_EXCEEDED"
+ACC header discountAmount 5000 of 10000 (50%)  ["201",{"id":26,"t":5000,"p":5000,"ps":"paid","v":0,"c":4400,"pr":600}]
+ACC line discount 9500 of 10000 (95%)          ["201",{"id":27,"t":500,"p":500,"ps":"paid","v":0,"c":4400,"pr":-3900}]
+ACC pricePerKg=1 (list 50.00, cost 22.00)      ["201",{"id":28,"t":2,"p":2,"ps":"paid","v":0,"c":4400,"pr":-4398}]
+ADMIN 6% discountPct (control, admin allowed)  201
+ACC GET /reports/profit-loss                   400 costFields=true
+ACC GET /reports/sales                         400 costFields=false
+ACC GET /reports/inventory                     200 costFields=false
+ACC GET /reports/expenses                      400 costFields=false
+ACC GET /reports/purchases                     400 costFields=false
+ACC GET /accounting/trial-balance              200 costFields=false
+ACC GET /expenses                              403 costFields=false
+ACC GET /expenses/summary                      403 costFields=false
+ACC GET /items                                 200 costFields=true
+ACC GET /suppliers                             403 costFields=false
+ACC GET /purchases                             403 costFields=false
+ACC GET /inventory/1/lots                      200 costFields=true
+ACC GET /sales/26                              200 costFields=true
+ACC GET /dashboard                             404 costFields=false
+ACC GET /dashboard/summary                     404 costFields=false
+ACC GET /users                                 403 costFields=false
+ACC GET /settings                              403 costFields=false
+ACC GET /tax/vat-report                        200 costFields=false
+ACC GET /backup                                404 costFields=false
+set tax_engine_enabled=true                    200
+TAX ON/GL OFF GL delta                         ["201",{"1111":11500,"1131":-4400,"4110":-11500,"5100":4400}]
+set gl_engine_enabled=true                     200
+TAX ON/GL ON GL delta                          ["201",{"1111":11500,"1131":-4400,"2120":-1500,"4110":-10000,"5100":4400},{"id":31,"t":11500,"p":11500,"ps":"paid","v":0,"c":4400,"pr":7100}]

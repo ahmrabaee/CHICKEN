@@ -1,0 +1,7 @@
+bank sale 201 bank bal 10000 cash bal 276000
+expense bank_transfer 2000 201 "" cash delta -2000 bank delta 0
+expense update amount->99900 200 JE amount still 2000
+expense delete 200 expense rows 0 JE rows left 1
+wastage by accountant 400 {"code":"VALIDATION_ERROR","message":"property wastageType should not exist","messageAr":"property wastageType should not exist","details":["property wastageType should not exist"]} SLE wastage rows 0
+accountant GET /system/backup/status 200
+wastage by accountant 201 "" SLE wastage 0 JE wastage 1

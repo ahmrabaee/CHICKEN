@@ -1,0 +1,48 @@
+[400] unbalanced 100/90: rejected {"code":"UNBALANCED_ENTRY","message":"Debits must equal credits","messageAr":"يجب أن يتساوى المدين مع الدائن"}
+[201] zero lines: CREATED  -> JE JE-000013 date=2026-11-25T11:20:30.135Z posted=0 src={"source_type":null,"source_id":null} lines=[]
+[400] single line debit only: rejected {"code":"UNBALANCED_ENTRY","message":"Debits must equal credits","messageAr":"يجب أن يتساوى المدين مع الدائن"}
+[201] all-zero lines: CREATED  -> JE JE-000014 date=2026-11-25T11:20:30.160Z posted=0 src={"source_type":null,"source_id":null} lines=[{"code":"1111","dr":0,"cr":0},{"code":"3100","dr":0,"cr":0}]
+[201] negative amounts (-100 dr / -100 cr): CREATED  -> JE JE-000015 date=2026-11-25T11:20:30.178Z posted=0 src={"source_type":null,"source_id":null} lines=[{"code":"1111","dr":-10000,"cr":0},{"code":"3100","dr":0,"cr":-10000}]
+[201] line with both debit and credit: CREATED  -> JE JE-000016 date=2026-11-25T11:20:30.194Z posted=0 src={"source_type":null,"source_id":null} lines=[{"code":"1111","dr":500,"cr":500},{"code":"3100","dr":100,"cr":100}]
+[201] fractional minor units 0.5: CREATED  -> JE JE-000017 date=2026-11-25T11:20:30.212Z posted=0 src={"source_type":null,"source_id":null} lines=[{"code":"1111","dr":0,"cr":0},{"code":"3100","dr":0,"cr":0}]
+[400] group account 1112 (bank group): rejected {"code":"POSTING_TO_GROUP_ACCOUNT","message":"Cannot post to group accounts: 1112","messageAr":"لا يمكن القيد على حسابات المجموعة: النقد في البنك"}
+[400] group account 1000 root: rejected {"code":"POSTING_TO_GROUP_ACCOUNT","message":"Cannot post to group accounts: 1000","messageAr":"لا يمكن القيد على حسابات المجموعة: الأصول"}
+[400] non-existent account 99999: rejected {"code":"FOREIGN_KEY_ERROR","message":"Related record does not exist: JournalEntryLine","messageAr":"السجل المرتبط غير موجود: JournalEntryLine"}
+[400] missing accountId: rejected {"code":"VALIDATION_ERROR","message":"lines has invalid value","messageAr":"lines has invalid value","details":["lines has invalid value"]}
+[201] same account dr/cr (net zero): CREATED  -> JE JE-000018 date=2026-11-25T11:20:30.260Z posted=0 src={"source_type":null,"source_id":null} lines=[{"code":"1111","dr":100,"cr":0},{"code":"1111","dr":0,"cr":100}]
+[500] huge amount 9e15: rejected {"code":"DATABASE_ERROR","message":"A database error occurred (P2023)","messageAr":"حدث خطأ في قاعدة البيانات (P2023)"}
+[500] huge amount > 2^53: rejected {"code":"DATABASE_ERROR","message":"A database error occurred (P2023)","messageAr":"حدث خطأ في قاعدة البيانات (P2023)"}
+[201] future date 2030-01-01: CREATED  -> JE JE-000019 date=2030-01-01T00:00:00.000Z posted=0 src={"source_type":null,"source_id":null} lines=[{"code":"1210","dr":100,"cr":0},{"code":"3100","dr":0,"cr":100}]
+[201] past date 2020-06-30: CREATED  -> JE JE-000020 date=2020-06-30T00:00:00.000Z posted=0 src={"source_type":null,"source_id":null} lines=[{"code":"1210","dr":100,"cr":0},{"code":"3100","dr":0,"cr":100}]
+[400] invalid date string: rejected {"code":"VALIDATION_ERROR","message":"\nInvalid `tx.journalEntry.create()` invocation in\nE:\\DEV\\Chicken FMS\\app\\backend\\dist\\accounting\\accounting.service.js:1153:49\n\n  1150 }\n  1151 return this.prisma.$transaction(async (tx) => {\n  1152     const entryNumber = await this.generateEntryNu
+[201] credit to AR 1120 with no party (subledger bypass): CREATED  -> JE JE-000021 date=2026-11-25T11:20:30.347Z posted=0 src={"source_type":null,"source_id":null} lines=[{"code":"1111","dr":100,"cr":0},{"code":"1120","dr":0,"cr":100}]
+[201] to inventory 1131 (no stock): CREATED  -> JE JE-000022 date=2026-11-25T11:20:30.364Z posted=0 src={"source_type":null,"source_id":null} lines=[{"code":"1131","dr":100,"cr":0},{"code":"3100","dr":0,"cr":100}]
+[201] cash overdraw: credit 1111 by 1,000,000.00: CREATED  -> JE JE-000023 date=2026-11-25T11:20:30.381Z posted=0 src={"source_type":null,"source_id":null} lines=[{"code":"3300","dr":100000000,"cr":0},{"code":"1111","dr":0,"cr":100000000}]
+[201] description empty: CREATED  -> JE JE-000024 date=2026-11-25T11:20:30.401Z posted=0 src={"source_type":null,"source_id":null} lines=[{"code":"1210","dr":100,"cr":0},{"code":"3100","dr":0,"cr":100}]
+[400] sourceType injection (sale/1): rejected {"code":"VALIDATION_ERROR","message":"property sourceType should not exist; property sourceId should not exist","messageAr":"property sourceType should not exist؛ property sourceId should not exist","details":["property sourceType should not exist","property sourceId should not exist"]}
+[201] referenceType/referenceId (DTO fields): CREATED  -> JE JE-000025 date=2026-11-25T11:20:30.424Z posted=0 src={"source_type":null,"source_id":null} lines=[{"code":"1210","dr":100,"cr":0},{"code":"3100","dr":0,"cr":100}]
+deactivate 1220 200 
+[400] post to INACTIVE 1220: rejected {"code":"POSTING_TO_DISABLED_ACCOUNT","message":"Cannot post to disabled accounts: 1220","messageAr":"لا يمكن القيد على حسابات معطلة: الأثاث والتجهيزات"}
+[400] post to FROZEN 1220: rejected {"code":"POSTING_TO_FROZEN_ACCOUNT","message":"Cannot post to frozen accounts: 1220","messageAr":"لا يمكن القيد على حسابات مجمدة: الأثاث والتجهيزات"}
+post "zero lines" JE 13: 201 
+post "all-zero lines" JE 14: 201 
+post "negative amounts (-100 dr / -100 cr)" JE 15: 201 
+post "line with both debit and credit" JE 16: 201 
+post "fractional minor units 0.5" JE 17: 201 
+post "same account dr/cr (net zero)" JE 18: 201 
+post "future date 2030-01-01" JE 19: 201 
+post "past date 2020-06-30" JE 20: 201 
+post "credit to AR 1120 with no party (subledger bypass)" JE 21: 201 
+post "to inventory 1131 (no stock)" JE 22: 201 
+post "cash overdraw: credit 1111 by 1,000,000.00" JE 23: 201 
+post "description empty" JE 24: 201 
+post "referenceType/referenceId (DTO fields)" JE 25: 201 
+double post: 400 {"code":"ALREADY_POSTED","message":"Entry is already posted","messageAr":"القيد مرحل بالفعل"}
+route POST /accounting/journal-entries/19/reverse: 404
+route PUT /accounting/journal-entries/19: 404
+route DELETE /accounting/journal-entries/19: 404
+route POST /accounting/journal-entries/19/cancel: 404
+draft JE 26 TB 1210 balance (draft 7.77 must be excluded): 300
+journal list shows draft? true
+GL 1111 balance now -99697900  (D-14 guard applies to documents only?)
+invariants: ["GL-02:3 empty/zero JEs, 8 bad lines","AR-01:{\"gl_ar\":\"119.00\",\"customers_currentBalance\":\"120.00\",\"open_receivable_debts\":\"120.00\",\"ple_customer\":\"120.00\",\"sales_total_minus_paid\":\"120.00\"}","AP-01:{\"gl_ap\":\"1000.00\",\"suppliers_currentBalance\":\"1500.00\",\"open_payable_debts\":\"1000.00\",\"ple_supplier_neg\":\"1000.00\",\"purchases_grand_minus_paid\":\"1000.00\"}","AP-02:1 suppliers differ","INV-01:{\"gl_inventory\":\"2361.00\",\"inventory_totalValue\":\"2360.00\",\"lots_remaining_x_cost\":\"2385.00\",\"stock_ledger_value\":\"2360.00\"}","INV-02:1 items","INV-03:1 items","CASH-01:1111=-996979.00 1112-001=3100.00","CASH-04:"]

@@ -1,0 +1,24 @@
+created item 201 id=107
+stock 201
+labels: L1=2123456003340001000029990 (0.334 kg, total 10.00) L2=2123456005000001500029990 (0.500 kg, total 15.00) L3=2123456000000001000029990 (no weight, total 10.00)
+  API lookup 2123456003340001000029990: 200 weightKg=0.334 price=1000
+  API lookup 2123456005000001500029990: 200 weightKg=0.5 price=1500
+  API lookup 2123456000000001000029990: 200 weightKg=0.333 price=1000
+
+=== K4-002 single label 0.334 kg / 10.00
+  cart: ["فخذ ميزان −¼ 0.33 +¼ 29.99 ₪10.00"] panel={"subtotal":"10.00","tax":null,"total":"10.00","net":null}
+  POST: ["400 req={\"saleType\":\"cash\",\"lines\":[{\"itemId\":107,\"weightGrams\":334,\"pricePerKg\":2999}],\"payments\":[{\"amount\":1000,\"paymentMethod\":\"cash\"}]} res={\"success\":false,\"error\":{\"code\":\"CUSTOMER_REQUIRED\",\"message\":\"Partial or deferred payment requires customer information.\",\"messageAr\":\"الدفع الآجل أو الجزئي يتطلب تحديد بيانات الزبون.\"},\"meta\":{\"timestamp\":\"2026-11-25T16:28:29.087Z\",\"path\":\"/v1/sal"] toasts=["خطأ في إنشاء الفاتورة\nالدفع الآجل أو الجزئي يتطلب تحديد بيانات الزبون."]
+
+=== K4-002 label without weight (inferred) total 10.00
+  cart: ["فخذ ميزان −¼ 0.33 +¼ 29.99 ₪10.00"]
+  POST: ["400 req={\"saleType\":\"cash\",\"lines\":[{\"itemId\":107,\"weightGrams\":333,\"pricePerKg\":2999}],\"payments\":[{\"amount\":1000,\"paymentMethod\":\"cash\"}]} res={\"success\":false,\"error\":{\"code\":\"UNBALANCED_ENTRY\",\"message\":\"Unbalanced entry: Debit=1500, Credit=1499\",\"messageAr\":\"القيد غير متوازن\"},\"meta\":{\"timestamp\":\"2026-11-25T16:28:33.430Z\",\"path\":\"/v1/sales\"}}"] toasts=["خطأ في إنشاء الفاتورة\nالقيد غير متوازن"]
+
+=== K4-003 two labels same item, then +¼ on second row, then remove first row
+  cart after 2 scans: ["فخذ ميزان −¼ 0.50 +¼ 29.99 ₪15.00","فخذ ميزان −¼ 0.25 +¼ 29.99 ₪7.50"] panel={"subtotal":"22.50","tax":null,"total":"22.50","net":null}
+  cart after + on row 2: ["فخذ ميزان −¼ 1.00 +¼ 29.99 ₪29.99","فخذ ميزان −¼ 0.75 +¼ 29.99 ₪22.49"] panel={"subtotal":"52.48","tax":null,"total":"52.48","net":null}
+  cart after trash on row 1: []
+  React duplicate-key warnings: 0
+
+=== unknown / wrong-length barcode message
+  API: ["404 {\"success\":false,\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"Item not found\",\"messageAr\":\"المنتج غير موجود\"},\"meta\":{\"timestamp\":\"2026-11-25T16:28:39.342Z\",\"path\":\"/v1/barcode/lookup?barcode=29999990005000","404 {\"success\":false,\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"Item not found\",\"messageAr\":\"المنتج غير موجود\"},\"meta\":{\"timestamp\":\"2026-11-25T16:28:40.256Z\",\"path\":\"/v1/barcode/lookup?barcode=12345\"}}"]
+  toasts: ["باركود غير معروف","باركود غير معروف"]

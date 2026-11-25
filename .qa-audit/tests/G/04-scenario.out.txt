@@ -1,0 +1,70 @@
+=== A. master delete rules with history
+purchase credit 20kg                                       201 {"success":true,"data":{"id":4,"purchaseNumber":"PUR-000004","purchaseDate":"2026-11-25T16:37:12.786Z","supplierId":3,"supplierName":"GSupHist","supplierInvoiceNumber":null,"totalAmount":40000,"taxAmount":0,"paymentStatus":"unpaid","taxTemplateId":null,"netTot
+cash sale 3kg                                              201 {"success":true,"data":{"id":6,"saleNumber":"SAL-20261125-0001","saleDate":"2026-11-25T16:37:12.817Z","saleType":"cash","customerId":null,"customerName":null,"grossTotalAmount":9000,"discountAmount":0,"taxAmount":0,"totalAmount":9000,"totalCost":6000,"totalPro
+credit sale 15000 vs limit 5000                            201 {"success":true,"data":{"id":7,"saleNumber":"SAL-20261125-0002","saleDate":"2026-11-25T16:37:12.844Z","saleType":"credit","customerId":4,"customerName":"GCustHist","grossTotalAmount":15000,"discountAmount":0,"taxAmount":0,"totalAmount":15000,"totalCost":10000,
+item delete w/ stock+history                               200 {"success":true,"meta":{"timestamp":"2026-11-25T16:37:12.872Z"}}
+item row [{"id":7,"is_active":0}]
+GET item after delete                                      200 {"success":true,"data":{"id":7,"code":"ITE-49610","barcode":null,"name":"GScen","nameEn":null,"description":null,"categoryId":1,"defaultSalePrice":3000,"defaultPurchasePrice":2000,"effectiveCostPrice":2000,"taxRatePct":null,"minStockLevelGrams":30000,"maxStock
+customer delete w/ balance                                 400 {"success":false,"error":{"code":"CUSTOMER_HAS_OPEN_DEBTS","message":"Customer has 1 open debt(s) and cannot be deleted","messageAr":"لا يمكن حذف الزبون لوجود 1 دين غير مسدد"},"meta":{"timestamp":"2026-11-25T16:37:12.881Z","path":"/v1/cu
+cust row [{"id":4,"is_active":1,"current_balance":15000}]
+supplier delete w/ balance                                 409 {"success":false,"error":{"code":"SUPPLIER_HAS_TRANSACTIONS","message":"Cannot delete supplier: it has 1 linked transaction(s)","messageAr":"لا يمكن حذف المورد لوجود 1 عملية مرتبطة به (مشتريات أو مصروفات)."},"meta":{"t
+sup row [{"id":3,"is_active":1,"current_balance":40000}]
+sale item inactive                                         201 {"success":true,"data":{"id":8,"saleNumber":"SAL-20261125-0003","saleDate":"2026-11-25T16:37:12.889Z","saleType":"cash","customerId":null,"customerName":null,"grossTotalAmount":3000,"discountAmount":0,"taxAmount":0,"totalAmount":3000,"totalCost":2000,"totalPro
+credit sale to inactive/deleted customer                   201 {"success":true,"data":{"id":9,"saleNumber":"SAL-20261125-0004","saleDate":"2026-11-25T16:37:12.916Z","saleType":"credit","customerId":4,"customerName":"GCustHist","grossTotalAmount":3000,"discountAmount":0,"taxAmount":0,"totalAmount":3000,"totalCost":1800,"to
+purchase from inactive supplier                            201 {"success":true,"data":{"id":5,"purchaseNumber":"PUR-000005","purchaseDate":"2026-11-25T16:37:12.941Z","supplierId":3,"supplierName":"GSupHist","supplierInvoiceNumber":null,"totalAmount":2000,"taxAmount":0,"paymentStatus":"unpaid","taxTemplateId":null,"netTota
+delete category with items                                 200 {"success":true,"data":{"action":"deactivated","messageAr":"تم تعطيل التصنيف \"GCatWithItem\" لأنه يحتوي على 1 صنف مرتبط"},"meta":{"timestamp":"2026-11-25T16:37:12.992Z"}}
+cat row [{"id":8,"is_active":0}]
+=== B. price rules
+sale below cost (price 100/kg vs cost 2000)                201 {"success":true,"data":{"id":10,"saleNumber":"SAL-20261125-0005","saleDate":"2026-11-25T16:37:12.998Z","saleType":"cash","customerId":null,"customerName":null,"grossTotalAmount":100,"discountAmount":0,"taxAmount":0,"totalAmount":100,"totalCost":1800,"totalProf
+=== C. payment-method list
+GET /payments?pageSize=1                                   200 {"success":true,"data":[{"id":6,"paymentNumber":"PAY-000006","paymentDate":"2026-11-25T16:37:13.004Z","amount":100,"paymentMethod":"cash","referenceType":"sale","referenceId":10,"partyType":"customer","partyId":null,"partyName":null,"receiptNumber":null,"bankT
+sale method "cash"             201 
+sale method "card"             201 
+sale method "bank_transfer"    201 
+sale method "check"            201 
+sale method "cheque"           400 payments has invalid value
+sale method "mobile_payment"   400 payments has invalid value
+sale method "credit"           400 payments has invalid value
+sale method "BITCOIN"          400 payments has invalid value
+sale method ""                 400 payments has invalid value
+payment methods stored: [{"payment_method":"bank_transfer","c":2},{"payment_method":"card","c":1},{"payment_method":"cash","c":6},{"payment_method":"check","c":1}]
+settings payment methods?                                  200 {"success":true,"data":{},"meta":{"timestamp":"2026-11-25T16:37:13.151Z"}}
+=== D. alerts
+low-stock                                                  200 {"success":true,"data":[{"itemId":1,"itemCode":"CHK-RAW-01","itemName":"دجاج خام","categoryName":"دجاج خام","branchId":0,"branchName":"الفرع الرئيسي","totalQuantity":0,"availableQuantity":0,"minStockLevel":0,"avgCostPrice":1800,"sellingPrice
+expiring days=30                                           200 {"success":true,"data":[{"lotId":6,"lotNumber":"LOT-20261125-006","itemId":7,"itemName":"GScen","totalQuantity":20000,"remainingQuantity":11000,"expiryDate":"2026-11-28T16:37:12.789Z","daysUntilExpiry":3}],"meta":{"timestamp":"2026-11-25T16:37:13.157Z"}}
+overdue debts                                              200 {"success":true,"data":{"totalOverdue":0,"receivables":{"count":0,"amount":0,"items":[]},"payables":{"count":0,"amount":0,"items":[]}},"meta":{"timestamp":"2026-11-25T16:37:13.160Z"}}
+summary                                                    200 {"success":true,"data":{"totalReceivables":18000,"totalPayables":42000,"netPosition":-24000},"meta":{"timestamp":"2026-11-25T16:37:13.163Z"}}
+dashboard                                                  200 {"success":true,"data":{"sales":{"today":{"count":9,"totalAmount":42100,"totalCost":28800,"totalProfit":13300}},"inventory":{"lowStockCount":2},"receivables":18000,"payables":42000},"meta":{"timestamp":"2026-11-25T16:37:13.167Z"}}
+GET /notifications                   404
+GET /alerts                          404
+GET /notifications/unread            404
+GET /reports/aging                   404
+GET /debts/aging                     400
+GET /debts/receivables/aging         404
+GET /reports/cash-flow               404
+GET /reports/cashier                 404
+GET /reports/items                   404
+GET /reports/z-report                404
+GET /sales/returns                   400
+GET /returns                         404
+GET /purchases/returns               400
+GET /purchases/return                400
+GET /suppliers/returns               400
+GET /purchase-returns                404
+GET /sales/return                    400
+GET /customers/1/statement           404
+GET /suppliers/1/statement           404
+GET /accounting/cash-ledger          404
+GET /accounting/day-book             404
+GET /reports/day-book                404
+GET /reports/export                  404
+GET /export                          404
+GET /import                          404
+GET /reports/sales/csv               404
+GET /reports/sales/excel             404
+GET /reports/sales/export            404
+POST /sales/1/return                  404
+POST /sales/1/refund                  404
+POST /purchases/1/return              404
+POST /purchases/1/refund              404
+POST /expenses/1/pay                  404

@@ -1,0 +1,5073 @@
+{
+  "params": {
+    "DAYS": 10,
+    "SEED": 20261001,
+    "TRANSFER_COST": "ui-default"
+  },
+  "customers": [
+    {
+      "key": "amir",
+      "name": "مطعم الأمير",
+      "truth": 150921,
+      "customerBalance": 150921,
+      "apiCurrentBalance": 150921,
+      "debtsOpen": 150921,
+      "ple": 150921
+    },
+    {
+      "key": "sultan",
+      "name": "مطعم السلطان",
+      "truth": 164467,
+      "customerBalance": 164467,
+      "apiCurrentBalance": 164467,
+      "debtsOpen": 164467,
+      "ple": 164467
+    },
+    {
+      "key": "hotel",
+      "name": "فندق القدس",
+      "truth": 78688,
+      "customerBalance": 78688,
+      "apiCurrentBalance": 78688,
+      "debtsOpen": 78688,
+      "ple": 78688
+    },
+    {
+      "key": "abukhalil",
+      "name": "عائلة أبو خليل",
+      "truth": 12067,
+      "customerBalance": 12067,
+      "apiCurrentBalance": 12067,
+      "debtsOpen": 12067,
+      "ple": 12067
+    },
+    {
+      "key": "ummoh",
+      "name": "أم محمد",
+      "truth": 15992,
+      "customerBalance": 15992,
+      "apiCurrentBalance": 15992,
+      "debtsOpen": 15992,
+      "ple": 15992
+    },
+    {
+      "key": "noor",
+      "name": "بقالة النور",
+      "truth": 19313,
+      "customerBalance": 19313,
+      "apiCurrentBalance": 19313,
+      "debtsOpen": 19313,
+      "ple": 19313
+    }
+  ],
+  "suppliers": [
+    {
+      "key": "farm",
+      "name": "مزرعة الخليل للدواجن",
+      "truth": 592236,
+      "supplierBalance": 1117236,
+      "debtsOpen": 592236,
+      "ple": 592236
+    },
+    {
+      "key": "whole",
+      "name": "أبو سامي لتجارة الدواجن",
+      "truth": 0,
+      "supplierBalance": 0,
+      "debtsOpen": 0,
+      "ple": 0
+    },
+    {
+      "key": "offal",
+      "name": "مسلخ النور",
+      "truth": 0,
+      "supplierBalance": 0,
+      "debtsOpen": 0,
+      "ple": 0
+    }
+  ],
+  "items": [
+    {
+      "key": "whole",
+      "truthQty": 49795,
+      "truthValue": 53032,
+      "invQty": 49795,
+      "invValue": 53040,
+      "avgCost": 1065,
+      "lotQty": 49795,
+      "lotValue": 53032,
+      "negLots": 0
+    },
+    {
+      "key": "breast",
+      "truthQty": 86185,
+      "truthValue": 189607,
+      "invQty": 86185,
+      "invValue": 189607,
+      "avgCost": 2200,
+      "lotQty": 86185,
+      "lotValue": 189607,
+      "negLots": 0
+    },
+    {
+      "key": "thigh",
+      "truthQty": 98860,
+      "truthValue": 148290,
+      "invQty": 98860,
+      "invValue": 148257,
+      "avgCost": 1500,
+      "lotQty": 98860,
+      "lotValue": 148290,
+      "negLots": 0
+    },
+    {
+      "key": "wings",
+      "truthQty": 38290,
+      "truthValue": 38290,
+      "invQty": 38290,
+      "invValue": 38290,
+      "avgCost": 1000,
+      "lotQty": 38290,
+      "lotValue": 38290,
+      "negLots": 0
+    },
+    {
+      "key": "backs",
+      "truthQty": 101055,
+      "truthValue": 30317,
+      "invQty": 101055,
+      "invValue": 30306,
+      "avgCost": 300,
+      "lotQty": 101055,
+      "lotValue": 30317,
+      "negLots": 0
+    },
+    {
+      "key": "minced",
+      "truthQty": 305,
+      "truthValue": 580,
+      "invQty": 305,
+      "invValue": 562,
+      "avgCost": 1843,
+      "lotQty": 305,
+      "lotValue": 580,
+      "negLots": 0
+    },
+    {
+      "key": "liver",
+      "truthQty": 35690,
+      "truthValue": 31882,
+      "invQty": 35690,
+      "invValue": 31880,
+      "avgCost": 893,
+      "lotQty": 35690,
+      "lotValue": 31882,
+      "negLots": 0
+    }
+  ],
+  "timings": {
+    "/reports/dashboard": {
+      "status": 200,
+      "medianMs": 2,
+      "maxMs": 15
+    },
+    "/reports/sales?startDate=2026-10-01&endDate=2026-10-10": {
+      "status": 200,
+      "medianMs": 34,
+      "maxMs": 35
+    },
+    "/reports/profit-loss?startDate=2026-10-01&endDate=2026-10-10": {
+      "status": 200,
+      "medianMs": 2,
+      "maxMs": 7
+    },
+    "/accounting/trial-balance": {
+      "status": 200,
+      "medianMs": 3,
+      "maxMs": 3
+    },
+    "/accounting/ledger/1111?startDate=2026-10-01&endDate=2026-10-10": {
+      "status": 200,
+      "medianMs": 14,
+      "maxMs": 15
+    },
+    "/sales?page=1&pageSize=20": {
+      "status": 200,
+      "medianMs": 4,
+      "maxMs": 5
+    },
+    "/sales?pageSize=500": {
+      "status": 200,
+      "medianMs": 33,
+      "maxMs": 43
+    },
+    "/debts/receivables?pageSize=500": {
+      "status": 200,
+      "medianMs": 3,
+      "maxMs": 4
+    },
+    "/inventory": {
+      "status": 200,
+      "medianMs": 4,
+      "maxMs": 4
+    },
+    "/reports/stock-vs-gl": {
+      "status": 200,
+      "medianMs": 13,
+      "maxMs": 14
+    },
+    "/reports/inventory": {
+      "status": 200,
+      "medianMs": 3,
+      "maxMs": 5
+    },
+    "/accounting/journal-entries?page=1&pageSize=20": {
+      "status": 200,
+      "medianMs": 7,
+      "maxMs": 8
+    },
+    "/accounting/reports/balance-sheet/pdf?asOfDate=2026-10-10": {
+      "status": 200,
+      "medianMs": 78,
+      "maxMs": 99
+    },
+    "/accounting/reports/income-statement/pdf?startDate=2026-10-01&endDate=2026-10-10": {
+      "status": 200,
+      "medianMs": 68,
+      "maxMs": 71
+    },
+    "/customers/1/statement/pdf?startDate=2026-10-01&endDate=2026-10-10": {
+      "status": 200,
+      "medianMs": 32,
+      "maxMs": 41
+    },
+    "/sales/report/pdf?startDate=2026-10-01&endDate=2026-10-10": {
+      "status": 200,
+      "medianMs": 103,
+      "maxMs": 108
+    },
+    "/payments?pageSize=500": {
+      "status": 200,
+      "medianMs": 26,
+      "maxMs": 29
+    },
+    "/stock-transfer/source-lots": {
+      "status": 200,
+      "medianMs": 2,
+      "maxMs": 3
+    }
+  },
+  "shadowGL": {
+    "1111": 1034294,
+    "1120": 441448,
+    "1131": 491942,
+    "2110": -592236,
+    "3100": -9500000,
+    "4110": -2721280,
+    "4900": 5300,
+    "5100": 1863912,
+    "5210": 600000,
+    "5221": 235000,
+    "5230": 420000,
+    "5250": 94400,
+    "5300": 41950,
+    "5320": -361321,
+    "5400": 32000,
+    "1112-001": 7914591
+  },
+  "inventoryReport": {
+    "summary": {
+      "totalItems": 7,
+      "totalWeight": 410180,
+      "totalValue": 491942,
+      "activeLots": 18
+    },
+    "items": [
+      {
+        "itemId": 1,
+        "itemName": "دجاج كامل طازج",
+        "categoryName": "دجاج طازج كامل",
+        "currentWeight": 49795,
+        "reservedWeight": 0,
+        "value": 53040
+      },
+      {
+        "itemId": 2,
+        "itemName": "صدر دجاج",
+        "categoryName": "قطع دجاج طازجة",
+        "currentWeight": 86185,
+        "reservedWeight": 0,
+        "value": 189607
+      },
+      {
+        "itemId": 3,
+        "itemName": "فخذ دجاج",
+        "categoryName": "قطع دجاج طازجة",
+        "currentWeight": 98860,
+        "reservedWeight": 0,
+        "value": 148257
+      },
+      {
+        "itemId": 4,
+        "itemName": "جوانح دجاج",
+        "categoryName": "قطع دجاج طازجة",
+        "currentWeight": 38290,
+        "reservedWeight": 0,
+        "value": 38290
+      },
+      {
+        "itemId": 5,
+        "itemName": "رقاب وظهور",
+        "categoryName": "قطع دجاج طازجة",
+        "currentWeight": 101055,
+        "reservedWeight": 0,
+        "value": 30306
+      },
+      {
+        "itemId": 6,
+        "itemName": "دجاج مفروم",
+        "categoryName": "منتجات مصنعة",
+        "currentWeight": 305,
+        "reservedWeight": 0,
+        "value": 562
+      },
+      {
+        "itemId": 7,
+        "itemName": "كبدة دجاج",
+        "categoryName": "قطع دجاج طازجة",
+        "currentWeight": 35690,
+        "reservedWeight": 0,
+        "value": 31880
+      }
+    ],
+    "lots": [
+      {
+        "lotNumber": "LOT-20261005-031",
+        "itemName": "رقاب وظهور",
+        "remainingWeight": 1155,
+        "unitPrice": 300,
+        "expiryDate": "2026-10-08T04:30:00.415Z"
+      },
+      {
+        "lotNumber": "LOT-20261006-037",
+        "itemName": "رقاب وظهور",
+        "remainingWeight": 19440,
+        "unitPrice": 300,
+        "expiryDate": "2026-10-09T04:30:00.259Z"
+      },
+      {
+        "lotNumber": "LOT-20261007-040",
+        "itemName": "كبدة دجاج",
+        "remainingWeight": 17690,
+        "unitPrice": 916,
+        "expiryDate": "2026-10-10T04:35:39.552Z"
+      },
+      {
+        "lotNumber": "LOT-20261007-044",
+        "itemName": "رقاب وظهور",
+        "remainingWeight": 8280,
+        "unitPrice": 300,
+        "expiryDate": "2026-10-10T04:30:00.285Z"
+      },
+      {
+        "lotNumber": "LOT-20261008-048",
+        "itemName": "فخذ دجاج",
+        "remainingWeight": 2860,
+        "unitPrice": 1500,
+        "expiryDate": "2026-10-11T04:30:00.274Z"
+      },
+      {
+        "lotNumber": "LOT-20261008-049",
+        "itemName": "جوانح دجاج",
+        "remainingWeight": 5290,
+        "unitPrice": 1000,
+        "expiryDate": "2026-10-11T04:30:00.274Z"
+      },
+      {
+        "lotNumber": "LOT-20261008-050",
+        "itemName": "رقاب وظهور",
+        "remainingWeight": 18180,
+        "unitPrice": 300,
+        "expiryDate": "2026-10-11T04:30:00.274Z"
+      },
+      {
+        "lotNumber": "LOT-20261009-053",
+        "itemName": "صدر دجاج",
+        "remainingWeight": 45685,
+        "unitPrice": 2200,
+        "expiryDate": "2026-10-12T04:30:00.275Z"
+      },
+      {
+        "lotNumber": "LOT-20261009-054",
+        "itemName": "فخذ دجاج",
+        "remainingWeight": 52800,
+        "unitPrice": 1500,
+        "expiryDate": "2026-10-12T04:30:00.275Z"
+      },
+      {
+        "lotNumber": "LOT-20261009-055",
+        "itemName": "جوانح دجاج",
+        "remainingWeight": 18150,
+        "unitPrice": 1000,
+        "expiryDate": "2026-10-12T04:30:00.275Z"
+      },
+      {
+        "lotNumber": "LOT-20261009-056",
+        "itemName": "رقاب وظهور",
+        "remainingWeight": 29700,
+        "unitPrice": 300,
+        "expiryDate": "2026-10-12T04:30:00.275Z"
+      },
+      {
+        "lotNumber": "LOT-20261010-058",
+        "itemName": "دجاج كامل طازج",
+        "remainingWeight": 49795,
+        "unitPrice": 1065,
+        "expiryDate": "2026-10-13T04:40:17.457Z"
+      },
+      {
+        "lotNumber": "LOT-20261010-059",
+        "itemName": "كبدة دجاج",
+        "remainingWeight": 18000,
+        "unitPrice": 871,
+        "expiryDate": "2026-10-13T04:45:21.595Z"
+      },
+      {
+        "lotNumber": "LOT-20261010-060",
+        "itemName": "صدر دجاج",
+        "remainingWeight": 40500,
+        "unitPrice": 2200,
+        "expiryDate": "2026-10-13T04:40:17.457Z"
+      },
+      {
+        "lotNumber": "LOT-20261010-061",
+        "itemName": "فخذ دجاج",
+        "remainingWeight": 43200,
+        "unitPrice": 1500,
+        "expiryDate": "2026-10-13T04:40:17.457Z"
+      },
+      {
+        "lotNumber": "LOT-20261010-062",
+        "itemName": "جوانح دجاج",
+        "remainingWeight": 14850,
+        "unitPrice": 1000,
+        "expiryDate": "2026-10-13T04:40:17.457Z"
+      },
+      {
+        "lotNumber": "LOT-20261010-063",
+        "itemName": "رقاب وظهور",
+        "remainingWeight": 24300,
+        "unitPrice": 300,
+        "expiryDate": "2026-10-13T04:40:17.457Z"
+      },
+      {
+        "lotNumber": "LOT-20261010-064",
+        "itemName": "دجاج مفروم",
+        "remainingWeight": 305,
+        "unitPrice": 1900,
+        "expiryDate": "2026-10-13T04:40:17.457Z"
+      }
+    ]
+  },
+  "lastDayReports": {
+    "tb": [
+      {
+        "accountId": 4,
+        "accountCode": "1111",
+        "name": "النقد في الصندوق",
+        "nameAr": "النقد في الصندوق",
+        "accountName": "النقد في الصندوق",
+        "accountType": "Cash",
+        "rootType": "Asset",
+        "openingDebit": 295493,
+        "openingCredit": 0,
+        "periodDebit": 149201,
+        "periodCredit": 665400,
+        "endingDebit": 0,
+        "endingCredit": 220706,
+        "debit": 149201,
+        "credit": 665400,
+        "balance": -220706
+      },
+      {
+        "accountId": 6,
+        "accountCode": "1112-001",
+        "name": "حساب بنكي عام",
+        "nameAr": "حساب بنكي عام",
+        "accountName": "حساب بنكي عام",
+        "accountType": "Other",
+        "rootType": "Asset",
+        "openingDebit": 9172427,
+        "openingCredit": 0,
+        "periodDebit": 12842,
+        "periodCredit": 15678,
+        "endingDebit": 9169591,
+        "endingCredit": 0,
+        "debit": 12842,
+        "credit": 15678,
+        "balance": 9169591
+      },
+      {
+        "accountId": 7,
+        "accountCode": "1120",
+        "name": "حسابات القبض",
+        "nameAr": "حسابات القبض",
+        "accountName": "حسابات القبض",
+        "accountType": "Receivable",
+        "rootType": "Asset",
+        "openingDebit": 413278,
+        "openingCredit": 0,
+        "periodDebit": 28170,
+        "periodCredit": 0,
+        "endingDebit": 441448,
+        "endingCredit": 0,
+        "debit": 28170,
+        "credit": 0,
+        "balance": 441448
+      },
+      {
+        "accountId": 10,
+        "accountCode": "1131",
+        "name": "مخزون الدجاج الطازج",
+        "nameAr": "مخزون الدجاج الطازج",
+        "accountName": "مخزون الدجاج الطازج",
+        "accountType": "Stock",
+        "rootType": "Asset",
+        "openingDebit": 40026,
+        "openingCredit": 0,
+        "periodDebit": 225483,
+        "periodCredit": 134888,
+        "endingDebit": 130621,
+        "endingCredit": 0,
+        "debit": 225483,
+        "credit": 134888,
+        "balance": 130621
+      },
+      {
+        "accountId": 17,
+        "accountCode": "2110",
+        "name": "حسابات الدفع",
+        "nameAr": "حسابات الدفع",
+        "accountName": "حسابات الدفع",
+        "accountType": "Payable",
+        "rootType": "Liability",
+        "openingDebit": 0,
+        "openingCredit": 382431,
+        "periodDebit": 0,
+        "periodCredit": 209805,
+        "endingDebit": 0,
+        "endingCredit": 592236,
+        "debit": 0,
+        "credit": 209805,
+        "balance": -592236
+      },
+      {
+        "accountId": 21,
+        "accountCode": "3100",
+        "name": "رأس المال",
+        "nameAr": "رأس المال",
+        "accountName": "رأس المال",
+        "accountType": "Equity",
+        "rootType": "Equity",
+        "openingDebit": 0,
+        "openingCredit": 9500000,
+        "periodDebit": 0,
+        "periodCredit": 0,
+        "endingDebit": 0,
+        "endingCredit": 9500000,
+        "debit": 0,
+        "credit": 0,
+        "balance": -9500000
+      },
+      {
+        "accountId": 26,
+        "accountCode": "4110",
+        "name": "مبيعات الدجاج الطازج",
+        "nameAr": "مبيعات الدجاج الطازج",
+        "accountName": "مبيعات الدجاج الطازج",
+        "accountType": "Income Account",
+        "rootType": "Income",
+        "openingDebit": 0,
+        "openingCredit": 2531067,
+        "periodDebit": 0,
+        "periodCredit": 190213,
+        "endingDebit": 0,
+        "endingCredit": 2721280,
+        "debit": 0,
+        "credit": 190213,
+        "balance": -2721280
+      },
+      {
+        "accountId": 32,
+        "accountCode": "5100",
+        "name": "تكلفة البضاعة المباعة",
+        "nameAr": "تكلفة البضاعة المباعة",
+        "accountName": "تكلفة البضاعة المباعة",
+        "accountType": "Cost of Goods Sold",
+        "rootType": "Expense",
+        "openingDebit": 1733337,
+        "openingCredit": 0,
+        "periodDebit": 130575,
+        "periodCredit": 0,
+        "endingDebit": 1863912,
+        "endingCredit": 0,
+        "debit": 130575,
+        "credit": 0,
+        "balance": 1863912
+      },
+      {
+        "accountId": 41,
+        "accountCode": "5300",
+        "name": "الفاقد والتالف",
+        "nameAr": "الفاقد والتالف",
+        "accountName": "الفاقد والتالف",
+        "accountType": "Expense Account",
+        "rootType": "Expense",
+        "openingDebit": 37637,
+        "openingCredit": 0,
+        "periodDebit": 4313,
+        "periodCredit": 0,
+        "endingDebit": 41950,
+        "endingCredit": 0,
+        "debit": 4313,
+        "credit": 0,
+        "balance": 41950
+      },
+      {
+        "accountId": 43,
+        "accountCode": "5400",
+        "name": "مصروفات أخرى",
+        "nameAr": "مصروفات أخرى",
+        "accountName": "مصروفات أخرى",
+        "accountType": "Expense Account",
+        "rootType": "Expense",
+        "openingDebit": 721300,
+        "openingCredit": 0,
+        "periodDebit": 665400,
+        "periodCredit": 0,
+        "endingDebit": 1386700,
+        "endingCredit": 0,
+        "debit": 665400,
+        "credit": 0,
+        "balance": 1386700
+      }
+    ],
+    "dash": {
+      "sales": {
+        "today": {
+          "count": 29,
+          "totalAmount": 190213,
+          "totalCost": 130575,
+          "totalProfit": 59638
+        }
+      },
+      "inventory": {
+        "lowStockCount": 1
+      },
+      "receivables": 441448,
+      "payables": 592236
+    },
+    "pl": {
+      "revenue": 2715980,
+      "discounts": 5300,
+      "costOfGoodsSold": 1863912,
+      "grossProfit": 852068,
+      "expenses": 1381400,
+      "netProfit": -529332,
+      "grossMargin": 31.372395967569716,
+      "netMargin": -19.489539687332012
+    },
+    "sr": {
+      "summary": {
+        "grossRevenue": 190213,
+        "discounts": 0,
+        "tax": 0,
+        "netRevenue": 190213,
+        "cost": 130575,
+        "profit": 59638,
+        "count": 29
+      },
+      "byItem": [
+        {
+          "itemId": 1,
+          "name": "دجاج كامل طازج",
+          "weightGrams": 45485,
+          "revenue": 72776,
+          "cost": 50635
+        },
+        {
+          "itemId": 3,
+          "name": "فخذ دجاج",
+          "weightGrams": 18295,
+          "revenue": 40249,
+          "cost": 27446
+        },
+        {
+          "itemId": 2,
+          "name": "صدر دجاج",
+          "weightGrams": 13535,
+          "revenue": 43312,
+          "cost": 29777
+        },
+        {
+          "itemId": 4,
+          "name": "جوانح دجاج",
+          "weightGrams": 5510,
+          "revenue": 8266,
+          "cost": 5510
+        },
+        {
+          "itemId": 6,
+          "name": "دجاج مفروم",
+          "weightGrams": 7995,
+          "revenue": 22386,
+          "cost": 15191
+        },
+        {
+          "itemId": 7,
+          "name": "كبدة دجاج",
+          "weightGrams": 1915,
+          "revenue": 2681,
+          "cost": 1744
+        },
+        {
+          "itemId": 5,
+          "name": "رقاب وظهور",
+          "weightGrams": 905,
+          "revenue": 543,
+          "cost": 272
+        }
+      ],
+      "sales": [
+        {
+          "id": 346,
+          "saleNumber": "SAL-20261010-0001",
+          "date": "2026-10-10T06:20:45.317Z",
+          "customerName": null,
+          "total": 3040,
+          "profit": 891
+        },
+        {
+          "id": 347,
+          "saleNumber": "SAL-20261010-0002",
+          "date": "2026-10-10T06:41:22.683Z",
+          "customerName": null,
+          "total": 6344,
+          "profit": 1904
+        },
+        {
+          "id": 348,
+          "saleNumber": "SAL-20261010-0003",
+          "date": "2026-10-10T07:01:37.936Z",
+          "customerName": null,
+          "total": 6505,
+          "profit": 2070
+        },
+        {
+          "id": 349,
+          "saleNumber": "SAL-20261010-0004",
+          "date": "2026-10-10T07:22:31.239Z",
+          "customerName": null,
+          "total": 9402,
+          "profit": 2922
+        },
+        {
+          "id": 350,
+          "saleNumber": "SAL-20261010-0005",
+          "date": "2026-10-10T07:43:18.812Z",
+          "customerName": null,
+          "total": 1643,
+          "profit": 548
+        },
+        {
+          "id": 351,
+          "saleNumber": "SAL-20261010-0006",
+          "date": "2026-10-10T08:03:37.057Z",
+          "customerName": null,
+          "total": 9109,
+          "profit": 2821
+        },
+        {
+          "id": 352,
+          "saleNumber": "SAL-20261010-0007",
+          "date": "2026-10-10T08:24:10.785Z",
+          "customerName": null,
+          "total": 2192,
+          "profit": 643
+        },
+        {
+          "id": 353,
+          "saleNumber": "SAL-20261010-0008",
+          "date": "2026-10-10T08:44:28.559Z",
+          "customerName": null,
+          "total": 11650,
+          "profit": 3594
+        },
+        {
+          "id": 354,
+          "saleNumber": "SAL-20261010-0009",
+          "date": "2026-10-10T09:04:55.796Z",
+          "customerName": "مطعم السلطان",
+          "total": 23267,
+          "profit": 7448
+        },
+        {
+          "id": 355,
+          "saleNumber": "SAL-20261010-0010",
+          "date": "2026-10-10T09:25:47.861Z",
+          "customerName": null,
+          "total": 8656,
+          "profit": 2651
+        },
+        {
+          "id": 356,
+          "saleNumber": "SAL-20261010-0011",
+          "date": "2026-10-10T09:46:28.295Z",
+          "customerName": null,
+          "total": 1522,
+          "profit": 507
+        },
+        {
+          "id": 357,
+          "saleNumber": "SAL-20261010-0012",
+          "date": "2026-10-10T10:07:21.346Z",
+          "customerName": null,
+          "total": 9200,
+          "profit": 2838
+        },
+        {
+          "id": 358,
+          "saleNumber": "SAL-20261010-0013",
+          "date": "2026-10-10T10:27:57.009Z",
+          "customerName": null,
+          "total": 1944,
+          "profit": 570
+        },
+        {
+          "id": 359,
+          "saleNumber": "SAL-20261010-0014",
+          "date": "2026-10-10T10:48:40.397Z",
+          "customerName": null,
+          "total": 10988,
+          "profit": 3350
+        },
+        {
+          "id": 360,
+          "saleNumber": "SAL-20261010-0015",
+          "date": "2026-10-10T11:08:50.378Z",
+          "customerName": null,
+          "total": 8497,
+          "profit": 2597
+        },
+        {
+          "id": 361,
+          "saleNumber": "SAL-20261010-0016",
+          "date": "2026-10-10T11:29:04.750Z",
+          "customerName": null,
+          "total": 4800,
+          "profit": 1500
+        },
+        {
+          "id": 362,
+          "saleNumber": "SAL-20261010-0017",
+          "date": "2026-10-10T11:49:59.934Z",
+          "customerName": null,
+          "total": 6136,
+          "profit": 1937
+        },
+        {
+          "id": 363,
+          "saleNumber": "SAL-20261010-0018",
+          "date": "2026-10-10T12:10:47.743Z",
+          "customerName": null,
+          "total": 3240,
+          "profit": 950
+        },
+        {
+          "id": 364,
+          "saleNumber": "SAL-20261010-0019",
+          "date": "2026-10-10T12:31:11.269Z",
+          "customerName": null,
+          "total": 8984,
+          "profit": 2729
+        },
+        {
+          "id": 365,
+          "saleNumber": "SAL-20261010-0020",
+          "date": "2026-10-10T12:51:43.729Z",
+          "customerName": null,
+          "total": 3354,
+          "profit": 1056
+        },
+        {
+          "id": 366,
+          "saleNumber": "SAL-20261010-0021",
+          "date": "2026-10-10T13:11:51.491Z",
+          "customerName": null,
+          "total": 3544,
+          "profit": 1054
+        },
+        {
+          "id": 367,
+          "saleNumber": "SAL-20261010-0022",
+          "date": "2026-10-10T13:32:05.176Z",
+          "customerName": null,
+          "total": 10611,
+          "profit": 3433
+        },
+        {
+          "id": 368,
+          "saleNumber": "SAL-20261010-0023",
+          "date": "2026-10-10T13:53:03.025Z",
+          "customerName": null,
+          "total": 12211,
+          "profit": 3910
+        },
+        {
+          "id": 369,
+          "saleNumber": "SAL-20261010-0024",
+          "date": "2026-10-10T14:13:17.893Z",
+          "customerName": null,
+          "total": 2608,
+          "profit": 815
+        },
+        {
+          "id": 370,
+          "saleNumber": "SAL-20261010-0025",
+          "date": "2026-10-10T14:34:12.601Z",
+          "customerName": null,
+          "total": 4543,
+          "profit": 1445
+        },
+        {
+          "id": 371,
+          "saleNumber": "SAL-20261010-0026",
+          "date": "2026-10-10T14:54:13.822Z",
+          "customerName": "عائلة أبو خليل",
+          "total": 2735,
+          "profit": 1004
+        },
+        {
+          "id": 372,
+          "saleNumber": "SAL-20261010-0027",
+          "date": "2026-10-10T15:14:29.736Z",
+          "customerName": "عائلة أبو خليل",
+          "total": 2168,
+          "profit": 725
+        },
+        {
+          "id": 373,
+          "saleNumber": "SAL-20261010-0028",
+          "date": "2026-10-10T15:34:34.050Z",
+          "customerName": null,
+          "total": 6088,
+          "profit": 1995
+        },
+        {
+          "id": 374,
+          "saleNumber": "SAL-20261010-0029",
+          "date": "2026-10-10T15:55:26.128Z",
+          "customerName": null,
+          "total": 5232,
+          "profit": 1731
+        }
+      ]
+    },
+    "debtsSummary": {
+      "totalReceivables": 441448,
+      "totalPayables": 592236,
+      "netPosition": -150788
+    },
+    "stockVsGl": {
+      "asOfDate": "2026-10-10T00:00:00.000Z",
+      "rows": [
+        {
+          "voucherType": "sale",
+          "voucherId": 345,
+          "postingDate": "2026-10-09T15:41:08.079Z",
+          "stockValue": -5150,
+          "accountValue": -5150,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 344,
+          "postingDate": "2026-10-09T15:32:11.294Z",
+          "stockValue": -7068,
+          "accountValue": -7068,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 343,
+          "postingDate": "2026-10-09T15:23:29.085Z",
+          "stockValue": -1697,
+          "accountValue": -1697,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 342,
+          "postingDate": "2026-10-09T15:15:04.791Z",
+          "stockValue": -453,
+          "accountValue": -453,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 341,
+          "postingDate": "2026-10-09T15:06:05.942Z",
+          "stockValue": -3062,
+          "accountValue": -3062,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 340,
+          "postingDate": "2026-10-09T14:57:22.050Z",
+          "stockValue": -5105,
+          "accountValue": -5105,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 339,
+          "postingDate": "2026-10-09T14:49:17.867Z",
+          "stockValue": -7475,
+          "accountValue": -7475,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 338,
+          "postingDate": "2026-10-09T14:40:41.776Z",
+          "stockValue": -4977,
+          "accountValue": -4977,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 337,
+          "postingDate": "2026-10-09T14:31:53.518Z",
+          "stockValue": -7210,
+          "accountValue": -7210,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 336,
+          "postingDate": "2026-10-09T14:23:32.385Z",
+          "stockValue": -3681,
+          "accountValue": -3681,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 335,
+          "postingDate": "2026-10-09T14:14:32.178Z",
+          "stockValue": -4534,
+          "accountValue": -4534,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 334,
+          "postingDate": "2026-10-09T14:05:53.584Z",
+          "stockValue": -8175,
+          "accountValue": -8175,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 333,
+          "postingDate": "2026-10-09T13:57:21.734Z",
+          "stockValue": -1845,
+          "accountValue": -1845,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 332,
+          "postingDate": "2026-10-09T13:48:44.937Z",
+          "stockValue": -3202,
+          "accountValue": -3202,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 331,
+          "postingDate": "2026-10-09T13:40:33.670Z",
+          "stockValue": -3532,
+          "accountValue": -3532,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 330,
+          "postingDate": "2026-10-09T13:31:36.725Z",
+          "stockValue": -1408,
+          "accountValue": -1408,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 329,
+          "postingDate": "2026-10-09T13:22:37.004Z",
+          "stockValue": -9399,
+          "accountValue": -9399,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 328,
+          "postingDate": "2026-10-09T13:13:54.066Z",
+          "stockValue": -2700,
+          "accountValue": -2700,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 327,
+          "postingDate": "2026-10-09T13:05:25.793Z",
+          "stockValue": -780,
+          "accountValue": -780,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 326,
+          "postingDate": "2026-10-09T12:56:54.604Z",
+          "stockValue": -7390,
+          "accountValue": -7390,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 325,
+          "postingDate": "2026-10-09T12:48:43.008Z",
+          "stockValue": -441,
+          "accountValue": -441,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 324,
+          "postingDate": "2026-10-09T12:40:32.578Z",
+          "stockValue": -6007,
+          "accountValue": -6007,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 323,
+          "postingDate": "2026-10-09T12:31:50.669Z",
+          "stockValue": -29891,
+          "accountValue": -29891,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 322,
+          "postingDate": "2026-10-09T12:22:56.650Z",
+          "stockValue": -7240,
+          "accountValue": -7240,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 321,
+          "postingDate": "2026-10-09T12:14:37.881Z",
+          "stockValue": -1973,
+          "accountValue": -1973,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 320,
+          "postingDate": "2026-10-09T12:05:39.536Z",
+          "stockValue": -4349,
+          "accountValue": -4349,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 319,
+          "postingDate": "2026-10-09T11:56:53.142Z",
+          "stockValue": -7130,
+          "accountValue": -7130,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 318,
+          "postingDate": "2026-10-09T11:48:40.654Z",
+          "stockValue": -4214,
+          "accountValue": -4214,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 317,
+          "postingDate": "2026-10-09T11:40:10.783Z",
+          "stockValue": -2233,
+          "accountValue": -2233,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 316,
+          "postingDate": "2026-10-09T11:31:33.564Z",
+          "stockValue": -2200,
+          "accountValue": -2200,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 315,
+          "postingDate": "2026-10-09T11:23:10.691Z",
+          "stockValue": -2910,
+          "accountValue": -2910,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 314,
+          "postingDate": "2026-10-09T11:15:00.709Z",
+          "stockValue": -5790,
+          "accountValue": -5790,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 313,
+          "postingDate": "2026-10-09T11:06:38.372Z",
+          "stockValue": -2968,
+          "accountValue": -2968,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 312,
+          "postingDate": "2026-10-09T10:58:33.604Z",
+          "stockValue": -373,
+          "accountValue": -373,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 311,
+          "postingDate": "2026-10-09T10:50:11.274Z",
+          "stockValue": -6140,
+          "accountValue": -6140,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 310,
+          "postingDate": "2026-10-09T10:41:29.540Z",
+          "stockValue": -762,
+          "accountValue": -762,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 309,
+          "postingDate": "2026-10-09T10:33:12.761Z",
+          "stockValue": -2233,
+          "accountValue": -2233,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 308,
+          "postingDate": "2026-10-09T10:25:02.869Z",
+          "stockValue": -2024,
+          "accountValue": -2024,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 307,
+          "postingDate": "2026-10-09T10:16:44.128Z",
+          "stockValue": -1764,
+          "accountValue": -1764,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 306,
+          "postingDate": "2026-10-09T10:08:30.969Z",
+          "stockValue": -2511,
+          "accountValue": -2511,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 305,
+          "postingDate": "2026-10-09T10:00:09.210Z",
+          "stockValue": -4668,
+          "accountValue": -4668,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 304,
+          "postingDate": "2026-10-09T09:51:15.778Z",
+          "stockValue": -7514,
+          "accountValue": -7514,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 303,
+          "postingDate": "2026-10-09T09:42:17.504Z",
+          "stockValue": -19679,
+          "accountValue": -19679,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 302,
+          "postingDate": "2026-10-09T09:33:49.642Z",
+          "stockValue": -6097,
+          "accountValue": -6097,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 301,
+          "postingDate": "2026-10-09T09:25:36.458Z",
+          "stockValue": -1839,
+          "accountValue": -1839,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 300,
+          "postingDate": "2026-10-09T09:16:40.246Z",
+          "stockValue": -930,
+          "accountValue": -930,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 299,
+          "postingDate": "2026-10-09T09:08:29.922Z",
+          "stockValue": -7786,
+          "accountValue": -7786,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 298,
+          "postingDate": "2026-10-09T08:59:46.939Z",
+          "stockValue": -2053,
+          "accountValue": -2053,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 297,
+          "postingDate": "2026-10-09T08:50:51.553Z",
+          "stockValue": -5787,
+          "accountValue": -5787,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 296,
+          "postingDate": "2026-10-09T08:42:17.050Z",
+          "stockValue": -1725,
+          "accountValue": -1725,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 295,
+          "postingDate": "2026-10-09T08:33:52.214Z",
+          "stockValue": -765,
+          "accountValue": -765,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 294,
+          "postingDate": "2026-10-09T08:25:48.925Z",
+          "stockValue": -6673,
+          "accountValue": -6673,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 293,
+          "postingDate": "2026-10-09T08:17:34.697Z",
+          "stockValue": -5773,
+          "accountValue": -5773,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 292,
+          "postingDate": "2026-10-09T08:08:43.003Z",
+          "stockValue": -1219,
+          "accountValue": -1219,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 291,
+          "postingDate": "2026-10-09T08:00:12.897Z",
+          "stockValue": -4561,
+          "accountValue": -4561,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 290,
+          "postingDate": "2026-10-09T07:51:30.893Z",
+          "stockValue": -2603,
+          "accountValue": -2603,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 289,
+          "postingDate": "2026-10-09T07:43:18.515Z",
+          "stockValue": -3370,
+          "accountValue": -3370,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 288,
+          "postingDate": "2026-10-09T07:34:32.636Z",
+          "stockValue": -3225,
+          "accountValue": -3225,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 287,
+          "postingDate": "2026-10-09T07:26:12.744Z",
+          "stockValue": -3267,
+          "accountValue": -3267,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 286,
+          "postingDate": "2026-10-09T07:17:15.708Z",
+          "stockValue": -2369,
+          "accountValue": -2369,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 285,
+          "postingDate": "2026-10-09T07:08:17.643Z",
+          "stockValue": -3486,
+          "accountValue": -3486,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 284,
+          "postingDate": "2026-10-09T06:59:31.924Z",
+          "stockValue": -4666,
+          "accountValue": -4666,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 283,
+          "postingDate": "2026-10-09T06:51:02.988Z",
+          "stockValue": -5210,
+          "accountValue": -5210,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 282,
+          "postingDate": "2026-10-09T06:42:39.658Z",
+          "stockValue": -6942,
+          "accountValue": -6942,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 281,
+          "postingDate": "2026-10-09T06:34:27.191Z",
+          "stockValue": -3354,
+          "accountValue": -3354,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 280,
+          "postingDate": "2026-10-09T06:25:36.764Z",
+          "stockValue": -6824,
+          "accountValue": -6824,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 279,
+          "postingDate": "2026-10-09T06:17:00.844Z",
+          "stockValue": -6403,
+          "accountValue": -6403,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 278,
+          "postingDate": "2026-10-09T06:08:58.642Z",
+          "stockValue": -3312,
+          "accountValue": -3312,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "wastage",
+          "voucherId": 13,
+          "postingDate": "2026-10-09T05:00:00.307Z",
+          "stockValue": 0,
+          "accountValue": -5598,
+          "difference": 5598,
+          "ledgerType": "GL Entry (no SLE)"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 9,
+          "postingDate": "2026-10-09T05:00:00.282Z",
+          "stockValue": -181017,
+          "accountValue": 0,
+          "difference": -181017,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 9,
+          "postingDate": "2026-10-09T05:00:00.280Z",
+          "stockValue": 18810,
+          "accountValue": 0,
+          "difference": 18810,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 9,
+          "postingDate": "2026-10-09T05:00:00.277Z",
+          "stockValue": 8910,
+          "accountValue": 0,
+          "difference": 8910,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 9,
+          "postingDate": "2026-10-09T05:00:00.275Z",
+          "stockValue": 18150,
+          "accountValue": 0,
+          "difference": 18150,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 9,
+          "postingDate": "2026-10-09T05:00:00.272Z",
+          "stockValue": 79200,
+          "accountValue": 0,
+          "difference": 79200,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 9,
+          "postingDate": "2026-10-09T05:00:00.269Z",
+          "stockValue": 108900,
+          "accountValue": 0,
+          "difference": 108900,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "purchase",
+          "voucherId": 12,
+          "postingDate": "2026-10-09T04:30:00.278Z",
+          "stockValue": 317246,
+          "accountValue": 317246,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 277,
+          "postingDate": "2026-10-08T16:11:54.714Z",
+          "stockValue": -2409,
+          "accountValue": -2409,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 276,
+          "postingDate": "2026-10-08T15:49:18.805Z",
+          "stockValue": -2422,
+          "accountValue": -2422,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 275,
+          "postingDate": "2026-10-08T15:26:47.722Z",
+          "stockValue": -3106,
+          "accountValue": -3106,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale_void",
+          "voucherId": 274,
+          "postingDate": "2026-10-08T15:24:54.444Z",
+          "stockValue": 1703,
+          "accountValue": 4187,
+          "difference": -2484,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale_void",
+          "voucherId": 274,
+          "postingDate": "2026-10-08T15:24:54.442Z",
+          "stockValue": 515,
+          "accountValue": 4187,
+          "difference": -3672,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale_void",
+          "voucherId": 274,
+          "postingDate": "2026-10-08T15:24:54.441Z",
+          "stockValue": 1969,
+          "accountValue": 4187,
+          "difference": -2218,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 274,
+          "postingDate": "2026-10-08T15:22:07.076Z",
+          "stockValue": -4187,
+          "accountValue": -4187,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 273,
+          "postingDate": "2026-10-08T14:59:32.365Z",
+          "stockValue": -8171,
+          "accountValue": -8171,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 272,
+          "postingDate": "2026-10-08T14:36:32.729Z",
+          "stockValue": -15446,
+          "accountValue": -15446,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 271,
+          "postingDate": "2026-10-08T14:13:41.232Z",
+          "stockValue": -45755,
+          "accountValue": -45755,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 270,
+          "postingDate": "2026-10-08T13:51:10.815Z",
+          "stockValue": -2068,
+          "accountValue": -2068,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 269,
+          "postingDate": "2026-10-08T13:28:21.753Z",
+          "stockValue": -7253,
+          "accountValue": -7253,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 268,
+          "postingDate": "2026-10-08T13:05:52.411Z",
+          "stockValue": -2843,
+          "accountValue": -2843,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 267,
+          "postingDate": "2026-10-08T12:43:11.977Z",
+          "stockValue": -13463,
+          "accountValue": -13463,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 266,
+          "postingDate": "2026-10-08T12:21:00.383Z",
+          "stockValue": -3612,
+          "accountValue": -3612,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 265,
+          "postingDate": "2026-10-08T11:58:11.576Z",
+          "stockValue": -10002,
+          "accountValue": -10002,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 264,
+          "postingDate": "2026-10-08T11:35:46.997Z",
+          "stockValue": -1328,
+          "accountValue": -1328,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 263,
+          "postingDate": "2026-10-08T11:13:29.015Z",
+          "stockValue": -3138,
+          "accountValue": -3138,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 262,
+          "postingDate": "2026-10-08T10:51:27.500Z",
+          "stockValue": -3507,
+          "accountValue": -3507,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 261,
+          "postingDate": "2026-10-08T10:28:56.298Z",
+          "stockValue": -1986,
+          "accountValue": -1986,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 260,
+          "postingDate": "2026-10-08T10:06:10.919Z",
+          "stockValue": -2805,
+          "accountValue": -2805,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 259,
+          "postingDate": "2026-10-08T09:43:36.771Z",
+          "stockValue": -2979,
+          "accountValue": -2979,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 258,
+          "postingDate": "2026-10-08T09:21:31.290Z",
+          "stockValue": -5572,
+          "accountValue": -5572,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 257,
+          "postingDate": "2026-10-08T08:59:00.940Z",
+          "stockValue": -4296,
+          "accountValue": -4296,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 256,
+          "postingDate": "2026-10-08T08:36:29.530Z",
+          "stockValue": -5930,
+          "accountValue": -5930,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 255,
+          "postingDate": "2026-10-08T08:14:19.432Z",
+          "stockValue": -2818,
+          "accountValue": -2818,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 254,
+          "postingDate": "2026-10-08T07:51:29.712Z",
+          "stockValue": -17394,
+          "accountValue": -17394,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 253,
+          "postingDate": "2026-10-08T07:29:20.668Z",
+          "stockValue": -8033,
+          "accountValue": -8033,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 252,
+          "postingDate": "2026-10-08T07:07:08.457Z",
+          "stockValue": -1572,
+          "accountValue": -1572,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 251,
+          "postingDate": "2026-10-08T06:45:06.240Z",
+          "stockValue": -5930,
+          "accountValue": -5930,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 250,
+          "postingDate": "2026-10-08T06:22:21.644Z",
+          "stockValue": -2385,
+          "accountValue": -2385,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "wastage",
+          "voucherId": 12,
+          "postingDate": "2026-10-08T05:00:00.305Z",
+          "stockValue": 0,
+          "accountValue": -3406,
+          "difference": 3406,
+          "ledgerType": "GL Entry (no SLE)"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 8,
+          "postingDate": "2026-10-08T05:00:00.279Z",
+          "stockValue": -110118,
+          "accountValue": 0,
+          "difference": -110118,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 8,
+          "postingDate": "2026-10-08T05:00:00.277Z",
+          "stockValue": 11514,
+          "accountValue": 0,
+          "difference": 11514,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 8,
+          "postingDate": "2026-10-08T05:00:00.274Z",
+          "stockValue": 5454,
+          "accountValue": 0,
+          "difference": 5454,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 8,
+          "postingDate": "2026-10-08T05:00:00.271Z",
+          "stockValue": 11110,
+          "accountValue": 0,
+          "difference": 11110,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 8,
+          "postingDate": "2026-10-08T05:00:00.268Z",
+          "stockValue": 48480,
+          "accountValue": 0,
+          "difference": 48480,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 8,
+          "postingDate": "2026-10-08T05:00:00.265Z",
+          "stockValue": 66660,
+          "accountValue": 0,
+          "difference": 66660,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "purchase",
+          "voucherId": 11,
+          "postingDate": "2026-10-08T04:30:00.277Z",
+          "stockValue": 157360,
+          "accountValue": 157360,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "wastage",
+          "voucherId": 11,
+          "postingDate": "2026-10-07T18:00:00.324Z",
+          "stockValue": 0,
+          "accountValue": -1079,
+          "difference": 1079,
+          "ledgerType": "GL Entry (no SLE)"
+        },
+        {
+          "voucherType": "wastage",
+          "voucherId": 10,
+          "postingDate": "2026-10-07T18:00:00.300Z",
+          "stockValue": 0,
+          "accountValue": -2090,
+          "difference": 2090,
+          "ledgerType": "GL Entry (no SLE)"
+        },
+        {
+          "voucherType": "wastage",
+          "voucherId": 9,
+          "postingDate": "2026-10-07T18:00:00.281Z",
+          "stockValue": 0,
+          "accountValue": -1800,
+          "difference": 1800,
+          "ledgerType": "GL Entry (no SLE)"
+        },
+        {
+          "voucherType": "wastage",
+          "voucherId": 8,
+          "postingDate": "2026-10-07T18:00:00.263Z",
+          "stockValue": 0,
+          "accountValue": -880,
+          "difference": 880,
+          "ledgerType": "GL Entry (no SLE)"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 249,
+          "postingDate": "2026-10-07T15:54:32.049Z",
+          "stockValue": -3563,
+          "accountValue": -3563,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 248,
+          "postingDate": "2026-10-07T15:35:35.121Z",
+          "stockValue": -2415,
+          "accountValue": -2415,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 247,
+          "postingDate": "2026-10-07T15:16:40.663Z",
+          "stockValue": -8064,
+          "accountValue": -8064,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 246,
+          "postingDate": "2026-10-07T14:57:55.476Z",
+          "stockValue": -1900,
+          "accountValue": -1900,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 245,
+          "postingDate": "2026-10-07T14:39:06.153Z",
+          "stockValue": -2755,
+          "accountValue": -2755,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 244,
+          "postingDate": "2026-10-07T14:20:18.503Z",
+          "stockValue": -2499,
+          "accountValue": -2499,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 243,
+          "postingDate": "2026-10-07T14:02:00.339Z",
+          "stockValue": -7478,
+          "accountValue": -7478,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 242,
+          "postingDate": "2026-10-07T13:43:56.926Z",
+          "stockValue": -751,
+          "accountValue": -751,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 241,
+          "postingDate": "2026-10-07T13:25:13.711Z",
+          "stockValue": -4917,
+          "accountValue": -4917,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 240,
+          "postingDate": "2026-10-07T13:06:36.431Z",
+          "stockValue": -7505,
+          "accountValue": -7505,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 239,
+          "postingDate": "2026-10-07T12:47:41.835Z",
+          "stockValue": -1474,
+          "accountValue": -1474,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 238,
+          "postingDate": "2026-10-07T12:29:31.727Z",
+          "stockValue": -4946,
+          "accountValue": -4946,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 237,
+          "postingDate": "2026-10-07T12:10:47.581Z",
+          "stockValue": -3503,
+          "accountValue": -3503,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 236,
+          "postingDate": "2026-10-07T11:51:59.882Z",
+          "stockValue": -2023,
+          "accountValue": -2023,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 235,
+          "postingDate": "2026-10-07T11:33:58.051Z",
+          "stockValue": -9145,
+          "accountValue": -9145,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 234,
+          "postingDate": "2026-10-07T11:15:14.864Z",
+          "stockValue": -5201,
+          "accountValue": -5201,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 233,
+          "postingDate": "2026-10-07T10:56:43.575Z",
+          "stockValue": -1880,
+          "accountValue": -1880,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 232,
+          "postingDate": "2026-10-07T10:37:47.092Z",
+          "stockValue": -4148,
+          "accountValue": -4148,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 231,
+          "postingDate": "2026-10-07T10:19:00.516Z",
+          "stockValue": -4791,
+          "accountValue": -4791,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 230,
+          "postingDate": "2026-10-07T10:00:10.277Z",
+          "stockValue": -6705,
+          "accountValue": -6705,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 229,
+          "postingDate": "2026-10-07T09:41:31.117Z",
+          "stockValue": -2062,
+          "accountValue": -2062,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 228,
+          "postingDate": "2026-10-07T09:23:22.890Z",
+          "stockValue": -1439,
+          "accountValue": -1439,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 227,
+          "postingDate": "2026-10-07T09:04:37.094Z",
+          "stockValue": -10634,
+          "accountValue": -10634,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 226,
+          "postingDate": "2026-10-07T08:46:07.552Z",
+          "stockValue": -6862,
+          "accountValue": -6862,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 225,
+          "postingDate": "2026-10-07T08:27:11.777Z",
+          "stockValue": -2473,
+          "accountValue": -2473,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 224,
+          "postingDate": "2026-10-07T08:09:03.823Z",
+          "stockValue": -3144,
+          "accountValue": -3144,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 223,
+          "postingDate": "2026-10-07T07:50:47.228Z",
+          "stockValue": -35869,
+          "accountValue": -35869,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 222,
+          "postingDate": "2026-10-07T07:32:14.487Z",
+          "stockValue": -2837,
+          "accountValue": -2837,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 221,
+          "postingDate": "2026-10-07T07:13:51.146Z",
+          "stockValue": -3802,
+          "accountValue": -3802,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 220,
+          "postingDate": "2026-10-07T06:55:47.071Z",
+          "stockValue": -4573,
+          "accountValue": -4573,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 219,
+          "postingDate": "2026-10-07T06:37:07.534Z",
+          "stockValue": -4651,
+          "accountValue": -4651,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 218,
+          "postingDate": "2026-10-07T06:18:47.832Z",
+          "stockValue": -5640,
+          "accountValue": -5640,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "wastage",
+          "voucherId": 7,
+          "postingDate": "2026-10-07T05:00:00.326Z",
+          "stockValue": 0,
+          "accountValue": -1466,
+          "difference": 1466,
+          "ledgerType": "GL Entry (no SLE)"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 7,
+          "postingDate": "2026-10-07T05:00:00.302Z",
+          "stockValue": -47386,
+          "accountValue": 0,
+          "difference": -47386,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 7,
+          "postingDate": "2026-10-07T05:00:00.300Z",
+          "stockValue": 5244,
+          "accountValue": 0,
+          "difference": 5244,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 7,
+          "postingDate": "2026-10-07T05:00:00.297Z",
+          "stockValue": 2484,
+          "accountValue": 0,
+          "difference": 2484,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 7,
+          "postingDate": "2026-10-07T05:00:00.294Z",
+          "stockValue": 5060,
+          "accountValue": 0,
+          "difference": 5060,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 7,
+          "postingDate": "2026-10-07T05:00:00.291Z",
+          "stockValue": 22080,
+          "accountValue": 0,
+          "difference": 22080,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 7,
+          "postingDate": "2026-10-07T05:00:00.287Z",
+          "stockValue": 30360,
+          "accountValue": 0,
+          "difference": 30360,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "purchase",
+          "voucherId": 10,
+          "postingDate": "2026-10-07T04:35:39.555Z",
+          "stockValue": 17404,
+          "accountValue": 17404,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "purchase",
+          "voucherId": 9,
+          "postingDate": "2026-10-07T04:30:00.287Z",
+          "stockValue": 83367,
+          "accountValue": 83367,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 217,
+          "postingDate": "2026-10-06T16:09:37.096Z",
+          "stockValue": -5673,
+          "accountValue": -5673,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 216,
+          "postingDate": "2026-10-06T15:38:43.079Z",
+          "stockValue": -6577,
+          "accountValue": -6577,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 215,
+          "postingDate": "2026-10-06T15:08:04.245Z",
+          "stockValue": -805,
+          "accountValue": -805,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 214,
+          "postingDate": "2026-10-06T14:37:08.491Z",
+          "stockValue": -6020,
+          "accountValue": -6020,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 213,
+          "postingDate": "2026-10-06T14:06:57.689Z",
+          "stockValue": -274,
+          "accountValue": -274,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 212,
+          "postingDate": "2026-10-06T13:36:43.436Z",
+          "stockValue": -4279,
+          "accountValue": -4279,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 211,
+          "postingDate": "2026-10-06T13:05:52.936Z",
+          "stockValue": -3043,
+          "accountValue": -3043,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 210,
+          "postingDate": "2026-10-06T12:35:29.452Z",
+          "stockValue": -3971,
+          "accountValue": -3971,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 209,
+          "postingDate": "2026-10-06T12:05:04.301Z",
+          "stockValue": -7218,
+          "accountValue": -7218,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 208,
+          "postingDate": "2026-10-06T11:34:43.688Z",
+          "stockValue": -2280,
+          "accountValue": -2280,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 207,
+          "postingDate": "2026-10-06T11:04:15.795Z",
+          "stockValue": -1800,
+          "accountValue": -1800,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 206,
+          "postingDate": "2026-10-06T10:34:11.443Z",
+          "stockValue": -1996,
+          "accountValue": -1996,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 205,
+          "postingDate": "2026-10-06T10:03:56.295Z",
+          "stockValue": -7811,
+          "accountValue": -7811,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 204,
+          "postingDate": "2026-10-06T09:33:47.064Z",
+          "stockValue": -3177,
+          "accountValue": -3177,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 203,
+          "postingDate": "2026-10-06T09:03:41.834Z",
+          "stockValue": -4319,
+          "accountValue": -4319,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 202,
+          "postingDate": "2026-10-06T08:33:15.052Z",
+          "stockValue": -1125,
+          "accountValue": -1125,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 201,
+          "postingDate": "2026-10-06T08:02:44.053Z",
+          "stockValue": -4681,
+          "accountValue": -4681,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 200,
+          "postingDate": "2026-10-06T07:31:52.595Z",
+          "stockValue": -4785,
+          "accountValue": -4785,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 199,
+          "postingDate": "2026-10-06T07:01:09.530Z",
+          "stockValue": -3152,
+          "accountValue": -3152,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 198,
+          "postingDate": "2026-10-06T06:30:29.733Z",
+          "stockValue": -1927,
+          "accountValue": -1927,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "wastage",
+          "voucherId": 6,
+          "postingDate": "2026-10-06T05:00:00.296Z",
+          "stockValue": 0,
+          "accountValue": -3807,
+          "difference": 3807,
+          "ledgerType": "GL Entry (no SLE)"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 6,
+          "postingDate": "2026-10-06T05:00:00.274Z",
+          "stockValue": -123093,
+          "accountValue": 0,
+          "difference": -123093,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 6,
+          "postingDate": "2026-10-06T05:00:00.272Z",
+          "stockValue": 12312,
+          "accountValue": 0,
+          "difference": 12312,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 6,
+          "postingDate": "2026-10-06T05:00:00.270Z",
+          "stockValue": 5832,
+          "accountValue": 0,
+          "difference": 5832,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 6,
+          "postingDate": "2026-10-06T05:00:00.267Z",
+          "stockValue": 11880,
+          "accountValue": 0,
+          "difference": 11880,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 6,
+          "postingDate": "2026-10-06T05:00:00.265Z",
+          "stockValue": 51840,
+          "accountValue": 0,
+          "difference": 51840,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 6,
+          "postingDate": "2026-10-06T05:00:00.262Z",
+          "stockValue": 71280,
+          "accountValue": 0,
+          "difference": 71280,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "purchase",
+          "voucherId": 8,
+          "postingDate": "2026-10-06T04:30:00.261Z",
+          "stockValue": 212675,
+          "accountValue": 212675,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 197,
+          "postingDate": "2026-10-05T16:08:38.358Z",
+          "stockValue": -5539,
+          "accountValue": -5539,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 196,
+          "postingDate": "2026-10-05T15:54:29.686Z",
+          "stockValue": -4327,
+          "accountValue": -4327,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 195,
+          "postingDate": "2026-10-05T15:40:24.807Z",
+          "stockValue": -4114,
+          "accountValue": -4114,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 194,
+          "postingDate": "2026-10-05T15:25:33.138Z",
+          "stockValue": -7448,
+          "accountValue": -7448,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 193,
+          "postingDate": "2026-10-05T15:10:39.093Z",
+          "stockValue": -3446,
+          "accountValue": -3446,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 192,
+          "postingDate": "2026-10-05T14:56:35.084Z",
+          "stockValue": -5034,
+          "accountValue": -5034,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 191,
+          "postingDate": "2026-10-05T14:42:09.410Z",
+          "stockValue": -5011,
+          "accountValue": -5011,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 190,
+          "postingDate": "2026-10-05T14:27:39.690Z",
+          "stockValue": -24303,
+          "accountValue": -24303,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 189,
+          "postingDate": "2026-10-05T14:12:57.755Z",
+          "stockValue": -9794,
+          "accountValue": -9794,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 188,
+          "postingDate": "2026-10-05T13:58:21.215Z",
+          "stockValue": -7092,
+          "accountValue": -7092,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 187,
+          "postingDate": "2026-10-05T13:43:23.478Z",
+          "stockValue": -5294,
+          "accountValue": -5294,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 186,
+          "postingDate": "2026-10-05T13:29:05.786Z",
+          "stockValue": -5459,
+          "accountValue": -5459,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 185,
+          "postingDate": "2026-10-05T13:14:52.496Z",
+          "stockValue": -1666,
+          "accountValue": -1666,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 184,
+          "postingDate": "2026-10-05T13:00:14.036Z",
+          "stockValue": -3493,
+          "accountValue": -3493,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 183,
+          "postingDate": "2026-10-05T12:45:29.518Z",
+          "stockValue": -3429,
+          "accountValue": -3429,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 182,
+          "postingDate": "2026-10-05T12:31:08.002Z",
+          "stockValue": -5058,
+          "accountValue": -5058,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 181,
+          "postingDate": "2026-10-05T12:16:21.620Z",
+          "stockValue": -4345,
+          "accountValue": -4345,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 180,
+          "postingDate": "2026-10-05T12:01:23.959Z",
+          "stockValue": -5254,
+          "accountValue": -5254,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 179,
+          "postingDate": "2026-10-05T11:47:10.755Z",
+          "stockValue": -27865,
+          "accountValue": -27865,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 178,
+          "postingDate": "2026-10-05T11:33:05.624Z",
+          "stockValue": -4115,
+          "accountValue": -4115,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 177,
+          "postingDate": "2026-10-05T11:18:07.227Z",
+          "stockValue": -16011,
+          "accountValue": -16011,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 176,
+          "postingDate": "2026-10-05T11:03:25.465Z",
+          "stockValue": -2103,
+          "accountValue": -2103,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 175,
+          "postingDate": "2026-10-05T10:48:49.267Z",
+          "stockValue": -2638,
+          "accountValue": -2638,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 174,
+          "postingDate": "2026-10-05T10:34:46.030Z",
+          "stockValue": -2328,
+          "accountValue": -2328,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 173,
+          "postingDate": "2026-10-05T10:20:27.166Z",
+          "stockValue": -2365,
+          "accountValue": -2365,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 172,
+          "postingDate": "2026-10-05T10:06:08.599Z",
+          "stockValue": -1461,
+          "accountValue": -1461,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 171,
+          "postingDate": "2026-10-05T09:51:46.422Z",
+          "stockValue": -17808,
+          "accountValue": -17808,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 170,
+          "postingDate": "2026-10-05T09:37:13.410Z",
+          "stockValue": -1935,
+          "accountValue": -1935,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 169,
+          "postingDate": "2026-10-05T09:23:04.763Z",
+          "stockValue": -1185,
+          "accountValue": -1185,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 168,
+          "postingDate": "2026-10-05T09:08:40.261Z",
+          "stockValue": -6271,
+          "accountValue": -6271,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 167,
+          "postingDate": "2026-10-05T08:54:11.459Z",
+          "stockValue": -4015,
+          "accountValue": -4015,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 166,
+          "postingDate": "2026-10-05T08:39:39.162Z",
+          "stockValue": -4389,
+          "accountValue": -4389,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 165,
+          "postingDate": "2026-10-05T08:24:53.632Z",
+          "stockValue": -5825,
+          "accountValue": -5825,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 164,
+          "postingDate": "2026-10-05T08:10:47.145Z",
+          "stockValue": -2173,
+          "accountValue": -2173,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 163,
+          "postingDate": "2026-10-05T07:56:34.951Z",
+          "stockValue": -6612,
+          "accountValue": -6612,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 162,
+          "postingDate": "2026-10-05T07:41:53.141Z",
+          "stockValue": -3436,
+          "accountValue": -3436,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 161,
+          "postingDate": "2026-10-05T07:27:52.125Z",
+          "stockValue": -4359,
+          "accountValue": -4359,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 160,
+          "postingDate": "2026-10-05T07:13:10.322Z",
+          "stockValue": -6746,
+          "accountValue": -6746,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 159,
+          "postingDate": "2026-10-05T06:58:15.520Z",
+          "stockValue": -3975,
+          "accountValue": -3975,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 158,
+          "postingDate": "2026-10-05T06:43:54.136Z",
+          "stockValue": -2323,
+          "accountValue": -2323,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 157,
+          "postingDate": "2026-10-05T06:28:59.619Z",
+          "stockValue": -1631,
+          "accountValue": -1631,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 156,
+          "postingDate": "2026-10-05T06:14:35.871Z",
+          "stockValue": -7874,
+          "accountValue": -7874,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "wastage",
+          "voucherId": 5,
+          "postingDate": "2026-10-05T05:00:00.480Z",
+          "stockValue": 0,
+          "accountValue": -3770,
+          "difference": 3770,
+          "ledgerType": "GL Entry (no SLE)"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 5,
+          "postingDate": "2026-10-05T05:00:00.394Z",
+          "stockValue": -121894,
+          "accountValue": 0,
+          "difference": -121894,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 5,
+          "postingDate": "2026-10-05T05:00:00.392Z",
+          "stockValue": 12768,
+          "accountValue": 0,
+          "difference": 12768,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 5,
+          "postingDate": "2026-10-05T05:00:00.389Z",
+          "stockValue": 6048,
+          "accountValue": 0,
+          "difference": 6048,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 5,
+          "postingDate": "2026-10-05T05:00:00.385Z",
+          "stockValue": 12320,
+          "accountValue": 0,
+          "difference": 12320,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 5,
+          "postingDate": "2026-10-05T05:00:00.383Z",
+          "stockValue": 53760,
+          "accountValue": 0,
+          "difference": 53760,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 5,
+          "postingDate": "2026-10-05T05:00:00.380Z",
+          "stockValue": 73920,
+          "accountValue": 0,
+          "difference": 73920,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "purchase",
+          "voucherId": 7,
+          "postingDate": "2026-10-05T04:30:00.417Z",
+          "stockValue": 222717,
+          "accountValue": 222717,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 155,
+          "postingDate": "2026-10-04T15:54:14.189Z",
+          "stockValue": -3173,
+          "accountValue": -3173,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 154,
+          "postingDate": "2026-10-04T15:39:17.764Z",
+          "stockValue": -9625,
+          "accountValue": -9625,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 153,
+          "postingDate": "2026-10-04T15:25:03.176Z",
+          "stockValue": -3158,
+          "accountValue": -3158,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 152,
+          "postingDate": "2026-10-04T15:10:25.556Z",
+          "stockValue": -7774,
+          "accountValue": -7774,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 151,
+          "postingDate": "2026-10-04T14:55:41.826Z",
+          "stockValue": -5099,
+          "accountValue": -5099,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 150,
+          "postingDate": "2026-10-04T14:41:37.692Z",
+          "stockValue": -2022,
+          "accountValue": -2022,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 149,
+          "postingDate": "2026-10-04T14:26:45.111Z",
+          "stockValue": -4220,
+          "accountValue": -4220,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 148,
+          "postingDate": "2026-10-04T14:12:33.027Z",
+          "stockValue": -2679,
+          "accountValue": -2679,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 147,
+          "postingDate": "2026-10-04T13:58:31.196Z",
+          "stockValue": -4012,
+          "accountValue": -4012,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 146,
+          "postingDate": "2026-10-04T13:43:33.502Z",
+          "stockValue": -6113,
+          "accountValue": -6113,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 145,
+          "postingDate": "2026-10-04T13:28:41.207Z",
+          "stockValue": -4330,
+          "accountValue": -4330,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 144,
+          "postingDate": "2026-10-04T13:14:10.749Z",
+          "stockValue": -1473,
+          "accountValue": -1473,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 143,
+          "postingDate": "2026-10-04T12:59:55.208Z",
+          "stockValue": -4740,
+          "accountValue": -4740,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 142,
+          "postingDate": "2026-10-04T12:45:20.699Z",
+          "stockValue": -4622,
+          "accountValue": -4622,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 141,
+          "postingDate": "2026-10-04T12:30:47.621Z",
+          "stockValue": -2865,
+          "accountValue": -2865,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 140,
+          "postingDate": "2026-10-04T12:16:29.577Z",
+          "stockValue": -6295,
+          "accountValue": -6295,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 139,
+          "postingDate": "2026-10-04T12:02:14.333Z",
+          "stockValue": -2880,
+          "accountValue": -2880,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 138,
+          "postingDate": "2026-10-04T11:48:12.628Z",
+          "stockValue": -3389,
+          "accountValue": -3389,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 137,
+          "postingDate": "2026-10-04T11:33:36.043Z",
+          "stockValue": -21538,
+          "accountValue": -21538,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 136,
+          "postingDate": "2026-10-04T11:19:21.406Z",
+          "stockValue": -1868,
+          "accountValue": -1868,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 135,
+          "postingDate": "2026-10-04T11:04:53.301Z",
+          "stockValue": -4719,
+          "accountValue": -4719,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 134,
+          "postingDate": "2026-10-04T10:49:56.124Z",
+          "stockValue": -1934,
+          "accountValue": -1934,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 133,
+          "postingDate": "2026-10-04T10:35:45.368Z",
+          "stockValue": -1529,
+          "accountValue": -1529,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 132,
+          "postingDate": "2026-10-04T10:21:08.419Z",
+          "stockValue": -5385,
+          "accountValue": -5385,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 131,
+          "postingDate": "2026-10-04T10:06:45.898Z",
+          "stockValue": -2157,
+          "accountValue": -2157,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 130,
+          "postingDate": "2026-10-04T09:52:00.210Z",
+          "stockValue": -1870,
+          "accountValue": -1870,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 129,
+          "postingDate": "2026-10-04T09:37:57.432Z",
+          "stockValue": -19045,
+          "accountValue": -19045,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 128,
+          "postingDate": "2026-10-04T09:23:15.861Z",
+          "stockValue": -3787,
+          "accountValue": -3787,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 127,
+          "postingDate": "2026-10-04T09:08:59.993Z",
+          "stockValue": -3984,
+          "accountValue": -3984,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 126,
+          "postingDate": "2026-10-04T08:54:07.464Z",
+          "stockValue": -12378,
+          "accountValue": -12378,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 125,
+          "postingDate": "2026-10-04T08:39:14.883Z",
+          "stockValue": -2183,
+          "accountValue": -2183,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 124,
+          "postingDate": "2026-10-04T08:24:33.087Z",
+          "stockValue": -5065,
+          "accountValue": -5065,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 123,
+          "postingDate": "2026-10-04T08:10:24.241Z",
+          "stockValue": -3067,
+          "accountValue": -3067,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 122,
+          "postingDate": "2026-10-04T07:56:04.807Z",
+          "stockValue": -2513,
+          "accountValue": -2513,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 121,
+          "postingDate": "2026-10-04T07:41:27.270Z",
+          "stockValue": -1345,
+          "accountValue": -1345,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 120,
+          "postingDate": "2026-10-04T07:26:52.599Z",
+          "stockValue": -3202,
+          "accountValue": -3202,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 119,
+          "postingDate": "2026-10-04T07:11:57.098Z",
+          "stockValue": -3027,
+          "accountValue": -3027,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 118,
+          "postingDate": "2026-10-04T06:57:20.379Z",
+          "stockValue": -548,
+          "accountValue": -548,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 117,
+          "postingDate": "2026-10-04T06:43:15.705Z",
+          "stockValue": -7486,
+          "accountValue": -7486,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 116,
+          "postingDate": "2026-10-04T06:28:47.939Z",
+          "stockValue": -7053,
+          "accountValue": -7053,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 115,
+          "postingDate": "2026-10-04T06:14:43.632Z",
+          "stockValue": -4853,
+          "accountValue": -4853,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "wastage",
+          "voucherId": 4,
+          "postingDate": "2026-10-04T05:00:00.723Z",
+          "stockValue": 0,
+          "accountValue": -2054,
+          "difference": 2054,
+          "ledgerType": "GL Entry (no SLE)"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 4,
+          "postingDate": "2026-10-04T05:00:00.609Z",
+          "stockValue": -66426,
+          "accountValue": 0,
+          "difference": -66426,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 4,
+          "postingDate": "2026-10-04T05:00:00.607Z",
+          "stockValue": 7296,
+          "accountValue": 0,
+          "difference": 7296,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 4,
+          "postingDate": "2026-10-04T05:00:00.605Z",
+          "stockValue": 3456,
+          "accountValue": 0,
+          "difference": 3456,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 4,
+          "postingDate": "2026-10-04T05:00:00.602Z",
+          "stockValue": 7040,
+          "accountValue": 0,
+          "difference": 7040,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 4,
+          "postingDate": "2026-10-04T05:00:00.600Z",
+          "stockValue": 30720,
+          "accountValue": 0,
+          "difference": 30720,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 4,
+          "postingDate": "2026-10-04T05:00:00.597Z",
+          "stockValue": 42240,
+          "accountValue": 0,
+          "difference": 42240,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "purchase",
+          "voucherId": 6,
+          "postingDate": "2026-10-04T04:35:11.798Z",
+          "stockValue": 18879,
+          "accountValue": 18879,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "purchase",
+          "voucherId": 5,
+          "postingDate": "2026-10-04T04:30:00.582Z",
+          "stockValue": 107535,
+          "accountValue": 107535,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 114,
+          "postingDate": "2026-10-03T15:59:46.905Z",
+          "stockValue": -7086,
+          "accountValue": -7086,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 113,
+          "postingDate": "2026-10-03T15:43:25.030Z",
+          "stockValue": -5640,
+          "accountValue": -5640,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 112,
+          "postingDate": "2026-10-03T15:26:39.497Z",
+          "stockValue": -2539,
+          "accountValue": -2539,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 111,
+          "postingDate": "2026-10-03T15:10:38.589Z",
+          "stockValue": -7040,
+          "accountValue": -7040,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 110,
+          "postingDate": "2026-10-03T14:54:03.093Z",
+          "stockValue": -2970,
+          "accountValue": -2970,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 109,
+          "postingDate": "2026-10-03T14:37:06.468Z",
+          "stockValue": -4143,
+          "accountValue": -4143,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 108,
+          "postingDate": "2026-10-03T14:20:16.379Z",
+          "stockValue": -7362,
+          "accountValue": -7362,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 107,
+          "postingDate": "2026-10-03T14:03:43.086Z",
+          "stockValue": -5551,
+          "accountValue": -5551,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 106,
+          "postingDate": "2026-10-03T13:47:26.928Z",
+          "stockValue": -4644,
+          "accountValue": -4644,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 105,
+          "postingDate": "2026-10-03T13:30:54.856Z",
+          "stockValue": -1925,
+          "accountValue": -1925,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 104,
+          "postingDate": "2026-10-03T13:14:20.028Z",
+          "stockValue": -4225,
+          "accountValue": -4225,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 103,
+          "postingDate": "2026-10-03T12:57:48.006Z",
+          "stockValue": -2666,
+          "accountValue": -2666,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 102,
+          "postingDate": "2026-10-03T12:40:58.115Z",
+          "stockValue": -3694,
+          "accountValue": -3694,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 101,
+          "postingDate": "2026-10-03T12:24:32.996Z",
+          "stockValue": -2522,
+          "accountValue": -2522,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 100,
+          "postingDate": "2026-10-03T12:08:11.887Z",
+          "stockValue": -6617,
+          "accountValue": -6617,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 99,
+          "postingDate": "2026-10-03T11:51:41.912Z",
+          "stockValue": -4943,
+          "accountValue": -4943,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 98,
+          "postingDate": "2026-10-03T11:35:28.456Z",
+          "stockValue": -5359,
+          "accountValue": -5359,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 97,
+          "postingDate": "2026-10-03T11:19:05.692Z",
+          "stockValue": -6109,
+          "accountValue": -6109,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 96,
+          "postingDate": "2026-10-03T11:03:05.415Z",
+          "stockValue": -1485,
+          "accountValue": -1485,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 95,
+          "postingDate": "2026-10-03T10:46:54.968Z",
+          "stockValue": -5258,
+          "accountValue": -5258,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 94,
+          "postingDate": "2026-10-03T10:30:02.777Z",
+          "stockValue": -5684,
+          "accountValue": -5684,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 93,
+          "postingDate": "2026-10-03T10:13:40.352Z",
+          "stockValue": -5019,
+          "accountValue": -5019,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 92,
+          "postingDate": "2026-10-03T09:56:50.285Z",
+          "stockValue": -6106,
+          "accountValue": -6106,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 91,
+          "postingDate": "2026-10-03T09:40:15.599Z",
+          "stockValue": -4663,
+          "accountValue": -4663,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 90,
+          "postingDate": "2026-10-03T09:23:42.946Z",
+          "stockValue": -1620,
+          "accountValue": -1620,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 89,
+          "postingDate": "2026-10-03T09:06:49.868Z",
+          "stockValue": -7684,
+          "accountValue": -7684,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 88,
+          "postingDate": "2026-10-03T08:50:08.021Z",
+          "stockValue": -1362,
+          "accountValue": -1362,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 87,
+          "postingDate": "2026-10-03T08:33:12.252Z",
+          "stockValue": -7235,
+          "accountValue": -7235,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 86,
+          "postingDate": "2026-10-03T08:16:53.047Z",
+          "stockValue": -5204,
+          "accountValue": -5204,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale_void",
+          "voucherId": 85,
+          "postingDate": "2026-10-03T08:14:56.613Z",
+          "stockValue": 2724,
+          "accountValue": 6078,
+          "difference": -3354,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale_void",
+          "voucherId": 85,
+          "postingDate": "2026-10-03T08:14:56.612Z",
+          "stockValue": 399,
+          "accountValue": 6078,
+          "difference": -5679,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale_void",
+          "voucherId": 85,
+          "postingDate": "2026-10-03T08:14:56.611Z",
+          "stockValue": 2955,
+          "accountValue": 6078,
+          "difference": -3123,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 85,
+          "postingDate": "2026-10-03T08:12:13.582Z",
+          "stockValue": -6078,
+          "accountValue": -6078,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 84,
+          "postingDate": "2026-10-03T07:55:56.687Z",
+          "stockValue": -4142,
+          "accountValue": -4142,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 83,
+          "postingDate": "2026-10-03T07:39:41.877Z",
+          "stockValue": -2464,
+          "accountValue": -2464,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 82,
+          "postingDate": "2026-10-03T07:23:14.915Z",
+          "stockValue": -2367,
+          "accountValue": -2367,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 81,
+          "postingDate": "2026-10-03T07:06:39.059Z",
+          "stockValue": -3647,
+          "accountValue": -3647,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 80,
+          "postingDate": "2026-10-03T06:49:53.642Z",
+          "stockValue": -27183,
+          "accountValue": -27183,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 79,
+          "postingDate": "2026-10-03T06:32:55.886Z",
+          "stockValue": -6297,
+          "accountValue": -6297,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 78,
+          "postingDate": "2026-10-03T06:16:04.048Z",
+          "stockValue": -5457,
+          "accountValue": -5457,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "wastage",
+          "voucherId": 3,
+          "postingDate": "2026-10-03T05:00:00.312Z",
+          "stockValue": 0,
+          "accountValue": -2202,
+          "difference": 2202,
+          "ledgerType": "GL Entry (no SLE)"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 3,
+          "postingDate": "2026-10-03T05:00:00.290Z",
+          "stockValue": -71193,
+          "accountValue": 0,
+          "difference": -71193,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 3,
+          "postingDate": "2026-10-03T05:00:00.288Z",
+          "stockValue": 7182,
+          "accountValue": 0,
+          "difference": 7182,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 3,
+          "postingDate": "2026-10-03T05:00:00.285Z",
+          "stockValue": 3402,
+          "accountValue": 0,
+          "difference": 3402,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 3,
+          "postingDate": "2026-10-03T05:00:00.282Z",
+          "stockValue": 6930,
+          "accountValue": 0,
+          "difference": 6930,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 3,
+          "postingDate": "2026-10-03T05:00:00.279Z",
+          "stockValue": 30240,
+          "accountValue": 0,
+          "difference": 30240,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 3,
+          "postingDate": "2026-10-03T05:00:00.276Z",
+          "stockValue": 41580,
+          "accountValue": 0,
+          "difference": 41580,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "purchase",
+          "voucherId": 4,
+          "postingDate": "2026-10-03T04:30:00.265Z",
+          "stockValue": 117665,
+          "accountValue": 117665,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 77,
+          "postingDate": "2026-10-02T15:56:45.851Z",
+          "stockValue": -8460,
+          "accountValue": -8460,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 76,
+          "postingDate": "2026-10-02T15:40:12.458Z",
+          "stockValue": -6411,
+          "accountValue": -6411,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 75,
+          "postingDate": "2026-10-02T15:23:47.062Z",
+          "stockValue": -6116,
+          "accountValue": -6116,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 74,
+          "postingDate": "2026-10-02T15:07:09.288Z",
+          "stockValue": -10439,
+          "accountValue": -10439,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 73,
+          "postingDate": "2026-10-02T14:50:09.617Z",
+          "stockValue": -3777,
+          "accountValue": -3777,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 72,
+          "postingDate": "2026-10-02T14:33:45.020Z",
+          "stockValue": -13655,
+          "accountValue": -13655,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 71,
+          "postingDate": "2026-10-02T14:16:53.170Z",
+          "stockValue": -3242,
+          "accountValue": -3242,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 70,
+          "postingDate": "2026-10-02T14:00:25.402Z",
+          "stockValue": -3882,
+          "accountValue": -3882,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 69,
+          "postingDate": "2026-10-02T13:44:18.535Z",
+          "stockValue": -5369,
+          "accountValue": -5369,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 68,
+          "postingDate": "2026-10-02T13:27:49.472Z",
+          "stockValue": -1520,
+          "accountValue": -1520,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 67,
+          "postingDate": "2026-10-02T13:10:51.097Z",
+          "stockValue": -1440,
+          "accountValue": -1440,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 66,
+          "postingDate": "2026-10-02T12:53:55.677Z",
+          "stockValue": -3653,
+          "accountValue": -3653,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 65,
+          "postingDate": "2026-10-02T12:37:42.163Z",
+          "stockValue": -714,
+          "accountValue": -714,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 64,
+          "postingDate": "2026-10-02T12:20:52.632Z",
+          "stockValue": -2393,
+          "accountValue": -2393,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 63,
+          "postingDate": "2026-10-02T12:04:38.175Z",
+          "stockValue": -5772,
+          "accountValue": -5772,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 62,
+          "postingDate": "2026-10-02T11:48:23.877Z",
+          "stockValue": -3942,
+          "accountValue": -3942,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 61,
+          "postingDate": "2026-10-02T11:31:46.086Z",
+          "stockValue": -3196,
+          "accountValue": -3196,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 60,
+          "postingDate": "2026-10-02T11:14:46.148Z",
+          "stockValue": -1933,
+          "accountValue": -1933,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 59,
+          "postingDate": "2026-10-02T10:58:07.695Z",
+          "stockValue": -2130,
+          "accountValue": -2130,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 58,
+          "postingDate": "2026-10-02T10:41:08.446Z",
+          "stockValue": -3158,
+          "accountValue": -3158,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 57,
+          "postingDate": "2026-10-02T10:24:25.634Z",
+          "stockValue": -4235,
+          "accountValue": -4235,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 56,
+          "postingDate": "2026-10-02T10:07:43.415Z",
+          "stockValue": -4121,
+          "accountValue": -4121,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 55,
+          "postingDate": "2026-10-02T09:50:49.268Z",
+          "stockValue": -8203,
+          "accountValue": -8203,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 54,
+          "postingDate": "2026-10-02T09:33:57.623Z",
+          "stockValue": -3660,
+          "accountValue": -3660,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 53,
+          "postingDate": "2026-10-02T09:17:42.648Z",
+          "stockValue": -3069,
+          "accountValue": -3069,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 52,
+          "postingDate": "2026-10-02T09:01:14.026Z",
+          "stockValue": -4190,
+          "accountValue": -4190,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 51,
+          "postingDate": "2026-10-02T08:44:51.593Z",
+          "stockValue": -3454,
+          "accountValue": -3454,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 50,
+          "postingDate": "2026-10-02T08:28:19.962Z",
+          "stockValue": -5822,
+          "accountValue": -5822,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 49,
+          "postingDate": "2026-10-02T08:11:27.117Z",
+          "stockValue": -6391,
+          "accountValue": -6391,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 48,
+          "postingDate": "2026-10-02T07:55:02.756Z",
+          "stockValue": -2044,
+          "accountValue": -2044,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 47,
+          "postingDate": "2026-10-02T07:38:09.393Z",
+          "stockValue": -5014,
+          "accountValue": -5014,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 46,
+          "postingDate": "2026-10-02T07:21:10.595Z",
+          "stockValue": -6454,
+          "accountValue": -6454,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 45,
+          "postingDate": "2026-10-02T07:04:50.298Z",
+          "stockValue": -3450,
+          "accountValue": -3450,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 44,
+          "postingDate": "2026-10-02T06:48:39.704Z",
+          "stockValue": -4331,
+          "accountValue": -4331,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 43,
+          "postingDate": "2026-10-02T06:32:20.072Z",
+          "stockValue": -6781,
+          "accountValue": -6781,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 42,
+          "postingDate": "2026-10-02T06:16:04.157Z",
+          "stockValue": -2887,
+          "accountValue": -2887,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "wastage",
+          "voucherId": 2,
+          "postingDate": "2026-10-02T05:00:00.347Z",
+          "stockValue": 0,
+          "accountValue": -5683,
+          "difference": 5683,
+          "ledgerType": "GL Entry (no SLE)"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 2,
+          "postingDate": "2026-10-02T05:00:00.321Z",
+          "stockValue": -183766,
+          "accountValue": 0,
+          "difference": -183766,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 2,
+          "postingDate": "2026-10-02T05:00:00.319Z",
+          "stockValue": 19266,
+          "accountValue": 0,
+          "difference": 19266,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 2,
+          "postingDate": "2026-10-02T05:00:00.316Z",
+          "stockValue": 9126,
+          "accountValue": 0,
+          "difference": 9126,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 2,
+          "postingDate": "2026-10-02T05:00:00.312Z",
+          "stockValue": 18590,
+          "accountValue": 0,
+          "difference": 18590,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 2,
+          "postingDate": "2026-10-02T05:00:00.310Z",
+          "stockValue": 81120,
+          "accountValue": 0,
+          "difference": 81120,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 2,
+          "postingDate": "2026-10-02T05:00:00.306Z",
+          "stockValue": 111540,
+          "accountValue": 0,
+          "difference": 111540,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "purchase",
+          "voucherId": 3,
+          "postingDate": "2026-10-02T04:30:00.293Z",
+          "stockValue": 312199,
+          "accountValue": 312199,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 41,
+          "postingDate": "2026-10-01T15:54:00.971Z",
+          "stockValue": -3413,
+          "accountValue": -3413,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 40,
+          "postingDate": "2026-10-01T15:39:41.898Z",
+          "stockValue": -3008,
+          "accountValue": -3008,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 39,
+          "postingDate": "2026-10-01T15:25:32.344Z",
+          "stockValue": -2780,
+          "accountValue": -2780,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 38,
+          "postingDate": "2026-10-01T15:11:23.289Z",
+          "stockValue": -6647,
+          "accountValue": -6647,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 37,
+          "postingDate": "2026-10-01T14:56:57.695Z",
+          "stockValue": -5100,
+          "accountValue": -5100,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 36,
+          "postingDate": "2026-10-01T14:42:26.444Z",
+          "stockValue": -3322,
+          "accountValue": -3322,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 35,
+          "postingDate": "2026-10-01T14:28:09.605Z",
+          "stockValue": -4557,
+          "accountValue": -4557,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 34,
+          "postingDate": "2026-10-01T14:13:27.277Z",
+          "stockValue": -1570,
+          "accountValue": -1570,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 33,
+          "postingDate": "2026-10-01T13:58:57.090Z",
+          "stockValue": -192,
+          "accountValue": -192,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 32,
+          "postingDate": "2026-10-01T13:44:04.613Z",
+          "stockValue": -6886,
+          "accountValue": -6886,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 31,
+          "postingDate": "2026-10-01T13:29:37.979Z",
+          "stockValue": -2673,
+          "accountValue": -2673,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 30,
+          "postingDate": "2026-10-01T13:15:24.268Z",
+          "stockValue": -14503,
+          "accountValue": -14503,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 29,
+          "postingDate": "2026-10-01T13:00:40.376Z",
+          "stockValue": -20554,
+          "accountValue": -20554,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 28,
+          "postingDate": "2026-10-01T12:45:46.770Z",
+          "stockValue": -3031,
+          "accountValue": -3031,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 27,
+          "postingDate": "2026-10-01T12:31:38.070Z",
+          "stockValue": -2380,
+          "accountValue": -2380,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 26,
+          "postingDate": "2026-10-01T12:17:01.563Z",
+          "stockValue": -2116,
+          "accountValue": -2116,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 25,
+          "postingDate": "2026-10-01T12:02:55.031Z",
+          "stockValue": -6654,
+          "accountValue": -6654,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 24,
+          "postingDate": "2026-10-01T11:48:09.745Z",
+          "stockValue": -2453,
+          "accountValue": -2453,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 23,
+          "postingDate": "2026-10-01T11:33:39.740Z",
+          "stockValue": -7556,
+          "accountValue": -7556,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 22,
+          "postingDate": "2026-10-01T11:19:08.208Z",
+          "stockValue": -377,
+          "accountValue": -377,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 21,
+          "postingDate": "2026-10-01T11:04:33.567Z",
+          "stockValue": -7015,
+          "accountValue": -7015,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 20,
+          "postingDate": "2026-10-01T10:50:26.499Z",
+          "stockValue": -6735,
+          "accountValue": -6735,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 19,
+          "postingDate": "2026-10-01T10:36:08.301Z",
+          "stockValue": -2504,
+          "accountValue": -2504,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 18,
+          "postingDate": "2026-10-01T10:21:33.622Z",
+          "stockValue": -3509,
+          "accountValue": -3509,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 17,
+          "postingDate": "2026-10-01T10:06:35.267Z",
+          "stockValue": -3265,
+          "accountValue": -3265,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 16,
+          "postingDate": "2026-10-01T09:51:46.156Z",
+          "stockValue": -6690,
+          "accountValue": -6690,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 15,
+          "postingDate": "2026-10-01T09:37:44.903Z",
+          "stockValue": -3410,
+          "accountValue": -3410,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 14,
+          "postingDate": "2026-10-01T09:22:51.561Z",
+          "stockValue": -2408,
+          "accountValue": -2408,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 13,
+          "postingDate": "2026-10-01T09:07:53.952Z",
+          "stockValue": -2950,
+          "accountValue": -2950,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 12,
+          "postingDate": "2026-10-01T08:53:53.414Z",
+          "stockValue": -4252,
+          "accountValue": -4252,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 11,
+          "postingDate": "2026-10-01T08:39:48.258Z",
+          "stockValue": -4631,
+          "accountValue": -4631,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 10,
+          "postingDate": "2026-10-01T08:25:10.742Z",
+          "stockValue": -4453,
+          "accountValue": -4453,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 9,
+          "postingDate": "2026-10-01T08:10:29.420Z",
+          "stockValue": -4612,
+          "accountValue": -4612,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 8,
+          "postingDate": "2026-10-01T07:56:24.303Z",
+          "stockValue": -2222,
+          "accountValue": -2222,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 7,
+          "postingDate": "2026-10-01T07:42:02.567Z",
+          "stockValue": -1967,
+          "accountValue": -1967,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 6,
+          "postingDate": "2026-10-01T07:27:29.561Z",
+          "stockValue": -4217,
+          "accountValue": -4217,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 5,
+          "postingDate": "2026-10-01T07:12:40.067Z",
+          "stockValue": -2595,
+          "accountValue": -2595,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 4,
+          "postingDate": "2026-10-01T06:58:07.774Z",
+          "stockValue": -4862,
+          "accountValue": -4862,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 3,
+          "postingDate": "2026-10-01T06:44:05.434Z",
+          "stockValue": -5065,
+          "accountValue": -5065,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 2,
+          "postingDate": "2026-10-01T06:29:12.930Z",
+          "stockValue": -6459,
+          "accountValue": -6459,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "sale",
+          "voucherId": 1,
+          "postingDate": "2026-10-01T06:14:31.799Z",
+          "stockValue": -3089,
+          "accountValue": -3089,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "wastage",
+          "voucherId": 1,
+          "postingDate": "2026-10-01T05:00:00.340Z",
+          "stockValue": 0,
+          "accountValue": -3802,
+          "difference": 3802,
+          "ledgerType": "GL Entry (no SLE)"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 1,
+          "postingDate": "2026-10-01T05:00:00.316Z",
+          "stockValue": -122928,
+          "accountValue": 0,
+          "difference": -122928,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 1,
+          "postingDate": "2026-10-01T05:00:00.313Z",
+          "stockValue": 13110,
+          "accountValue": 0,
+          "difference": 13110,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 1,
+          "postingDate": "2026-10-01T05:00:00.309Z",
+          "stockValue": 6210,
+          "accountValue": 0,
+          "difference": 6210,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 1,
+          "postingDate": "2026-10-01T05:00:00.304Z",
+          "stockValue": 12650,
+          "accountValue": 0,
+          "difference": 12650,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 1,
+          "postingDate": "2026-10-01T05:00:00.299Z",
+          "stockValue": 55200,
+          "accountValue": 0,
+          "difference": 55200,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "transfer",
+          "voucherId": 1,
+          "postingDate": "2026-10-01T05:00:00.294Z",
+          "stockValue": 75900,
+          "accountValue": 0,
+          "difference": 75900,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "purchase",
+          "voucherId": 2,
+          "postingDate": "2026-10-01T04:35:03.563Z",
+          "stockValue": 21900,
+          "accountValue": 21900,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        },
+        {
+          "voucherType": "purchase",
+          "voucherId": 1,
+          "postingDate": "2026-10-01T04:30:00.294Z",
+          "stockValue": 222053,
+          "accountValue": 222053,
+          "difference": 0,
+          "ledgerType": "Stock Ledger Entry"
+        }
+      ],
+      "summary": {
+        "totalStockValue": 387016,
+        "totalAccountValue": 60556,
+        "totalDifference": 326460
+      }
+    }
+  },
+  "writeTimings": {
+    "POST /users": {
+      "n": 1,
+      "p50": 434,
+      "p95": 434,
+      "max": 434
+    },
+    "POST /bank-accounts": {
+      "n": 1,
+      "p50": 16,
+      "p95": 16,
+      "max": 16
+    },
+    "POST /items": {
+      "n": 7,
+      "p50": 14,
+      "p95": 17,
+      "max": 17
+    },
+    "POST /customers": {
+      "n": 6,
+      "p50": 10,
+      "p95": 11,
+      "max": 11
+    },
+    "POST /suppliers": {
+      "n": 3,
+      "p50": 9,
+      "p95": 11,
+      "max": 11
+    },
+    "POST /accounting/journal-entries": {
+      "n": 2,
+      "p50": 15,
+      "p95": 15,
+      "max": 15
+    },
+    "POST /accounting/journal-entries/:id/post": {
+      "n": 2,
+      "p50": 10,
+      "p95": 10,
+      "max": 10
+    },
+    "POST /purchases": {
+      "n": 15,
+      "p50": 281,
+      "p95": 691,
+      "max": 691
+    },
+    "POST /stock-transfer": {
+      "n": 10,
+      "p50": 311,
+      "p95": 711,
+      "max": 711
+    },
+    "POST /wastage": {
+      "n": 14,
+      "p50": 18,
+      "p95": 270,
+      "max": 270
+    },
+    "POST /sales": {
+      "n": 374,
+      "p50": 296,
+      "p95": 791,
+      "max": 1069
+    },
+    "GET /barcode/lookup": {
+      "n": 24,
+      "p50": 11,
+      "p95": 582,
+      "max": 600
+    },
+    "POST /payments/sale": {
+      "n": 31,
+      "p50": 31,
+      "p95": 306,
+      "max": 520
+    },
+    "POST /expenses": {
+      "n": 15,
+      "p50": 271,
+      "p95": 716,
+      "max": 716
+    },
+    "GET /accounting/trial-balance": {
+      "n": 10,
+      "p50": 281,
+      "p95": 440,
+      "max": 440
+    },
+    "GET /reports/dashboard": {
+      "n": 10,
+      "p50": 3,
+      "p95": 15,
+      "max": 15
+    },
+    "GET /reports/profit-loss": {
+      "n": 10,
+      "p50": 3,
+      "p95": 16,
+      "max": 16
+    },
+    "GET /reports/sales": {
+      "n": 10,
+      "p50": 7,
+      "p95": 8,
+      "max": 8
+    },
+    "GET /debts/summary": {
+      "n": 10,
+      "p50": 3,
+      "p95": 4,
+      "max": 4
+    },
+    "GET /reports/stock-vs-gl": {
+      "n": 10,
+      "p50": 9,
+      "p95": 12,
+      "max": 12
+    },
+    "GET /accounting/ledger/:id": {
+      "n": 10,
+      "p50": 13,
+      "p95": 18,
+      "max": 18
+    },
+    "POST /sales/:id/void": {
+      "n": 2,
+      "p50": 285,
+      "p95": 285,
+      "max": 285
+    },
+    "POST /payments/purchase": {
+      "n": 4,
+      "p50": 20,
+      "p95": 273,
+      "max": 273
+    },
+    "PUT /purchases/:id": {
+      "n": 1,
+      "p50": 29,
+      "p95": 29,
+      "max": 29
+    },
+    "GET /customers/:id": {
+      "n": 6,
+      "p50": 2,
+      "p95": 262,
+      "max": 262
+    },
+    "GET /reports/inventory": {
+      "n": 1,
+      "p50": 4,
+      "p95": 4,
+      "max": 4
+    }
+  },
+  "errors": [
+    {
+      "day": 9,
+      "at": "2026-10-09T04:30:00.000Z",
+      "user": "owner",
+      "method": "POST",
+      "path": "/purchases",
+      "status": 400,
+      "code": "INSUFFICIENT_BALANCE",
+      "msg": "Insufficient balance in النقد في الصندوق. Available: 286.63 ₪, required: 3172.46 ₪. Shortfall: 2885.83 ₪. Use bank transfer or card if balance suffices, or record as credit purchase.",
+      "body": {
+        "supplierId": 2,
+        "purchaseDate": "2026-10-09T04:30:00.000Z",
+        "lines": [
+          {
+            "itemId": 1,
+            "weightGrams": 280500,
+            "pricePerKg": 1131
+          }
+        ],
+        "amountPaid": 317246,
+        "paymentMethod": "bank_transfer",
+        "bankAccountId": 1
+      }
+    },
+    {
+      "day": 10,
+      "at": "2026-10-10T17:00:00.000Z",
+      "user": "owner",
+      "method": "POST",
+      "path": "/expenses",
+      "status": 400,
+      "code": "INSUFFICIENT_BALANCE",
+      "msg": "Insufficient balance in النقد في الصندوق. Available: 1992.94 ₪, required: 4200.00 ₪. Shortfall: 2207.06 ₪. Use bank transfer or card if balance suffices, or record as credit purchase.",
+      "body": {
+        "categoryId": 6,
+        "description": "راتب عامل 1",
+        "amount": 420000,
+        "expenseDate": "2026-10-10T17:00:00.000Z",
+        "paymentMethod": "cash"
+      }
+    }
+  ],
+  "counts": {
+    "sales": 374,
+    "voided": 2,
+    "jes": 455,
+    "purchases": 14,
+    "payments": 376,
+    "transfers": 10,
+    "wastage": 14,
+    "expenses": 14
+  }
+}

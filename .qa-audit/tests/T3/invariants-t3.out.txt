@@ -1,0 +1,52 @@
+Invariants for envs/t3/app.db  ->  PASS:17 FAIL:10 WARN:1
+[PASS] GL-01    Every journal entry balanced (Σdr = Σcr per JE)
+[FAIL] GL-02    JE structure: ≥2 lines, non-zero, no negative/two-sided/zero lines
+          actual:   "1 empty/zero JEs, 4 bad lines"
+          details:  {"empty":[{"id":52,"entry_number":"JE-000052","source_type":"sale","nl":3,"dr":0}],"badLines":[{"id":170,"journal_entry_id":49,"debit_amount":0,"credit_amount":0},{"id":181,"journal_entry_id":52,"debit_amount":0,"credit_amount":0},{"id":182,"journal_entry_id":52,"debit_amount":0,"credit_amount":0},{"id":183,"journal_entry_id":52,"debit_amount":0,"credit_amount":0}]}
+[PASS] GL-03    Trial balance: total debits = total credits (posted)
+[PASS] GL-04    No JE line on group / inactive / frozen account (I-04)
+[PASS] GL-05    Balance sheet: Assets = Liabilities + Equity + (Income − Expense)
+[PASS] GL-06    Unposted (draft) JEs (excluded from balances above)
+[PASS] GL-07    Reversals mirror originals exactly, at most once, flags consistent (I-06)
+[PASS] GL-08    Journal entry numbers unique
+[FAIL] AR-01    GL AR (1120) = Σ customer.currentBalance = open receivable debts = PLE (I-29/I-31)
+          expected: "20000635.04"
+          actual:   {"gl_ar":"20000635.04","customers_currentBalance":"20000519.01","open_receivable_debts":"20000819.01","ple_customer":"20000694.01","sales_total_minus_paid":"20001019.04"}
+          details:  {"note":"sales_total_minus_paid includes walk-in due (≤1 minor) and is informational"}
+[FAIL] AR-02    Per customer: currentBalance = open debts = PLE balance
+          actual:   "8 customers differ"
+          details:  [{"id":1,"customer_number":"C-SEED-001","name":"مطعم أ","bal":2000018001,"debt":2000008001,"ple":2000018001},{"id":2,"customer_number":"C-SEED-002","name":"فندق ب","bal":10900,"debt":10900,"ple":6900},{"id":3,"customer_number":"C-SEED-003","name":"عميل نقدي","bal":-4000,"debt":6000,"ple":1000},{"id":6,"customer_number":"CUST0003","name":"T3 A","bal":0,"debt":0,"ple":7500},{"id":7,"customer_number":"CUST0004","name":"T3 B","bal":0,"debt":0,"ple":-4000},{"id":8,"customer_number":"CUST0005","name":"T3 C","bal":-10000,"debt":0,"ple":0},{"id":10,"customer_number":"CUST0007","name":"T3 E","bal":15000,"debt":15000,"ple":-2000},{"id":11,"customer_number":"CUST0008","name":"T3 F","bal":-20000,"debt":0,"ple":0}]
+[PASS] AP-01    GL AP (2110) = Σ supplier.currentBalance = open payable debts = −PLE (I-30)
+[PASS] AP-02    Per supplier: currentBalance = open debts = −PLE balance
+[FAIL] DEBT-01  Debt rows sane: 0 ≤ paid ≤ total, status consistent (I-33)
+          details:  [{"id":31,"debt_number":"DEB-SAL-20261125-0053","direction":"receivable","total_amount":10000,"amount_paid":18000,"status":"partial"}]
+[FAIL] INV-01   GL inventory (1131,1132) = Σ inventory.totalValue = Σ lot remaining×cost = SLE value (I-14/I-16)
+          expected: "22982.60"
+          actual:   {"gl_inventory":"22982.60","inventory_totalValue":"28582.60","lots_remaining_x_cost":"28582.60","stock_ledger_value":"22982.60"}
+[PASS] INV-02   Per item: inventory qty = Σ lot remaining (I-15)
+[PASS] INV-03   Per item: inventory.totalValue = Σ lot value (±1) (I-16)
+[PASS] INV-04   No negative stock / lot remaining within [0, total] (I-17)
+[WARN] INV-05   Per item: Σ stock_ledger qty = inventory qty (I-19)
+          actual:   "5 items"
+          details:  [{"item_id":2,"q":244000,"sq":194000},{"item_id":3,"q":237000,"sq":187000},{"item_id":4,"q":248000,"sq":198000},{"item_id":5,"q":203997,"sq":153997},{"item_id":6,"q":248000,"sq":198000}]
+[PASS] INV-06   Sale totalCost = Σ line cost = Σ FIFO allocations (I-21)
+[PASS] CASH-01  Cash/bank GL accounts never negative (I-36)
+[FAIL] CASH-03  GL cash+bank (excl. manual JEs) = Σ active customer payments − supplier payments − paid expenses (heuristic)
+          expected: "1688.13"
+          actual:   "1547.13"
+          diff:     -141.00
+          details:  {"payIn":"1688.13","payOut":"0.00","expensesPaid":"0.00","manualJeCash":"0.00"}
+[FAIL] CASH-04  Per bank account: GL (excl. manual) = payments/expenses routed to that bank
+          details:  [{"bank":"BANK-001","gl":"1112-001","gl_balance_excl_manual":22000,"docs":21000}]
+[PASS] DOC-01   Every financial document has its JE (I-05/I-13)
+[FAIL] DOC-02   No JE without a live document; cancelled documents neutralised; no duplicate posting (I-13/I-05)
+          actual:   "1 issues"
+          details:  [{"source_type":"sale_void","source_id":57,"c":3,"issue":"document posted more than once"}]
+[PASS] NUM-01   Document numbers unique (I-46)
+[FAIL] DOC-03   Sale.amountPaid = Σ active payments; 0 ≤ paid ≤ total (I-32/I-40)
+          actual:   "1 sales"
+          details:  [{"id":58,"sale_number":"SAL-20261125-0053","total_amount":10000,"amount_paid":18000,"payment_status":"partial","is_voided":0,"paid_rows":18000}]
+[PASS] DOC-04   Purchase.amountPaid = Σ active payments; paid ≤ grand total
+[FAIL] DOC-05   Sale total = Σ lines − discount + tax (I-40)
+          actual:   "1 sales"
+          details:  [{"id":37,"sale_number":"SAL-20261125-0032","gross_total_amount":0,"lines":null,"discount_amount":0,"tax_amount":0,"total_amount":0}]

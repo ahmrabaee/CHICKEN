@@ -1,0 +1,138 @@
+=== PDF sweep (HTTP status, content-type, bytes, first bytes)
+200 application/pdf                 104563 %PDF- /accounting/reports/balance-sheet/pdf 
+200 application/pdf                 103780 %PDF- /accounting/reports/balance-sheet/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 
+400 application/json; charset=utf-     506 {"suc /accounting/reports/balance-sheet/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     362 {"suc /accounting/reports/balance-sheet/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+200 application/pdf                 104147 %PDF- /accounting/reports/income-statement/pdf 
+200 application/pdf                 103880 %PDF- /accounting/reports/income-statement/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 
+400 application/json; charset=utf-     509 {"suc /accounting/reports/income-statement/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     365 {"suc /accounting/reports/income-statement/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+200 application/pdf                 105821 %PDF- /accounting/reports/trial-balance/pdf 
+200 application/pdf                 105034 %PDF- /accounting/reports/trial-balance/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 
+400 application/json; charset=utf-     506 {"suc /accounting/reports/trial-balance/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     362 {"suc /accounting/reports/trial-balance/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+200 application/pdf                 296106 %PDF- /accounting/reports/ledger/1111/pdf 
+200 application/pdf                 296807 %PDF- /accounting/reports/ledger/1111/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 
+400 application/json; charset=utf-     504 {"suc /accounting/reports/ledger/1111/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     360 {"suc /accounting/reports/ledger/1111/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+200 application/pdf                 196065 %PDF- /customers/4/statement/pdf 
+200 application/pdf                 198711 %PDF- /customers/4/statement/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 
+400 application/json; charset=utf-     495 {"suc /customers/4/statement/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     351 {"suc /customers/4/statement/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+200 application/pdf                 195208 %PDF- /customers/3/statement/pdf 
+200 application/pdf                 197125 %PDF- /customers/3/statement/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 
+400 application/json; charset=utf-     495 {"suc /customers/3/statement/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     351 {"suc /customers/3/statement/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+404 application/json; charset=utf-     212 {"suc /customers/9999/statement/pdf {"success":false,"error":{"code":"NOT_FOUND","message":"Customer not found","messageAr":"العميل غير موجود"},"m
+404 application/json; charset=utf-     264 {"suc /customers/9999/statement/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 {"success":false,"error":{"code":"NOT_FOUND","message":"Customer not found","messageAr":"العميل غير موجود"},"m
+400 application/json; charset=utf-     498 {"suc /customers/9999/statement/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     354 {"suc /customers/9999/statement/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+200 application/pdf                 195281 %PDF- /debts/receivables/pdf 
+200 application/pdf                 195663 %PDF- /debts/receivables/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 
+400 application/json; charset=utf-     491 {"suc /debts/receivables/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     347 {"suc /debts/receivables/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+200 application/pdf                 194372 %PDF- /debts/payables/pdf 
+200 application/pdf                 195255 %PDF- /debts/payables/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 
+400 application/json; charset=utf-     488 {"suc /debts/payables/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     344 {"suc /debts/payables/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+200 application/pdf                 197007 %PDF- /expenses/report/pdf 
+200 application/pdf                 195975 %PDF- /expenses/report/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 
+400 application/json; charset=utf-     489 {"suc /expenses/report/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     345 {"suc /expenses/report/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+200 application/pdf                 197695 %PDF- /inventory/report/pdf 
+200 application/pdf                 197198 %PDF- /inventory/report/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 
+400 application/json; charset=utf-     490 {"suc /inventory/report/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     346 {"suc /inventory/report/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+200 application/pdf                 194448 %PDF- /payments/1/pdf 
+200 application/pdf                 196725 %PDF- /payments/1/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 
+400 application/json; charset=utf-     484 {"suc /payments/1/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     340 {"suc /payments/1/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+404 application/json; charset=utf-     202 {"suc /payments/9999/pdf {"success":false,"error":{"code":"NOT_FOUND","message":"Payment not found","messageAr":"الدفعة غير موجودة"},"m
+404 application/json; charset=utf-     254 {"suc /payments/9999/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 {"success":false,"error":{"code":"NOT_FOUND","message":"Payment not found","messageAr":"الدفعة غير موجودة"},"m
+400 application/json; charset=utf-     487 {"suc /payments/9999/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     343 {"suc /payments/9999/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+200 application/pdf                 194376 %PDF- /purchases/report/pdf 
+200 application/pdf                 193675 %PDF- /purchases/report/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 
+400 application/json; charset=utf-     490 {"suc /purchases/report/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     346 {"suc /purchases/report/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+200 application/pdf                 194864 %PDF- /purchases/4/pdf 
+200 application/pdf                 195924 %PDF- /purchases/4/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 
+400 application/json; charset=utf-     485 {"suc /purchases/4/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     341 {"suc /purchases/4/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+200 application/pdf                 193583 %PDF- /reports/wastage/pdf 
+200 application/pdf                 194292 %PDF- /reports/wastage/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 
+400 application/json; charset=utf-     489 {"suc /reports/wastage/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     345 {"suc /reports/wastage/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+200 application/pdf                 195931 %PDF- /reports/vat/pdf 
+200 application/pdf                 196437 %PDF- /reports/vat/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 
+400 application/json; charset=utf-     485 {"suc /reports/vat/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     341 {"suc /reports/vat/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+200 application/pdf                 292388 %PDF- /reports/stock-vs-gl/pdf 
+200 application/pdf                 294570 %PDF- /reports/stock-vs-gl/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 
+400 application/json; charset=utf-     493 {"suc /reports/stock-vs-gl/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     349 {"suc /reports/stock-vs-gl/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+200 application/pdf                 196477 %PDF- /sales/report/pdf 
+200 application/pdf                 193605 %PDF- /sales/report/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 
+400 application/json; charset=utf-     486 {"suc /sales/report/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     342 {"suc /sales/report/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+200 application/pdf                 194959 %PDF- /sales/6/pdf 
+200 application/pdf                 195994 %PDF- /sales/6/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 
+400 application/json; charset=utf-     481 {"suc /sales/6/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     337 {"suc /sales/6/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+404 application/json; charset=utf-     205 {"suc /sales/9999/pdf {"success":false,"error":{"code":"NOT_FOUND","message":"Sale not found","messageAr":"عملية البيع غير موجودة"},
+404 application/json; charset=utf-     257 {"suc /sales/9999/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 {"success":false,"error":{"code":"NOT_FOUND","message":"Sale not found","messageAr":"عملية البيع غير موجودة"},
+400 application/json; charset=utf-     484 {"suc /sales/9999/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     340 {"suc /sales/9999/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+200 application/pdf                 290950 %PDF- /suppliers/3/statement/pdf 
+200 application/pdf                 197770 %PDF- /suppliers/3/statement/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 
+400 application/json; charset=utf-     495 {"suc /suppliers/3/statement/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     351 {"suc /suppliers/3/statement/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+200 application/pdf                 195068 %PDF- /suppliers/1/statement/pdf 
+200 application/pdf                 197308 %PDF- /suppliers/1/statement/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 
+400 application/json; charset=utf-     495 {"suc /suppliers/1/statement/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     351 {"suc /suppliers/1/statement/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+404 application/json; charset=utf-     212 {"suc /suppliers/9999/statement/pdf {"success":false,"error":{"code":"NOT_FOUND","message":"Supplier not found","messageAr":"المورد غير موجود"},"m
+404 application/json; charset=utf-     264 {"suc /suppliers/9999/statement/pdf?language=ar&startDate=2026-11-25&endDate=2026-11-25 {"success":false,"error":{"code":"NOT_FOUND","message":"Supplier not found","messageAr":"المورد غير موجود"},"m
+400 application/json; charset=utf-     498 {"suc /suppliers/9999/statement/pdf?startDate=garbage&endDate=garbage {"success":false,"error":{"code":"VALIDATION_ERROR","message":"startDate must be a valid ISO 8601 date string;
+400 application/json; charset=utf-     354 {"suc /suppliers/9999/statement/pdf?language=fr {"success":false,"error":{"code":"VALIDATION_ERROR","message":"language must be one of the following values: e
+=== duplicate handling
+cust same name different phone                             201 {"success":true,"data":{"id":5,"customerNumber":"CUST0002","name":"GCustHist","nameEn":null,"phone":"0599777111","phone2":null,"address":null,"creditLimit":0,"currentBalance":0,"priceLevel":"standard","defaultDiscountPct":0,"taxNumber":null,"notes":null,"isAct
+cust phone w/ spaces dup                                   201 {"success":true,"data":{"id":6,"customerNumber":"CUST0003","name":"Dup","nameEn":null,"phone":" 0599777000 ","phone2":null,"address":null,"creditLimit":0,"currentBalance":0,"priceLevel":"standard","defaultDiscountPct":0,"taxNumber":null,"notes":null,"isActive"
+cust phone +970 form dup                                   201 {"success":true,"data":{"id":7,"customerNumber":"CUST0004","name":"Dup2","nameEn":null,"phone":"+970599777000","phone2":null,"address":null,"creditLimit":0,"currentBalance":0,"priceLevel":"standard","defaultDiscountPct":0,"taxNumber":null,"notes":null,"isActiv
+sup name case dup                                          201 {"success":true,"data":{"id":4,"supplierNumber":"SUP-0004","name":"gsuphist","nameEn":null,"phone":null,"address":null,"contactPerson":null,"taxNumber":null,"paymentTerms":null,"currentBalance":0,"creditLimit":null,"bankName":null,"bankAccountNumber":null,"rat
+sup name trailing space dup                                201 {"success":true,"data":{"id":5,"supplierNumber":"SUP-0005","name":"GSupHist ","nameEn":null,"phone":null,"address":null,"contactPerson":null,"taxNumber":null,"paymentTerms":null,"currentBalance":0,"creditLimit":null,"bankName":null,"bankAccountNumber":null,"ra
+category dup name case                                     201 {"success":true,"data":{"id":9,"code":"CAT_0009","name":"دجاج خام","nameEn":null,"displayOrder":8,"icon":null,"defaultShelfLifeDays":null,"storageType":null,"isActive":true,"createdAt":"2026-11-25T16:39:52.650Z","updatedAt":"2026-11-25T16:39:52.650Z"},"meta":{
+item dup barcode vs other item code                        201 {"success":true,"data":{"id":9,"code":"ITE-72524","barcode":"CHK-RAW-01","name":"BC","nameEn":null,"description":null,"categoryId":1,"defaultSalePrice":100,"defaultPurchasePrice":null,"effectiveCostPrice":0,"taxRatePct":null,"minStockLevelGrams":null,"maxStock
+item code collision                                        409 {"success":false,"error":{"code":"DUPLICATE_ENTRY","message":"Item code already exists","messageAr":"رمز المنتج موجود بالفعل"},"meta":{"timestamp":"2026-11-25T16:39:52.673Z","path":"/v1/items"}}
+=== search wildcard
+items search "%" 200 8
+items search "_" 200 8
+items search "دجاج" 200 4
+items search "chk" 200 7
+items search "CHK" 200 7
+cust search "%" 200 7
+cust search "_" 200 7
+=== customer lifecycle / deactivate
+PUT customer isActive=false with open debt                 200 {"success":true,"data":{"id":4,"customerNumber":"CUST0001","name":"GCustHist","nameEn":null,"phone":"0599777000","phone2":null,"address":null,"creditLimit":5000,"currentBalance":5000,"priceLevel":"standard","defaultDiscountPct":0,"taxNumber":null,"notes":null,
+PUT customer creditLimit=-1                                400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"creditLimit must not be less than 0","messageAr":"creditLimit must not be less than 0","details":["creditLimit must not be less than 0"]},"meta":{"timestamp":"2026-11-25T16:39:52.739Z","path":"/v1/
+PUT customer discount 20000bp                              400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"defaultDiscountPct must not be greater than 10000","messageAr":"defaultDiscountPct must not be greater than 10000","details":["defaultDiscountPct must not be greater than 10000"]},"meta":{"timestam
+stored discount [{"default_discount_pct":0}]
+PUT customer priceLevel junk                               200 {"success":true,"data":{"id":4,"customerNumber":"CUST0001","name":"GCustHist","nameEn":null,"phone":"0599777000","phone2":null,"address":null,"creditLimit":5000,"currentBalance":5000,"priceLevel":"vip","defaultDiscountPct":0,"taxNumber":null,"notes":null,"isAc
+=== expense approval
+expense approval flags [{"id":1,"is_approved":0,"approved_by":null,"docstatus":1,"amount":5000},{"id":2,"is_approved":0,"approved_by":null,"docstatus":1,"amount":10000},{"id":3,"is_approved":0,"approved_by":null,"docstatus":1,"amount":15000},{"id":4,"is_approved":0,"approved_by":null,"docstatus":0,"amount":12000},{"id":5,"is_app
+approve expense 5                                          201 {"success":true,"data":{"id":5,"expenseNumber":"EXP-000005","expenseDate":"2026-11-25T16:38:35.218Z","expenseType":"operational","categoryId":1,"amount":50,"taxAmount":0,"description":"big","supplierId":null,"paymentMethod":"cash","bankAccountId":null,"referen
+approve unknown                                            404 {"success":false,"error":{"code":"NOT_FOUND","message":"Expense not found","messageAr":"المصروف غير موجود"},"meta":{"timestamp":"2026-11-25T16:39:52.782Z","path":"/v1/expenses/9999/approve"}}
+JE for expense 5? [{"id":23,"entry_number":"JE-000023"}]
+=== purchase approve/receive routes
+PUT /purchases/4/receive                                   400 {"success":false,"error":{"code":"ALREADY_RECEIVED","message":"This purchase has already been received","messageAr":"تم استلام هذا الشراء مسبقاً"},"meta":{"timestamp":"2026-11-25T16:39:52.787Z","path":"/v1/purchases/4/receive"}}
+=== wastage approve routes
+post /wastage/1/approve        404
+put /wastage/1/approve         404
+post /wastage/1/reject         404
+delete /wastage/1              404
+=== inventory adjustments approval/ item price
+item PUT price negative                                    400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"defaultSalePrice must not be less than 0","messageAr":"defaultSalePrice must not be less than 0","details":["defaultSalePrice must not be less than 0"]},"meta":{"timestamp":"2026-11-25T16:39:52.797
+item PUT categoryId unknown                                404 {"success":false,"error":{"code":"NOT_FOUND","message":"Category not found","messageAr":"الصنف غير موجود"},"meta":{"timestamp":"2026-11-25T16:39:52.805Z","path":"/v1/items/2"}}
+item PUT name empty                                        400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"name should not be empty","messageAr":"name should not be empty","details":["name should not be empty"]},"meta":{"timestamp":"2026-11-25T16:39:52.809Z","path":"/v1/items/2"}}
+GET /items/abc                                             400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"Validation failed (numeric string is expected)","messageAr":"فشل التحقق من البيانات"},"meta":{"timestamp":"2026-11-25T16:39:52.812Z","path":"/v1/items/abc"}}
+GET /customers/999999                                      404 {"success":false,"error":{"code":"NOT_FOUND","message":"Customer not found","messageAr":"العميل غير موجود"},"meta":{"timestamp":"2026-11-25T16:39:52.815Z","path":"/v1/customers/999999"}}

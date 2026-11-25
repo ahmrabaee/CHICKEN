@@ -1,0 +1,56 @@
+=== A: purchase 10kg@20 + 10kg@30, sell 5kg, adjust -5kg, sell 10kg, try sell 5kg more
+  GL delta [purchases] {"1131":50000,"2110":-50000}
+  [item 7] inv 20000g/50000 avg 2500 | lots 20000g/50000 | SLE 20000g/50000 | mov 20000g | lots=6:LOT-20261125-006:10000/10000@2000 7:LOT-20261125-007:10000/10000@3000  OK
+  GL delta [sale 5kg] {"1111":20000,"1131":-10000,"4110":-20000,"5100":10000}
+  [item 7] inv 15000g/40000 avg 2667 | lots 15000g/40000 | SLE 15000g/40000 | mov 15000g | lots=6:LOT-20261125-006:5000/10000@2000 7:LOT-20261125-007:10000/10000@3000  OK
+adjust -5kg 201 {"movementId":4,"previousQuantityGrams":15000,"newQuantityGrams":10000,"previousTotalValue":40000,"newTotalValue":26667,"adjustmentGrams":5000,"type":"decrease"}
+  GL delta [adjust -5kg] {"1131":-13333,"5320":13333}
+  [item 7] inv 10000g/26667 avg 2667 | lots 15000g/40000 | SLE 10000g/26667 | mov 10000g | lots=6:LOT-20261125-006:5000/10000@2000 7:LOT-20261125-007:10000/10000@3000  <<invQty 10000 != lotQty 15000; invVal 26667 != lotVal 40000
+sale 10kg 201 totalCost=25000
+  GL delta [sale 10kg] {"1111":40000,"1131":-25000,"4110":-40000,"5100":25000}
+  [item 7 phantom lot?] inv 0g/1667 avg 2667 | lots 5000g/15000 | SLE 0g/1667 | mov 0g | lots=6:LOT-20261125-006:0/10000@2000 7:LOT-20261125-007:5000/10000@3000  <<invQty 0 != lotQty 5000; invVal 1667 != lotVal 15000
+sale 5kg more (lots still have 5kg) 400 INSUFFICIENT_STOCK
+  => A residue: inventory 0g / value 1667; lots 5000g / 15000
+=== B: purchase 10kg@20, adjust +5kg without unitCost, sell 15kg
+  GL delta [purchase] {"1131":20000,"2110":-20000}
+adjust +5kg (no cost) 201 {"movementId":7,"previousQuantityGrams":10000,"newQuantityGrams":15000,"previousTotalValue":20000,"newTotalValue":30000,"adjustmentGrams":5000,"type":"increase"}
+  GL delta [adjust +5kg nocost] {"1131":10000,"5320":-10000}
+  [item 8] inv 15000g/30000 avg 2000 | lots 10000g/20000 | SLE 15000g/30000 | mov 15000g | lots=8:LOT-20261125-008:10000/10000@2000  <<invQty 15000 != lotQty 10000; invVal 30000 != lotVal 20000
+sale 15kg 400 {"code":"INSUFFICIENT_STOCK","message":"Insufficient stock. Short by 5000g","messageAr":"المخزون غير كاف. ينقص 5000 جرام"}
+sale 10kg 201 ACCEPTED
+  GL delta [sales B] {"1111":40000,"1131":-20000,"4110":-40000,"5100":20000}
+  [item 8] inv 5000g/10000 avg 2000 | lots 0g/0 | SLE 5000g/10000 | mov 5000g | lots=8:LOT-20261125-008:0/10000@2000  <<invQty 5000 != lotQty 0; invVal 10000 != lotVal 0
+=== C: adjust +10kg with unitCost=0 and with unitCost=-1500 (stock>0)
+  GL delta [purchase] {"1131":20000,"2110":-20000}
+adjust +10kg cost 0 201 {"movementId":10,"previousQuantityGrams":10000,"newQuantityGrams":20000,"previousTotalValue":20000,"newTotalValue":20000,"adjustmentGrams":10000,"type":"increase"}
+  GL delta [adj cost 0] {}
+  [item 9] inv 20000g/20000 avg 1000 | lots 10000g/20000 | SLE 10000g/20000 | mov 20000g | lots=9:LOT-20261125-009:10000/10000@2000  <<invQty 20000 != lotQty 10000; sleQty 10000 != invQty 20000
+adjust +10kg cost -1500 201 {"movementId":11,"previousQuantityGrams":20000,"newQuantityGrams":30000,"previousTotalValue":20000,"newTotalValue":5000,"adjustmentGrams":10000,"type":"increase"}
+  GL delta [adj cost -1500] {}
+  [item 9] inv 30000g/5000 avg 167 | lots 10000g/20000 | SLE 10000g/20000 | mov 30000g | lots=9:LOT-20261125-009:10000/10000@2000  <<invQty 30000 != lotQty 10000; invVal 5000 != lotVal 20000; sleQty 10000 != invQty 30000; sleVal 20000 != invVal 5000
+=== D: purchase 10kg@20, sell 3kg, adjust -7kg to zero, adjust +5kg @25 (lot), sell 5kg
+  GL delta [purchase+sale] {"1111":12000,"1131":14000,"2110":-20000,"4110":-12000,"5100":6000}
+adjust -7kg (to zero) 201 {"movementId":14,"previousQuantityGrams":7000,"newQuantityGrams":0,"previousTotalValue":14000,"newTotalValue":0,"adjustmentGrams":7000,"type":"decrease"}
+  GL delta [adj to zero] {"1131":-14000,"5320":14000}
+  [item 10] inv 0g/0 avg 0 | lots 7000g/14000 | SLE 0g/0 | mov 0g | lots=10:LOT-20261125-010:7000/10000@2000  <<invQty 0 != lotQty 7000; invVal 0 != lotVal 14000
+adjust +5kg @25 201 {"movementId":15,"previousQuantityGrams":0,"newQuantityGrams":5000,"previousTotalValue":0,"newTotalValue":12500,"adjustmentGrams":5000,"type":"increase"}
+  GL delta [adj +5 @25] {"1131":12500,"5320":-12500}
+  [item 10] inv 5000g/12500 avg 2500 | lots 12000g/26500 | SLE 5000g/12500 | mov 5000g | lots=10:LOT-20261125-010:7000/10000@2000 11:LOT-ADJ-10-1795605262668:5000/5000@2500  <<invQty 5000 != lotQty 12000; invVal 12500 != lotVal 26500
+sale 5kg 201 totalCost=10000 (adjustment valued 12500)
+  allocations [{"lot_id":10,"g":5000,"unit_cost":2000,"total_cost":10000}]
+  GL delta [sale 5kg] {"1111":20000,"1131":-10000,"4110":-20000,"5100":10000}
+  [item 10] inv 0g/2500 avg 2500 | lots 7000g/16500 | SLE 0g/2500 | mov 0g | lots=10:LOT-20261125-010:2000/10000@2000 11:LOT-ADJ-10-1795605262668:5000/5000@2500  <<invQty 0 != lotQty 7000; invVal 2500 != lotVal 16500
+=== E: decrease 2kg with lotId
+adjust -2kg lotId 12 201
+  GL delta [adj E] {"1131":16000,"2110":-20000,"5320":4000}
+  [item 11] inv 8000g/16000 avg 2000 | lots 10000g/20000 | SLE 8000g/16000 | mov 8000g | lots=12:LOT-20261125-012:10000/10000@2000  <<invQty 8000 != lotQty 10000; invVal 16000 != lotVal 20000
+adjust -1kg with lotId of another item -> 201
+stock-vs-gl summary {"totalStockValue":48167,"totalAccountValue":48167,"totalDifference":0}
+stock-vs-gl adjustment rows [{"voucherType":"adjustment","voucherId":19,"postingDate":"2026-11-25T11:14:22.755Z","stockValue":-2000,"accountValue":-2000,"difference":0,"ledgerType":"Stock Ledger Entry"},{"voucherType":"adjustment","voucherId":18,"postingDate":"2026-11-25T11:14:22.740Z","stockValue":-4000,"accountValue":-4000,"difference":0,"ledgerType":"Stock Ledger Entry"},{"voucherType":"adjustment","voucherId":15,"postingDate":"2026-11-25T11:14:22.670Z","stockValue":12500,"accountValue":12500,"difference":0,"ledgerType":"Stock Ledger Entry"},{"voucherType":"adjustment","voucherId":14,"postingDate":"2026-11-25T11:14:22.655Z","stockValue":-14000,"accountValue":-14000,"difference":0,"ledgerType":"Stock Ledger Entry"},{"voucherType":"adjustment","voucherId":7,"postingDate":"2026-11-25T11:14:22.501Z","stockValue":10000,"accountValue":10000,"difference":0,"ledgerType":"Stock Ledger Entry"},{"voucherType":"adjustment","voucherId":4,"postingDate":"2026-11-25T11:14:22.405Z","stockValue":-13333,"accountValue":-13333,"difference":0,"ledgerType":"Stock Ledger Entry"}]
+/reports/inventory rows [{"id":7,"w":0,"v":1667},{"id":8,"w":5000,"v":10000},{"id":9,"w":30000,"v":5000},{"id":10,"w":0,"v":2500},{"id":11,"w":7000,"v":14000}]
+  item 7: inv 0g/1667  lots 5000g/15000  drift qty 5000g value 13333
+  item 8: inv 5000g/10000  lots 0g/0  drift qty -5000g value -10000
+  item 9: inv 30000g/5000  lots 10000g/20000  drift qty -20000g value 15000
+  item 10: inv 0g/2500  lots 7000g/16500  drift qty 7000g value 14000
+  item 11: inv 7000g/14000  lots 10000g/20000  drift qty 3000g value 6000
+GL 1131 total 48167 | Σ inventory.total_value test items 33167 | 5320 10833

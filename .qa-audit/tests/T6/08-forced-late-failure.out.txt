@@ -1,0 +1,9 @@
+a) sale w/ invalid tax template → 400 FOREIGN_KEY_ERROR "Related record does not exist: Sale"
+   customers with that phone: 0 | delta: GL delta: Dr 0.00 / Cr 0.00 (balanced)
+b) purchase PUR-000022 update paying 36.00 cash → 400 PURCHASE_UPDATE_WITH_PAYMENT_NOT_ALLOWED
+   before {"pur":{"purchase_number":"PUR-000022","total_amount":2400,"amount_paid":0},"lots":[{"lot_number":"LOT-20261125-036","remaining_quantity_grams":2000}],"je":[{"entry_number":"JE-000184"}],"debt":[{"total_amount":2400}]}
+   after  {"pur":{"purchase_number":"PUR-000022","total_amount":2400,"amount_paid":0},"lots":[{"lot_number":"LOT-20261125-036","remaining_quantity_grams":2000}],"je":[{"entry_number":"JE-000184"}],"debt":[{"total_amount":2400}]}
+   delta: GL delta: Dr 0.00 / Cr 0.00 (balanced)
+c) expense EXP-000010 3.00 JE: [{"entry_number":"JE-000185","d":300}]
+   PUT amount 999.00 → 200; expense row amount=99900; JE: [{"entry_number":"JE-000185","d":300}]
+   DELETE → 200; expense rows=0; JE still: [{"entry_number":"JE-000185","d":300}]

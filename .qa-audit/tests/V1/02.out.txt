@@ -1,0 +1,26 @@
+F13 bank_transfer sale GL delta (exp bank+10000, cash 0) {"1131":-5600,"4110":-10000,"5100":5600,"1112-001":10000}
+F13 card sale GL delta                         {"1131":-5600,"4110":-10000,"5100":5600,"1112-001":10000}
+F13 void of bank sale: delta (exp bank -10000, cash 0) {"1131":5600,"4110":10000,"5100":-5600,"1112-001":-10000}
+F08 balance: after sale/after pay/after cancel (exp 10000/6000/10000) [10000,6000,10000]
+F08 cancel                                     200
+F08 sale row                                   {"id":17,"t":10000,"p":0,"ps":"unpaid","v":0,"c":5600,"pr":4400}
+F08 GL delta cancel (exp cash-4000, AR+4000)   {"1111":-4000,"1120":4000}
+F08 debt                                       {"t":10000,"p":0,"s":"unpaid"}
+expense category                               {"id":1,"name":"مصروفات تشغيلية"}
+expense bank create                            400 "INSUFFICIENT_BALANCE"
+expense bank GL delta (exp bank -20000 cash 0) {}
+expense cash                                   ["400 \"INSUFFICIENT_BALANCE\"",{}]
+file:///E:/DEV/Chicken%20FMS/.qa-audit/tests/V1/lib.mjs:13
+  try { return db.prepare(s).all(...p).map(r => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, typeof v === 'bigint' ? Number(v) : v]))); } finally { db.close(); }
+                  ^
+
+Error: no such column: status
+    at Module.sql (file:///E:/DEV/Chicken%20FMS/.qa-audit/tests/V1/lib.mjs:13:19)
+    at file:///E:/DEV/Chicken%20FMS/.qa-audit/tests/V1/02-good-and-expense.mjs:34:27
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  code: 'ERR_SQLITE_ERROR',
+  errcode: 1,
+  errstr: 'SQL logic error'
+}
+
+Node.js v24.15.0

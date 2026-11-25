@@ -1,0 +1,19 @@
+landing URL (setup not completed): http://localhost:5173/setup
+direct /login before setup -> http://localhost:5173/login
+step1 empty errors: ["اسم النشاط التجاري مطلوب"]
+step2 short password errors: ["كلمة المرور يجب أن تكون 8 أحرف على الأقل"]
+  POST /v1/auth/setup -> 200 {"success":true,"data":{"accessToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoiYm9zcyIsInJvbGVzIjpbImFkbWluIl0sInBlcm1pc3Npb25zIjpbInVzZXJzOnJlYWQiLCJ1c2VyczpjcmVhdGUiLCJ1c2Vyczp1cGRhdGUiLCJ1c2VyczpkZWxldGUiLCJzYWxlczpyZWFkIiwic2FsZXM6Y3JlYXRlIiwic2FsZXM6dXBkYXRlIiwic2FsZXM6
+  POST /v1/auth/check-setup -> 200 {"success":true,"data":{"setupCompleted":true,"businessName":"<b>ملحمة</b> & \"QA\""},"meta":{"timestamp":"2026-11-25T16:17:13.757Z"}}
+after finish URL: http://localhost:5173/login toasts=["تم إعداد النظام بنجاح"]
+revisit /setup after completion -> http://localhost:5173/login
+login after setup -> http://localhost:5173/
+replay POST /auth/setup after completion: 400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"preferredLanguage must be one of the following values: ","messageAr":"preferredLanguage must be one of the following values: ","details":
+  baseline after setup GET /bank-accounts: 200 []
+  baseline after setup GET /tax/templates: 200 [{"id":1,"name":"VAT 15% Sales","type":"sales","companyId":null,"isActive":true,"createdAt":"2026-11-24T20:56:43.277Z","updatedAt":"2026-11-24T20:56:43.277Z","items":[{"id":1,"templateId":1,"accountId
+  baseline after setup GET /branches: 200 {"branches":[{"id":1,"code":"MAIN","name":"الفرع الرئيسي","nameEn":"Main Branch","address":null,"phone":null,"isMainBranch":true,"isActive":true,"stockAccountId":null,"userCount":1,"createdAt":"2026-1
+  baseline after setup GET /settings/company: 404 {"success":false,"error":{"code":"NOT_FOUND","message":"Setting 'company' not found","messageAr":"الإعداد 'company' غير موجود"},"meta":{"timestamp":"2026-11-25T16:17:19.963Z","path":"/v1/settings/comp
+  baseline after setup GET /items: 200 []
+  baseline after setup GET /customers: 200 []
+business name HTML rendered as element in DOM: false
+pageErrors: [] apiErrors: []replay setup with valid body: 400 {"success":false,"error":{"code":"SETUP_ALREADY_COMPLETE","message":"Initial setup has already been completed","messageAr":"تم إكمال الإعداد الأولي بالفعل"},"meta":{"timestamp":"2026-11-25T16:17:24.914Z","path":"/v1/auth/setup"}}
+login evil: 401

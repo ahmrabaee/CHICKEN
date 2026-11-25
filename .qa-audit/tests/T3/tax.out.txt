@@ -1,0 +1,53 @@
+create templates 16% / compound / negative / group-account 201#3 201#4 201#5 201#6
+accountant creates tax template (K3-010)                   201
+=== MODE OFF/OFF                                           
+OFF 16% template, walk-in pays UI-15% total 11500 (K4-001 backend side) 400 "CUSTOMER_REQUIRED"
+OFF 16% template, customer 1 pays 11500 (UI estimate)      201 sub=10000 tax=1600 total=11600 paid=11500 due=100 profit=9800
+   GL Δ                                                    {"1111":11500,"1120":100,"1131":-1800,"4110":-11600,"5100":1800}
+OFF compound template 15% + 2% of (net+15%)                201 sub=10000 tax=1730 total=11730 paid=11730 due=0 profit=9930
+   GL Δ                                                    {"1111":11730,"1131":-1800,"4110":-11730,"5100":1800}
+OFF negative-rate template                                 201 sub=10000 tax=-1500 total=8500 paid=8500 due=0 profit=6700
+   GL Δ                                                    {"1111":8500,"1131":-1800,"4110":-8500,"5100":1800}
+OFF 15% with header discount 1000 (tax after discount?)    201 sub=9000 tax=1350 total=10350 paid=10350 due=0 profit=8550
+   GL Δ                                                    {"1111":10350,"1131":-1800,"4110":-11350,"5100":1800,"5400":1000}
+OFF 15% three lines 333g/333g/334g @ 29.99 (per-invoice rounding) 201 sub=3000 tax=450 total=3450 paid=3450 due=0 profit=1651
+   GL Δ                                                    {"1111":3450,"1131":-1799,"4110":-3450,"5100":1799}
+deactivate 16% template                                    200
+OFF sale with INACTIVE template                            201 sub=1000 tax=160 total=1160 paid=1160 due=0 profit=-640
+   GL Δ                                                    {"1111":1160,"1131":-1800,"4110":-1160,"5100":1800}
+=== MODE tax ON / GL OFF                                   true
+taxON/glOFF 15% sale 10000                                 201 sub=10000 tax=1500 total=11500 paid=11500 due=0 profit=9700
+   GL Δ                                                    {"1111":11500,"1131":-1800,"4110":-11500,"5100":1800}
+=== MODE tax ON / GL ON                                    true
+ON/ON 15% cash sale 10000                                  201 sub=10000 tax=1500 total=11500 paid=11500 due=0 profit=8700
+   GL Δ                                                    {"1111":11500,"1131":-2800,"2120":-1500,"4110":-10000,"5100":2800}
+ON/ON 15% credit sale 10000 cust 2                         201 sub=10000 tax=1500 total=11500 paid=0 due=11500 profit=8700
+   GL Δ                                                    {"1120":11500,"1131":-2800,"2120":-1500,"4110":-10000,"5100":2800}
+ON/ON 15% with header discount 30 (within 50 tolerance)    201 sub=9970 tax=1496 total=11466 paid=11466 due=0 profit=8666
+   GL Δ                                                    {"1111":11466,"1131":-2800,"2120":-1496,"4110":-9970,"5100":2800}
+ON/ON 15% with header discount 1000                        400 "UNBALANCED_ENTRY"
+ON/ON 15% with LINE discount 1000                          201 sub=9000 tax=1350 total=10350 paid=10350 due=0 profit=7550
+   GL Δ                                                    {"1111":10350,"1131":-2800,"2120":-1350,"4110":-9000,"5100":2800}
+ON/ON compound template                                    201 sub=10000 tax=1730 total=11730 paid=11730 due=0 profit=8930
+   GL Δ                                                    {"1111":11730,"1131":-2800,"2120":-1730,"4110":-10000,"5100":2800}
+ON/ON no template, discount 1000                           201 sub=9000 tax=0 total=9000 paid=9000 due=0 profit=6200
+   GL Δ                                                    {"1111":9000,"1131":-2800,"4110":-10000,"5100":2800,"5400":1000}
+ON/ON template on GROUP account 2100                       400 "POSTING_TO_GROUP_ACCOUNT"
+ON/ON /payments/sale 5000 on taxed credit sale             201
+ON/ON CN 1150 (=1000 + VAT 150) on taxed sale              201 201
+   GL Δ (expect 4110 +1000, 2120 +150, AR -1150)           {"1120":-1150,"5400":1150}
+ON/ON void taxed cash sale                                 200
+   GL Δ (expect 2120 +1500, 4110 +10000, cash -11500)      {"1111":-11500,"1131":2800,"2120":1500,"4110":10000,"5100":-2800}
+VAT report 2026-11-25..2026-11-25                          200 output=0 input=0 net=0 byRate=[{"rate":1500,"output":0,"input":0}]
+VAT report 2026-11-25..2026-11-26                          200 output=7576 input=1500 net=6076 byRate=[{"rate":1500,"output":7576,"input":1500}]
+GL 2120 credit balance (all posted JEs)                    6076
+Σ sales.tax_amount non-voided (all)                        11366
+Σ sales.tax_amount non-voided posted while GL+tax ON       6076
+sales report summary                                       {"grossRevenue":103000,"discounts":2030,"tax":11366,"netRevenue":112336,"cost":26599,"profit":85737,"count":12}
+GL revenue 4110 (credit) total                             108260
+GL ON / tax OFF, 15% template 10000                        201 sub=10000 tax=1500 total=11500 paid=11500 due=0 profit=9300
+   GL Δ                                                    {"1111":11500,"1131":-2200,"4110":-11500,"5100":2200}
+GL ON / tax OFF, discount 1000 no template                 201 sub=9000 tax=0 total=9000 paid=9000 due=0 profit=6800
+   GL Δ                                                    {"1111":9000,"1131":-2200,"4110":-10000,"5100":2200,"5400":1000}
+INVARIANT unbalanced JEs                                   []
+JE lines on group accounts                                 []

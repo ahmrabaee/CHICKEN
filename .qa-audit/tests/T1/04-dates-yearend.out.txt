@@ -1,0 +1,23 @@
+JE "capital today" date=now -> create 201 post 201 
+JE "prior-year revenue 2025-06-30" date=2025-06-30 -> create 201 post 201 
+JE "prior-year expense 2025-12-31 12:00Z" date=2025-12-31T12:00:00Z -> create 201 post 201 
+JE "NYE local 00:30 2026-01-01 (=2025-12-31T22:30Z)" date=2025-12-31T22:30:00Z -> create 201 post 201 
+JE "current-year revenue 2026-03-10" date=2026-03-10 -> create 201 post 201 
+JE "local 00:30 on 2026-11-25 (=2026-11-24T22:30Z)" date=2026-11-24T22:30:00Z -> create 201 post 201 
+
+RAW GL all: {"1111":111570,"3100":-100000,"4200":-13570,"5210":2000}
+RAW GL as of 2025-12-31 23:59:59.999Z: {"1111":8500,"4200":-10500,"5210":2000}
+TB API asOfDate=2025-12-31: {"1111":111570,"3100":-100000,"4200":-13570,"5210":2000}
+TB API asOfDate=2026-06-30: {"1111":111570,"3100":-100000,"4200":-13570,"5210":2000}
+fiscal start computed by server code new Date(2026,0,1).toISOString() = 2025-12-31T22:00:00.000Z -> split = 2025-12-31
+ledger 1111 2026-01-01..: rows=3 first.balance=3000 closing=103070 entries=JE-000005@2026-03-10T00:00:00.000Z,JE-000006@2026-11-24T22:30:00.000Z,JE-000001@2026-11-25T11:23:50.146Z
+ledger 1111 2026-11-25..2026-11-25: rows=1 first.balance=100000 closing=100000 entries=JE-000001@2026-11-25T11:23:50.146Z
+ledger 1111 2026-11-24..2026-11-24: rows=1 first.balance=70 closing=70 entries=JE-000006@2026-11-24T22:30:00.000Z
+ledger 1111 all: closing = 111570  raw = 111570
+PDF bs-today: 200 103587b
+PDF bs-2025-12-31: 200 103544b
+PDF is-2026: 200 102129b
+PDF is-2025: 200 102529b
+PDF tb-2025-12-31: 200 103325b
+PDF led1111-2026: 200 196229b
+invariants: []

@@ -1,0 +1,10 @@
+barcode.total_length="abc"                     lookup 404 parse 400 sale 201  NOT_FOUND
+barcode.item_code_length="abc"                 lookup 404 parse 200 sale 201  NOT_FOUND
+barcode.weight_start=-5                        lookup 404 parse 200 sale 201  NOT_FOUND
+barcode.custom_enabled="banana"                lookup 404 parse 200 sale 201  NOT_FOUND
+gl_engine_enabled="banana"                     lookup 404 parse 200 sale 201  NOT_FOUND
+gl_engine_enabled="true"                       lookup 404 parse 200 sale 201  NOT_FOUND
+gl_debit_credit_tolerance="abc"                lookup 404 parse 200 sale 201  NOT_FOUND
+tax_engine_enabled="yes"                       lookup 404 parse 200 sale 201  NOT_FOUND
+tax.default_rate="abc"                         lookup 404 parse 200 sale 201  NOT_FOUND
+final sale 201

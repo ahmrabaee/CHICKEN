@@ -1,0 +1,10 @@
+/items?pageSize=100        no-filter 8 {"0":8,"1":8,"true":8,"false":8,"(empty)":1}
+/customers?pageSize=100    no-filter 8 {"0":8,"1":8,"true":8,"false":8,"(empty)":1}
+/suppliers?pageSize=100    no-filter 6 {"0":400,"1":400,"true":400,"false":400,"(empty)":400}
+/users                     no-filter 2 {"0":2,"1":2,"true":2,"false":2,"(empty)":0}
+/categories                no-filter 8 {"0":8,"1":8,"true":8,"false":8,"(empty)":8}
+/branches                  no-filter 1 {"0":1,"1":1,"true":1,"false":1,"(empty)":1}
+items lowStock=false 1 lowStock=true 1 none 8
+customers hasBalance=false 2 true 2
+default items list includes inactive? 0
+default customers list includes inactive? 0

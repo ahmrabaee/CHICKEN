@@ -1,0 +1,100 @@
+# T4-01 purchase cross-validation 2026-11-25T11:14:01.042Z
+funded cash 1111 =  1000000
+
+## 1. credit purchase item2 10kg@20.00 + tax 30.00 (grand 230.00)
+  resp: {"status":201} id=4 number=PUR-000004
+  delta: {"gl":{"1131":20000,"2110":-20000},"suppliers":{"1":23000},"payDebt":{"1":23000},"plePay":{"1":-23000},"inv":{"q":10000,"v":20000},"lots":{"q":10000,"v":20000},"sle":{"q":10000,"v":20000},"je":1,"tbBalanced":true}
+  view: {"p":{"id":4,"purchase_number":"PUR-000004","grand_total":23000,"net_total":20000,"tax_amount":3000,"amount_paid":0,"payment_status":"unpaid"},"debts":[{"total_amount":23000,"amount_paid":0,"status":"open"}],"pleOutstanding":-23000,"je":["JE-000002:1131 D20000 C0","JE-000002:2110 D0 C20000"],"pays":[]} supplier1 bal 23000
+
+## 2. fully-paid taxed purchase (230.00 cash)
+  resp: {"status":400,"err":"UNBALANCED_ENTRY"} 
+  delta: {"gl":{},"suppliers":{},"payDebt":{},"plePay":{},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"sle":{"q":0,"v":0},"je":0,"tbBalanced":true}
+
+## 2b. taxed purchase paid net 200.00 (grand 230.00)
+  resp: {"status":201} id=5 number=PUR-000005
+  delta: {"gl":{"1111":-20000,"1131":20000},"suppliers":{"1":3000},"payDebt":{"1":3000},"plePay":{"1":-3000},"inv":{"q":10000,"v":20000},"lots":{"q":10000,"v":20000},"sle":{"q":10000,"v":20000},"je":1,"tbBalanced":true}
+  view: {"p":{"id":5,"purchase_number":"PUR-000005","grand_total":23000,"net_total":20000,"tax_amount":3000,"amount_paid":20000,"payment_status":"partial"},"debts":[{"total_amount":23000,"amount_paid":20000,"status":"open"}],"pleOutstanding":-3000,"je":["JE-000003:1131 D20000 C0","JE-000003:1111 D0 C20000"],"pays":[{"id":4,"payment_number":"PAY-000004","amount":20000,"payment_method":"cash","bank_account_id":null,"docstatus":1}]}
+
+## 3. taxed purchase partially paid 100.00 cash at creation
+  resp: {"status":201} id=6 number=PUR-000006
+  delta: {"gl":{"1111":-10000,"1131":20000,"2110":-10000},"suppliers":{"1":13000},"payDebt":{"1":13000},"plePay":{"1":-13000},"inv":{"q":10000,"v":20000},"lots":{"q":10000,"v":20000},"sle":{"q":10000,"v":20000},"je":1,"tbBalanced":true}
+  view: {"p":{"id":6,"purchase_number":"PUR-000006","grand_total":23000,"net_total":20000,"tax_amount":3000,"amount_paid":10000,"payment_status":"partial"},"debts":[{"total_amount":23000,"amount_paid":10000,"status":"open"}],"pleOutstanding":-13000,"je":["JE-000004:1131 D20000 C0","JE-000004:1111 D0 C10000","JE-000004:2110 D0 C10000"],"pays":[{"id":5,"payment_number":"PAY-000005","amount":10000,"payment_method":"cash","bank_account_id":null,"docstatus":1}]}
+
+## 4. POST /payments/purchase P1 100.00 cash
+  resp: {"status":201} id=6 number=PAY-000006
+  delta: {"gl":{"1111":-10000,"2110":10000},"suppliers":{},"payDebt":{"1":-10000},"plePay":{"1":10000},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"sle":{"q":0,"v":0},"je":1,"tbBalanced":true}
+  view: {"p":{"id":4,"purchase_number":"PUR-000004","grand_total":23000,"net_total":20000,"tax_amount":3000,"amount_paid":10000,"payment_status":"partial"},"debts":[{"total_amount":23000,"amount_paid":10000,"status":"partial"}],"pleOutstanding":-13000,"je":["JE-000002:1131 D20000 C0","JE-000002:2110 D0 C20000"],"pays":[{"id":6,"payment_number":"PAY-000006","amount":10000,"payment_method":"cash","bank_account_id":null,"docstatus":1}]} supplier1 bal 39000
+
+## 5. POST /payments/purchase P1 130.00 cash (settles)
+  resp: {"status":201} id=7 number=PAY-000007
+  delta: {"gl":{"1111":-13000,"2110":13000},"suppliers":{},"payDebt":{"1":-13000},"plePay":{"1":13000},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"sle":{"q":0,"v":0},"je":1,"tbBalanced":true}
+  view: {"p":{"id":4,"purchase_number":"PUR-000004","grand_total":23000,"net_total":20000,"tax_amount":3000,"amount_paid":23000,"payment_status":"paid"},"debts":[{"total_amount":23000,"amount_paid":23000,"status":"paid"}],"pleOutstanding":0,"je":["JE-000002:1131 D20000 C0","JE-000002:2110 D0 C20000"],"pays":[{"id":6,"payment_number":"PAY-000006","amount":10000,"payment_method":"cash","bank_account_id":null,"docstatus":1},{"id":7,"payment_number":"PAY-000007","amount":13000,"payment_method":"cash","bank_account_id":null,"docstatus":1}]} supplier1 bal 39000
+  GL AP 2110 now: -7000
+
+## 5b. overpay P1 by 0.01
+  resp: {"status":400,"err":"OVERPAYMENT"} 
+  delta: {"gl":{},"suppliers":{},"payDebt":{},"plePay":{},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"sle":{"q":0,"v":0},"je":0,"tbBalanced":true}
+
+## 6. cancel payment step4
+  resp: {"status":200} 
+  delta: {"gl":{"1111":10000,"2110":-10000},"suppliers":{},"payDebt":{"1":10000},"plePay":{"1":-10000},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"sle":{"q":0,"v":0},"je":1,"tbBalanced":true}
+  view: {"p":{"id":4,"purchase_number":"PUR-000004","grand_total":23000,"net_total":20000,"tax_amount":3000,"amount_paid":13000,"payment_status":"partial"},"debts":[{"total_amount":23000,"amount_paid":13000,"status":"partial"}],"pleOutstanding":-10000,"je":["JE-000002:1131 D20000 C0","JE-000002:2110 D0 C20000"],"pays":[{"id":6,"payment_number":"PAY-000006","amount":10000,"payment_method":"cash","bank_account_id":null,"docstatus":2},{"id":7,"payment_number":"PAY-000007","amount":13000,"payment_method":"cash","bank_account_id":null,"docstatus":1}]} supplier1 bal 39000
+
+## 6b. cancel payment step4 again
+  resp: {"status":400,"err":"ALREADY_CANCELLED"} 
+  delta: {"gl":{},"suppliers":{},"payDebt":{},"plePay":{},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"sle":{"q":0,"v":0},"je":0,"tbBalanced":true}
+
+## 7. re-pay P1 100.00
+  resp: {"status":201} id=8 number=PAY-000008
+  delta: {"gl":{"1111":-10000,"2110":10000},"suppliers":{},"payDebt":{"1":-10000},"plePay":{"1":10000},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"sle":{"q":0,"v":0},"je":1,"tbBalanced":true}
+  view: {"p":{"id":4,"purchase_number":"PUR-000004","grand_total":23000,"net_total":20000,"tax_amount":3000,"amount_paid":23000,"payment_status":"paid"},"debts":[{"total_amount":23000,"amount_paid":23000,"status":"paid"}],"pleOutstanding":0,"je":["JE-000002:1131 D20000 C0","JE-000002:2110 D0 C20000"],"pays":[{"id":6,"payment_number":"PAY-000006","amount":10000,"payment_method":"cash","bank_account_id":null,"docstatus":2},{"id":7,"payment_number":"PAY-000007","amount":13000,"payment_method":"cash","bank_account_id":null,"docstatus":1},{"id":8,"payment_number":"PAY-000008","amount":10000,"payment_method":"cash","bank_account_id":null,"docstatus":1}]} supplier1 bal 39000
+
+## 8. cancel creation-time payment PAY-000005 of P3
+  resp: {"status":404,"err":"JOURNAL_ENTRY_NOT_FOUND"} 
+  delta: {"gl":{},"suppliers":{},"payDebt":{},"plePay":{},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"sle":{"q":0,"v":0},"je":0,"tbBalanced":true}
+
+## 8b. edit P3 (no payment change)
+  resp: {"status":400,"err":"PURCHASE_HAS_PAYMENTS"} 
+  delta: {"gl":{},"suppliers":{},"payDebt":{},"plePay":{},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"sle":{"q":0,"v":0},"je":0,"tbBalanced":true}
+
+## 8c. delete P3
+  resp: {"status":400,"err":"PURCHASE_HAS_PAYMENTS"} 
+  delta: {"gl":{},"suppliers":{},"payDebt":{},"plePay":{},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"sle":{"q":0,"v":0},"je":0,"tbBalanced":true}
+
+## 9a. credit purchase P6 item4 5kg@30.00, no tax
+  resp: {"status":201} id=7 number=PUR-000007
+  delta: {"gl":{"1131":15000,"2110":-15000},"suppliers":{"2":15000},"payDebt":{"2":15000},"plePay":{"2":-15000},"inv":{"q":5000,"v":15000},"lots":{"q":5000,"v":15000},"sle":{"q":5000,"v":15000},"je":1,"tbBalanced":true}
+
+## 9b. PUT P6 change to 8kg@30.00, amountPaid 0
+  resp: {"status":200} id=7 number=PUR-000007
+  delta: {"gl":{"1131":9000,"2110":-9000},"suppliers":{"2":9000},"payDebt":{"2":9000},"plePay":{"2":-9000},"inv":{"q":3000,"v":9000},"lots":{"q":3000,"v":9000},"sle":{"q":3000,"v":9000},"je":0,"tbBalanced":true}
+  JE before edit: ["JE-000009:1131 D15000 C0","JE-000009:2110 D0 C15000"]  after: ["JE-000009:1131 D24000 C0","JE-000009:2110 D0 C24000"]  supplier2 bal 24000
+  audit rows for purchase []
+
+## 9c. PUT P6 with amountPaid 100.00 (edit-with-payment)
+  resp: {"status":400,"err":"PURCHASE_UPDATE_WITH_PAYMENT_NOT_ALLOWED"} 
+  delta: {"gl":{},"suppliers":{},"payDebt":{},"plePay":{},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"sle":{"q":0,"v":0},"je":0,"tbBalanced":true}
+
+## 9d. pay P6 50.00
+  resp: {"status":201} id=9 number=PAY-000009
+  delta: {"gl":{"1111":-5000,"2110":5000},"suppliers":{},"payDebt":{"2":-5000},"plePay":{"2":5000},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"sle":{"q":0,"v":0},"je":1,"tbBalanced":true}
+
+## 9e. PUT P6 after payment
+  resp: {"status":400,"err":"PURCHASE_HAS_PAYMENTS"} 
+  delta: {"gl":{},"suppliers":{},"payDebt":{},"plePay":{},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"sle":{"q":0,"v":0},"je":0,"tbBalanced":true}
+
+## 9f. cancel 9d payment then edit
+  resp: {"status":200} 
+  delta: {"gl":{"1111":5000,"2110":-5000},"suppliers":{},"payDebt":{"2":5000},"plePay":{"2":-5000},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"sle":{"q":0,"v":0},"je":1,"tbBalanced":true}
+
+## 9g. PUT P6 after cancel (8kg->9kg)
+  resp: {"status":200} id=7 number=PUR-000007
+  delta: {"gl":{"1131":3000,"2110":-3000},"suppliers":{"2":3000},"payDebt":{"2":3000},"plePay":{"2":-3000},"inv":{"q":1000,"v":3000},"lots":{"q":1000,"v":3000},"sle":{"q":1000,"v":3000},"je":0,"tbBalanced":true}
+  view P6: {"p":{"id":7,"purchase_number":"PUR-000007","grand_total":27000,"net_total":27000,"tax_amount":0,"amount_paid":0,"payment_status":"unpaid"},"debts":[{"total_amount":27000,"amount_paid":0,"status":"open"}],"pleOutstanding":-27000,"je":["JE-000012:1131 D27000 C0","JE-000012:2110 D0 C27000"],"pays":[{"id":9,"payment_number":"PAY-000009","amount":5000,"payment_method":"cash","bank_account_id":null,"docstatus":2}]} supplier2 bal 27000
+
+## FINAL reconciliation (AP views)
+  GL 2110 balance (debit-credit): -34000 => AP owed per GL 34000
+  suppliers.current_balance: {"1":39000,"2":27000}  sum 66000
+  debts outstanding by supplier: [{"party_id":1,"o":16000},{"party_id":2,"o":27000}]
+  PLE sum by supplier (neg=owed): [{"party_id":1,"a":-16000},{"party_id":2,"a":-27000}]
+  TB balanced: {"d":1140000,"c":1140000}  cash 1111 947000

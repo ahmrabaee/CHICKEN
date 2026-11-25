@@ -1,0 +1,16 @@
+VOID x4 statuses (exp 1x200 + 3x400)           ["200","200","200","200"]
+sale_void JEs created (exp 1)                  4
+stock restored: inv q delta (exp +2000), lots delta [8000,8000]
+GL delta vs after sale (exp AR-10000,rev+10000, cogs-5600..) {"1120":-40000,"1131":17600,"4110":40000,"5100":-17600}
+customer balance (exp 0)                       -30000
+PAY x4 6000 on 10000 statuses                  ["201","201","201","201"]
+sale row (exp paid<=10000)                     {"id":23,"t":10000,"p":24000,"ps":"partial","v":0,"c":4400,"pr":5600}
+GL delta (exp cash<=+10000)                    {"1111":24000,"1120":-24000}
+customer bal                                   -14000
+SALEPAY x4 statuses                            ["201","201","201","201"]
+sale row (sale.amount_paid vs debts)           {"id":24,"t":10000,"p":6000,"ps":"partial","v":0,"c":4400,"pr":5600}
+debt                                           {"t":10000,"p":24000,"s":"partial"}
+customer bal                                   -14000
+ADJ x4 statuses                                ["201","201","201","201"]
+inventory q before/after (exp -4000)           [102000,101000,-1000]
+inventory value delta, GL1131 delta (exp equal) [-2102,-8408]

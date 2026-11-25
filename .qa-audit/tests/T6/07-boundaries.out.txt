@@ -1,0 +1,54 @@
+[201] sale price=INT32 max, 1 kg → ACCEPTED {"n":"SAL-20261125-0126","total":2147483647}
+    delta: GL delta: Dr 21474858.47 / Cr 21474858.47 (balanced) |   1111      Cash in Drawer             Dr  21474836.47 Cr         0.00 net  21474836.47 |   1131      Fresh Chicken Inventory    Dr         0.00 Cr        22.00 net       -22.00 |   4110      Fresh Chicken Sales        Dr         0.00 Cr  21474836.47 net -21474836.47 |   5100      Cost of Goods Sold         Dr        22.00 Cr         0.00 net        22.00 |   inventory_qty            -1000 g |   inventory_value          -22.00 |   lots_qty                 -1000 g |   lots_value               -22.00 | Row count deltas: {"journal_entries":1,"journal_entry_lines":4,"sales":1,"sale_lines":1,"payments":1,"stock_movements":1,"stock_ledger_entries":1}
+[500] sale total > INT32 (2 kg × INT32) → DATABASE_ERROR "A database error occurred (P2023)"
+    delta: GL delta: Dr 0.00 / Cr 0.00 (balanced)
+[500] sale price 2^53 → DATABASE_ERROR "A database error occurred (P2023)"
+    delta: GL delta: Dr 0.00 / Cr 0.00 (balanced)
+[400] sale weight 0.4 g (rounds to 0) → VALIDATION_ERROR "lines has invalid value"
+[400] sale weight 1.5 g (rounds to 2) → CUSTOMER_REQUIRED "Partial or deferred payment requires customer information."
+[400] sale payment fractional 280.5 → VALIDATION_ERROR "payments has invalid value"
+[201] sale customerId null → ACCEPTED {"n":"SAL-20261125-0127","total":280}
+    delta: GL delta: Dr 5.00 / Cr 5.00 (balanced) |   1111      Cash in Drawer             Dr         2.80 Cr         0.00 net         2.80 |   1131      Fresh Chicken Inventory    Dr         0.00 Cr         2.20 net        -2.20 |   4110      Fresh Chicken Sales        Dr         0.00 Cr         2.80 net        -2.80 |   5100      Cost of Goods Sold         Dr         2.20 Cr         0.00 net         2.20 |   inventory_qty            -100 g |   inventory_value          -2.20 |   lots_qty                 -100 g |   lots_value               -2.20 | Row count deltas: {"journal_entries":1,"journal_entry_lines":4,"sales":1,"sale_lines":1,"payments":1,"stock_movements":1,"stock_ledger_entries":1}
+[500] sale notes 200k Arabic chars → INTERNAL_ERROR "request entity too large"
+    delta: GL delta: Dr 0.00 / Cr 0.00 (balanced)
+[201] sale dueDate year 9999 → ACCEPTED {"n":"SAL-20261125-0128","total":280}
+    delta: GL delta: Dr 5.00 / Cr 5.00 (balanced) |   1120      Accounts Receivable        Dr         2.80 Cr         0.00 net         2.80 |   1131      Fresh Chicken Inventory    Dr         0.00 Cr         2.20 net        -2.20 |   4110      Fresh Chicken Sales        Dr         0.00 Cr         2.80 net        -2.80 |   5100      Cost of Goods Sold         Dr         2.20 Cr         0.00 net         2.20 |   inventory_qty            -100 g |   inventory_value          -2.20 |   lots_qty                 -100 g |   lots_value               -2.20 | Row count deltas: {"journal_entries":1,"journal_entry_lines":4,"sales":1,"sale_lines":1,"debts":1,"payment_ledger_entries":1,"stock_movements":1,"stock_ledger_entries":1}
+[201] sale dueDate invalid 2026-02-30 → ACCEPTED {"n":"SAL-20261125-0129","total":280}
+    delta: GL delta: Dr 5.00 / Cr 5.00 (balanced) |   1120      Accounts Receivable        Dr         2.80 Cr         0.00 net         2.80 |   1131      Fresh Chicken Inventory    Dr         0.00 Cr         2.20 net        -2.20 |   4110      Fresh Chicken Sales        Dr         0.00 Cr         2.80 net        -2.80 |   5100      Cost of Goods Sold         Dr         2.20 Cr         0.00 net         2.20 |   inventory_qty            -100 g |   inventory_value          -2.20 |   lots_qty                 -100 g |   lots_value               -2.20 | Row count deltas: {"journal_entries":1,"journal_entry_lines":4,"sales":1,"sale_lines":1,"debts":1,"payment_ledger_entries":1,"stock_movements":1,"stock_ledger_entries":1}
+[400] sale discountAmount > total → OVERPAYMENT "Paid amount exceeds total. المبلغ المدفوع أكبر من الإجمالي"
+[201] purchase weight NEGATIVE → ACCEPTED {"n":"PUR-000016","total":-5000,"date":"2026-11-25T11:21:22.645Z"}
+    delta: GL delta: Dr 0.00 / Cr 0.00 (balanced) |   inventory_qty            -5000 g |   inventory_value          -50.00 |   lots_qty                 -5000 g |   lots_value               -50.00 | Row count deltas: {"purchases":1,"inventory_lots":1,"stock_movements":1,"stock_ledger_entries":1}
+[201] purchase price NEGATIVE → ACCEPTED {"n":"PUR-000017","total":-1000,"date":"2026-11-25T11:21:22.756Z"}
+    delta: GL delta: Dr 0.00 / Cr 0.00 (balanced) |   inventory_qty            1000 g |   inventory_value          -10.00 |   lots_qty                 1000 g |   lots_value               -10.00 | Row count deltas: {"purchases":1,"inventory_lots":1,"stock_movements":1,"stock_ledger_entries":1}
+[201] purchase weight 0 → ACCEPTED {"n":"PUR-000018","total":0,"date":"2026-11-25T11:21:22.889Z"}
+    delta: GL delta: Dr 0.00 / Cr 0.00 (balanced) | Row count deltas: {"purchases":1,"inventory_lots":1,"stock_movements":1,"stock_ledger_entries":1}
+[201] purchase weight fractional 1000.7 → ACCEPTED {"n":"PUR-000019","total":1001,"date":"2026-11-25T11:21:23.002Z"}
+    delta: GL delta: Dr 10.01 / Cr 10.01 (balanced) |   1131      Fresh Chicken Inventory    Dr        10.01 Cr         0.00 net        10.01 |   2110      Accounts Payable           Dr         0.00 Cr        10.01 net       -10.01 |   inventory_qty            1000 g |   inventory_value          10.01 |   lots_qty                 1000 g |   lots_value               9.99 | Row count deltas: {"journal_entries":1,"journal_entry_lines":2,"purchases":1,"debts":1,"payment_ledger_entries":1,"inventory_lots":1,"stock_movements":1,"stock_ledger_entries":1}
+[500] purchase weight 1e12 → DATABASE_ERROR "A database error occurred (P2023)"
+    delta: GL delta: Dr 0.00 / Cr 0.00 (balanced)
+[400] purchase date "not-a-date" → VALIDATION_ERROR "\nInvalid `tx.purchase.create()` invocation in\nE:\\DEV\\Chicken FMS\\app\\backend\\dist\\purchases\\purchases.service.js:322:48\n\n  319 else if (amountPaid >
+[201] purchase date 1900-01-01 → ACCEPTED {"n":"PUR-000020","total":1000,"date":"1900-01-01T00:00:00.000Z"}
+    delta: GL delta: Dr 10.00 / Cr 10.00 (balanced) |   1131      Fresh Chicken Inventory    Dr        10.00 Cr         0.00 net        10.00 |   2110      Accounts Payable           Dr         0.00 Cr        10.00 net       -10.00 |   inventory_qty            1000 g |   inventory_value          10.00 |   lots_qty                 1000 g |   lots_value               10.00 | Row count deltas: {"journal_entries":1,"journal_entry_lines":2,"purchases":1,"debts":1,"payment_ledger_entries":1,"inventory_lots":1,"stock_movements":1,"stock_ledger_entries":1}
+[201] purchase taxAmount negative → ACCEPTED {"n":"PUR-000021","total":500,"date":"2026-11-25T11:21:23.461Z"}
+    delta: GL delta: Dr 10.00 / Cr 10.00 (balanced) |   1131      Fresh Chicken Inventory    Dr        10.00 Cr         0.00 net        10.00 |   2110      Accounts Payable           Dr         0.00 Cr        10.00 net       -10.00 |   inventory_qty            1000 g |   inventory_value          10.00 |   lots_qty                 1000 g |   lots_value               10.00 | Row count deltas: {"journal_entries":1,"journal_entry_lines":2,"purchases":1,"debts":1,"payment_ledger_entries":1,"inventory_lots":1,"stock_movements":1,"stock_ledger_entries":1}
+[201] expense amount NEGATIVE → ACCEPTED {"n":"EXP-000006","total":-5000,"date":"2026-11-25T11:21:23.584Z"}
+    delta: GL delta: Dr -50.00 / Cr -50.00 (balanced) |   1111      Cash in Drawer             Dr         0.00 Cr       -50.00 net        50.00 |   5400      Other Expenses             Dr       -50.00 Cr         0.00 net       -50.00 | Row count deltas: {"journal_entries":1,"journal_entry_lines":2,"expenses":1}
+[201] expense amount fractional 10.55 → ACCEPTED {"n":"EXP-000007","total":10,"date":"2026-11-25T11:21:23.698Z"}
+    delta: GL delta: Dr 0.10 / Cr 0.10 (balanced) |   1111      Cash in Drawer             Dr         0.00 Cr         0.10 net        -0.10 |   5400      Other Expenses             Dr         0.10 Cr         0.00 net         0.10 | Row count deltas: {"journal_entries":1,"journal_entry_lines":2,"expenses":1}
+[201] expense amount 0 → ACCEPTED {"n":"EXP-000008","total":0,"date":"2026-11-25T11:21:23.820Z"}
+    delta: GL delta: Dr 0.00 / Cr 0.00 (balanced) | Row count deltas: {"journal_entries":1,"journal_entry_lines":2,"expenses":1}
+[400] expense date invalid → VALIDATION_ERROR "\nInvalid `tx.expense.create()` invocation in\nE:\\DEV\\Chicken FMS\\app\\backend\\dist\\expenses\\expenses.service.js:63:46\n\n  60 async create(dto, userId) 
+[201] expense description emoji → ACCEPTED {"n":"EXP-000009","total":100,"date":"2026-11-25T11:21:24.018Z"}
+    delta: GL delta: Dr 1.00 / Cr 1.00 (balanced) |   1111      Cash in Drawer             Dr         0.00 Cr         1.00 net        -1.00 |   5400      Other Expenses             Dr         1.00 Cr         0.00 net         1.00 | Row count deltas: {"journal_entries":1,"journal_entry_lines":2,"expenses":1}
+[201] customer name emoji+Arabic+RTL marks → ACCEPTED {"n":4}
+    delta: GL delta: Dr 0.00 / Cr 0.00 (balanced) | Row count deltas: {"customers":1}
+[201] adjustment increase unitCost NEGATIVE → ACCEPTED {}
+    delta: GL delta: Dr 0.00 / Cr 0.00 (balanced) |   inventory_qty            1000 g |   inventory_value          -50.00 | Row count deltas: {"stock_movements":1,"audit_logs":1}
+[500] adjustment quantity INT32 max increase → DATABASE_ERROR "A database error occurred (P2023)"
+    delta: GL delta: Dr 0.00 / Cr 0.00 (balanced)
+[201] /payments/sale NEGATIVE amount → ACCEPTED; sale now {"amount_paid":-1000,"payment_status":"unpaid"}
+    delta: GL delta: Dr -10.00 / Cr -10.00 (balanced) |   1111      Cash in Drawer             Dr       -10.00 Cr         0.00 net       -10.00 |   1120      Accounts Receivable        Dr         0.00 Cr       -10.00 net        10.00 | Metric deltas (money in currency units, qty in grams): |   gl_cash                  -10.00 |   gl_ar                    10.00 |   gl_total_dr              -10.00 |   gl_total_cr              -10.00 |   customers_balance        10.00 |   debts_receivable_open    10.00 |   ple_customer             10.00 | Row count deltas: {"journal_entries":1,"journal_entry_lines":2,"payments":1,"payment_ledger_entries":1}
+[201] /payments/sale fractional 0.5 → ACCEPTED; sale now {"amount_paid":0,"payment_status":"partial"}
+    delta: GL delta: Dr 0.00 / Cr 0.00 (balanced) | Row count deltas: {"journal_entries":1,"journal_entry_lines":2,"payments":1,"payment_ledger_entries":1}
+[201] /payments/sale 0 → ACCEPTED; sale now {"amount_paid":0,"payment_status":"unpaid"}
+    delta: GL delta: Dr 0.00 / Cr 0.00 (balanced) | Row count deltas: {"journal_entries":1,"journal_entry_lines":2,"payments":1,"payment_ledger_entries":1}

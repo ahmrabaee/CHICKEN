@@ -1,0 +1,9 @@
+recover first: restore run 16 → 201 ; GET /sales → 200
+restore fake-sqlite run 13 → 500 {"code":"INTERNAL_ERROR","message":"\nInvalid `this.prisma.systemSetting.upsert()` invocation in\nE:\\DEV\\Chicken FMS\\app\\backend\\dist\\settings\\settings.s
+  GET /sales?pageSize=1 (old token) → 500 {"code":"INTERNAL_ERROR","message":"\nInvalid `this.prisma.user.findUnique()` invocation in\nE:\\DEV\\Chicken FMS\\app\\backend\\dist\\auth\
+  GET /items (old token) → 500 {"code":"INTERNAL_ERROR","message":"\nInvalid `this.prisma.user.findUnique()` invocation in\nE:\\DEV\\Chicken FMS\\app\\backend\\dist\\auth\
+  GET /users/me (old token) → 500 {"code":"INTERNAL_ERROR","message":"\nInvalid `this.prisma.user.findUnique()` invocation in\nE:\\DEV\\Chicken FMS\\app\\backend\\dist\\auth\
+  login after fake restore → login failed for admin: 500 {"success":false,"error":{"code":"INTERNAL_ERROR","message":"\nInvalid `this.prisma.user.findUnique()` invocation in\nE:\\DEV\\Chick
+  recovery attempt through API (restore 16) → 500 {"code":"INTERNAL_ERROR","message":"\nInvalid `this.prisma.user.findUnique()` invocation in\nE:\\DEV\\Chicken FMS\\app\\backend\\dist\\auth\\auth.service.js:328
+  GET /sales after recovery attempt → 500
+  DB size now 5016 ; before-restore .bak files: 7

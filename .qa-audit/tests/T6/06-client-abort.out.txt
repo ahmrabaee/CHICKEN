@@ -1,0 +1,5 @@
+abort after 1 ms → client saw "client error: AbortError"; server committed sales: []
+abort after 5 ms → client saw "client error: AbortError"; server committed sales: [{"sale_number":"SAL-20261125-0113","total_amount":2800}]
+abort after 15 ms → client saw "response 201"; server committed sales: [{"sale_number":"SAL-20261125-0114","total_amount":2800}]
+abort after 50 ms → client saw "response 201"; server committed sales: [{"sale_number":"SAL-20261125-0115","total_amount":2800}]
+burst of 10 aborted at 30 ms: client outcomes [201,"AbortError","AbortError","AbortError","AbortError","AbortError","AbortError","AbortError","AbortError","AbortError"] → committed on server: 10

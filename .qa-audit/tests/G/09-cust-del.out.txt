@@ -1,0 +1,12 @@
+create cust                                                201 {"success":true,"data":{"id":9,"customerNumber":"CUST0006","name":"GPaidOff1795624841652","nameEn":null,"phone":"0594841652","phone2":null,"address":null,"creditLimit":0,"currentBalance":0,"priceLevel":"standard","defaultDiscountPct":0,"taxNumber":null,"notes"
+credit sale                                                201 {"success":true,"data":{"id":21,"saleNumber":"SAL-20261125-0016","saleDate":"2026-11-25T16:40:41.672Z","saleType":"credit","customerId":9,"customerName":"GPaidOff1795624841652","grossTotalAmount":3000,"discountAmount":0,"taxAmount":0,"totalAmount":3000,"totalC
+pay 201
+debt [{"id":7,"status":"paid","total_amount":3000,"amount_paid":3000}] bal [{"current_balance":0}]
+delete fully-paid customer with sales                      204 null
+customer row [{"id":9,"is_active":0}] sale cust id [{"customer_id":9,"customer_name":"GPaidOff1795624841652"}]
+GET sale after                                             200 {"success":true,"data":{"id":21,"saleNumber":"SAL-20261125-0016","saleDate":"2026-11-25T16:40:41.672Z","saleType":"credit","customerId":9,"customerName":"GPaidOff1795624841652","grossTotalAmount":3000,"discountAmount":0,"taxAmount":0,"totalAmount":3000,"totalC
+statement pdf of deleted cust                              200 {}
+delete fully paid supplier w/ purchase                     409 {"success":false,"error":{"code":"SUPPLIER_HAS_TRANSACTIONS","message":"Cannot delete supplier: it has 1 linked transaction(s)","messageAr":"لا يمكن حذف المورد لوجود 1 عملية مرتبطة به (مشتريات أو مصروفات)."},"meta":{"timestamp":"2026-11-25T16:40:41.815Z","path
+expenses JE exist for unapproved expense 4? [{"id":12}]
+accountant DELETE customer                                 403 {"success":false,"error":{"code":"FORBIDDEN","message":"Insufficient permissions","messageAr":"صلاحيات غير كافية"},"meta":{"timestamp":"2026-11-25T16:40:42.129Z","path":"/v1/customers/9"}}
+items pageSize=500 200 5 ms

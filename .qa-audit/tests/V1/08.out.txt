@@ -1,0 +1,7 @@
+TB 1111 asOfDate=2025-12-31                    [{"openD":0,"perD":291000,"perC":98500,"endD":192500,"bal":192500}]
+TB 1111 asOfDate=2026-11-24                    [{"openD":0,"perD":291000,"perC":98500,"endD":192500,"bal":192500}]
+TB 1111 asOfDate=2026-11-25                    [{"openD":0,"perD":291000,"perC":98500,"endD":192500,"bal":192500}]
+TB 1111 asOfDate=2027-01-01                    [{"openD":192500,"perD":0,"perC":0,"endD":192500,"bal":192500}]
+TB 1111 startDate=2026-11-25 endDate=2026-11-25 [{"openD":0,"perD":291000,"perC":98500,"endD":192500,"bal":192500}]
+TB 1111 endDate=2025-12-31 only                [{"openD":0,"perD":291000,"perC":98500,"endD":192500,"bal":192500}]
+GL truth 1111 (all entries today)              192500

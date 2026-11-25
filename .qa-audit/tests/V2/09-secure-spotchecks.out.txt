@@ -1,0 +1,11 @@
+SQLi search payload on /items 200 {"success":true,"data":[],"meta":{"timestamp":"2026-11-25T16:45:02.716Z"},"pagination":{"page":1,"pageSize":20,"totalItems":0,"totalPages":0,"hasNext":false,"hasPrev":false}}
+SQLi sortBy payload on /items 400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"property sortBy should not exist","messageAr":"property sortBy should not exist","details":["property sortBy should not exist"]},"meta":{"timestamp":"2026-11-25T16:45:02.719Z","path":"/v1/items?sortBy=name%3B%20DROP%20TABLE%20items%3B--"
+SQLi UNION payload on /customers search 200 {"success":true,"data":[],"meta":{"timestamp":"2026-11-25T16:45:02.724Z"},"pagination":{"page":1,"pageSize":20,"totalItems":0,"totalPages":0,"hasNext":false,"hasPrev":false}}
+items table intact after SQLi attempts: 200 count= 6
+GET /setup/status 404 {"success":false,"error":{"code":"NOT_FOUND","message":"Cannot GET /v1/setup/status","messageAr":"غير موجود"},"meta":{"timestamp":"2026-11-25T16:45:02.730Z","path":"/v1/setup/status"}}
+POST /setup/complete (re-run attempt) 404 {"success":false,"error":{"code":"NOT_FOUND","message":"Cannot POST /v1/setup/complete","messageAr":"غير موجود"},"meta":{"timestamp":"2026-11-25T16:45:02.731Z","path":"/v1/setup/complete"}}
+me before 200 {"success":true,"data":{"id":1,"username":"admin","fullName":"مدير النظام","fullNameEn":"System Admin","email":"admin@chickenshop.local","phone":"+966-50-000-0001","preferredLanguage":"ar","defaultBranchId":1,"isActive":true,"roles":["admin"],"createdAt":"2026-11-24T20:56:55.242Z","lastLoginAt":"202
+PUT /users/me mass-assignment attempt 400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"property isActive should not exist; property passwordHash should not exist; property role should not exist","messageAr":"property isActive should not exist؛ property passwordHash should not exist؛ property role should not exist","details
+me after 200 {"success":true,"data":{"id":1,"username":"admin","fullName":"مدير النظام","fullNameEn":"System Admin","email":"admin@chickenshop.local","phone":"+966-50-000-0001","preferredLanguage":"ar","defaultBranchId":1,"isActive":true,"roles":["admin"],"createdAt":"2026-11-24T20:56:55.242Z","lastLoginAt":"202
+role unchanged? true username unchanged? true isActive unchanged? true
+DONE

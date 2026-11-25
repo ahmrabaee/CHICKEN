@@ -1,0 +1,12 @@
+cash funded: 201
+{ now: '2026-11-25T22:30:00.000Z', offset: 20815312 }
+sale created at clock=2026-11-25T22:30Z (00:30 local 26-Nov) 201 {"success":true,"data":{"id":6,"saleNumber":"SAL-20261125-0001","saleDate":"2026-11-25T22:30:00.270Z","saleType":"cash","customerId":null,"customerName":null,"grossTotalAmount":200,"discountAmount":0,"taxAmount":0,"totalAmount":200,"totalCost":280,"totalProfit":-80,"paymentStatus":"paid","amountPaid
+saleDate stored: 2026-11-25T22:30:00.270Z saleNumber: SAL-20261125-0001
+{ now: '2026-11-25T22:35:00.000Z', offset: 21115019 }
+T6-010a: GET /sales?startDate=2026-11-26&endDate=2026-11-26 (the LOCAL business day of the sale) 200 {"success":true,"data":[],"meta":{"timestamp":"2026-11-25T22:35:00.260Z"},"pagination":{"page":1,"pageSize":20,"totalItems":0,"totalPages":0,"hasNext":false,"hasPrev":false}}
+T6-010b: GET /sales?startDate=2026-11-25&endDate=2026-11-25 (the UTC day the instant actually falls on) 200 {"success":true,"data":[],"meta":{"timestamp":"2026-11-25T22:35:00.263Z"},"pagination":{"page":1,"pageSize":20,"totalItems":0,"totalPages":0,"hasNext":false,"hasPrev":false}}
+T6-010c: GET /reports/sales for local day 26-Nov 200 {"success":true,"data":{"summary":{"grossRevenue":0,"discounts":0,"tax":0,"netRevenue":0,"cost":0,"profit":0,"count":0},"byItem":[],"sales":[]},"meta":{"timestamp":"2026-11-25T22:35:00.267Z"}}
+{ now: '2026-11-25T10:00:00.000Z', offset: -24185249 }
+midday sale on 2026-11-25 201 {"success":true,"data":{"id":7,"saleNumber":"SAL-20261125-0002","saleDate":"2026-11-25T10:00:00.280Z","saleType":"cash","customerId":null,"customerName":null,"grossTotalAmount":100,"discountAmount":0,"taxAmount":0,"totalAmount":100,"totalCost":140,"totalProfit":-40,"paymentStatus":"paid","amountPaid
+T6-010d: GET /sales?startDate=2026-11-25&endDate=2026-11-25 (same-day filter, sale made at 10:00 UTC same day) 200 {"success":true,"data":[],"meta":{"timestamp":"2026-11-25T10:00:00.305Z"},"pagination":{"page":1,"pageSize":20,"totalItems":0,"totalPages":0,"hasNext":false,"hasPrev":false}}
+DONE

@@ -1,0 +1,22 @@
+backup run 1 success backup_manual_20261125_132421.tar.gz 122689 B in 221 ms 
+fingerprint changed during backup itself? {}
+post-backup sale SAL-20261125-0133
+post-backup sale SAL-20261125-0134
+post-backup sale SAL-20261125-0135
+post-backup expense EXP-000014
+restore 1 → 201 {"message":"Backup restored successfully","messageAr":"Backup restored successfully","restoredFrom":"backup_manual_20261125_132421.tar.gz"} in 60 ms
+sales before restore 140, after 137
+DIFF backup-state vs restored DB (system_settings backup.* and updated_at excluded): {}
+GET /sales with pre-restore token → 200
+POST /sales after restore → 201 SAL-20261125-0133
+(info) refresh endpoint → 400
+files left in db dir: ["app.db.before-restore-1795605861758.bak"]
+staging leftovers: []
+backup run 2 success backup_manual_20261125_132421.tar.gz 123533 B in 249 ms 
+burst: 20/20 sales OK, statuses [201,201,201,201,201,201,201,201,201,201,201,201,201,201,201,201,201,201,201,201]
+archive entries: ["db","db\\app.db"]
+archived DB integrity_check: [{"integrity_check":"ok"}]
+archived DB has burst sales: 1 of 20
+archived DB checker FAIL ids (compare with live): ["GL-02","AR-01","AR-02","AP-01","DEBT-01","INV-01","INV-02","INV-03","INV-04","CASH-03","DOC-01","DOC-02","DOC-03","DOC-04"] | live: ["GL-02","AR-01","AR-02","AP-01","DEBT-01","INV-01","INV-02","INV-03","INV-04","CASH-03","DOC-01","DOC-02","DOC-03","DOC-04"]
+archived sale-without-JE / JE-without-sale: [{"n":0}] [{"n":0}]
+runs: ["2:manual:success:backup_manual_20261125_132421.tar.gz","1:manual:success:backup_manual_20261125_132421.tar.gz"]

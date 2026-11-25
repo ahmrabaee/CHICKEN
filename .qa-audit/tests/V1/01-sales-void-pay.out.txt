@@ -1,0 +1,39 @@
+S0 void status                                 200
+S0 lots restored identical                     true
+S0 inv restored                                yes
+S0 GL net delta (expect {})                    {}
+S0 lots consumed in middle                     ["2:50000->48000","7:40000->40000"]
+S1 pay                                         201
+S1 delta after payment (exp cash+4000 AR-4000) {"1111":4000,"1120":-4000}
+S1 void                                        200
+S1 delta void-step (exp cash -4000?, AR 0 net vs g0 after total) {"1111":-8000,"1120":-2000,"1131":5600,"4110":10000,"5100":-5600}
+S1 NET delta vs before-payment (exp {} i.e. cash 0 AR 0 ... see below) {"1111":-4000,"1120":-6000,"1131":5600,"4110":10000,"5100":-5600}
+S1 sale row                                    {"id":7,"t":10000,"p":4000,"ps":"partial","v":1,"c":5600,"pr":4400}
+S1 customer balance                            0
+S1 JEs                                         [{"id":5,"st":"sale","d":"بيع: SAL-20261125-0002","amt":15600},{"id":8,"st":"sale_void","d":"إلغاء بيع: SAL-20261125-0002","amt":15600}]
+S1 JE lines for void                           [{"st":"sale_void","code":"1111","dr":0,"cr":4000},{"st":"sale_void","code":"1120","dr":0,"cr":6000},{"st":"sale_void","code":"4110","dr":10000,"cr":0},{"st":"sale_void","code":"5100","dr":0,"cr":5600},{"st":"sale_void","code":"1131","dr":5600,"cr":0}]
+S2 sale+pay                                    ["201",{"id":8,"t":10000,"p":5000,"ps":"partial","v":0,"c":5600,"pr":4400}]
+S2 delta after sale (rev10000, cash+3000, AR+7000) {"1111":3000,"1120":7000,"1131":-5600,"4110":-10000,"5100":5600}
+S2 void                                        200
+S2 NET delta from start (expect all zero)      {"1111":-2000,"1120":2000}
+S2 customer balance                            0
+S3 addPayment                                  201
+S3 JEs created                                 0
+S3 GL delta (exp cash+3000, AR-3000)           {}
+S3 sale row                                    {"id":9,"t":10000,"p":3000,"ps":"partial","v":0,"c":5600,"pr":4400}
+S3 customer bal (exp 7000)                     7000
+file:///E:/DEV/Chicken%20FMS/.qa-audit/tests/V1/lib.mjs:13
+  try { return db.prepare(s).all(...p).map(r => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, typeof v === 'bigint' ? Number(v) : v]))); } finally { db.close(); }
+                  ^
+
+Error: no such column: sale_id
+    at sql (file:///E:/DEV/Chicken%20FMS/.qa-audit/tests/V1/lib.mjs:13:19)
+    at Module.one (file:///E:/DEV/Chicken%20FMS/.qa-audit/tests/V1/lib.mjs:15:33)
+    at file:///E:/DEV/Chicken%20FMS/.qa-audit/tests/V1/01-sales-void-pay.mjs:67:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  code: 'ERR_SQLITE_ERROR',
+  errcode: 1,
+  errstr: 'SQL logic error'
+}
+
+Node.js v24.15.0

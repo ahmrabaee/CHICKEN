@@ -1,0 +1,9 @@
+backup1: {"id":1,"type":"manual","status":"success","startedAt":"2026-11-25T16:43:27.405Z","finishedAt":"2026-11-25T10:00:22.182Z","filename":"backup_manual_20261125_120022.tar.gz","sizeBytes":35342,"checksumSha256":"5dccf69ed513d2e9c716966de5e67410fcf972c2e696756795d1307d2aee48c3","errorMessage":null,"createdAt":"2026-11-25T16:43:27.405Z"}
+backup2: {"id":2,"type":"manual","status":"success","startedAt":"2026-11-25T16:43:27.577Z","finishedAt":"2026-11-25T10:00:22.349Z","filename":"backup_manual_20261125_120022.tar.gz","sizeBytes":35432,"checksumSha256":"f80b845a7242793d7e8ea94ad04d367e53bf77cb5b475f3b711f6a8b438f0df1","errorMessage":null,"createdAt":"2026-11-25T16:43:27.577Z"}
+T6-011: same filename? true | same checksum? false
+b1.filename= backup_manual_20261125_120022.tar.gz b2.filename= backup_manual_20261125_120022.tar.gz
+actual file on disk sha256 = f80b845a7242793d7e8ea94ad04d367e53bf77cb5b475f3b711f6a8b438f0df1
+matches b1 checksum (first run)? false
+matches b2 checksum (second run)? true
+==> if it matches b2 only, backup run #1 (id=1) is now a DANGLING restore point: its DB row says success but the file on disk is actually run #2's content.
+DONE

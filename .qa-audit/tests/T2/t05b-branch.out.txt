@@ -1,0 +1,7 @@
+GET /inventory 200 rows 13 meta {"timestamp":"2026-11-25T11:21:05.463Z"}
+GET /inventory?branchId=1 200 rows 13 meta {"timestamp":"2026-11-25T11:21:05.468Z"}
+GET /inventory?branchId=2 200 rows 13 meta {"timestamp":"2026-11-25T11:21:05.473Z"}
+GET /inventory?branchId=999 200 rows 13 meta {"timestamp":"2026-11-25T11:21:05.477Z"}
+lots by branch [{"branch_id":null,"n":6},{"branch_id":1,"n":5}]
+inventory rows by branch [{"branch_id":null,"n":8},{"branch_id":1,"n":5}]
+stock-vs-gl branch 2 {"totalStockValue":0,"totalAccountValue":0,"totalDifference":0}

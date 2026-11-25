@@ -1,0 +1,12 @@
+rebuild-tree                                               201 {"success":true,"meta":{"timestamp":"2026-11-25T16:43:53.725Z"}}
+accounts parent consistency [{"c":0}]
+credit sale due 2026-10-01 (past)                          201 {"success":true,"data":{"id":33,"saleNumber":"SAL-20261125-0028","saleDate":"2026-11-25T16:43:53.735Z","saleType":"credit","customerId":4,"customerName":"GCustHist","grossTotalAmount":3000,"discountAmount":0,"taxAmount":0,"totalAmount":3000,"totalCost":1800,"t
+overdue {"totalOverdue":1,"receivables":{"count":1,"amount":3000,"items":[{"id":10,"debtNumber":"DEB-SAL-20261125-0028","direction":"receivable","partyType":"customer","partyId":4,"partyName":"GCustHist","totalAmount":3000,"amountPaid":0,"dueDate":"2026-10-01T00:00:00.000Z","sourceType":"sale","sourceId":33
+dashboard has overdue? {"sales":{"today":{"count":27,"totalAmount":182980,"totalCost":109400,"totalProfit":73580}},"inventory":{"lowStockCount":2},"receivables":14000,"payables":122000}
+reconciliation/suggest                                     200 {"success":true,"data":[],"meta":{"timestamp":"2026-11-25T16:43:53.768Z"}}
+stock-transfer/source-lots                                 200 {"success":true,"data":[{"id":1,"lotNumber":"LOT-SEED-CHK-WHOLE-01","itemId":2,"itemCode":"CHK-WHOLE-01","itemName":"فروج كامل","remainingQuantityGrams":27000,"remainingKg":"27.00","unitPurchasePrice":1800,"receivedAt":"2026-11-24T20:56:54.843Z","expiryDate":
+stock-transfer/products                                    200 {"success":true,"data":[{"id":9,"code":"ITE-72524","barcode":"CHK-RAW-01","name":"BC","nameEn":null,"description":null,"categoryId":1,"defaultSalePrice":100,"defaultPurchasePrice":null,"taxRatePct":null,"minStockLevelGrams":null,"maxStockLevelGrams":null,"shel
+JE with bogus costCenterId                                 400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"lines has invalid value","messageAr":"lines has invalid value","details":["lines has invalid value"]},"meta":{"timestamp":"2026-11-25T16:43:53.784Z","path":"/v1/accounting/journal-entries"}}
+--- debt due date overdue interplay: customer statement/aging
+default customer discount used? create customer 10% & sale 200 {"success":true,"data":{"id":4,"customerNumber":"CUST0001","name":"GCustHist","nameEn":null,"phone":"0599777000","phone2":null,"address":null,"creditLimit":5000,"currentBalance":8000,"priceLevel":"vip","defaultDiscountPct":1000,"taxNumber":null,"notes":null,"i
+customer default discount 10% applied by backend? 201 0 3000

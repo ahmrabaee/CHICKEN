@@ -1,0 +1,6 @@
+ledger 1111 2026-11-01..02: {"status":200} rows 1 last balance 100000
+ledger 5400 2026-11-01..02: {"status":200} rows 0 last balance []
+ledger 1131 2026-11-01..02: {"status":200} rows 0 last balance []
+/reports/profit-loss 2026-11-01..02: {"revenue":0,"discounts":0,"costOfGoodsSold":0,"grossProfit":0,"expenses":90000,"netProfit":-90000,"grossMargin":0,"netMargin":0}
+/reports/purchases 2026-11-01..02: {"status":200} {"summary":{"totalAmount":80000,"count":1},"bySupplier":[{"supplierId":1,"name":"مورد الدواجن المتحدة","amount":80000,"count":1}],"purchases":[{"id":6,"purchaseNumber":"PUR-000006","date":"2026-11-02T00:00:00.000Z","supplierName":"مورد الدواجن المتحدة","total":80000,"status":"paid"}]}
+trial-balance?asOfDate=2026-11-02 row 1111: {"accountId":4,"accountCode":"1111","name":"النقد في الصندوق","nameAr":"النقد في الصندوق","accountName":"النقد في الصندوق","accountType":"Cash","rootType":"Asset","openingDebit":100000,"openingCredit":0,"periodDebit":50000,"periodCredit":370000,"endingDebit":0,"endingCredit":220000,"debit":50000,"credit":370000,"balance":-220000}

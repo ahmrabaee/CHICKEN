@@ -1,0 +1,29 @@
+bank created 201 {"id":1,"code":"BANK-001","name":"بنك فلسطين QA","nameEn":null,"accountId":6,"companyId":1,"isActive":true,"isDefault":t
+acc1 id=2
+
+=== accountant POS card sale (bank exists)
+  "استلام في" bank selector visible: false
+  POST 201 req={"saleType":"cash","lines":[{"itemId":5,"weightGrams":1000,"pricePerKg":2600}],"payments":[{"amount":2600,"paymentMethod":"card"}]}
+  JE: 1112-001 D2600 C0, 4110 D0 C2600, 5100 D2000 C0, 1131 D0 C2000
+
+=== accountant POS 100% discount
+  POST 201 req={"saleType":"cash","discountAmount":2600,"lines":[{"itemId":5,"weightGrams":1000,"pricePerKg":2600}]} res={"success":true,"data":{"id":531,"saleNumber":"SAL-20261125-0526","saleDate":"2026-11-25T16:29:36.336Z","saleType":"cash","customerId":null,"customerName":null,
+
+=== accountant /payments/new → method card
+  pageErrors=["Link is not defined"] bodyLen=0
+
+=== accountant sale detail: cost/profit and void
+  void buttons on list: 2
+  detail shows التكلفة والربح: true — التكلفة والربح إجمالي التكلفة ₪ 20.00 إجمالي الربح ₪ -20.00 نسبة الربح 0% Close
+  void attempt: ["/v1/sales/531/void 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions\",\"messageAr\":\"صلاحيات غير كافية\"},\"meta\":{\"timestamp\":\"2026-11-25T16:29:44.384Z"] toasts=["خطأ في إلغاء الفاتورة\nصلاحيات غير كافية"]
+
+=== live revocation of POS (sales-pos) while logged in
+  admin PUT /page-access sales-pos=false: 200
+  POS replaced by access-denied after 45s: false
+  allowedPages now: ["/","/inventory","/sales","/customers","/payments","/reconciliation","/credit-notes","/accounting","/reports/sales","/reports/inventory","/reports/purchases","/reports/wastage","/stock-transfer"]
+  direct /sales/new denied: false
+  API POST /sales by acc1 after POS revoked: 201 {"success":true,"data":{"id":532,"saleNumber":"SAL-20261125-0527","saleDate":"2026-11-25T16:30:34.078Z","saleType":"cash","customerId":null,"customerName":null,
+
+=== logout
+  after logout url=http://localhost:5173/login tokens in storage={"a":false,"r":false} logout call=[200]
+  back button → http://localhost:5173/login

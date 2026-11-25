@@ -1,0 +1,47 @@
+set gl_engine_enabled=true: {"status":200}
+set tax_engine_enabled=true: {"status":200}
+settings now [{"key":"gl_engine_enabled","value":"true"},{"key":"tax_engine_enabled","value":"true"}]
+
+## E1. credit purchase net 200.00 + tax 30.00
+  resp: {"status":201} id=4
+  Δ: {"gl":{"1131":20000,"2110":-20000},"sup":{"1":23000},"debt":{"1":23000},"je":1,"tbBalanced":true}
+
+## E2. fully paid taxed purchase 230.00 cash
+  resp: {"status":400,"err":"UNBALANCED_ENTRY"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"je":0,"tbBalanced":true}
+
+## E3. fully paid purchase with tax 0.40 (within 0.50 tolerance) 200.40 cash
+  resp: {"status":201} id=5
+  Δ: {"gl":{"1111":-20040,"1131":20000,"5400":40},"sup":{},"debt":{},"je":1,"tbBalanced":true}
+  JE lines: [{"code":"1131","d":20000,"c":0,"r":0},{"code":"1111","d":0,"c":20040,"r":0},{"code":"5400","d":40,"c":0,"r":1}]
+
+## E4. expense 50.00 bank_transfer B1 (GL engine path)
+  resp: {"status":201} id=4
+  Δ: {"gl":{"5400":5000,"1112-003":-5000},"sup":{},"debt":{},"je":1,"tbBalanced":true}
+
+## N1. credit purchase X
+  resp: {"status":201} id=6
+  Δ: {"gl":{"1131":2000,"2110":-2000},"sup":{"2":2000},"debt":{"2":2000},"je":1,"tbBalanced":true}
+
+## N2. payment on another purchase (new JE after X)
+  resp: {"status":201} id=5
+  Δ: {"gl":{"1111":-500,"2110":500},"sup":{},"debt":{"2":-500},"je":1,"tbBalanced":true}
+  last JE numbers: ["JE-000009","JE-000008","JE-000007"]
+
+## N3. DELETE purchase X (its JE is not the newest)
+  resp: {"status":200} 
+  Δ: {"gl":{"1131":-2000,"2110":2000},"sup":{"2":-2000},"debt":{"2":-2000},"je":-1,"tbBalanced":true}
+
+## N4. supplier payment after delete (GL engine JE count+1)
+  resp: {"status":409,"err":"DUPLICATE_ENTRY"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"je":0,"tbBalanced":true}
+
+## N5. expense after delete (GL engine)
+  resp: {"status":409,"err":"DUPLICATE_ENTRY"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"je":0,"tbBalanced":true}
+set gl_engine_enabled=false: {"status":200}
+set tax_engine_enabled=false: {"status":200}
+
+## N6. same payment with legacy path
+  resp: {"status":201} id=6
+  Δ: {"gl":{"1111":-500,"2110":500},"sup":{},"debt":{"2":-500},"je":1,"tbBalanced":true}

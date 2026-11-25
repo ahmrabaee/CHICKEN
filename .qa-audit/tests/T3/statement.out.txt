@@ -1,0 +1,9 @@
+customer 6 PLE sum=7500 currentBalance=0                   
+  statement 2026 (PLE path)                                {"opening":"Opening Balance 0.00","closing":"75.00","tail":"Opening Balance 0.00 Total Debits 325.00 Total Credits 250.00 Closing Balance 75.00 Chicken Shop POS v1.0.0 Date: 25-11-2026 Chicken Shop POS 2 / 2 متجر الدجاج "}
+  statement Jan-2027 (empty period -> fallback path); opening should equal 2026 closing {"opening":"Opening Balance 105.00","closing":"105.00","tail":" Opening Balance 105.00 Total Debits 0.00 Total Credits 0.00 Closing Balance 105.00 Chicken Shop POS v1.0.0 Date: 25-11-2026 Chicken Shop POS 1 / 1 متجر الدجاج "}
+customer 7 PLE sum=-4000 currentBalance=0                  
+  statement 2026 (PLE path)                                {"opening":"Opening Balance 0.00","closing":"-40.00","tail":"0 Opening Balance 0.00 Total Debits 0.00 Total Credits 40.00 Closing Balance -40.00 Chicken Shop POS v1.0.0 Date: 25-11-2026 Chicken Shop POS 1 / 1 متجر الدجاج "}
+  statement Jan-2027 (empty period -> fallback path); opening should equal 2026 closing {"tail":"ts. For purchases from suppliers, use \"Supplier Statement\" from the Suppliers page. Chicken Shop POS v1.0.0 Date: 25-11-2026 Chicken Shop POS 1 / 1 متجر الدجاج "}
+customer 9 PLE sum=0 currentBalance=0                      
+  statement 2026 (PLE path)                                {"tail":"ts. For purchases from suppliers, use \"Supplier Statement\" from the Suppliers page. Chicken Shop POS v1.0.0 Date: 25-11-2026 Chicken Shop POS 1 / 1 متجر الدجاج "}
+  statement Jan-2027 (empty period -> fallback path); opening should equal 2026 closing {"tail":"ts. For purchases from suppliers, use \"Supplier Statement\" from the Suppliers page. Chicken Shop POS v1.0.0 Date: 25-11-2026 Chicken Shop POS 1 / 1 متجر الدجاج "}

@@ -1,0 +1,7 @@
+  before edit: id=7 grand=2000 paid=2000 status=paid
+  edit form shows paid field: 0
+  PUT /v1/purchases/7 -> 400 req={"supplierId":1,"purchaseDate":"2026-11-25","notes":"edited by T7","lines":[{"itemId":1,"weightGrams":1000,"pricePerKg":2000,"isLiveBird":false}]} res={"success":false,"error":{"code":"PURCHASE_HAS_PAYMENTS","message":"Cannot modify purchase with linked payments","messageAr":"لا يمكن تعديل أو حذف أمر شراء مرتبط بدفعات"},"meta":{"timestamp":"2026-11-25T16:18:43.704Z","path":"/v1/purchases/7"}}
+  toasts: ["خطأ في تحديث أمر الشراء\nلا يمكن تعديل أو حذف أمر شراء مرتبط بدفعات"]
+  after edit: grand=2000 paid=2000 status=paid
+
+pageErrors: [{"msg":"Request failed with status code 400","url":"http://localhost:5173/purchasing/7/edit"}]

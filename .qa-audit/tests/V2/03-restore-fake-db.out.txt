@@ -1,0 +1,8 @@
+using pre-built archive: E:\DEV\Chicken FMS\.qa-audit\tests\V2\fake-restore\fake-backup.tar.gz 168 bytes
+pre-restore login check -> 200
+T6-012a: import fake DB archive -> 201 {"success":true,"data":{"message":"Backup imported successfully","messageAr":"Backup imported successfully","backupId":4,"filename":"backup_manual_import_1795624724247.tar.gz","restored":false},"meta":{"timestamp":"2026-11-25T16:38:44.324Z"}}
+imported backup id = 4
+T6-012b: restore imported fake DB -> 500 {"success":false,"error":{"code":"INTERNAL_ERROR","message":"\nInvalid `this.prisma.systemSetting.upsert()` invocation in\nE:\\DEV\\Chicken FMS\\app\\backend\\dist\\settings\\settings.service.js:60:42\n\n  57 if ((value === 'true' || value === 'false') && detectedType === 'string') {\n  58     detectedType = 'boolean';\n  59 }\n→ 60 return this.prisma.systemSetting.upsert(\nError occurred during q
+T6-012c: login AFTER restore attempt -> 500 {"success":false,"error":{"code":"INTERNAL_ERROR","message":"\nInvalid `this.prisma.user.findUnique()` invocation in\nE:\\DEV\\Chicken FMS\\app\\backend\\dist\\auth\\auth.service.js:70:45\n\n  67  * Validate user credentials\n  68  */\n  69 async validateUser(username, password) {\n→ 70     const us
+T6-012d: unauthenticated /items probe (server alive?) -> 401
+DONE

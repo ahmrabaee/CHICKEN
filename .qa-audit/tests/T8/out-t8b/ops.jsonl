@@ -1,0 +1,469 @@
+{"day":1,"at":"2026-10-01T04:00:00.000Z","op":"opening capital JE","ok":true}
+{"day":1,"at":"2026-10-01T04:30:00.000Z","op":"purchase farm whole 201.5kg credit","ok":true}
+{"day":1,"at":"2026-10-01T04:35:03.553Z","op":"purchase offal liver 25kg bank","ok":true}
+{"day":1,"at":"2026-10-01T05:00:00.000Z","op":"stock-transfer cut 115kg lot 1 (ui-default)","ok":true}
+{"day":1,"at":"2026-10-01T05:00:00.000Z","op":"wastage whole 3.45kg lot 1 processing_loss","ok":true}
+{"day":1,"at":"2026-10-01T06:14:31.499Z","op":"sale#1 cash ","ok":true}
+{"day":1,"at":"2026-10-01T06:29:12.919Z","op":"sale#2 cash ","ok":true}
+{"day":1,"at":"2026-10-01T06:44:05.138Z","op":"sale#3 credit sultan ","ok":true}
+{"day":1,"at":"2026-10-01T06:58:07.766Z","op":"sale#4 cash ","ok":true}
+{"day":1,"at":"2026-10-01T07:12:39.773Z","op":"sale#5 cash ","ok":true}
+{"day":1,"at":"2026-10-01T07:27:29.552Z","op":"sale#6 card ","ok":true}
+{"day":1,"at":"2026-10-01T07:42:02.270Z","op":"sale#7 cash ","ok":true}
+{"day":1,"at":"2026-10-01T07:56:24.296Z","op":"sale#8 card ","ok":true}
+{"day":1,"at":"2026-10-01T08:10:29.120Z","op":"sale#9 cash ","ok":true}
+{"day":1,"at":"2026-10-01T08:25:10.731Z","op":"sale#10 cash disc400 ","ok":true}
+{"day":1,"at":"2026-10-01T08:39:47.962Z","op":"sale#11 cash ","ok":true}
+{"day":1,"at":"2026-10-01T08:53:53.404Z","op":"sale#12 cash ","ok":true}
+{"day":1,"at":"2026-10-01T09:07:53.658Z","op":"sale#13 cash ","ok":true}
+{"day":1,"at":"2026-10-01T09:22:51.553Z","op":"sale#14 cash ","ok":true}
+{"day":1,"at":"2026-10-01T09:37:44.606Z","op":"sale#15 cash ","ok":true}
+{"day":1,"at":"2026-10-01T09:51:46.144Z","op":"sale#16 card ","ok":true}
+{"day":1,"at":"2026-10-01T10:06:34.973Z","op":"sale#17 credit ummoh ","ok":true}
+{"day":1,"at":"2026-10-01T10:21:33.609Z","op":"sale#18 cash disc200 ","ok":true}
+{"day":1,"at":"2026-10-01T10:36:08.005Z","op":"sale#19 credit abukhalil ","ok":true}
+{"day":1,"at":"2026-10-01T10:50:26.490Z","op":"sale#20 cash ","ok":true}
+{"day":1,"at":"2026-10-01T11:04:33.267Z","op":"sale#21 cash ","ok":true}
+{"day":1,"at":"2026-10-01T11:19:08.200Z","op":"sale#22 cash ","ok":true}
+{"day":1,"at":"2026-10-01T11:33:39.442Z","op":"sale#23 cash ","ok":true}
+{"day":1,"at":"2026-10-01T11:48:09.737Z","op":"sale#24 cash ","ok":true}
+{"day":1,"at":"2026-10-01T12:02:54.737Z","op":"sale#25 cash ","ok":true}
+{"day":1,"at":"2026-10-01T12:17:01.555Z","op":"sale#26 cash ","ok":true}
+{"day":1,"at":"2026-10-01T12:31:37.777Z","op":"sale#27 card ","ok":true}
+{"day":1,"at":"2026-10-01T12:45:46.762Z","op":"sale#28 cash ","ok":true}
+{"day":1,"at":"2026-10-01T13:00:40.080Z","op":"sale#29 credit sultan ","ok":true}
+{"day":1,"at":"2026-10-01T13:15:24.260Z","op":"sale#30 credit amir ","ok":true}
+{"day":1,"at":"2026-10-01T13:29:37.685Z","op":"sale#31 credit abukhalil ","ok":true}
+{"day":1,"at":"2026-10-01T13:44:04.605Z","op":"sale#32 cash ","ok":true}
+{"day":1,"at":"2026-10-01T13:58:56.788Z","op":"sale#33 cash ","ok":true}
+{"day":1,"at":"2026-10-01T14:13:27.255Z","op":"sale#34 cash barcode ","ok":true}
+{"day":1,"at":"2026-10-01T14:28:09.308Z","op":"sale#35 cash ","ok":true}
+{"day":1,"at":"2026-10-01T14:42:26.435Z","op":"sale#36 cash ","ok":true}
+{"day":1,"at":"2026-10-01T14:56:57.400Z","op":"sale#37 card ","ok":true}
+{"day":1,"at":"2026-10-01T15:11:23.279Z","op":"sale#38 cash ","ok":true}
+{"day":1,"at":"2026-10-01T15:25:32.049Z","op":"sale#39 partial ummoh ","ok":true}
+{"day":1,"at":"2026-10-01T15:39:41.890Z","op":"sale#40 cash ","ok":true}
+{"day":1,"at":"2026-10-01T15:54:00.675Z","op":"sale#41 cash ","ok":true}
+{"day":1,"at":"2026-10-01T16:33:35.746Z","op":"collection amir SAL-20261001-0030 221.76 bank_transfer","ok":true}
+{"day":1,"at":"2026-10-01T16:36:43.839Z","op":"collection sultan SAL-20261001-0003 75.98 bank_transfer","ok":true}
+{"day":1,"at":"2026-10-01T16:36:43.839Z","op":"collection sultan SAL-20261001-0029 304.02 bank_transfer","ok":true}
+{"day":1,"at":"2026-10-01T17:00:00.000Z","op":"expense fuel 109.00 cash","ok":true}
+{"day":1,"at":"2026-10-01T17:00:00.000Z","op":"expense rent 6000.00 bank_transfer","ok":true}
+{"day":2,"at":"2026-10-02T04:30:00.000Z","op":"purchase farm whole 278.5kg partial","ok":true}
+{"day":2,"at":"2026-10-02T05:00:00.000Z","op":"stock-transfer cut 169kg lot 8 (ui-default)","ok":true}
+{"day":2,"at":"2026-10-02T05:00:00.000Z","op":"wastage whole 5.07kg lot 8 processing_loss","ok":true}
+{"day":2,"at":"2026-10-02T06:16:03.858Z","op":"sale#42 cash ","ok":true}
+{"day":2,"at":"2026-10-02T06:32:19.774Z","op":"sale#43 cash disc500 ","ok":true}
+{"day":2,"at":"2026-10-02T06:48:39.408Z","op":"sale#44 cash ","ok":true}
+{"day":2,"at":"2026-10-02T07:04:50.005Z","op":"sale#45 cash ","ok":true}
+{"day":2,"at":"2026-10-02T07:21:10.280Z","op":"sale#46 card ","ok":true}
+{"day":2,"at":"2026-10-02T07:38:09.097Z","op":"sale#47 cash disc500 ","ok":true}
+{"day":2,"at":"2026-10-02T07:55:02.457Z","op":"sale#48 cash ","ok":true}
+{"day":2,"at":"2026-10-02T08:11:26.818Z","op":"sale#49 cash disc400 ","ok":true}
+{"day":2,"at":"2026-10-02T08:28:19.665Z","op":"sale#50 cash ","ok":true}
+{"day":2,"at":"2026-10-02T08:44:51.298Z","op":"sale#51 card ","ok":true}
+{"day":2,"at":"2026-10-02T09:01:13.732Z","op":"sale#52 cash ","ok":true}
+{"day":2,"at":"2026-10-02T09:17:42.357Z","op":"sale#53 cash ","ok":true}
+{"day":2,"at":"2026-10-02T09:33:57.304Z","op":"sale#54 cash barcode ","ok":true}
+{"day":2,"at":"2026-10-02T09:50:48.973Z","op":"sale#55 cash ","ok":true}
+{"day":2,"at":"2026-10-02T10:07:43.122Z","op":"sale#56 cash ","ok":true}
+{"day":2,"at":"2026-10-02T10:24:25.341Z","op":"sale#57 credit ummoh ","ok":true}
+{"day":2,"at":"2026-10-02T10:41:08.134Z","op":"sale#58 card ","ok":true}
+{"day":2,"at":"2026-10-02T10:58:07.396Z","op":"sale#59 cash ","ok":true}
+{"day":2,"at":"2026-10-02T11:14:45.855Z","op":"sale#60 cash ","ok":true}
+{"day":2,"at":"2026-10-02T11:31:45.791Z","op":"sale#61 cash ","ok":true}
+{"day":2,"at":"2026-10-02T11:48:23.578Z","op":"sale#62 cash ","ok":true}
+{"day":2,"at":"2026-10-02T12:04:37.877Z","op":"sale#63 cash ","ok":true}
+{"day":2,"at":"2026-10-02T12:20:52.340Z","op":"sale#64 cash ","ok":true}
+{"day":2,"at":"2026-10-02T12:37:41.887Z","op":"sale#65 cash disc500 ","ok":true}
+{"day":2,"at":"2026-10-02T12:53:55.382Z","op":"sale#66 cash ","ok":true}
+{"day":2,"at":"2026-10-02T13:10:50.819Z","op":"sale#67 cash ","ok":true}
+{"day":2,"at":"2026-10-02T13:27:49.194Z","op":"sale#68 card ","ok":true}
+{"day":2,"at":"2026-10-02T13:44:18.257Z","op":"sale#69 cash ","ok":true}
+{"day":2,"at":"2026-10-02T14:00:25.095Z","op":"sale#70 card ","ok":true}
+{"day":2,"at":"2026-10-02T14:16:52.879Z","op":"sale#71 cash ","ok":true}
+{"day":2,"at":"2026-10-02T14:33:44.725Z","op":"sale#72 credit amir ","ok":true}
+{"day":2,"at":"2026-10-02T14:50:09.321Z","op":"sale#73 cash ","ok":true}
+{"day":2,"at":"2026-10-02T15:07:08.987Z","op":"sale#74 credit amir ","ok":true}
+{"day":2,"at":"2026-10-02T15:23:46.764Z","op":"sale#75 cash ","ok":true}
+{"day":2,"at":"2026-10-02T15:40:12.169Z","op":"sale#76 cash ","ok":true}
+{"day":2,"at":"2026-10-02T15:56:45.586Z","op":"sale#77 cash ","ok":true}
+{"day":2,"at":"2026-10-02T17:00:00.000Z","op":"expense fuel 104.00 cash","ok":true}
+{"day":3,"at":"2026-10-03T04:30:00.000Z","op":"purchase whole whole 101kg cash","ok":true}
+{"day":3,"at":"2026-10-03T05:00:00.000Z","op":"stock-transfer cut 63kg lot 14 (ui-default)","ok":true}
+{"day":3,"at":"2026-10-03T05:00:00.000Z","op":"wastage whole 1.89kg lot 14 processing_loss","ok":true}
+{"day":3,"at":"2026-10-03T06:16:03.774Z","op":"sale#78 cash ","ok":true}
+{"day":3,"at":"2026-10-03T06:32:55.606Z","op":"sale#79 credit abukhalil ","ok":true}
+{"day":3,"at":"2026-10-03T06:49:53.363Z","op":"sale#80 credit hotel ","ok":true}
+{"day":3,"at":"2026-10-03T07:06:38.796Z","op":"sale#81 partial abukhalil ","ok":true}
+{"day":3,"at":"2026-10-03T07:23:14.649Z","op":"sale#82 partial ummoh ","ok":true}
+{"day":3,"at":"2026-10-03T07:39:41.615Z","op":"sale#83 cash ","ok":true}
+{"day":3,"at":"2026-10-03T07:55:56.393Z","op":"sale#84 cash ","ok":true}
+{"day":3,"at":"2026-10-03T08:12:13.309Z","op":"sale#85 cash ","ok":true}
+{"day":3,"at":"2026-10-03T08:14:56.342Z","op":"void sale SAL-20261003-0008 (cash)","ok":true}
+{"day":3,"at":"2026-10-03T08:16:53.038Z","op":"sale#86 cash (re-entry)","ok":true}
+{"day":3,"at":"2026-10-03T08:33:11.950Z","op":"sale#87 cash barcode ","ok":true}
+{"day":3,"at":"2026-10-03T08:50:07.734Z","op":"sale#88 cash ","ok":true}
+{"day":3,"at":"2026-10-03T09:06:49.594Z","op":"sale#89 card ","ok":true}
+{"day":3,"at":"2026-10-03T09:23:42.673Z","op":"sale#90 cash ","ok":true}
+{"day":3,"at":"2026-10-03T09:40:15.303Z","op":"sale#91 cash ","ok":true}
+{"day":3,"at":"2026-10-03T09:56:49.644Z","op":"sale#92 cash ","ok":true}
+{"day":3,"at":"2026-10-03T10:13:39.699Z","op":"sale#93 cash ","ok":true}
+{"day":3,"at":"2026-10-03T10:30:02.107Z","op":"sale#94 cash ","ok":true}
+{"day":3,"at":"2026-10-03T10:46:54.363Z","op":"sale#95 cash ","ok":true}
+{"day":3,"at":"2026-10-03T11:03:04.802Z","op":"sale#96 cash ","ok":true}
+{"day":3,"at":"2026-10-03T11:19:05.123Z","op":"sale#97 cash ","ok":true}
+{"day":3,"at":"2026-10-03T11:35:27.843Z","op":"sale#98 cash ","ok":true}
+{"day":3,"at":"2026-10-03T11:51:41.334Z","op":"sale#99 cash ","ok":true}
+{"day":3,"at":"2026-10-03T12:08:11.335Z","op":"sale#100 cash ","ok":true}
+{"day":3,"at":"2026-10-03T12:24:32.547Z","op":"sale#101 cash ","ok":true}
+{"day":3,"at":"2026-10-03T12:40:57.487Z","op":"sale#102 cash ","ok":true}
+{"day":3,"at":"2026-10-03T12:57:47.404Z","op":"sale#103 cash ","ok":true}
+{"day":3,"at":"2026-10-03T13:14:19.440Z","op":"sale#104 cash ","ok":true}
+{"day":3,"at":"2026-10-03T13:30:54.084Z","op":"sale#105 cash ","ok":true}
+{"day":3,"at":"2026-10-03T13:47:26.325Z","op":"sale#106 card ","ok":true}
+{"day":3,"at":"2026-10-03T14:03:42.588Z","op":"sale#107 cash ","ok":true}
+{"day":3,"at":"2026-10-03T14:20:15.847Z","op":"sale#108 card ","ok":true}
+{"day":3,"at":"2026-10-03T14:37:05.886Z","op":"sale#109 partial ummoh ","ok":true}
+{"day":3,"at":"2026-10-03T14:54:02.649Z","op":"sale#110 cash ","ok":true}
+{"day":3,"at":"2026-10-03T15:10:38.021Z","op":"sale#111 cash ","ok":true}
+{"day":3,"at":"2026-10-03T15:26:38.910Z","op":"sale#112 cash barcode ","ok":true}
+{"day":3,"at":"2026-10-03T15:43:24.479Z","op":"sale#113 credit abukhalil ","ok":true}
+{"day":3,"at":"2026-10-03T15:59:46.295Z","op":"sale#114 partial noor ","ok":true}
+{"day":3,"at":"2026-10-03T17:00:00.000Z","op":"expense fuel 113.00 cash","ok":true}
+{"day":4,"at":"2026-10-04T04:30:00.000Z","op":"purchase farm whole 100.5kg credit","ok":true}
+{"day":4,"at":"2026-10-04T04:35:11.789Z","op":"purchase offal liver 21kg bank","ok":true}
+{"day":4,"at":"2026-10-04T05:00:00.000Z","op":"stock-transfer cut 64kg lot 20 (ui-default)","ok":true}
+{"day":4,"at":"2026-10-04T05:00:00.000Z","op":"wastage whole 1.92kg lot 20 processing_loss","ok":true}
+{"day":4,"at":"2026-10-04T06:14:43.003Z","op":"sale#115 cash barcode ","ok":true}
+{"day":4,"at":"2026-10-04T06:28:47.931Z","op":"sale#116 cash ","ok":true}
+{"day":4,"at":"2026-10-04T06:43:15.126Z","op":"sale#117 card ","ok":true}
+{"day":4,"at":"2026-10-04T06:57:20.372Z","op":"sale#118 cash ","ok":true}
+{"day":4,"at":"2026-10-04T07:11:56.500Z","op":"sale#119 cash ","ok":true}
+{"day":4,"at":"2026-10-04T07:26:52.593Z","op":"sale#120 cash ","ok":true}
+{"day":4,"at":"2026-10-04T07:41:26.663Z","op":"sale#121 cash ","ok":true}
+{"day":4,"at":"2026-10-04T07:56:04.799Z","op":"sale#122 cash ","ok":true}
+{"day":4,"at":"2026-10-04T08:10:23.618Z","op":"sale#123 card ","ok":true}
+{"day":4,"at":"2026-10-04T08:24:33.078Z","op":"sale#124 cash ","ok":true}
+{"day":4,"at":"2026-10-04T08:39:14.285Z","op":"sale#125 cash ","ok":true}
+{"day":4,"at":"2026-10-04T08:54:07.456Z","op":"sale#126 credit amir ","ok":true}
+{"day":4,"at":"2026-10-04T09:08:59.390Z","op":"sale#127 cash ","ok":true}
+{"day":4,"at":"2026-10-04T09:23:15.848Z","op":"sale#128 cash ","ok":true}
+{"day":4,"at":"2026-10-04T09:37:56.813Z","op":"sale#129 credit sultan ","ok":true}
+{"day":4,"at":"2026-10-04T09:52:00.203Z","op":"sale#130 cash ","ok":true}
+{"day":4,"at":"2026-10-04T10:06:45.122Z","op":"sale#131 cash ","ok":true}
+{"day":4,"at":"2026-10-04T10:21:08.408Z","op":"sale#132 cash ","ok":true}
+{"day":4,"at":"2026-10-04T10:35:44.688Z","op":"sale#133 cash ","ok":true}
+{"day":4,"at":"2026-10-04T10:49:56.115Z","op":"sale#134 cash ","ok":true}
+{"day":4,"at":"2026-10-04T11:04:52.492Z","op":"sale#135 cash ","ok":true}
+{"day":4,"at":"2026-10-04T11:19:21.397Z","op":"sale#136 cash ","ok":true}
+{"day":4,"at":"2026-10-04T11:33:35.333Z","op":"sale#137 credit hotel ","ok":true}
+{"day":4,"at":"2026-10-04T11:48:12.621Z","op":"sale#138 cash ","ok":true}
+{"day":4,"at":"2026-10-04T12:02:13.726Z","op":"sale#139 cash ","ok":true}
+{"day":4,"at":"2026-10-04T12:16:29.569Z","op":"sale#140 cash ","ok":true}
+{"day":4,"at":"2026-10-04T12:30:47.004Z","op":"sale#141 credit ummoh ","ok":true}
+{"day":4,"at":"2026-10-04T12:45:20.690Z","op":"sale#142 cash ","ok":true}
+{"day":4,"at":"2026-10-04T12:59:54.641Z","op":"sale#143 cash ","ok":true}
+{"day":4,"at":"2026-10-04T13:14:10.741Z","op":"sale#144 card ","ok":true}
+{"day":4,"at":"2026-10-04T13:28:40.911Z","op":"sale#145 cash ","ok":true}
+{"day":4,"at":"2026-10-04T13:43:33.493Z","op":"sale#146 cash ","ok":true}
+{"day":4,"at":"2026-10-04T13:58:30.780Z","op":"sale#147 cash ","ok":true}
+{"day":4,"at":"2026-10-04T14:12:33.019Z","op":"sale#148 cash ","ok":true}
+{"day":4,"at":"2026-10-04T14:26:44.680Z","op":"sale#149 cash ","ok":true}
+{"day":4,"at":"2026-10-04T14:41:37.685Z","op":"sale#150 card ","ok":true}
+{"day":4,"at":"2026-10-04T14:55:41.387Z","op":"sale#151 cash ","ok":true}
+{"day":4,"at":"2026-10-04T15:10:25.545Z","op":"sale#152 cash ","ok":true}
+{"day":4,"at":"2026-10-04T15:25:02.750Z","op":"sale#153 card ","ok":true}
+{"day":4,"at":"2026-10-04T15:39:17.757Z","op":"sale#154 credit hotel ","ok":true}
+{"day":4,"at":"2026-10-04T15:54:13.784Z","op":"sale#155 cash ","ok":true}
+{"day":4,"at":"2026-10-04T16:33:43.248Z","op":"collection amir SAL-20261002-0031 204.24 cash","ok":true}
+{"day":4,"at":"2026-10-04T16:33:43.248Z","op":"collection amir SAL-20261002-0033 58.76 cash","ok":true}
+{"day":4,"at":"2026-10-04T16:37:04.410Z","op":"collection sultan SAL-20261001-0029 0.08 bank_transfer","ok":true}
+{"day":4,"at":"2026-10-04T16:37:04.410Z","op":"collection sultan SAL-20261004-0015 274.64 bank_transfer","ok":true}
+{"day":4,"at":"2026-10-04T16:40:17.192Z","op":"collection abukhalil SAL-20261001-0019 36.85 cash","ok":true}
+{"day":4,"at":"2026-10-04T16:40:17.192Z","op":"collection abukhalil SAL-20261001-0031 38.88 cash","ok":true}
+{"day":4,"at":"2026-10-04T16:40:17.192Z","op":"collection abukhalil SAL-20261003-0002 65.27 cash","ok":true}
+{"day":4,"at":"2026-10-04T16:43:57.895Z","op":"collection ummoh SAL-20261001-0017 47.66 bank_transfer","ok":true}
+{"day":4,"at":"2026-10-04T16:43:57.895Z","op":"collection ummoh SAL-20261001-0039 24.53 bank_transfer","ok":true}
+{"day":4,"at":"2026-10-04T16:43:57.895Z","op":"collection ummoh SAL-20261002-0016 44.81 bank_transfer","ok":true}
+{"day":4,"at":"2026-10-04T17:00:00.000Z","op":"expense fuel 63.00 cash","ok":true}
+{"day":5,"at":"2026-10-05T04:30:00.000Z","op":"purchase farm whole 198.5kg credit","ok":true}
+{"day":5,"at":"2026-10-05T05:00:00.000Z","op":"stock-transfer cut 112kg lot 27 (ui-default)","ok":true}
+{"day":5,"at":"2026-10-05T05:00:00.000Z","op":"wastage whole 3.36kg lot 27 processing_loss","ok":true}
+{"day":5,"at":"2026-10-05T06:14:35.499Z","op":"sale#156 card ","ok":true}
+{"day":5,"at":"2026-10-05T06:28:59.612Z","op":"sale#157 cash ","ok":true}
+{"day":5,"at":"2026-10-05T06:43:53.805Z","op":"sale#158 cash ","ok":true}
+{"day":5,"at":"2026-10-05T06:58:15.511Z","op":"sale#159 credit abukhalil ","ok":true}
+{"day":5,"at":"2026-10-05T07:13:09.998Z","op":"sale#160 cash ","ok":true}
+{"day":5,"at":"2026-10-05T07:27:52.117Z","op":"sale#161 partial noor ","ok":true}
+{"day":5,"at":"2026-10-05T07:41:52.686Z","op":"sale#162 cash ","ok":true}
+{"day":5,"at":"2026-10-05T07:56:34.940Z","op":"sale#163 cash ","ok":true}
+{"day":5,"at":"2026-10-05T08:10:46.850Z","op":"sale#164 card ","ok":true}
+{"day":5,"at":"2026-10-05T08:24:53.622Z","op":"sale#165 cash disc500 ","ok":true}
+{"day":5,"at":"2026-10-05T08:39:38.866Z","op":"sale#166 cash ","ok":true}
+{"day":5,"at":"2026-10-05T08:54:11.452Z","op":"sale#167 cash ","ok":true}
+{"day":5,"at":"2026-10-05T09:08:39.963Z","op":"sale#168 cash ","ok":true}
+{"day":5,"at":"2026-10-05T09:23:04.755Z","op":"sale#169 card ","ok":true}
+{"day":5,"at":"2026-10-05T09:37:13.119Z","op":"sale#170 cash ","ok":true}
+{"day":5,"at":"2026-10-05T09:51:46.413Z","op":"sale#171 credit hotel ","ok":true}
+{"day":5,"at":"2026-10-05T10:06:08.325Z","op":"sale#172 credit hotel ","ok":true}
+{"day":5,"at":"2026-10-05T10:20:27.159Z","op":"sale#173 cash ","ok":true}
+{"day":5,"at":"2026-10-05T10:34:45.765Z","op":"sale#174 card ","ok":true}
+{"day":5,"at":"2026-10-05T10:48:49.259Z","op":"sale#175 cash ","ok":true}
+{"day":5,"at":"2026-10-05T11:03:25.189Z","op":"sale#176 cash ","ok":true}
+{"day":5,"at":"2026-10-05T11:18:07.220Z","op":"sale#177 credit sultan ","ok":true}
+{"day":5,"at":"2026-10-05T11:33:05.349Z","op":"sale#178 cash ","ok":true}
+{"day":5,"at":"2026-10-05T11:47:10.747Z","op":"sale#179 credit sultan ","ok":true}
+{"day":5,"at":"2026-10-05T12:01:23.693Z","op":"sale#180 cash ","ok":true}
+{"day":5,"at":"2026-10-05T12:16:21.613Z","op":"sale#181 card ","ok":true}
+{"day":5,"at":"2026-10-05T12:31:07.732Z","op":"sale#182 cash ","ok":true}
+{"day":5,"at":"2026-10-05T12:45:29.510Z","op":"sale#183 cash ","ok":true}
+{"day":5,"at":"2026-10-05T13:00:13.757Z","op":"sale#184 cash disc100 ","ok":true}
+{"day":5,"at":"2026-10-05T13:14:52.488Z","op":"sale#185 cash ","ok":true}
+{"day":5,"at":"2026-10-05T13:29:05.513Z","op":"sale#186 cash ","ok":true}
+{"day":5,"at":"2026-10-05T13:43:23.470Z","op":"sale#187 cash ","ok":true}
+{"day":5,"at":"2026-10-05T13:58:20.940Z","op":"sale#188 cash disc500 ","ok":true}
+{"day":5,"at":"2026-10-05T14:12:57.744Z","op":"sale#189 cash ","ok":true}
+{"day":5,"at":"2026-10-05T14:27:39.425Z","op":"sale#190 credit amir ","ok":true}
+{"day":5,"at":"2026-10-05T14:42:09.401Z","op":"sale#191 cash ","ok":true}
+{"day":5,"at":"2026-10-05T14:56:34.800Z","op":"sale#192 cash ","ok":true}
+{"day":5,"at":"2026-10-05T15:10:39.085Z","op":"sale#193 cash ","ok":true}
+{"day":5,"at":"2026-10-05T15:25:32.867Z","op":"sale#194 cash ","ok":true}
+{"day":5,"at":"2026-10-05T15:40:24.801Z","op":"sale#195 card ","ok":true}
+{"day":5,"at":"2026-10-05T15:54:29.420Z","op":"sale#196 cash ","ok":true}
+{"day":5,"at":"2026-10-05T16:08:38.351Z","op":"sale#197 cash ","ok":true}
+{"day":5,"at":"2026-10-05T16:33:45.865Z","op":"collection noor SAL-20261003-0037 61.55 cash","ok":true}
+{"day":5,"at":"2026-10-05T16:33:45.865Z","op":"collection noor SAL-20261005-0006 37.45 cash","ok":true}
+{"day":5,"at":"2026-10-05T17:00:00.000Z","op":"expense fuel 109.00 cash","ok":true}
+{"day":5,"at":"2026-10-05T17:00:00.000Z","op":"expense other 320.00 cash","ok":true}
+{"day":6,"at":"2026-10-06T04:30:00.000Z","op":"purchase whole whole 181kg cash","ok":true}
+{"day":6,"at":"2026-10-06T05:00:00.000Z","op":"stock-transfer cut 108kg lot 33 (ui-default)","ok":true}
+{"day":6,"at":"2026-10-06T05:00:00.000Z","op":"wastage whole 3.24kg lot 33 processing_loss","ok":true}
+{"day":6,"at":"2026-10-06T06:30:29.471Z","op":"sale#198 cash ","ok":true}
+{"day":6,"at":"2026-10-06T07:01:09.241Z","op":"sale#199 cash ","ok":true}
+{"day":6,"at":"2026-10-06T07:31:52.308Z","op":"sale#200 cash ","ok":true}
+{"day":6,"at":"2026-10-06T08:02:43.788Z","op":"sale#201 cash ","ok":true}
+{"day":6,"at":"2026-10-06T08:33:14.782Z","op":"sale#202 card ","ok":true}
+{"day":6,"at":"2026-10-06T09:03:41.552Z","op":"sale#203 cash ","ok":true}
+{"day":6,"at":"2026-10-06T09:33:46.787Z","op":"sale#204 cash ","ok":true}
+{"day":6,"at":"2026-10-06T10:03:56.027Z","op":"sale#205 cash ","ok":true}
+{"day":6,"at":"2026-10-06T10:34:11.172Z","op":"sale#206 cash ","ok":true}
+{"day":6,"at":"2026-10-06T11:04:15.520Z","op":"sale#207 cash ","ok":true}
+{"day":6,"at":"2026-10-06T11:34:43.409Z","op":"sale#208 partial noor ","ok":true}
+{"day":6,"at":"2026-10-06T12:05:04.036Z","op":"sale#209 cash ","ok":true}
+{"day":6,"at":"2026-10-06T12:35:29.192Z","op":"sale#210 cash ","ok":true}
+{"day":6,"at":"2026-10-06T13:05:52.671Z","op":"sale#211 cash ","ok":true}
+{"day":6,"at":"2026-10-06T13:36:43.151Z","op":"sale#212 card ","ok":true}
+{"day":6,"at":"2026-10-06T14:06:57.418Z","op":"sale#213 card ","ok":true}
+{"day":6,"at":"2026-10-06T14:37:08.197Z","op":"sale#214 cash ","ok":true}
+{"day":6,"at":"2026-10-06T15:08:03.957Z","op":"sale#215 cash ","ok":true}
+{"day":6,"at":"2026-10-06T15:38:42.811Z","op":"sale#216 cash disc500 ","ok":true}
+{"day":6,"at":"2026-10-06T16:09:36.825Z","op":"sale#217 cash ","ok":true}
+{"day":6,"at":"2026-10-06T17:00:00.000Z","op":"expense fuel 94.00 cash","ok":true}
+{"day":7,"at":"2026-10-07T04:30:00.000Z","op":"purchase farm whole 78.5kg partial","ok":true}
+{"day":7,"at":"2026-10-07T04:35:39.545Z","op":"purchase offal liver 19kg bank","ok":true}
+{"day":7,"at":"2026-10-07T05:00:00.000Z","op":"stock-transfer cut 46kg lot 39 (ui-default)","ok":true}
+{"day":7,"at":"2026-10-07T05:00:00.000Z","op":"wastage whole 1.38kg lot 39 processing_loss","ok":true}
+{"day":7,"at":"2026-10-07T06:18:47.539Z","op":"sale#218 cash ","ok":true}
+{"day":7,"at":"2026-10-07T06:37:07.239Z","op":"sale#219 card ","ok":true}
+{"day":7,"at":"2026-10-07T06:55:46.803Z","op":"sale#220 cash ","ok":true}
+{"day":7,"at":"2026-10-07T07:13:50.857Z","op":"sale#221 cash ","ok":true}
+{"day":7,"at":"2026-10-07T07:32:14.206Z","op":"sale#222 cash ","ok":true}
+{"day":7,"at":"2026-10-07T07:50:46.934Z","op":"sale#223 credit sultan ","ok":true}
+{"day":7,"at":"2026-10-07T08:09:03.532Z","op":"sale#224 cash ","ok":true}
+{"day":7,"at":"2026-10-07T08:27:11.486Z","op":"sale#225 credit abukhalil ","ok":true}
+{"day":7,"at":"2026-10-07T08:46:07.260Z","op":"sale#226 cash ","ok":true}
+{"day":7,"at":"2026-10-07T09:04:36.804Z","op":"sale#227 credit amir ","ok":true}
+{"day":7,"at":"2026-10-07T09:23:22.599Z","op":"sale#228 cash ","ok":true}
+{"day":7,"at":"2026-10-07T09:41:30.825Z","op":"sale#229 card ","ok":true}
+{"day":7,"at":"2026-10-07T10:00:10.010Z","op":"sale#230 cash ","ok":true}
+{"day":7,"at":"2026-10-07T10:19:00.248Z","op":"sale#231 cash ","ok":true}
+{"day":7,"at":"2026-10-07T10:37:46.830Z","op":"sale#232 cash ","ok":true}
+{"day":7,"at":"2026-10-07T10:56:43.290Z","op":"sale#233 cash ","ok":true}
+{"day":7,"at":"2026-10-07T11:15:14.593Z","op":"sale#234 credit noor ","ok":true}
+{"day":7,"at":"2026-10-07T11:33:57.789Z","op":"sale#235 cash ","ok":true}
+{"day":7,"at":"2026-10-07T11:51:59.615Z","op":"sale#236 cash ","ok":true}
+{"day":7,"at":"2026-10-07T12:10:47.312Z","op":"sale#237 card ","ok":true}
+{"day":7,"at":"2026-10-07T12:29:31.447Z","op":"sale#238 card ","ok":true}
+{"day":7,"at":"2026-10-07T12:47:41.575Z","op":"sale#239 cash ","ok":true}
+{"day":7,"at":"2026-10-07T13:06:36.168Z","op":"sale#240 cash ","ok":true}
+{"day":7,"at":"2026-10-07T13:25:13.435Z","op":"sale#241 cash ","ok":true}
+{"day":7,"at":"2026-10-07T13:43:56.633Z","op":"sale#242 cash ","ok":true}
+{"day":7,"at":"2026-10-07T14:02:00.079Z","op":"sale#243 cash ","ok":true}
+{"day":7,"at":"2026-10-07T14:20:18.244Z","op":"sale#244 cash ","ok":true}
+{"day":7,"at":"2026-10-07T14:39:05.890Z","op":"sale#245 cash ","ok":true}
+{"day":7,"at":"2026-10-07T14:57:55.207Z","op":"sale#246 cash barcode ","ok":true}
+{"day":7,"at":"2026-10-07T15:16:40.384Z","op":"sale#247 cash ","ok":true}
+{"day":7,"at":"2026-10-07T15:35:34.855Z","op":"sale#248 cash disc100 ","ok":true}
+{"day":7,"at":"2026-10-07T15:54:31.778Z","op":"sale#249 card ","ok":true}
+{"day":7,"at":"2026-10-07T16:33:07.997Z","op":"collection amir SAL-20261002-0033 93.08 cash","ok":true}
+{"day":7,"at":"2026-10-07T16:33:07.997Z","op":"collection amir SAL-20261004-0012 170.00 cash","ok":true}
+{"day":7,"at":"2026-10-07T16:33:07.997Z","op":"collection amir SAL-20261005-0035 355.18 cash","ok":true}
+{"day":7,"at":"2026-10-07T16:33:07.997Z","op":"collection amir SAL-20261007-0010 144.74 cash","ok":true}
+{"day":7,"at":"2026-10-07T16:36:38.032Z","op":"collection abukhalil SAL-20261003-0002 27.24 cash","ok":true}
+{"day":7,"at":"2026-10-07T16:36:38.032Z","op":"collection abukhalil SAL-20261003-0004 31.91 cash","ok":true}
+{"day":7,"at":"2026-10-07T16:36:38.032Z","op":"collection abukhalil SAL-20261003-0036 82.55 cash","ok":true}
+{"day":7,"at":"2026-10-07T16:36:38.032Z","op":"collection abukhalil SAL-20261005-0004 57.71 cash","ok":true}
+{"day":7,"at":"2026-10-07T16:36:38.032Z","op":"collection abukhalil SAL-20261007-0008 33.59 cash","ok":true}
+{"day":7,"at":"2026-10-07T17:00:00.000Z","op":"expense fuel 63.00 cash","ok":true}
+{"day":7,"at":"2026-10-07T17:30:00.000Z","op":"supplier payment farm PUR#1 2220.53 bank_transfer","ok":true}
+{"day":7,"at":"2026-10-07T17:30:00.000Z","op":"supplier payment farm PUR#3 1560.99 bank_transfer","ok":true}
+{"day":7,"at":"2026-10-07T17:30:00.000Z","op":"supplier payment farm PUR#5 1075.35 bank_transfer","ok":true}
+{"day":7,"at":"2026-10-07T17:30:00.000Z","op":"supplier payment farm PUR#7 393.13 bank_transfer","ok":true}
+{"day":7,"at":"2026-10-07T18:00:00.000Z","op":"wastage breast 0.4kg lot 28 expired","ok":true}
+{"day":7,"at":"2026-10-07T18:00:00.000Z","op":"wastage thigh 1.2kg lot 29 expired","ok":true}
+{"day":7,"at":"2026-10-07T18:00:00.000Z","op":"wastage minced 1.1kg lot 45 expired","ok":true}
+{"day":7,"at":"2026-10-07T18:00:00.000Z","op":"wastage liver 1.2kg lot 21 expired","ok":true}
+{"day":7,"at":"2026-10-07T18:00:00.000Z","op":"cash deposit to bank 16400.00 (manual JE)","ok":true}
+{"day":8,"at":"2026-10-08T04:30:00.000Z","op":"purchase farm whole 140kg credit","ok":true}
+{"day":8,"at":"2026-10-08T05:00:00.000Z","op":"stock-transfer cut 101kg lot 46 (ui-default)","ok":true}
+{"day":8,"at":"2026-10-08T05:00:00.000Z","op":"wastage whole 3.03kg lot 46 processing_loss","ok":true}
+{"day":8,"at":"2026-10-08T06:22:21.376Z","op":"sale#250 cash ","ok":true}
+{"day":8,"at":"2026-10-08T06:45:05.979Z","op":"sale#251 cash ","ok":true}
+{"day":8,"at":"2026-10-08T07:07:08.177Z","op":"sale#252 cash disc500 ","ok":true}
+{"day":8,"at":"2026-10-08T07:29:20.384Z","op":"sale#253 cash ","ok":true}
+{"day":8,"at":"2026-10-08T07:51:29.451Z","op":"sale#254 credit sultan ","ok":true}
+{"day":8,"at":"2026-10-08T08:14:19.155Z","op":"sale#255 cash ","ok":true}
+{"day":8,"at":"2026-10-08T08:36:29.252Z","op":"sale#256 cash ","ok":true}
+{"day":8,"at":"2026-10-08T08:59:00.645Z","op":"sale#257 cash ","ok":true}
+{"day":8,"at":"2026-10-08T09:21:31.016Z","op":"sale#258 cash ","ok":true}
+{"day":8,"at":"2026-10-08T09:43:36.503Z","op":"sale#259 cash ","ok":true}
+{"day":8,"at":"2026-10-08T10:06:10.637Z","op":"sale#260 cash ","ok":true}
+{"day":8,"at":"2026-10-08T10:28:56.014Z","op":"sale#261 cash ","ok":true}
+{"day":8,"at":"2026-10-08T10:51:27.234Z","op":"sale#262 cash ","ok":true}
+{"day":8,"at":"2026-10-08T11:13:28.746Z","op":"sale#263 cash ","ok":true}
+{"day":8,"at":"2026-10-08T11:35:46.719Z","op":"sale#264 cash ","ok":true}
+{"day":8,"at":"2026-10-08T11:58:11.273Z","op":"sale#265 cash barcode ","ok":true}
+{"day":8,"at":"2026-10-08T12:21:00.112Z","op":"sale#266 cash ","ok":true}
+{"day":8,"at":"2026-10-08T12:43:11.714Z","op":"sale#267 credit hotel ","ok":true}
+{"day":8,"at":"2026-10-08T13:05:52.127Z","op":"sale#268 cash barcode ","ok":true}
+{"day":8,"at":"2026-10-08T13:28:21.461Z","op":"sale#269 cash barcode ","ok":true}
+{"day":8,"at":"2026-10-08T13:51:10.538Z","op":"sale#270 cash ","ok":true}
+{"day":8,"at":"2026-10-08T14:13:40.964Z","op":"sale#271 credit amir ","ok":true}
+{"day":8,"at":"2026-10-08T14:36:32.462Z","op":"sale#272 credit hotel ","ok":true}
+{"day":8,"at":"2026-10-08T14:59:32.094Z","op":"sale#273 cash ","ok":true}
+{"day":8,"at":"2026-10-08T15:22:06.787Z","op":"sale#274 cash ","ok":true}
+{"day":8,"at":"2026-10-08T15:24:54.182Z","op":"void sale SAL-20261008-0025 (cash)","ok":true}
+{"day":8,"at":"2026-10-08T15:26:47.713Z","op":"sale#275 cash (re-entry)","ok":true}
+{"day":8,"at":"2026-10-08T15:49:18.540Z","op":"sale#276 cash ","ok":true}
+{"day":8,"at":"2026-10-08T16:11:54.451Z","op":"sale#277 cash ","ok":true}
+{"day":8,"at":"2026-10-08T16:33:48.101Z","op":"collection hotel SAL-20261003-0003 400.31 bank_transfer","ok":true}
+{"day":8,"at":"2026-10-08T16:33:48.101Z","op":"collection hotel SAL-20261004-0023 313.28 bank_transfer","ok":true}
+{"day":8,"at":"2026-10-08T16:33:48.101Z","op":"collection hotel SAL-20261004-0040 73.41 bank_transfer","ok":true}
+{"day":8,"at":"2026-10-08T17:00:00.000Z","op":"expense fuel 104.00 cash","ok":true}
+{"type":"ERROR","day":9,"at":"2026-10-09T04:30:00.000Z","user":"owner","method":"POST","path":"/purchases","status":400,"code":"INSUFFICIENT_BALANCE","msg":"Insufficient balance in النقد في الصندوق. Available: 286.63 ₪, required: 3172.46 ₪. Shortfall: 2885.83 ₪. Use bank transfer or card if balance suffices, or record as credit purchase.","body":{"supplierId":2,"purchaseDate":"2026-10-09T04:30:00.000Z","lines":[{"itemId":1,"weightGrams":280500,"pricePerKg":1131}],"amountPaid":317246,"paymentMethod":"cash"}}
+{"day":9,"at":"2026-10-09T04:30:00.000Z","op":"purchase whole whole 280.5kg cash","ok":true}
+{"day":9,"at":"2026-10-09T05:00:00.000Z","op":"stock-transfer cut 165kg lot 52 (ui-default)","ok":true}
+{"day":9,"at":"2026-10-09T05:00:00.000Z","op":"wastage whole 4.95kg lot 52 processing_loss","ok":true}
+{"day":9,"at":"2026-10-09T06:08:58.369Z","op":"sale#278 cash ","ok":true}
+{"day":9,"at":"2026-10-09T06:17:00.835Z","op":"sale#279 cash ","ok":true}
+{"day":9,"at":"2026-10-09T06:25:36.491Z","op":"sale#280 cash ","ok":true}
+{"day":9,"at":"2026-10-09T06:34:27.183Z","op":"sale#281 cash ","ok":true}
+{"day":9,"at":"2026-10-09T06:42:39.380Z","op":"sale#282 cash ","ok":true}
+{"day":9,"at":"2026-10-09T06:51:02.979Z","op":"sale#283 card ","ok":true}
+{"day":9,"at":"2026-10-09T06:59:31.631Z","op":"sale#284 card ","ok":true}
+{"day":9,"at":"2026-10-09T07:08:17.635Z","op":"sale#285 cash ","ok":true}
+{"day":9,"at":"2026-10-09T07:17:15.433Z","op":"sale#286 cash ","ok":true}
+{"day":9,"at":"2026-10-09T07:26:12.738Z","op":"sale#287 cash ","ok":true}
+{"day":9,"at":"2026-10-09T07:34:32.368Z","op":"sale#288 credit noor ","ok":true}
+{"day":9,"at":"2026-10-09T07:43:18.507Z","op":"sale#289 cash ","ok":true}
+{"day":9,"at":"2026-10-09T07:51:30.609Z","op":"sale#290 cash ","ok":true}
+{"day":9,"at":"2026-10-09T08:00:12.889Z","op":"sale#291 cash ","ok":true}
+{"day":9,"at":"2026-10-09T08:08:42.725Z","op":"sale#292 cash disc100 ","ok":true}
+{"day":9,"at":"2026-10-09T08:17:34.687Z","op":"sale#293 cash ","ok":true}
+{"day":9,"at":"2026-10-09T08:25:48.656Z","op":"sale#294 cash ","ok":true}
+{"day":9,"at":"2026-10-09T08:33:52.207Z","op":"sale#295 cash ","ok":true}
+{"day":9,"at":"2026-10-09T08:42:16.784Z","op":"sale#296 credit abukhalil ","ok":true}
+{"day":9,"at":"2026-10-09T08:50:51.545Z","op":"sale#297 card ","ok":true}
+{"day":9,"at":"2026-10-09T08:59:46.678Z","op":"sale#298 partial abukhalil ","ok":true}
+{"day":9,"at":"2026-10-09T09:08:29.885Z","op":"sale#299 cash barcode ","ok":true}
+{"day":9,"at":"2026-10-09T09:16:39.972Z","op":"sale#300 cash ","ok":true}
+{"day":9,"at":"2026-10-09T09:25:36.451Z","op":"sale#301 cash ","ok":true}
+{"day":9,"at":"2026-10-09T09:33:49.376Z","op":"sale#302 card ","ok":true}
+{"day":9,"at":"2026-10-09T09:42:17.497Z","op":"sale#303 credit amir ","ok":true}
+{"day":9,"at":"2026-10-09T09:51:15.515Z","op":"sale#304 cash disc500 ","ok":true}
+{"day":9,"at":"2026-10-09T10:00:09.202Z","op":"sale#305 cash ","ok":true}
+{"day":9,"at":"2026-10-09T10:08:30.706Z","op":"sale#306 cash ","ok":true}
+{"day":9,"at":"2026-10-09T10:16:44.120Z","op":"sale#307 cash ","ok":true}
+{"day":9,"at":"2026-10-09T10:25:02.597Z","op":"sale#308 credit abukhalil ","ok":true}
+{"day":9,"at":"2026-10-09T10:33:12.754Z","op":"sale#309 cash ","ok":true}
+{"day":9,"at":"2026-10-09T10:41:29.273Z","op":"sale#310 card ","ok":true}
+{"day":9,"at":"2026-10-09T10:50:11.266Z","op":"sale#311 cash ","ok":true}
+{"day":9,"at":"2026-10-09T10:58:33.344Z","op":"sale#312 cash ","ok":true}
+{"day":9,"at":"2026-10-09T11:06:38.364Z","op":"sale#313 credit ummoh ","ok":true}
+{"day":9,"at":"2026-10-09T11:15:00.449Z","op":"sale#314 card ","ok":true}
+{"day":9,"at":"2026-10-09T11:23:10.684Z","op":"sale#315 cash ","ok":true}
+{"day":9,"at":"2026-10-09T11:31:33.290Z","op":"sale#316 cash ","ok":true}
+{"day":9,"at":"2026-10-09T11:40:10.776Z","op":"sale#317 card ","ok":true}
+{"day":9,"at":"2026-10-09T11:48:40.382Z","op":"sale#318 cash ","ok":true}
+{"day":9,"at":"2026-10-09T11:56:53.135Z","op":"sale#319 cash ","ok":true}
+{"day":9,"at":"2026-10-09T12:05:39.274Z","op":"sale#320 cash ","ok":true}
+{"day":9,"at":"2026-10-09T12:14:37.874Z","op":"sale#321 card ","ok":true}
+{"day":9,"at":"2026-10-09T12:22:56.378Z","op":"sale#322 cash ","ok":true}
+{"day":9,"at":"2026-10-09T12:31:50.655Z","op":"sale#323 credit amir ","ok":true}
+{"day":9,"at":"2026-10-09T12:40:32.307Z","op":"sale#324 cash ","ok":true}
+{"day":9,"at":"2026-10-09T12:48:42.993Z","op":"sale#325 cash barcode ","ok":true}
+{"day":9,"at":"2026-10-09T12:56:54.339Z","op":"sale#326 card ","ok":true}
+{"day":9,"at":"2026-10-09T13:05:25.786Z","op":"sale#327 cash ","ok":true}
+{"day":9,"at":"2026-10-09T13:13:53.802Z","op":"sale#328 cash ","ok":true}
+{"day":9,"at":"2026-10-09T13:22:36.996Z","op":"sale#329 credit amir ","ok":true}
+{"day":9,"at":"2026-10-09T13:31:36.454Z","op":"sale#330 cash ","ok":true}
+{"day":9,"at":"2026-10-09T13:40:33.662Z","op":"sale#331 credit noor ","ok":true}
+{"day":9,"at":"2026-10-09T13:48:44.672Z","op":"sale#332 cash ","ok":true}
+{"day":9,"at":"2026-10-09T13:57:21.728Z","op":"sale#333 cash ","ok":true}
+{"day":9,"at":"2026-10-09T14:05:53.315Z","op":"sale#334 partial abukhalil ","ok":true}
+{"day":9,"at":"2026-10-09T14:14:32.170Z","op":"sale#335 cash ","ok":true}
+{"day":9,"at":"2026-10-09T14:23:32.126Z","op":"sale#336 card ","ok":true}
+{"day":9,"at":"2026-10-09T14:31:53.510Z","op":"sale#337 cash ","ok":true}
+{"day":9,"at":"2026-10-09T14:40:41.495Z","op":"sale#338 cash ","ok":true}
+{"day":9,"at":"2026-10-09T14:49:17.858Z","op":"sale#339 cash ","ok":true}
+{"day":9,"at":"2026-10-09T14:57:21.784Z","op":"sale#340 cash ","ok":true}
+{"day":9,"at":"2026-10-09T15:06:05.933Z","op":"sale#341 card ","ok":true}
+{"day":9,"at":"2026-10-09T15:15:04.526Z","op":"sale#342 cash ","ok":true}
+{"day":9,"at":"2026-10-09T15:23:29.077Z","op":"sale#343 cash ","ok":true}
+{"day":9,"at":"2026-10-09T15:32:11.027Z","op":"sale#344 cash ","ok":true}
+{"day":9,"at":"2026-10-09T15:41:08.071Z","op":"sale#345 cash ","ok":true}
+{"day":9,"at":"2026-10-09T16:33:49.758Z","op":"collection abukhalil SAL-20261007-0008 0.09 bank_transfer","ok":true}
+{"day":9,"at":"2026-10-09T16:33:49.758Z","op":"collection abukhalil SAL-20261009-0019 25.88 bank_transfer","ok":true}
+{"day":9,"at":"2026-10-09T16:33:49.758Z","op":"collection abukhalil SAL-20261009-0021 17.04 bank_transfer","ok":true}
+{"day":9,"at":"2026-10-09T16:33:49.758Z","op":"collection abukhalil SAL-20261009-0031 27.99 bank_transfer","ok":true}
+{"day":9,"at":"2026-10-09T17:00:00.000Z","op":"expense fuel 81.00 cash","ok":true}
+{"day":10,"at":"2026-10-10T04:30:00.000Z","op":"purchase farm whole 198.5kg credit","ok":true}
+{"day":10,"at":"2026-10-10T04:40:17.445Z","op":"purchase EDIT 13 -> 197kg","ok":true}
+{"day":10,"at":"2026-10-10T04:45:21.332Z","op":"purchase offal liver 18kg bank","ok":true}
+{"day":10,"at":"2026-10-10T05:00:00.000Z","op":"stock-transfer cut 135kg lot 59 (ui-default)","ok":true}
+{"day":10,"at":"2026-10-10T05:00:00.000Z","op":"wastage whole 4.05kg lot 59 processing_loss","ok":true}
+{"day":10,"at":"2026-10-10T06:20:45.055Z","op":"sale#346 cash ","ok":true}
+{"day":10,"at":"2026-10-10T06:41:22.402Z","op":"sale#347 cash ","ok":true}
+{"day":10,"at":"2026-10-10T07:01:37.673Z","op":"sale#348 cash ","ok":true}
+{"day":10,"at":"2026-10-10T07:22:30.959Z","op":"sale#349 cash ","ok":true}
+{"day":10,"at":"2026-10-10T07:43:18.536Z","op":"sale#350 cash ","ok":true}
+{"day":10,"at":"2026-10-10T08:03:36.793Z","op":"sale#351 cash ","ok":true}
+{"day":10,"at":"2026-10-10T08:24:10.525Z","op":"sale#352 cash ","ok":true}
+{"day":10,"at":"2026-10-10T08:44:28.298Z","op":"sale#353 cash ","ok":true}
+{"day":10,"at":"2026-10-10T09:04:55.518Z","op":"sale#354 credit sultan ","ok":true}
+{"day":10,"at":"2026-10-10T09:25:47.598Z","op":"sale#355 cash ","ok":true}
+{"day":10,"at":"2026-10-10T09:46:28.037Z","op":"sale#356 card ","ok":true}
+{"day":10,"at":"2026-10-10T10:07:21.085Z","op":"sale#357 cash ","ok":true}
+{"day":10,"at":"2026-10-10T10:27:56.743Z","op":"sale#358 cash ","ok":true}
+{"day":10,"at":"2026-10-10T10:48:40.127Z","op":"sale#359 cash ","ok":true}
+{"day":10,"at":"2026-10-10T11:08:50.114Z","op":"sale#360 cash ","ok":true}
+{"day":10,"at":"2026-10-10T11:29:04.489Z","op":"sale#361 cash ","ok":true}
+{"day":10,"at":"2026-10-10T11:49:59.669Z","op":"sale#362 cash ","ok":true}
+{"day":10,"at":"2026-10-10T12:10:47.461Z","op":"sale#363 cash ","ok":true}
+{"day":10,"at":"2026-10-10T12:31:11.006Z","op":"sale#364 cash ","ok":true}
+{"day":10,"at":"2026-10-10T12:51:43.467Z","op":"sale#365 cash ","ok":true}
+{"day":10,"at":"2026-10-10T13:11:51.221Z","op":"sale#366 cash barcode ","ok":true}
+{"day":10,"at":"2026-10-10T13:32:04.904Z","op":"sale#367 cash ","ok":true}
+{"day":10,"at":"2026-10-10T13:53:02.758Z","op":"sale#368 cash ","ok":true}
+{"day":10,"at":"2026-10-10T14:13:17.629Z","op":"sale#369 cash ","ok":true}
+{"day":10,"at":"2026-10-10T14:34:12.331Z","op":"sale#370 cash ","ok":true}
+{"day":10,"at":"2026-10-10T14:54:13.552Z","op":"sale#371 credit abukhalil ","ok":true}
+{"day":10,"at":"2026-10-10T15:14:29.459Z","op":"sale#372 credit abukhalil ","ok":true}
+{"day":10,"at":"2026-10-10T15:34:33.769Z","op":"sale#373 card ","ok":true}
+{"day":10,"at":"2026-10-10T15:55:25.853Z","op":"sale#374 card ","ok":true}
+{"day":10,"at":"2026-10-10T17:00:00.000Z","op":"expense fuel 104.00 cash","ok":true}
+{"day":10,"at":"2026-10-10T17:00:00.000Z","op":"expense elec 2350.00 bank_transfer","ok":true}
+{"type":"ERROR","day":10,"at":"2026-10-10T17:00:00.000Z","user":"owner","method":"POST","path":"/expenses","status":400,"code":"INSUFFICIENT_BALANCE","msg":"Insufficient balance in النقد في الصندوق. Available: 1992.94 ₪, required: 4200.00 ₪. Shortfall: 2207.06 ₪. Use bank transfer or card if balance suffices, or record as credit purchase.","body":{"categoryId":6,"description":"راتب عامل 1","amount":420000,"expenseDate":"2026-10-10T17:00:00.000Z","paymentMethod":"cash"}}
+{"day":10,"at":"2026-10-10T17:00:00.000Z","op":"expense salaries 4200.00 cash","ok":false}
+{"day":10,"at":"2026-10-10T17:00:00.000Z","op":"expense salaries 4200.00 bank_transfer","ok":true}

@@ -1,0 +1,8 @@
+baseline                                       {"GL2110_total_credit":220000,"debtOutstanding":0,"debtTotal":0,"PLE":0,"supplier_current_balance":0,"GL1125":0}
+purchase                                       ["201",{"total":23000,"tax":3000,"grand":23000}]
+GL delta on purchase (exp AP credit 23000 or inv20000+VAT3000) {"1131":20000,"2110":-20000}
+after credit purchase                          {"GL2110_total_credit":240000,"debtOutstanding":23000,"debtTotal":23000,"PLE":-23000,"supplier_current_balance":23000,"GL1125":0}
+pay full 23000                                 201
+GL delta on pay                                {"1111":-23000,"2110":23000}
+after full payment (exp all 0)                 {"GL2110_total_credit":217000,"debtOutstanding":0,"debtTotal":23000,"PLE":0,"supplier_current_balance":23000,"GL1125":0}
+purchase row                                   {"t":23000,"p":23000,"s":"paid"}

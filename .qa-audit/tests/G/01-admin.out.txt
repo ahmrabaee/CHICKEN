@@ -1,0 +1,25 @@
+--- USERS
+GET /users                                                 200 {"success":true,"data":[{"id":1,"username":"admin","fullName":"مدير النظام","fullNameEn":"System Admin","email":"admin@chickenshop.local","phone":"+966-50-000-0001","preferredLanguage":"ar","defaultBranchId":1,"isActive":true,"roles":["admin"],"createdAt":"202
+me {"id":1,"username":"admin","fullName":"مدير النظام","fullNameEn":"System Admin","role":"admin","permissions":["dashboard.view","sales.create","sales.view","sales.void","sales.discount.unlimited","purchases.create","purchases.view","purchases.approve","purchases.void","inventory.view","inventory.adjust","inventory.transfer","wastage.create","wastage.view","wastage.approve","customers.create","customers.view","customers.edit","customers.delete","suppliers.create","suppliers.view","suppliers.edit","suppliers.delete","debts.view","debts.collect","debts.pay","debts.write_off","expenses.create","expenses.view","expenses.approve","reports.sales","reports.inventory","reports.financial","reports.export","settings.view","settings.edit","users.create","users.view","users.edit","users.deactivate","audit.view"],"defaultBranchId":1,"preferredLanguage":"ar","allowedPages":["*"]}
+roles                                                      200 {"success":true,"data":[{"id":1,"name":"admin","nameAr":"مدير النظام","description":"Full system access with all permissions"},{"id":2,"name":"accountant","nameAr":"محاسب","description":"POS operations with limited administrative access"}],"meta":{"timestamp":
+active-sessions                                            200 {"success":true,"data":[{"userId":1,"username":"admin","fullName":"مدير النظام","lastLoginAt":"2026-11-25T16:34:29.294Z","sessionExpiresAt":"2026-12-02T16:34:29.241Z"}],"meta":{"timestamp":"2026-11-25T16:34:29.325Z"}}
+users count 1
+DELETE self (last admin)                                   403 {"success":false,"error":{"code":"FORBIDDEN","message":"Cannot deactivate your own account","messageAr":"لا يمكنك إلغاء تفعيل حسابك الخاص"},"meta":{"timestamp":"2026-11-25T16:34:29.333Z","path":"/v1/users/1"}}
+PUT self isActive=false                                    400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"property isActive should not exist","messageAr":"property isActive should not exist","details":["property isActive should not exist"]},"meta":{"timestamp":"2026-11-25T16:34:29.337Z","path":"/v1/use
+PUT self role=accountant                                   400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"property role should not exist","messageAr":"property role should not exist","details":["property role should not exist"]},"meta":{"timestamp":"2026-11-25T16:34:29.340Z","path":"/v1/users/1"}}
+PUT self roleId?                                           200 {"success":true,"data":{"id":1,"username":"admin","fullName":"مدير النظام","fullNameEn":"System Admin","email":"admin@chickenshop.local","phone":"+966-50-000-0001","preferredLanguage":"ar","defaultBranchId":1,"isActive":true,"roles":["accountant"],"createdAt":
+POST /users weak pw                                        403 {"success":false,"error":{"code":"FORBIDDEN","message":"Insufficient permissions","messageAr":"صلاحيات غير كافية"},"meta":{"timestamp":"2026-11-25T16:34:29.516Z","path":"/v1/users"}}
+POST /users dup username                                   403 {"success":false,"error":{"code":"FORBIDDEN","message":"Insufficient permissions","messageAr":"صلاحيات غير كافية"},"meta":{"timestamp":"2026-11-25T16:34:29.521Z","path":"/v1/users"}}
+POST /users dup username case                              403 {"success":false,"error":{"code":"FORBIDDEN","message":"Insufficient permissions","messageAr":"صلاحيات غير كافية"},"meta":{"timestamp":"2026-11-25T16:34:29.526Z","path":"/v1/users"}}
+POST /users bad role                                       403 {"success":false,"error":{"code":"FORBIDDEN","message":"Insufficient permissions","messageAr":"صلاحيات غير كافية"},"meta":{"timestamp":"2026-11-25T16:34:29.531Z","path":"/v1/users"}}
+POST /users admin role                                     403 {"success":false,"error":{"code":"FORBIDDEN","message":"Insufficient permissions","messageAr":"صلاحيات غير كافية"},"meta":{"timestamp":"2026-11-25T16:34:29.536Z","path":"/v1/users"}}
+POST /users cashier                                        403 {"success":false,"error":{"code":"FORBIDDEN","message":"Insufficient permissions","messageAr":"صلاحيات غير كافية"},"meta":{"timestamp":"2026-11-25T16:34:29.540Z","path":"/v1/users"}}
+file:///E:/DEV/Chicken%20FMS/.qa-audit/tests/G/01-admin.mjs:24
+const g1 = arr.find(u=>u.username==='g1'); const gadm = arr.find(u=>u.username==='gadm');
+               ^
+
+TypeError: arr.find is not a function
+    at file:///E:/DEV/Chicken%20FMS/.qa-audit/tests/G/01-admin.mjs:24:16
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+Node.js v24.15.0

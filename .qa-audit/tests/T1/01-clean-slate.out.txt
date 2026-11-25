@@ -1,0 +1,298 @@
+setup 200 
+after setup: JE count {"n":0} branches [{"id":1,"code":"MAIN","stock_account_id":null}]
+invariants after setup: []
+bank 201 1 
+customer 1
+suppliers 1 2
+item1 201 1 
+item2 201 2 
+
+## manual JE capital cash 5000.00 + bank 3000.00 (create) -> HTTP 201 
+GL delta: Dr 0.00 / Cr 0.00 (balanced)
+Row count deltas: {"journal_entries":1,"journal_entry_lines":3}
+  GL delta matches expectation
+
+## post capital JE -> HTTP 201 
+GL delta: Dr 8000.00 / Cr 8000.00 (balanced)
+  1111      Cash in Drawer             Dr      5000.00 Cr         0.00 net      5000.00
+  3100      Capital                    Dr         0.00 Cr      8000.00 net     -8000.00
+  1112-001  General Bank Account       Dr      3000.00 Cr         0.00 net      3000.00
+Metric deltas (money in currency units, qty in grams):
+  gl_cash                  5000.00
+  gl_bank                  3000.00
+  gl_total_dr              8000.00
+  gl_total_cr              8000.00
+  GL delta matches expectation
+
+## credit purchase supplier A 100kg item1 @15.00 -> HTTP 201 
+GL delta: Dr 1500.00 / Cr 1500.00 (balanced)
+  1131      Fresh Chicken Inventory    Dr      1500.00 Cr         0.00 net      1500.00
+  2110      Accounts Payable           Dr         0.00 Cr      1500.00 net     -1500.00
+Metric deltas (money in currency units, qty in grams):
+  gl_ap                    1500.00
+  gl_inventory             1500.00
+  gl_total_dr              1500.00
+  gl_total_cr              1500.00
+  suppliers_balance        1500.00
+  debts_payable_open       1500.00
+  ple_supplier             -1500.00
+  inventory_qty            100000 g
+  inventory_value          1500.00
+  lots_qty                 100000 g
+  lots_value               1500.00
+  sle_value                1500.00
+  sle_qty                  100000 g
+Item deltas:
+  1@- WH1 {"code":"WH1","qty":100000,"value":150000,"lotQty":100000,"lotValue":150000}
+Row count deltas: {"journal_entries":1,"journal_entry_lines":2,"purchases":1,"debts":1,"payment_ledger_entries":1,"inventory_lots":1,"stock_movements":1,"stock_ledger_entries":1}
+  GL delta matches expectation
+
+## cash purchase supplier B 50kg item2 @25.00 paid -> HTTP 201 
+GL delta: Dr 1250.00 / Cr 1250.00 (balanced)
+  1111      Cash in Drawer             Dr         0.00 Cr      1250.00 net     -1250.00
+  1131      Fresh Chicken Inventory    Dr      1250.00 Cr         0.00 net      1250.00
+Metric deltas (money in currency units, qty in grams):
+  gl_cash                  -1250.00
+  gl_inventory             1250.00
+  gl_total_dr              1250.00
+  gl_total_cr              1250.00
+  inventory_qty            50000 g
+  inventory_value          1250.00
+  lots_qty                 50000 g
+  lots_value               1250.00
+  sle_value                1250.00
+  sle_qty                  50000 g
+Item deltas:
+  2@- BR1 {"code":"BR1","qty":50000,"value":125000,"lotQty":50000,"lotValue":125000}
+Row count deltas: {"journal_entries":1,"journal_entry_lines":2,"purchases":1,"payments":1,"inventory_lots":1,"stock_movements":1,"stock_ledger_entries":1}
+  GL delta matches expectation
+
+## cash sale 10kg item1 @25 -> HTTP 201 
+GL delta: Dr 400.00 / Cr 400.00 (balanced)
+  1111      Cash in Drawer             Dr       250.00 Cr         0.00 net       250.00
+  1131      Fresh Chicken Inventory    Dr         0.00 Cr       150.00 net      -150.00
+  4110      Fresh Chicken Sales        Dr         0.00 Cr       250.00 net      -250.00
+  5100      Cost of Goods Sold         Dr       150.00 Cr         0.00 net       150.00
+Metric deltas (money in currency units, qty in grams):
+  gl_cash                  250.00
+  gl_inventory             -150.00
+  gl_total_dr              400.00
+  gl_total_cr              400.00
+  inventory_qty            -10000 g
+  inventory_value          -150.00
+  lots_qty                 -10000 g
+  lots_value               -150.00
+  sle_value                -150.00
+  sle_qty                  -10000 g
+Item deltas:
+  1@- WH1 {"code":"WH1","qty":-10000,"value":-15000,"lotQty":-10000,"lotValue":-15000}
+Row count deltas: {"journal_entries":1,"journal_entry_lines":4,"sales":1,"sale_lines":1,"payments":1,"stock_movements":1,"stock_ledger_entries":1}
+  GL delta matches expectation
+
+## credit sale 5kg item2 @40 to customer -> HTTP 201 
+GL delta: Dr 325.00 / Cr 325.00 (balanced)
+  1120      Accounts Receivable        Dr       200.00 Cr         0.00 net       200.00
+  1131      Fresh Chicken Inventory    Dr         0.00 Cr       125.00 net      -125.00
+  4110      Fresh Chicken Sales        Dr         0.00 Cr       200.00 net      -200.00
+  5100      Cost of Goods Sold         Dr       125.00 Cr         0.00 net       125.00
+Metric deltas (money in currency units, qty in grams):
+  gl_ar                    200.00
+  gl_inventory             -125.00
+  gl_total_dr              325.00
+  gl_total_cr              325.00
+  customers_balance        200.00
+  debts_receivable_open    200.00
+  ple_customer             200.00
+  inventory_qty            -5000 g
+  inventory_value          -125.00
+  lots_qty                 -5000 g
+  lots_value               -125.00
+  sle_value                -125.00
+  sle_qty                  -5000 g
+Item deltas:
+  2@- BR1 {"code":"BR1","qty":-5000,"value":-12500,"lotQty":-5000,"lotValue":-12500}
+Row count deltas: {"journal_entries":1,"journal_entry_lines":4,"sales":1,"sale_lines":1,"debts":1,"payment_ledger_entries":1,"stock_movements":1,"stock_ledger_entries":1}
+  GL delta matches expectation
+
+## bank sale 4kg item1 @25 -> HTTP 201 
+GL delta: Dr 160.00 / Cr 160.00 (balanced)
+  1131      Fresh Chicken Inventory    Dr         0.00 Cr        60.00 net       -60.00
+  4110      Fresh Chicken Sales        Dr         0.00 Cr       100.00 net      -100.00
+  5100      Cost of Goods Sold         Dr        60.00 Cr         0.00 net        60.00
+  1112-001  General Bank Account       Dr       100.00 Cr         0.00 net       100.00
+Metric deltas (money in currency units, qty in grams):
+  gl_bank                  100.00
+  gl_inventory             -60.00
+  gl_total_dr              160.00
+  gl_total_cr              160.00
+  inventory_qty            -4000 g
+  inventory_value          -60.00
+  lots_qty                 -4000 g
+  lots_value               -60.00
+  sle_value                -60.00
+  sle_qty                  -4000 g
+Item deltas:
+  1@- WH1 {"code":"WH1","qty":-4000,"value":-6000,"lotQty":-4000,"lotValue":-6000}
+Row count deltas: {"journal_entries":1,"journal_entry_lines":4,"sales":1,"sale_lines":1,"payments":1,"stock_movements":1,"stock_ledger_entries":1}
+  GL delta matches expectation
+
+## cash sale 2kg item1 @25 with 10.00 discount -> HTTP 201 
+GL delta: Dr 80.00 / Cr 80.00 (balanced)
+  1111      Cash in Drawer             Dr        40.00 Cr         0.00 net        40.00
+  1131      Fresh Chicken Inventory    Dr         0.00 Cr        30.00 net       -30.00
+  4110      Fresh Chicken Sales        Dr         0.00 Cr        50.00 net       -50.00
+  5100      Cost of Goods Sold         Dr        30.00 Cr         0.00 net        30.00
+  5400      Other Expenses             Dr        10.00 Cr         0.00 net        10.00
+Metric deltas (money in currency units, qty in grams):
+  gl_cash                  40.00
+  gl_inventory             -30.00
+  gl_total_dr              80.00
+  gl_total_cr              80.00
+  inventory_qty            -2000 g
+  inventory_value          -30.00
+  lots_qty                 -2000 g
+  lots_value               -30.00
+  sle_value                -30.00
+  sle_qty                  -2000 g
+Item deltas:
+  1@- WH1 {"code":"WH1","qty":-2000,"value":-3000,"lotQty":-2000,"lotValue":-3000}
+Row count deltas: {"journal_entries":1,"journal_entry_lines":5,"sales":1,"sale_lines":1,"payments":1,"stock_movements":1,"stock_ledger_entries":1}
+  GL delta matches expectation
+
+## customer payment 80.00 cash via /payments/sale -> HTTP 201 
+GL delta: Dr 80.00 / Cr 80.00 (balanced)
+  1111      Cash in Drawer             Dr        80.00 Cr         0.00 net        80.00
+  1120      Accounts Receivable        Dr         0.00 Cr        80.00 net       -80.00
+Metric deltas (money in currency units, qty in grams):
+  gl_cash                  80.00
+  gl_ar                    -80.00
+  gl_total_dr              80.00
+  gl_total_cr              80.00
+  customers_balance        -80.00
+  debts_receivable_open    -80.00
+  ple_customer             -80.00
+Row count deltas: {"journal_entries":1,"journal_entry_lines":2,"payments":1,"payment_ledger_entries":1}
+  GL delta matches expectation
+
+## supplier payment 500.00 cash via /payments/purchase -> HTTP 201 
+GL delta: Dr 500.00 / Cr 500.00 (balanced)
+  1111      Cash in Drawer             Dr         0.00 Cr       500.00 net      -500.00
+  2110      Accounts Payable           Dr       500.00 Cr         0.00 net       500.00
+Metric deltas (money in currency units, qty in grams):
+  gl_cash                  -500.00
+  gl_ap                    -500.00
+  gl_total_dr              500.00
+  gl_total_cr              500.00
+  debts_payable_open       -500.00
+  ple_supplier             500.00
+Row count deltas: {"journal_entries":1,"journal_entry_lines":2,"payments":1,"payment_ledger_entries":1}
+  GL delta matches expectation
+
+## expense rent 300.00 cash -> HTTP 201 
+GL delta: Dr 300.00 / Cr 300.00 (balanced)
+  1111      Cash in Drawer             Dr         0.00 Cr       300.00 net      -300.00
+  5400      Other Expenses             Dr       300.00 Cr         0.00 net       300.00
+Metric deltas (money in currency units, qty in grams):
+  gl_cash                  -300.00
+  gl_total_dr              300.00
+  gl_total_cr              300.00
+Row count deltas: {"journal_entries":1,"journal_entry_lines":2,"expenses":1}
+  ** GL delta MISMATCH expected {"1111":-30000,"5210":30000} got {"1111":-30000,"5400":30000}
+
+## expense electricity 200.00 bank -> HTTP 201 
+GL delta: Dr 200.00 / Cr 200.00 (balanced)
+  1111      Cash in Drawer             Dr         0.00 Cr       200.00 net      -200.00
+  5400      Other Expenses             Dr       200.00 Cr         0.00 net       200.00
+Metric deltas (money in currency units, qty in grams):
+  gl_cash                  -200.00
+  gl_total_dr              200.00
+  gl_total_cr              200.00
+Row count deltas: {"journal_entries":1,"journal_entry_lines":2,"expenses":1}
+  ** GL delta MISMATCH expected {"5221":20000,"1112-001":-20000} got {"1111":-20000,"5400":20000}
+
+## wastage 1kg item1 lot -> HTTP 400 {"code":"VALIDATION_ERROR","message":"property wastageType should not exist","messageAr":"property wastageType should not exist","details":["property wastageType should not exist"]}
+GL delta: Dr 0.00 / Cr 0.00 (balanced)
+  ** GL delta MISMATCH expected {"1131":-1500,"5300":1500} got {}
+
+## adjustment decrease 1kg item2 -> HTTP 201 
+GL delta: Dr 25.00 / Cr 25.00 (balanced)
+  1131      Fresh Chicken Inventory    Dr         0.00 Cr        25.00 net       -25.00
+  5320      Inventory Adjustment       Dr        25.00 Cr         0.00 net        25.00
+Metric deltas (money in currency units, qty in grams):
+  gl_inventory             -25.00
+  gl_total_dr              25.00
+  gl_total_cr              25.00
+  inventory_qty            -1000 g
+  inventory_value          -25.00
+  sle_value                -25.00
+  sle_qty                  -1000 g
+Item deltas:
+  2@- BR1 {"code":"BR1","qty":-1000,"value":-2500}
+Row count deltas: {"journal_entries":1,"journal_entry_lines":2,"stock_movements":1,"stock_ledger_entries":1,"audit_logs":1}
+  GL delta matches expectation
+
+#### INVARIANTS after clean-slate scenario
+[PASS] GL-01 Every journal entry balanced (Σdr = Σcr per JE) 
+[PASS] GL-02 JE structure: ≥2 lines, non-zero, no negative/two-sided/zero lines 
+[PASS] GL-03 Trial balance: total debits = total credits (posted) 
+[PASS] GL-04 No JE line on group / inactive / frozen account (I-04) 
+[PASS] GL-05 Balance sheet: Assets = Liabilities + Equity + (Income − Expense) 
+[PASS] GL-06 Unposted (draft) JEs (excluded from balances above) 
+[PASS] GL-07 Reversals mirror originals exactly, at most once, flags consistent (I-06) 
+[PASS] GL-08 Journal entry numbers unique 
+[PASS] AR-01 GL AR (1120) = Σ customer.currentBalance = open receivable debts = PLE (I-29/I-31) 
+[PASS] AR-02 Per customer: currentBalance = open debts = PLE balance 
+[FAIL] AP-01 GL AP (2110) = Σ supplier.currentBalance = open payable debts = −PLE (I-30) {"e":"1000.00","a":{"gl_ap":"1000.00","suppliers_currentBalance":"1500.00","open_payable_debts":"1000.00","ple_supplier_neg":"1000.00","purchases_grand_minus_paid":"1000.00"},"det":{"note":"open_payable_debts also includes credit expenses (no PLE)"}}
+[FAIL] AP-02 Per supplier: currentBalance = open debts = −PLE balance {"a":"1 suppliers differ","det":[{"id":1,"supplier_number":"SUP-0001","name":"Supplier A","bal":150000,"debt":100000,"ple":100000}]}
+[PASS] DEBT-01 Debt rows sane: 0 ≤ paid ≤ total, status consistent (I-33) 
+[FAIL] INV-01 GL inventory (1131,1132) = Σ inventory.totalValue = Σ lot remaining×cost = SLE value (I-14/I-16) {"e":"2360.00","a":{"gl_inventory":"2360.00","inventory_totalValue":"2360.00","lots_remaining_x_cost":"2385.00","stock_ledger_value":"2360.00"}}
+[FAIL] INV-02 Per item: inventory qty = Σ lot remaining (I-15) {"a":"1 items","det":[{"item_id":2,"code":"BR1","branch_id":null,"q":44000,"v":110000,"lq":45000,"lv":112500}]}
+[FAIL] INV-03 Per item: inventory.totalValue = Σ lot value (±1) (I-16) {"a":"1 items","det":[{"item_id":2,"code":"BR1","branch_id":null,"q":44000,"v":110000,"lq":45000,"lv":112500}]}
+[PASS] INV-04 No negative stock / lot remaining within [0, total] (I-17) 
+[PASS] INV-05 Per item: Σ stock_ledger qty = inventory qty (I-19) 
+[PASS] INV-06 Sale totalCost = Σ line cost = Σ FIFO allocations (I-21) 
+[PASS] CASH-01 Cash/bank GL accounts never negative (I-36) 
+[PASS] CASH-03 GL cash+bank (excl. manual JEs) = Σ active customer payments − supplier payments − paid expenses (heuristic) 
+[FAIL] CASH-04 Per bank account: GL (excl. manual) = payments/expenses routed to that bank {"det":[{"bank":"BANK-001","gl":"1112-001","gl_balance_excl_manual":10000,"docs":-10000}]}
+[PASS] DOC-01 Every financial document has its JE (I-05/I-13) 
+[PASS] DOC-02 No JE without a live document; cancelled documents neutralised; no duplicate posting (I-13/I-05) 
+[PASS] NUM-01 Document numbers unique (I-46) 
+[PASS] DOC-03 Sale.amountPaid = Σ active payments; 0 ≤ paid ≤ total (I-32/I-40) 
+[PASS] DOC-04 Purchase.amountPaid = Σ active payments; paid ≤ grand total 
+[PASS] DOC-05 Sale total = Σ lines − discount + tax (I-40) 
+
+#### RAW GL balances {"1111":312000,"1120":12000,"1131":236000,"2110":-100000,"3100":-800000,"4110":-60000,"5100":36500,"5320":2500,"5400":51000,"1112-001":310000}
+TB (no params) balances {"1111":312000,"1120":12000,"1131":236000,"2110":-100000,"3100":-800000,"4110":-60000,"5100":36500,"5320":2500,"5400":51000,"1112-001":310000} Σ endingDr 960000 Σ endingCr 960000
+TB == raw ? true
+TB asOfDate=today: Σ opening 0 Σ period dr 1282000 balances equal raw? true
+TB asOfDate=2026-11-24 (before any entry) -> non-zero balances (expected none): 1111=312000 1112-001=310000 1120=12000 1131=236000 2110=-100000 3100=-800000 4110=-60000 5100=36500 5320=2500 5400=51000
+ledger 1111: rows=8 closing=312000 raw=312000 OK
+ledger 1112-001: rows=2 closing=310000 raw=310000 OK
+ledger 1120: rows=2 closing=12000 raw=12000 OK
+ledger 1131: rows=7 closing=236000 raw=236000 OK
+ledger 2110: rows=2 closing=-100000 raw=-100000 OK
+ledger 4110: rows=4 closing=-60000 raw=-60000 OK
+/reports/profit-loss {"revenue":59000,"discounts":1000,"costOfGoodsSold":36500,"grossProfit":22500,"expenses":50000,"netProfit":-27500,"grossMargin":38.13559322033898,"netMargin":-46.61016949152542}  vs GL revenue 60000 GL expenses(5xxx) 90000 GL net -30000
+/reports/stock-vs-gl summary 200 {"totalStockValue":0,"totalAccountValue":0,"totalDifference":0} raw 1131 236000 inventory.total_value 236000
+/reports/stock-vs-gl (no date) summary 200 {"totalStockValue":236000,"totalAccountValue":236000,"totalDifference":0}
+/reports/dashboard {"sales":{"today":{"count":4,"totalAmount":59000,"totalCost":36500,"totalProfit":22500}},"inventory":{"lowStockCount":0},"receivables":12000,"payables":100000}
+PDF bs: HTTP 200 104820 bytes
+PDF is: HTTP 200 104103 bytes
+PDF tb: HTTP 200 106671 bytes
+PDF led1111: HTTP 200 199402 bytes
+PDF svg: HTTP 200 193907 bytes
+
+STEP SUMMARY OK  manual JE capital cash 5000.00 + bank 3000.00 (create)
+OK  post capital JE
+OK  credit purchase supplier A 100kg item1 @15.00
+OK  cash purchase supplier B 50kg item2 @25.00 paid
+OK  cash sale 10kg item1 @25
+OK  credit sale 5kg item2 @40 to customer
+OK  bank sale 4kg item1 @25
+OK  cash sale 2kg item1 @25 with 10.00 discount
+OK  customer payment 80.00 cash via /payments/sale
+OK  supplier payment 500.00 cash via /payments/purchase
+MISMATCH expense rent 300.00 cash
+MISMATCH expense electricity 200.00 bank
+MISMATCH wastage 1kg item1 lot
+OK  adjustment decrease 1kg item2

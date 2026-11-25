@@ -1,0 +1,15 @@
+Invariants for .qa-audit/envs/v1/app.db  ->  PASS:15 FAIL:12 WARN:2
+[FAIL] AR-01    GL AR (1120) = Σ customer.currentBalance = open receivable debts = PLE (I-29/I-31)
+[FAIL] AR-02    Per customer: currentBalance = open debts = PLE balance
+[FAIL] AP-01    GL AP (2110) = Σ supplier.currentBalance = open payable debts = −PLE (I-30)
+[FAIL] AP-02    Per supplier: currentBalance = open debts = −PLE balance
+[FAIL] DEBT-01  Debt rows sane: 0 ≤ paid ≤ total, status consistent (I-33)
+[FAIL] INV-01   GL inventory (1131,1132) = Σ inventory.totalValue = Σ lot remaining×cost = SLE value (I-14/I-16)
+[FAIL] INV-02   Per item: inventory qty = Σ lot remaining (I-15)
+[FAIL] INV-03   Per item: inventory.totalValue = Σ lot value (±1) (I-16)
+[WARN] INV-05   Per item: Σ stock_ledger qty = inventory qty (I-19)
+[FAIL] CASH-03  GL cash+bank (excl. manual JEs) = Σ active customer payments − supplier payments − paid expenses (heuristic)
+[FAIL] CASH-04  Per bank account: GL (excl. manual) = payments/expenses routed to that bank
+[WARN] DOC-01b  Stock transfers have no JE by design (K3-016) — value created/destroyed not posted
+[FAIL] DOC-02   No JE without a live document; cancelled documents neutralised; no duplicate posting (I-13/I-05)
+[FAIL] DOC-03   Sale.amountPaid = Σ active payments; 0 ≤ paid ≤ total (I-32/I-40)

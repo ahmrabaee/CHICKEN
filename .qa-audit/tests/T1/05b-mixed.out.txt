@@ -1,0 +1,2 @@
+mixed sale 30 cash + 70 card -> 201 cash/bank delta 10000 0 payments rows [{"payment_method":"cash","amount":3000,"bank_account_id":null},{"payment_method":"card","amount":7000,"bank_account_id":1}]
+void -> 200 cash/bank delta -10000 0

@@ -1,0 +1,4 @@
+JE count {"n":48,"mx":"JE-000049"}
+credit purchase with GL engine ON: 409 {"success":false,"error":{"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"},"meta":{"timestamp":"2026-11-25T11:23:05.995Z","path":"/v1/purchases"}}
+customer advance receipt with GL engine ON: 409 {"success":false,"error":{"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"},"meta":{"timestamp":"2026-11-25T11:23:06.006Z","path":"/v1/payments/advance"}}
+same purchase, GL engine OFF: 201 PUR-000021

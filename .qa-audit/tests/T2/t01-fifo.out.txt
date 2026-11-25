@@ -1,0 +1,27 @@
+item 7 inventory after create:
+  [item 7] inv 0g/0 avg 0 | lots 0g/0 | SLE 0g/0 | mov 0g | lots=  OK
+3 purchases 10kg @20.00/22.00/25.00 -> PUR-000004 PUR-000005 PUR-000006
+  [item 7 after purchases] inv 30000g/67000 avg 2233 | lots 30000g/67000 | SLE 30000g/67000 | mov 30000g | lots=6:LOT-20261125-006:10000/10000@2000 7:LOT-20261125-007:10000/10000@2200 8:LOT-20261125-008:10000/10000@2500  OK
+GL delta purchases {"1131":67000,"2110":-67000}
+Sale A 15kg @30: totalCost 31000 expected 31000; allocations [{"lot_id":6,"g":10000,"unit_cost":2000,"total_cost":20000},{"lot_id":7,"g":5000,"unit_cost":2200,"total_cost":11000}]
+GL delta sale A {"1111":45000,"1131":-31000,"4110":-45000,"5100":31000}
+  [item 7 after sale A] inv 15000g/36000 avg 2400 | lots 15000g/36000 | SLE 15000g/36000 | mov 15000g | lots=6:LOT-20261125-006:0/10000@2000 7:LOT-20261125-007:5000/10000@2200 8:LOT-20261125-008:10000/10000@2500  OK
+Sale B 8kg: totalCost 18500 expected 18500
+GL delta sale B {"1111":24000,"1131":-18500,"4110":-24000,"5100":18500}
+  [item 7 after sale B] inv 7000g/17500 avg 2500 | lots 7000g/17500 | SLE 7000g/17500 | mov 7000g | lots=6:LOT-20261125-006:0/10000@2000 7:LOT-20261125-007:0/10000@2200 8:LOT-20261125-008:7000/10000@2500  OK
+void A 200 
+GL delta void A {"1111":-45000,"1131":31000,"4110":45000,"5100":-31000}
+  [item 7 after void A] inv 22000g/48500 avg 2500 | lots 22000g/48500 | SLE 22000g/48500 | mov 22000g | lots=6:LOT-20261125-006:10000/10000@2000 7:LOT-20261125-007:5000/10000@2200 8:LOT-20261125-008:7000/10000@2500  OK
+  avg cost after void (not recomputed?) 2500 expected 2205
+Sale C 4kg after void: totalCost 8000 expected 8000 (restored lot1)
+  [item 7 after sale C] inv 18000g/40500 avg 2250 | lots 18000g/40500 | SLE 18000g/40500 | mov 18000g | lots=6:LOT-20261125-006:6000/10000@2000 7:LOT-20261125-007:5000/10000@2200 8:LOT-20261125-008:7000/10000@2500  OK
+credit note create 400 {"success":false,"error":{"code":"EXCEEDS_OUTSTANDING","message":"Credit note amount 24000 exceeds outstanding 0","messageAr":"مبلغ الإشعار الدائن يتجاوز المستحق"},"meta":{"timestamp":"2026-11-25T11:1
+GL delta credit note {"1111":12000,"1131":-8000,"4110":-12000,"5100":8000}
+  [item 7 after CN on sale B] inv 18000g/40500 avg 2250 | lots 18000g/40500 | SLE 18000g/40500 | mov 18000g | lots=6:LOT-20261125-006:6000/10000@2000 7:LOT-20261125-007:5000/10000@2200 8:LOT-20261125-008:7000/10000@2500  OK
+GET /inventory/:id {"itemId":7,"itemCode":"T2-mww0zf4h-1","itemName":"T2 FIFO item","categoryName":"قطع دجاج طازجة","branchId":0,"branchName":"الفرع الرئيسي","totalQuantity":18000,"availableQuantity":18000,"minStockLevel":0,"avgCostPrice":2250,"sellingPrice":3000,"unitOfMeasure":"كجم","lotCount":3,"lastRestockedAt":"2026-11-25T11:13:35.138Z","lastSoldAt":"2026-11-25T11:13:35.243Z","currentQuantityGrams":18000,"availableQuantityGrams":18000}
+GET lots [{"id":6,"lotNumber":"LOT-20261125-006","totalQuantity":10000,"remainingQuantity":6000,"unitPurchasePrice":2000,"receivedAt":"2026-11-25T11:13:35.082Z","purchaseNumber":"PUR-000004"},{"id":7,"lotNumber":"LOT-20261125-007","totalQuantity":10000,"remainingQuantity":5000,"unitPurchasePrice":2200,"receivedAt":"2026-11-25T11:13:35.113Z","purchaseNumber":"PUR-000005"},{"id":8,"lotNumber":"LOT-20261125-008","totalQuantity":10000,"remainingQuantity":7000,"unitPurchasePrice":2500,"receivedAt":"2026-11-25T11:13:35.137Z","purchaseNumber":"PUR-000006"}]
+P&L {"revenue":36000,"discounts":0,"costOfGoodsSold":26500,"grossProfit":9500,"expenses":0,"netProfit":9500,"grossMargin":26.38888888888889,"netMargin":26.38888888888889}
+sales rows [{"id":6,"sale_number":"SAL-20261125-0001","total_amount":45000,"total_cost":31000,"total_profit":14000,"is_voided":1},{"id":7,"sale_number":"SAL-20261125-0002","total_amount":24000,"total_cost":18500,"total_profit":5500,"is_voided":0},{"id":8,"sale_number":"SAL-20261125-0003","total_amount":12000,"total_cost":8000,"total_profit":4000,"is_voided":0}]
+stock-vs-gl summary {"totalStockValue":40500,"totalAccountValue":40500,"totalDifference":0}
+GL total delta (whole script) {"1111":36000,"1131":40500,"2110":-67000,"4110":-36000,"5100":26500}
+FINAL item inv value 40500 lot value 40500 | GL 1131 delta 40500 | COGS 5100 delta 26500

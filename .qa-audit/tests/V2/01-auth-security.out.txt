@@ -1,0 +1,20 @@
+admin login OK, user= admin admin
+T5-006: 10x wrong password statuses last= 401 -> correct password after: 200 LOGIN OK (no lockout)
+T5-010: /api/docs status= 200 /api/docs-json status= 200
+users sample: [{"id":1,"username":"admin","fullName":"مدير النظام","fullNameEn":"System Admin","email":"admin@chickenshop.local","phone":"+966-50-000-0001","preferredLanguage":"ar","defaultBranchId":1,"isActive":true,"roles":["admin"],"createdAt":"2026-11-24T20:56:55.242Z","lastLoginAt":"2026-11-25T16:36:10.134Z","workStartDate":"2026-11-24T20:56:55.242Z","isLoggedIn":true}]
+fresh login for logout test: access/refresh captured
+  /users/me before logout: 200
+  logout response: 200
+T5-005a: /users/me AFTER logout with SAME access token -> 200 VULNERABLE (token still valid)
+  refresh with old refresh token after logout -> 401
+  change-password (same pw) -> 200 {"success":true,"data":{"message":"Password changed successfully","messageAr":"تم تغيير كلمة المرور بنجاح"},"meta":{"timestamp":"2026-11-25T16:36:11.187Z"}}
+T5-005b: /users/me AFTER password change with SAME OLD access token -> 200 VULNERABLE (token still valid)
+T5-005c: refresh token used TWICE -> 200 200 REPLAYABLE
+T5-003a: forged token signed with default secret against instance WITH real JWT_SECRET set -> 401 rejected (expected, real secret in effect)
+backup create -> 201 {"success":true,"data":{"message":"Backup started","messageAr":"بدأ النسخ الاحتياطي"},"meta":{"timestamp":"2026-11-25T16:36:11.589Z"}}
+using backupId= 2
+T5-001a: unauth download with forged token (correct hardcoded secret, guessed payload shape) -> status= 200 content-type= application/gzip
+  downloaded bytes= 34487 magic= 1f8b0800
+T5-001b: control with WRONG secret -> status= 401
+T5-001c: official signed download-link response: {"success":true,"data":{"url":"http://localhost:3117/v1/system/backups/2/download?token=eyJiYWNrdXBJZCI6MiwiZXhwIjoxNzk1NjI0ODcyfQ.WlbdqW2efuaxZVpJeSv7iRiI1nIfm5gkilBri_k9oeo","expiresAt":"2026-11-25T16:41:12.115Z"},"meta":{"timestamp":"2026-11-25T16:36:12.115Z"}}
+DONE

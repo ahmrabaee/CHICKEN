@@ -1,0 +1,46 @@
+set gl_engine_enabled=true: {"status":200}
+set tax_engine_enabled=true: {"status":200}
+settings now [{"key":"gl_engine_enabled","value":"true"},{"key":"tax_engine_enabled","value":"true"}]
+
+## E1. credit purchase net 200.00 + tax 30.00
+  resp: {"status":409,"err":"DUPLICATE_ENTRY"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"je":0,"tbBalanced":true}
+
+## E2. fully paid taxed purchase 230.00 cash
+  resp: {"status":400,"err":"UNBALANCED_ENTRY"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"je":0,"tbBalanced":true}
+
+## E3. fully paid purchase with tax 0.40 (within 0.50 tolerance) 200.40 cash
+  resp: {"status":409,"err":"DUPLICATE_ENTRY"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"je":0,"tbBalanced":true}
+
+## E4. expense 50.00 bank_transfer B1 (GL engine path)
+  resp: {"status":409,"err":"DUPLICATE_ENTRY"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"je":0,"tbBalanced":true}
+
+## N1. credit purchase X
+  resp: {"status":409,"err":"DUPLICATE_ENTRY"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"je":0,"tbBalanced":true}
+
+## N2. payment on another purchase (new JE after X)
+  resp: {"status":400,"err":"VALIDATION_ERROR"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"je":0,"tbBalanced":true}
+  last JE numbers: ["JE-000049","JE-000048","JE-000047"]
+
+## N3. DELETE purchase X (its JE is not the newest)
+  resp: {"status":400,"err":"VALIDATION_ERROR"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"je":0,"tbBalanced":true}
+
+## N4. supplier payment after delete (GL engine JE count+1)
+  resp: {"status":400,"err":"VALIDATION_ERROR"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"je":0,"tbBalanced":true}
+
+## N5. expense after delete (GL engine)
+  resp: {"status":409,"err":"DUPLICATE_ENTRY"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"je":0,"tbBalanced":true}
+set gl_engine_enabled=false: {"status":200}
+set tax_engine_enabled=false: {"status":200}
+
+## N6. same payment with legacy path
+  resp: {"status":400,"err":"VALIDATION_ERROR"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"je":0,"tbBalanced":true}

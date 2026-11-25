@@ -1,0 +1,9 @@
+ACC GET /reports/profit-loss                   200  cost/profit-fields=true
+{"success":true,"data":{"revenue":234402,"discounts":5600,"costOfGoodsSold":118600,"grossProfit":115802,"expenses":21500,"netProfit":94302,"grossMargin":49.40316208906068,"netMargin":40.23088540200169},"meta":{"timestamp":"2026-11-25T16:36:59.484Z"}}
+ACC GET /reports/sales                         200  cost/profit-fields=false
+ACC GET /reports/purchases                     200  cost/profit-fields=false
+ACC GET /reports/expenses                      200  cost/profit-fields=false
+ACC GET /reports/inventory                     200  cost/profit-fields=true
+ACC GET /reports/stock-vs-gl                   200  cost/profit-fields=false
+ACC item 3 purchase-price fields               ["\"defaultPurchasePrice\":2800","\"averageCost\":2229}"]
+ACC lots unit cost sample                      [{"id":2,"lotNumber":"LOT-SEED-CHK-BREAST-01","totalQuantity":50000,"remainingQuantity":40000,"unitPurchasePrice":2800,"receivedAt":"2026-11-24T20:56:54.868Z"},{"id":7,"lotNumber":"LOT-20261125-007","totalQuantity":40000,"remainingQuantity":40000,"un

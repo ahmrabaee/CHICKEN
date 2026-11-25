@@ -1,0 +1,815 @@
+[
+  {
+    "route": "/",
+    "finalUrl": "/",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/login 200",
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/branches 200",
+      "GET /v1/reports/sales?startDate=2026-10-27&endDate=2026-11-25 200",
+      "GET /v1/reports/sales?startDate=2026-09-27&endDate=2026-10-26 200",
+      "GET /v1/debts/receivables?page=1&pageSize=500 200",
+      "GET /v1/debts/payables?page=1&pageSize=500 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/inventory/low-stock 200"
+    ]
+  },
+  {
+    "route": "/inventory",
+    "finalUrl": "/inventory",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/categories 200",
+      "GET /v1/inventory/low-stock 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/inventory?page=1&pageSize=10&search= 200",
+      "GET /v1/inventory/expiring?days=30 200"
+    ]
+  },
+  {
+    "route": "/inventory?tab=categories",
+    "finalUrl": "/inventory?tab=categories",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/categories 200",
+      "GET /v1/categories?includeInactive=true 200",
+      "GET /v1/inventory/low-stock 200",
+      "GET /v1/inventory?page=1&pageSize=10&search= 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/inventory/expiring?days=30 200"
+    ]
+  },
+  {
+    "route": "/inventory?tab=stock-transfer",
+    "finalUrl": "/inventory?tab=stock-transfer",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/categories 200",
+      "GET /v1/inventory/expiring?days=30 200",
+      "GET /v1/inventory/low-stock 200",
+      "GET /v1/inventory?page=1&pageSize=10&search= 200",
+      "GET /v1/stock-transfer?page=1&pageSize=20 200",
+      "GET /v1/auth/me 200"
+    ]
+  },
+  {
+    "route": "/inventory/new",
+    "finalUrl": "/inventory/new",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/categories 200",
+      "GET /v1/auth/me 200"
+    ]
+  },
+  {
+    "route": "/inventory/1",
+    "finalUrl": "/inventory/1",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/categories 200",
+      "GET /v1/items/1 200"
+    ]
+  },
+  {
+    "route": "/sales/new",
+    "finalUrl": "/sales/new",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/tax/templates?type=sales 200",
+      "GET /v1/items?isActive=true&page=1&pageSize=100 200",
+      "GET /v1/customers?isActive=true&pageSize=500 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/bank-accounts 200"
+    ]
+  },
+  {
+    "route": "/sales",
+    "finalUrl": "/sales",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/sales?page=1&pageSize=20 200"
+    ]
+  },
+  {
+    "route": "/sales/1",
+    "finalUrl": "/sales/1",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/sales?page=1&pageSize=20 200",
+      "GET /v1/auth/me 200"
+    ]
+  },
+  {
+    "route": "/purchasing",
+    "finalUrl": "/purchasing",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/purchases?page=1&pageSize=20 200"
+    ]
+  },
+  {
+    "route": "/purchasing/1",
+    "finalUrl": "/purchasing/1",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/purchases?page=1&pageSize=20 200",
+      "GET /v1/auth/me 200"
+    ]
+  },
+  {
+    "route": "/purchasing/new",
+    "finalUrl": "/purchasing/new",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/suppliers?page=1&pageSize=100 200",
+      "GET /v1/bank-accounts 200",
+      "GET /v1/categories/purchaseable 200"
+    ]
+  },
+  {
+    "route": "/purchasing/1/edit",
+    "finalUrl": "/purchasing/1/edit",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/suppliers?page=1&pageSize=100 200",
+      "GET /v1/categories/purchaseable 200",
+      "GET /v1/bank-accounts 200",
+      "GET /v1/purchases/1 200",
+      "GET /v1/auth/me 200"
+    ]
+  },
+  {
+    "route": "/customers",
+    "finalUrl": "/customers",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/customers 200"
+    ]
+  },
+  {
+    "route": "/customers/new",
+    "finalUrl": "/customers/new",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200"
+    ]
+  },
+  {
+    "route": "/customers/1",
+    "finalUrl": "/customers/1",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/customers/1 200"
+    ]
+  },
+  {
+    "route": "/traders",
+    "finalUrl": "/traders",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/suppliers 200",
+      "GET /v1/auth/me 200"
+    ]
+  },
+  {
+    "route": "/traders/new",
+    "finalUrl": "/traders/new",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200"
+    ]
+  },
+  {
+    "route": "/traders/1",
+    "finalUrl": "/traders/1",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/suppliers/1 200"
+    ]
+  },
+  {
+    "route": "/payments",
+    "finalUrl": "/payments",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/payments?page=1&pageSize=20 200"
+    ]
+  },
+  {
+    "route": "/payments/new",
+    "finalUrl": "/payments/new",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/sales?pageSize=500 200",
+      "GET /v1/purchases?pageSize=100 200",
+      "GET /v1/customers?pageSize=500 200",
+      "GET /v1/suppliers?pageSize=500 200",
+      "GET /v1/bank-accounts 200",
+      "GET /v1/auth/me 200"
+    ]
+  },
+  {
+    "route": "/payments/1",
+    "finalUrl": "/payments/1",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/sales?pageSize=500 200",
+      "GET /v1/payments/1 200",
+      "GET /v1/customers?pageSize=500 200",
+      "GET /v1/suppliers?pageSize=500 200",
+      "GET /v1/bank-accounts 200",
+      "GET /v1/purchases?pageSize=100 200",
+      "GET /v1/auth/me 200"
+    ]
+  },
+  {
+    "route": "/reconciliation",
+    "finalUrl": "/reconciliation",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/customers?page=1&pageSize=500 200",
+      "GET /v1/suppliers?page=1&pageSize=500 200"
+    ]
+  },
+  {
+    "route": "/credit-notes",
+    "finalUrl": "/credit-notes",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/credit-notes?page=1&pageSize=50 200"
+    ]
+  },
+  {
+    "route": "/credit-notes/new",
+    "finalUrl": "/credit-notes/new",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/customers?page=1&pageSize=500 200",
+      "GET /v1/auth/me 200"
+    ]
+  },
+  {
+    "route": "/expenses",
+    "finalUrl": "/expenses",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/expenses?page=1&pageSize=20 200"
+    ]
+  },
+  {
+    "route": "/expenses/new",
+    "finalUrl": "/expenses/new",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/expenses/categories 200",
+      "GET /v1/suppliers 200",
+      "GET /v1/bank-accounts 200",
+      "GET /v1/branches 200"
+    ]
+  },
+  {
+    "route": "/expenses/1",
+    "finalUrl": "/expenses/1",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/expenses/1 200"
+    ]
+  },
+  {
+    "route": "/debts",
+    "finalUrl": "/debts",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/debts/payables 200",
+      "GET /v1/debts/receivables 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/debts/summary 200"
+    ]
+  },
+  {
+    "route": "/wastage",
+    "finalUrl": "/wastage",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/wastage?page=1&pageSize=20 200"
+    ]
+  },
+  {
+    "route": "/wastage/new",
+    "finalUrl": "/wastage/new",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/items?isActive=true&page=1&pageSize=100 200"
+    ]
+  },
+  {
+    "route": "/stock-transfer/new",
+    "finalUrl": "/stock-transfer/new",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/stock-transfer/source-lots 200",
+      "GET /v1/stock-transfer/products 200"
+    ]
+  },
+  {
+    "route": "/reports",
+    "finalUrl": "/reports",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/reports/inventory 200",
+      "GET /v1/reports/stock-vs-gl 200"
+    ]
+  },
+  {
+    "route": "/reports/sales",
+    "finalUrl": "/reports/sales",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/reports/sales?startDate=2026-10-31&endDate=2026-11-29 200",
+      "GET /v1/reports/inventory 200",
+      "GET /v1/reports/stock-vs-gl 200",
+      "GET /v1/auth/me 200"
+    ]
+  },
+  {
+    "route": "/reports/purchases",
+    "finalUrl": "/reports/purchases",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/reports/inventory 200",
+      "GET /v1/reports/purchases?startDate=2026-10-31&endDate=2026-11-29 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/reports/stock-vs-gl 200"
+    ]
+  },
+  {
+    "route": "/reports/inventory",
+    "finalUrl": "/reports/inventory",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/reports/inventory 200",
+      "GET /v1/reports/stock-vs-gl 200",
+      "GET /v1/auth/me 200"
+    ]
+  },
+  {
+    "route": "/reports/expenses",
+    "finalUrl": "/reports/expenses",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/reports/expenses?startDate=2026-10-31&endDate=2026-11-29 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/reports/stock-vs-gl 200",
+      "GET /v1/reports/inventory 200"
+    ]
+  },
+  {
+    "route": "/reports/profit-loss",
+    "finalUrl": "/reports/profit-loss",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/reports/inventory 200",
+      "GET /v1/reports/profit-loss?startDate=2026-10-31&endDate=2026-11-29 200",
+      "GET /v1/reports/stock-vs-gl 200"
+    ]
+  },
+  {
+    "route": "/reports/wastage",
+    "finalUrl": "/reports/wastage",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/reports/inventory 200",
+      "GET /v1/reports/stock-vs-gl 200",
+      "GET /v1/reports/wastage?startDate=2026-10-31&endDate=2026-11-29 200"
+    ]
+  },
+  {
+    "route": "/reports/vat",
+    "finalUrl": "/reports/vat",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/reports/inventory 200",
+      "GET /v1/reports/stock-vs-gl 200",
+      "GET /v1/tax/vat-report?startDate=2026-10-31&endDate=2026-11-29 200"
+    ]
+  },
+  {
+    "route": "/reports/stock-vs-gl",
+    "finalUrl": "/reports/stock-vs-gl",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/reports/stock-vs-gl?asOfDate=2026-11-25 200",
+      "GET /v1/reports/inventory 200"
+    ]
+  },
+  {
+    "route": "/accounting",
+    "finalUrl": "/accounting",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/accounting/journal-entries?page=1&pageSize=20 200",
+      "GET /v1/accounting/trial-balance 200",
+      "GET /v1/accounting/accounts 200"
+    ]
+  },
+  {
+    "route": "/accounting/journal/new",
+    "finalUrl": "/accounting/journal/new",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/accounting/accounts?postableOnly=true 200"
+    ]
+  },
+  {
+    "route": "/audit",
+    "finalUrl": "/audit",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/audit?page=1&pageSize=30 200",
+      "GET /v1/auth/me 200"
+    ]
+  },
+  {
+    "route": "/settings",
+    "finalUrl": "/settings",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200"
+    ]
+  },
+  {
+    "route": "/users",
+    "finalUrl": "/users",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/users?page=1&pageSize=10&search= 200",
+      "GET /v1/users/active-sessions 200",
+      "GET /v1/branches 200"
+    ]
+  },
+  {
+    "route": "/branches",
+    "finalUrl": "/branches",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/branches 200"
+    ]
+  },
+  {
+    "route": "/branches/new",
+    "finalUrl": "/branches/new",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/accounting/accounts 200"
+    ]
+  },
+  {
+    "route": "/branches/1",
+    "finalUrl": "/branches/1",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/branches/1 200",
+      "GET /v1/accounting/accounts 200"
+    ]
+  },
+  {
+    "route": "/categories",
+    "finalUrl": "/inventory?tab=categories",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/categories?includeInactive=true 200",
+      "GET /v1/categories 200",
+      "GET /v1/inventory?page=1&pageSize=10&search= 200",
+      "GET /v1/inventory/expiring?days=30 200",
+      "GET /v1/inventory/low-stock 200"
+    ]
+  },
+  {
+    "route": "/adjustments",
+    "finalUrl": "/inventory",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/inventory/expiring?days=30 200",
+      "GET /v1/categories 200",
+      "GET /v1/inventory/low-stock 200",
+      "GET /v1/inventory?page=1&pageSize=10&search= 200"
+    ]
+  },
+  {
+    "route": "/stock-transfer",
+    "finalUrl": "/inventory?tab=stock-transfer",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200",
+      "GET /v1/categories 200",
+      "GET /v1/inventory?page=1&pageSize=10&search= 200",
+      "GET /v1/inventory/expiring?days=30 200",
+      "GET /v1/inventory/low-stock 200",
+      "GET /v1/stock-transfer?page=1&pageSize=20 200"
+    ]
+  },
+  {
+    "route": "/nonexistent",
+    "finalUrl": "/nonexistent",
+    "denied": false,
+    "crashed": false,
+    "consoleErrors": [
+      "404 Error: User attempted to access non-existent route: /nonexistent"
+    ],
+    "pageErrors": [],
+    "apiErrors": [],
+    "apiCalls": [
+      "POST /v1/auth/check-setup 200",
+      "GET /v1/auth/me 200"
+    ]
+  }
+]

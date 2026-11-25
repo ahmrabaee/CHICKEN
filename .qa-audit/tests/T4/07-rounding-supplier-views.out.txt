@@ -1,0 +1,22 @@
+# T4-07 2026-11-25T11:24:13.892Z
+
+K4-013 3 × 0.334 kg @ ₪1.00: UI shows ₪1.00, "pay full" sends amountPaid=100; backend: {"status":400,"err":"UNBALANCED_ENTRY"} 
+
+K4-013 3 × 0.335 kg @ ₪1.00: UI shows ₪1.01, "pay full" sends amountPaid=101; backend: {"status":201} grandTotal=102 status=partial due=1
+
+K4-013 2 × 1.255 kg @ ₪19.99: UI shows ₪50.17, "pay full" sends amountPaid=5017; backend: {"status":201} grandTotal=5018 status=partial due=1
+
+supplier 2: purchase 345.00 (tax 45.00), paid 100.00, advance 50.00 → {"status":201}
+views before allocation: {"supplierCurrentBalance":34500,"debtsPayables":[{"id":3,"debtNumber":"DEB-PUR-000006","direction":"payable","partyType":"supplier","partyId":2,"partyName":"شركة الأعلاف الوطنية","totalAmount":34500,"amountPaid":10000,"dueDate":null,"sourceType":"purchase","sourceId":6,"status":"partial","branchId":null,"notes":null,"createdAt":"2026-11-25T11:24:14.031Z","updatedAt":"2026-11-25T11:24:14.051Z","debtType":"payable","originalAmount":34500,"remainingAmount":24500,"supplierName":"شركة الأعلاف الوطنية","purchaseNumber":"DEB-PUR-000006","isOverdue":false}],"outstandingParty":19500,"openInvoices":[],"unallocated":[{"id":7,"paymentNumber":"PAY-000007","paymentDate":"2026-11-25T11:24:14.067Z","amount":5000,"allocatedAmount":0,"unallocatedAmount":5000,"partyName":"شركة الأعلاف الوطنية"}],"glAP_total":-15002}
+
+POST /reconciliation/apply advance→purchase 50.00: {"status":201} {"success":true,"allocated":5000}
+after allocation: purchase {"amount_paid":10000,"payment_status":"partial"}  debt [{"total_amount":34500,"amount_paid":10000,"status":"partial"}]
+views after allocation: {"supplierCurrentBalance":34500,"debtsPayables":[{"id":3,"debtNumber":"DEB-PUR-000006","direction":"payable","partyType":"supplier","partyId":2,"partyName":"شركة الأعلاف الوطنية","totalAmount":34500,"amountPaid":10000,"dueDate":null,"sourceType":"purchase","sourceId":6,"status":"partial","branchId":null,"notes":null,"createdAt":"2026-11-25T11:24:14.031Z","updatedAt":"2026-11-25T11:24:14.051Z","debtType":"payable","originalAmount":34500,"remainingAmount":24500,"supplierName":"شركة الأعلاف الوطنية","purchaseNumber":"DEB-PUR-000006","isOverdue":false}],"outstandingParty":19500,"openInvoices":[],"unallocated":[],"glAP_total":-15002}
+
+pay remaining per purchase (245.00) after allocating advance 50.00: {"status":201}  PLE outstanding for purchase: 5000  supplier PLE total 5000
+PDF /purchases/6/pdf?language=ar: HTTP 200 application/pdf 195540 bytes, header %PDF-
+PDF /suppliers/2/statement/pdf?language=ar: HTTP 200 application/pdf 295617 bytes, header %PDF-
+PDF /debts/payables/pdf?language=ar: HTTP 200 application/pdf 194546 bytes, header %PDF-
+PDF /purchases/report/pdf?language=ar: HTTP 200 application/pdf 196341 bytes, header %PDF-
+
+supplier list currentBalance (GET /suppliers): [{"id":2,"bal":34500},{"id":1,"bal":2}]

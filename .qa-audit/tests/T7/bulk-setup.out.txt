@@ -1,0 +1,4 @@
+items before 7
+last item [{"id":106,"code":"QA-105","barcode":null,"name":"صنف اختبار 105","nameEn":null,"description":null,"categoryId":2,"defaultSalePrice":1105,"defaultPurchasePrice":500,"effectiveCostPrice":500,"taxRatePc
+target credit sale 201 23 SAL-20261125-0018
+filler cash sales created 505 target id 23

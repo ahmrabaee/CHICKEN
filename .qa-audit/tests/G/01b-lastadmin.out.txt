@@ -1,0 +1,19 @@
+role after relogin accountant [
+  '/',
+  '/inventory',
+  '/sales',
+  '/sales/new',
+  '/customers',
+  '/payments',
+  '/reconciliation',
+  '/credit-notes',
+  '/accounting',
+  '/reports/sales',
+  '/reports/inventory',
+  '/reports/purchases',
+  '/reports/wastage',
+  '/stock-transfer'
+]
+GET /users (admin demoted)                                 403 {"success":false,"error":{"code":"FORBIDDEN","message":"Insufficient permissions","messageAr":"صلاحيات غير كافية"},"meta":{"timestamp":"2026-11-25T16:34:35.663Z","path":"/v1/users"}}
+GET /settings                                              403 {"success":false,"error":{"code":"FORBIDDEN","message":"Insufficient permissions","messageAr":"صلاحيات غير كافية"},"meta":{"timestamp":"2026-11-25T16:34:35.670Z","path":"/v1/settings"}}
+PUT /users/1 roleId 1 (self-restore)                       403 {"success":false,"error":{"code":"FORBIDDEN","message":"Insufficient permissions","messageAr":"صلاحيات غير كافية"},"meta":{"timestamp":"2026-11-25T16:34:35.676Z","path":"/v1/users/1"}}

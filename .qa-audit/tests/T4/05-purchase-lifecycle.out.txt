@@ -1,0 +1,132 @@
+# T4-05 2026-11-25T11:22:20.213Z
+
+## V1. negative weight line -5kg @20.00
+  resp: {"status":201} id=7 PUR-000007 grand=-10000 status=unpaid
+  Δ: {"gl":{},"sup":{},"debt":{},"ple":{},"inv":{"q":-5000,"v":-10000},"lots":{"q":-5000,"v":-10000},"je":0}
+
+## V2. negative price line 5kg @ -20.00
+  resp: {"status":201} id=8 PUR-000008 grand=-10000 status=unpaid
+  Δ: {"gl":{},"sup":{},"debt":{},"ple":{},"inv":{"q":5000,"v":-10000},"lots":{"q":5000,"v":-10000},"je":0}
+
+## V3. zero price line 5kg @0
+  resp: {"status":201} id=9 PUR-000009 grand=0 status=unpaid
+  Δ: {"gl":{},"sup":{},"debt":{},"ple":{},"inv":{"q":5000,"v":0},"lots":{"q":5000,"v":0},"je":0}
+
+## V4. empty lines []
+  resp: {"status":201} id=10 PUR-000010 grand=0 status=unpaid
+  Δ: {"gl":{},"sup":{},"debt":{},"ple":{},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"je":0}
+
+## V5. overpaid at creation (paid 150.00 of 100.00, no tax)
+  resp: {"status":400,"err":"UNBALANCED_ENTRY"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"ple":{},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"je":0}
+
+## V6. negative amountPaid -50.00
+  resp: {"status":400,"err":"UNBALANCED_ENTRY"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"ple":{},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"je":0}
+
+## V7. line with non-existent item 999 + valid line
+  resp: {"status":201} id=11 PUR-000011 grand=20000 status=unpaid
+  Δ: {"gl":{"1131":10000,"2110":-10000},"sup":{"1":20000},"debt":{"1":20000},"ple":{"1":-20000},"inv":{"q":5000,"v":10000},"lots":{"q":5000,"v":10000},"je":1}
+  last purchase {"id":11,"grand_total":20000,"net_total":20000}  JE [{"code":"1131","d":10000,"c":0},{"code":"2110","d":0,"c":10000}]
+
+## V8. negative taxAmount -10.00
+  resp: {"status":201} id=12 PUR-000012 grand=9000 status=unpaid
+  Δ: {"gl":{"1131":10000,"2110":-10000},"sup":{"1":9000},"debt":{"1":9000},"ple":{"1":-9000},"inv":{"q":5000,"v":10000},"lots":{"q":5000,"v":10000},"je":1}
+
+## V9. fractional grams 1234.5 @ 19.99/kg
+  resp: {"status":201} id=13 PUR-000013 grand=2468 status=unpaid
+  Δ: {"gl":{"1131":2468,"2110":-2468},"sup":{"1":2468},"debt":{"1":2468},"ple":{"1":-2468},"inv":{"q":1234,"v":2468},"lots":{"q":1234,"v":2467},"je":1}
+  stored line: {"weight_grams":1234,"line_total_amount":2468}
+
+## V10. purchase from INACTIVE supplier 2
+  resp: {"status":201} id=14 PUR-000014 grand=2000 status=unpaid
+  Δ: {"gl":{"1131":2000,"2110":-2000},"sup":{"2":2000},"debt":{"2":2000},"ple":{"2":-2000},"inv":{"q":1000,"v":2000},"lots":{"q":1000,"v":2000},"je":1}
+
+## V11. huge purchase 1,000,000 kg @ 99,999.99
+  resp: {"status":500,"err":"DATABASE_ERROR"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"ple":{},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"je":0}
+
+## V12. branchId in body (not in DTO)
+  resp: {"status":400,"err":"VALIDATION_ERROR"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"ple":{},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"je":0}
+  branch_id of purchases/lots/JE created so far: [{"pNull":11,"lotNull":10}]
+
+GET /categories/purchaseable: {"status":200} ["CHICKEN_RAW->item1","FRESH_WHOLE->item2","FRESH_PARTS->item3","FROZEN_WHOLE->item2","FROZEN_PARTS->item3","PROCESSED->item6","EXTRAS->item7"]
+
+## C1. buy raw chicken (category CHICKEN_RAW -> item 1) 20kg @ 12.00
+  resp: {"status":201} id=15 PUR-000015 grand=24000 status=unpaid
+  Δ: {"gl":{"1131":24000,"2110":-24000},"sup":{"1":24000},"debt":{"1":24000},"ple":{"1":-24000},"inv":{"q":20000,"v":24000},"lots":{"q":20000,"v":24000},"je":1}
+  inventory item1: [{"item_id":1,"branch_id":null,"q":20000,"v":24000,"average_cost":1200}]
+
+## C2. live bird line isLiveBird=true 30kg @ 10.00
+  resp: {"status":201} id=16 PUR-000016 grand=30000 status=unpaid
+  Δ: {"gl":{"1131":30000,"2110":-30000},"sup":{"1":30000},"debt":{"1":30000},"ple":{"1":-30000},"inv":{"q":30000,"v":30000},"lots":{"q":30000,"v":30000},"je":1}
+
+## R1. PUT /purchases/:id/receive on API-created purchase
+  resp: {"status":400,"err":"ALREADY_RECEIVED"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"ple":{},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"je":0}
+
+## U1. purchase item 6 (seed stock 50kg) 10kg @ 30.00 credit
+  resp: {"status":201} id=17 PUR-000017 grand=30000 status=unpaid
+  Δ: {"gl":{"1131":30000,"2110":-30000},"sup":{"1":30000},"debt":{"1":30000},"ple":{"1":-30000},"inv":{"q":10000,"v":30000},"lots":{"q":10000,"v":30000},"je":1}
+
+## U2. adjustment decrease item 6 55kg (no lotId)
+  resp: {"status":201} 
+  Δ: {"gl":{"1131":-137500,"5320":137500},"sup":{},"debt":{},"ple":{},"inv":{"q":-55000,"v":-137500},"lots":{"q":0,"v":0},"je":1}
+  inv item6: [{"q":5000,"v":12500}]  lots item6 [{"id":5,"r":50000,"u":2400,"purchase_id":null},{"id":18,"r":10000,"u":3000,"purchase_id":17}]
+
+## U3. DELETE purchase after its quantity was adjusted away
+  resp: {"status":200} 
+  Δ: {"gl":{"1131":-30000,"2110":30000},"sup":{"1":-30000},"debt":{"1":-30000},"ple":{"1":30000},"inv":{"q":-5000,"v":-12500},"lots":{"q":-10000,"v":-30000},"je":-1}
+  inv item6 after delete: [{"q":0,"v":0}]  lots [{"id":5,"r":50000}]
+
+## U4. purchase item 5 10kg @ 25.00
+  resp: {"status":201} id=18 PUR-000017 grand=25000 status=unpaid
+  Δ: {"gl":{"1131":25000,"2110":-25000},"sup":{"1":25000},"debt":{"1":25000},"ple":{"1":-25000},"inv":{"q":10000,"v":25000},"lots":{"q":10000,"v":25000},"je":1}
+
+## U5. wastage 1kg from that lot
+  resp: {"status":201} id=1  grand= status=
+  Δ: {"gl":{"1131":-2500,"5300":2500},"sup":{},"debt":{},"ple":{},"inv":{"q":-1000,"v":-2500},"lots":{"q":-1000,"v":-2500},"je":1}
+
+## U6. DELETE purchase after wastage
+  resp: {"status":400,"err":"PURCHASE_STOCK_ALREADY_USED"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"ple":{},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"je":0}
+
+## PR1. credit purchase item 4 10kg @ 20.00 (200.00)
+  resp: {"status":201} id=19 PUR-000018 grand=20000 status=unpaid
+  Δ: {"gl":{"1131":20000,"2110":-20000},"sup":{"1":20000},"debt":{"1":20000},"ple":{"1":-20000},"inv":{"q":10000,"v":20000},"lots":{"q":10000,"v":20000},"je":1}
+
+PR2. create purchase credit note 50.00: {"status":201} 1
+
+## PR3. submit credit note
+  resp: {"status":201} id=1  grand= status=
+  Δ: {"gl":{"2110":5000,"4200":-5000},"sup":{},"debt":{},"ple":{"1":5000},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"je":1}
+  purchase after CN: {"amount_paid":0,"payment_status":"unpaid"}  debt [{"total_amount":20000,"amount_paid":0,"status":"open"}]  lot remaining [{"remaining_quantity_grams":10000}]
+
+## PR4. pay remaining as per debt (200.00) after CN 50.00
+  resp: {"status":201} id=7  grand= status=
+  Δ: {"gl":{"1111":-20000,"2110":20000},"sup":{},"debt":{"1":-20000},"ple":{"1":20000},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"je":1}
+  PLE outstanding for purchase: 5000
+PR5. POST /purchases/:id/return → {"status":404,"err":"NOT_FOUND"}
+
+## N1. purchase A
+  resp: {"status":201} id=20 PUR-000019 grand=2000 status=unpaid
+  Δ: {"gl":{"1131":2000,"2110":-2000},"sup":{"1":2000},"debt":{"1":2000},"ple":{"1":-2000},"inv":{"q":1000,"v":2000},"lots":{"q":1000,"v":2000},"je":1}
+
+## N2. purchase B
+  resp: {"status":201} id=21 PUR-000020 grand=2000 status=unpaid
+  Δ: {"gl":{"1131":2000,"2110":-2000},"sup":{"1":2000},"debt":{"1":2000},"ple":{"1":-2000},"inv":{"q":1000,"v":2000},"lots":{"q":1000,"v":2000},"je":1}
+
+## N3. delete A (non-last)
+  resp: {"status":200} 
+  Δ: {"gl":{"1131":-2000,"2110":2000},"sup":{"1":-2000},"debt":{"1":-2000},"ple":{"1":2000},"inv":{"q":-1000,"v":-2000},"lots":{"q":-1000,"v":-2000},"je":-1}
+
+## N4. create purchase after delete
+  resp: {"status":409,"err":"DUPLICATE_ENTRY"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"ple":{},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"je":0}
+
+## N5. retry
+  resp: {"status":409,"err":"DUPLICATE_ENTRY"} 
+  Δ: {"gl":{},"sup":{},"debt":{},"ple":{},"inv":{"q":0,"v":0},"lots":{"q":0,"v":0},"je":0}
+N6. stock transfer after purchase delete (lot numbering): {"status":409,"err":"DUPLICATE_ENTRY"}
+  purchase numbers: ["PUR-000020","PUR-000018","PUR-000017","PUR-000016"]

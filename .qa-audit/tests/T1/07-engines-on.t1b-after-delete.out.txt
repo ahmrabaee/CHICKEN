@@ -1,0 +1,103 @@
+
+## [OFF] cash sale 100.00 -> 201 
+   JE-000039 sale posted=1 date=2026-11-25T16:11:48.733Z Dr=15000 Cr=15000 roundOff=0 | 1111:10000 4110:-10000 5100:5000 1131:-5000
+   GL Δ balanced=true; metrics Δ {"gl_cash":10000,"gl_inventory":-5000,"gl_total_dr":15000,"gl_total_cr":15000,"inventory_qty":-2500,"inventory_value":-5000,"lots_qty":-2500,"lots_value":-5000,"sle_value":-5000,"sle_qty":-2500}
+
+## [OFF] credit sale 100.00 -> 201 
+   JE-000040 sale posted=1 date=2026-11-25T16:11:48.771Z Dr=15000 Cr=15000 roundOff=0 | 1120:10000 4110:-10000 5100:5000 1131:-5000
+   GL Δ balanced=true; metrics Δ {"gl_ar":10000,"gl_inventory":-5000,"gl_total_dr":15000,"gl_total_cr":15000,"customers_balance":10000,"debts_receivable_open":10000,"ple_customer":10000,"inventory_qty":-2500,"inventory_value":-5000,"lots_qty":-2500,"lots_value":-5000,"sle_value":-5000,"sle_qty":-2500}
+
+## [OFF] /payments/sale 25.00 -> 201 
+   JE-000041 payment posted=1 date=2026-11-25T16:11:48.805Z Dr=2500 Cr=2500 roundOff=0 | 1111:2500 1120:-2500
+   GL Δ balanced=true; metrics Δ {"gl_cash":2500,"gl_ar":-2500,"gl_total_dr":2500,"gl_total_cr":2500,"customers_balance":-2500,"debts_receivable_open":-2500,"ple_customer":-2500}
+
+set gl_engine_enabled 200 tax_engine_enabled 200 [{"key":"gl_engine_enabled","value":"true"},{"key":"tax_engine_enabled","value":"true"}]
+
+## [ON] cash sale 100.00 -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] cash sale 100.00 with 5.00 discount -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] cash sale 33.33 + VAT template 1 (15%) -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] same, paying the server-computed total (credit for remainder) -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] VAT sale with 1.00 discount (K3-020) -> 400 {"code":"UNBALANCED_ENTRY","message":"Unbalanced entry: Debit=6585, Credit=6485, diff=100","messageAr":"القيد غير متوازن"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] credit sale 100.00 -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] /payments/sale 25.00 bank -> 400 {"code":"VALIDATION_ERROR","message":"saleId must be a number conforming to the specified constraints","messageAr":"saleId must be a number conforming to the specified constraints","details":["saleId 
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] mixed tender 50 cash + 50 card -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] credit purchase 20.00 + tax 3.00 -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this purchase_number already exists","messageAr":"يوجد سجل بهذا purchase_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] purchase 20.00 + tax 3.00 paid 23.00 bank -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this purchase_number already exists","messageAr":"يوجد سجل بهذا purchase_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] expense 10.00 bank_transfer (category rent 5210) -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] expense 10.00 + tax 1.50 cash -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] wastage 0.333 kg -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] adjustment -0.777 kg -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] manual JE imbalance 0.03 (within tolerance 5) -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] manual JE imbalance 0.40 (> tolerance 5) -> 400 {"code":"UNBALANCED_ENTRY","message":"Unbalanced entry: Debit=1040, Credit=1000, diff=40","messageAr":"القيد غير متوازن"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] manual JE zero lines -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] manual JE fractional 1.6+0.4/2 -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] void sale posted under OFF -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] cancel payment posted under OFF -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] void sale posted under ON -> 400 {"code":"VALIDATION_ERROR","message":"Validation failed (numeric string is expected)","messageAr":"فشل التحقق من البيانات"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] purchase X -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this purchase_number already exists","messageAr":"يوجد سجل بهذا purchase_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] purchase Y -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this purchase_number already exists","messageAr":"يوجد سجل بهذا purchase_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] DELETE purchase X (hard-deletes its JE) -> 400 {"code":"VALIDATION_ERROR","message":"Validation failed (numeric string is expected)","messageAr":"فشل التحقق من البيانات"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] next posting after JE delete (cash sale) -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] and again -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+set gl_engine_enabled=false 200 tax_engine_enabled=false 200
+
+## [OFF] cancel payment posted under ON -> 400 {"code":"VALIDATION_ERROR","message":"Validation failed (numeric string is expected)","messageAr":"فشل التحقق من البيانات"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [OFF] void credit sale posted under ON (after its payment cancelled) -> 400 {"code":"VALIDATION_ERROR","message":"Validation failed (numeric string is expected)","messageAr":"فشل التحقق من البيانات"}
+   GL Δ balanced=true; metrics Δ {}
+
+SUMMARY [{"name":"[ON] cash sale 100.00","status":409,"jes":0,"unbalanced":0},{"name":"[ON] cash sale 100.00 with 5.00 discount","status":409,"jes":0,"unbalanced":0},{"name":"[ON] cash sale 33.33 + VAT template 1 (15%)","status":409,"jes":0,"unbalanced":0},{"name":"[ON] same, paying the server-computed total (credit for remainder)","status":409,"jes":0,"unbalanced":0},{"name":"[ON] VAT sale with 1.00 discount (K3-020)","status":400,"jes":0,"unbalanced":0},{"name":"[ON] credit sale 100.00","status":409,"jes":0,"unbalanced":0},{"name":"[ON] /payments/sale 25.00 bank","status":400,"jes":0,"unbalanced":0},{"name":"[ON] mixed tender 50 cash + 50 card","status":409,"jes":0,"unbalanced":0},{"name":"[ON] credit purchase 20.00 + tax 3.00","status":409,"jes":0,"unbalanced":0},{"name":"[ON] purchase 20.00 + tax 3.00 paid 23.00 bank","status":409,"jes":0,"unbalanced":0},{"name":"[ON] expense 10.00 bank_transfer (category rent 5210)","status":409,"jes":0,"unbalanced":0},{"name":"[ON] expense 10.00 + tax 1.50 cash","status":409,"jes":0,"unbalanced":0},{"name":"[ON] wastage 0.333 kg","status":409,"jes":0,"unbalanced":0},{"name":"[ON] adjustment -0.777 kg","status":409,"jes":0,"unbalanced":0},{"name":"[ON] manual JE imbalance 0.03 (within tolerance 5)","status":409,"jes":0,"unbalanced":0},{"name":"[ON] manual JE imbalance 0.40 (> tolerance 5)","status":400,"jes":0,"unbalanced":0},{"name":"[ON] manual JE zero lines","status":409,"jes":0,"unbalanced":0},{"name":"[ON] manual JE fractional 1.6+0.4/2","status":409,"jes":0,"unbalanced":0},{"name":"[ON] void sale posted under OFF","status":409,"jes":0,"unbalanced":0},{"name":"[ON] cancel payment posted under OFF","status":409,"jes":0,"unbalanced":0},{"name":"[ON] void sale posted under ON","status":400,"jes":0,"unbalanced":0},{"name":"[ON] purchase X","status":409,"jes":0,"unbalanced":0},{"name":"[ON] purchase Y","status":409,"jes":0,"unbalanced":0},{"name":"[ON] DELETE purchase X (hard-deletes its JE)","status":400,"jes":0,"unbalanced":0},{"name":"[ON] next posting after JE delete (cash sale)","status":409,"jes":0,"unbalanced":0},{"name":"[ON] and again","status":409,"jes":0,"unbalanced":0},{"name":"[OFF] cancel payment posted under ON","status":400,"jes":0,"unbalanced":0},{"name":"[OFF] void credit sale posted under ON (after its payment cancelled)","status":400,"jes":0,"unbalanced":0}]
+invariants: ["AR-01:{\"gl_ar\":\"225.00\",\"customers_currentBalance\":\"145.00\",\"open_receivable_debts\":\"145.00\",\"ple_customer\":\"155.00\",\"sales_total_minus_paid\":\"195.00\"}","AR-02:1 customers differ","AP-01:{\"gl_ap\":\"6340.00\",\"suppliers_currentBalance\":\"6343.00\",\"open_payable_debts\":\"6343.00\",\"ple_supplier_neg\":\"6343.00\",\"purchases_grand_minus_paid\":\"6343.00\"}","INV-01:{\"gl_inventory\":\"3683.00\",\"inventory_totalValue\":\"3683.00\",\"lots_remaining_x_cost\":\"3725.00\",\"stock_ledger_value\":\"3683.00\"}","INV-02:1 items","INV-03:1 items","INV-04:1 inventory rows, 1 lots","CASH-03:4885.00 diff=-70.00"]

@@ -1,0 +1,26 @@
+config (seed)                                              {"customEnabled":true,"totalLength":25,"itemCodeStart":1,"itemCodeLength":6,"weightStart":7,"weightLength":5,"totalPriceStart":12,"totalPriceLength":7,"priceStart":19,"priceLength":5}
+seed item codes                                            CHK-RAW-01,CHK-WHOLE-01,CHK-BREAST-01,CHK-THIGH-01,CHK-WING-01,CHK-SKEWER-01
+25d 1.234 kg item 123456 total 3702 price 3000             {"status":200,"itemId":8,"code":"123456","active":true,"weightKg":1.234,"price":3702}
+25d same with wrong check digit 9                          {"status":200,"itemId":8,"code":"123456","active":true,"weightKg":1.234,"price":3702}
+25d label price/kg 3500 != system 3000 (scale reprogrammed) {"status":200,"itemId":8,"code":"123456","active":true,"weightKg":1,"price":3500}
+25d unknown item 999999                                    404 "NOT_FOUND"
+25d INACTIVE item 222222                                   {"status":200,"itemId":11,"code":"222222","active":false,"weightKg":1,"price":2500}
+25d weight 00000 (weight missing)                          {"status":200,"itemId":8,"code":"123456","active":true,"weightKg":1,"price":3000}
+25d with dashes/letters "2-123456-01234-0003702-03000-0"   {"status":200,"itemId":8,"code":"123456","active":true,"weightKg":1.234,"price":3702}
+25d by ACCOUNTANT                                          {"status":200,"itemId":8,"code":"123456","active":true,"weightKg":1.234,"price":3702}
+static EAN-13 6291234567890                                {"status":200,"itemId":8,"code":"123456","active":true,"weightKg":1,"price":3000}
+static unknown 0000000000000                               404 "NOT_FOUND"
+/barcode/parse 25d                                         {"itemCode":"123456","weightKg":1.234,"weightGrams":1234,"price":3000,"totalPriceWithTax":3702,"rawBarcode":"2123456012340003702030000"}
+PUT /barcode/config 14-digit (weightLength 0)              400 "VALIDATION_ERROR" ["weightLength must not be less than 1","priceLength must not be less than 1"]
+  PUT /settings/barcode.total_length=14                    200
+  PUT /settings/barcode.weight_length=0                    200
+  PUT /settings/barcode.total_price_start=7                200
+  PUT /settings/barcode.price_start=0                      200
+  PUT /settings/barcode.price_length=0                     200
+  config now                                               {"customEnabled":true,"totalLength":14,"itemCodeStart":1,"itemCodeLength":6,"weightStart":7,"weightLength":0,"totalPriceStart":7,"totalPriceLength":7,"priceStart":0,"priceLength":0}
+14d 123456 label total 1001                                lookup weightKg=0.334 price=1001 -> saved line=1002 status=201 due=1
+14d 123456 label total 3000                                lookup weightKg=1 price=3000 -> saved line=3000 status=201 due=0
+14d 654321 label total 1000                                lookup weightKg=0.333 price=1000 -> saved line=(price 0, POS would send pricePerKg 0 -> 400) status=400 "UNBALANCED_ENTRY" due=undefined
+14d 654321 label total 2999                                lookup weightKg=1 price=2999 -> saved line=2999 status=201 due=0
+14d 111111 label total 1234                                lookup weightKg=1 price=1234 -> saved line=(price 0, POS would send pricePerKg 0 -> 400) status= due=undefined
+14d GTIN-14 10012345678902 treated as scale label?         404 "NOT_FOUND"

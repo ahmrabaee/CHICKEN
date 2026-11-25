@@ -1,0 +1,52 @@
+create bank account                              201 id=1
+create accountant                                201
+AUTHZ accountant GET /system/backup/config       200
+AUTHZ accountant GET /system/backups             200
+AUTHZ accountant GET /accounting/accounts/1/can-delete 403
+AUTHZ accountant GET /tax/templates              200
+AUTHZ accountant GET /credit-notes               200
+AUTHZ accountant GET /purchases                  403
+AUTHZ accountant GET /settings                   403
+cash sale 10kg item2 @30                         201 cost=18000
+  GL after cash sale                             {"cash":30000,"bank":0,"ar":0,"inv":-18000,"rev":-30000,"ap":0,"exp5400":0}
+credit sale 10000 cust1                          201 id=7
+payment 4000 via /payments/sale                  201
+void credit sale                                 200 
+  NET GL delta (credit sale+pay+void) expect all 0 {"cash":-4000,"bank":0,"ar":4000,"inv":0,"rev":0,"ap":0,"exp5400":0}
+  customer1 balance                              {"current_balance":0}
+POST /sales/:id/payments 3000                    201 
+  JE rows for that payment                       {"n":0}
+  GL delta (expect cash +3000, AR -3000)         {"cash":0,"ar":0}
+  debt / customer2 balance                       {"debt":{"total_amount":10000,"amount_paid":3000,"status":"partial"},"cust":{"current_balance":7000}}
+payment 1000 on VOIDED sale                      201 ACCEPTED
+mixed sale cash5000+bank5000                     201
+  GL delta (expect cash+5000 bank+5000)          {"cash":10000,"bank":0}
+expense 2000 bank_transfer                       400 {"code":"VALIDATION_ERROR","message":"categoryId must be a number conforming to the specified constraints","messageAr":"categoryId must be a number conforming to the specified constraints","details":["categoryId must be a number conforming to the specified constraints"]}
+  GL delta (expect bank -2000)                   {"cash":0,"bank":0,"exp":0}
+credit purchase 2000 + tax 300                   201 grandTotal=2300
+  GL AP delta (expect -2300)                     {"ap":-2000,"inv":2000}
+  supplier1 balance / debt                       {"sup":{"current_balance":2300},"debt":{"total_amount":2300}}
+purchase paid in full incl tax (cash)            400 "UNBALANCED_ENTRY"
+purchase payment 1000                            201 supplier balance 2300 -> 2300 (expect -1000)
+3 purchases                                      201:PUR-000005 201:PUR-000006 201:PUR-000007
+delete middle purchase                           200
+next purchase after delete                       409 {"code":"DUPLICATE_ENTRY","message":"A record with this purchase_number already exists","messageAr":"يوجد سجل بهذا purchase_number بالفعل"}
+and again                                        409 "DUPLICATE_ENTRY"
+  JE for deleted purchase remaining              {"n":0}
+sale 2x30kg of item6 (only 50kg in stock)        201 ACCEPTED
+  item6 inventory/lots                           {"inv":{"q":-10000,"v":-24000},"lots":[{"id":5,"remaining_quantity_grams":-10000}]}
+adjust item5 -5kg                                201 
+  item5 inv vs lots                              {"inv":{"q":47000},"lots":{"q":52000}}
+wastage 1kg by ACCOUNTANT                        400
+  SLE rows for wastage                           {"n":0}
+stock transfer 5kg with inflated unitCost        409 {"code":"DUPLICATE_ENTRY","message":"A record with this lot_number already exists","messageAr":"يوجد سجل بهذا lot_number بالفعل"}
+  inventory.total_value delta vs GL 1131 delta   {"invTable":0,"gl1131":0,"jeForTransfer":0}
+debt write-off 5000                              200 AR delta=0 (expect -5000), JE count unchanged
+INVARIANT total dr/cr                            {"dr":524208,"cr":524208}
+INVARIANT unbalanced JEs                         []
+INVARIANT negative lots                          [{"id":5,"item_id":6,"remaining_quantity_grams":-10000}]
+INVARIANT inv vs lots                            [{"item_id":2,"inv":41000,"lots":41000},{"item_id":3,"inv":48000,"lots":48000},{"item_id":4,"inv":47000,"lots":47000},{"item_id":5,"inv":47000,"lots":52000},{"item_id":6,"inv":-10000,"lots":-10000}]
+INVARIANT GL1131 vs inventory.total_value        {"gl":-180008,"table":379992}
+JE by source                                     [{"source_type":"adjustment","n":1},{"source_type":"payment","n":3},{"source_type":"purchase","n":3},{"source_type":"reversal","n":1},{"source_type":"sale","n":6},{"source_type":"sale_void","n":1}]
+
+SUMMARY {"authz GET /system/backup/config":200,"authz GET /system/backups":200,"authz GET /accounting/accounts/1/can-delete":403,"authz GET /tax/templates":200,"authz GET /credit-notes":200,"authz GET /purchases":403,"authz GET /settings":403,"k3_001":{"cash":-4000,"bank":0,"ar":4000,"inv":0,"rev":0,"ap":0,"exp5400":0},"k3_002":{"cash":0,"ar":0},"payOnVoided":201,"k3_003":{"cash":10000,"bank":0},"expenseBank":{"status":400,"cash":0,"bank":0},"k3_004":{"ap":-2000},"k3_004_paid":400,"k3_007":{"status":201,"before":2300,"after":2300},"k3_005":[409,409],"k3_008":201,"transfer":{"invTable":0,"gl":0}}

@@ -1,0 +1,53 @@
+--- A lifecycle customer                                   6
+A1 credit sale 20000                                       AGREE {"glAR":20000,"custBal":20000,"debtsOpen":20000,"ple":20000,"apiOutstanding":20000,"stmtClosing":20000}
+   pay 7000                                                201
+A2 after partial collection 7000                           AGREE {"glAR":13000,"custBal":13000,"debtsOpen":13000,"ple":13000,"apiOutstanding":13000,"stmtClosing":13000}
+A3 2nd sale 10000 paid 4000 (due 6000)                     AGREE {"glAR":19000,"custBal":19000,"debtsOpen":19000,"ple":19000,"apiOutstanding":19000,"stmtClosing":19000}
+   CN 3000 on sale1                                        201 201
+A4 after credit note 3000                                  DISAGREE {"glAR":16000,"custBal":19000,"debtsOpen":19000,"ple":16000,"apiOutstanding":16000,"stmtClosing":16000}
+   write-off remainder of sale1                            200
+A5 after write-off of sale1 remainder                      DISAGREE {"glAR":16000,"custBal":6000,"debtsOpen":6000,"ple":16000,"apiOutstanding":16000,"stmtClosing":16000}
+   advance 2500                                            201
+A6 after advance payment 2500                              DISAGREE {"glAR":13500,"custBal":6000,"debtsOpen":6000,"ple":13500,"apiOutstanding":13500,"stmtClosing":13500}
+   allocate advance 2500 -> sale2                          201
+A7 after allocation                                        DISAGREE {"glAR":13500,"custBal":6000,"debtsOpen":6000,"ple":13500,"apiOutstanding":13500,"stmtClosing":13500}
+   sale2 status after allocation                           {"amount_paid":4000,"payment_status":"partial"}
+   pay sale2 full remaining 6000 AFTER allocation of 2500 (double collection?) 201
+A8 end                                                     DISAGREE {"glAR":7500,"custBal":0,"debtsOpen":0,"ple":7500,"apiOutstanding":7500,"stmtClosing":7500}
+--- B void after credit note, customer                     7
+B void after CN 4000                                       200
+   GL Δ of void                                            {"1120":-10000,"1131":5600,"4110":10000,"5100":-5600}
+B end (expect all 0)                                       DISAGREE {"glAR":-4000,"custBal":0,"debtsOpen":0,"ple":-4000,"apiOutstanding":0,"stmtClosing":-4000}
+--- C void after write-off, customer                       8
+C after write-off                                          DISAGREE {"glAR":10000,"custBal":0,"debtsOpen":0,"ple":10000,"apiOutstanding":10000,"stmtClosing":10000}
+C void after write-off                                     200
+C end (expect all 0)                                       DISAGREE {"glAR":0,"custBal":-10000,"debtsOpen":0,"ple":0,"apiOutstanding":0,"stmtClosing":"(no PLE rows in range; status 200)"}
+--- D POS partial then /payments then void, customer       9
+D void (POS paid 3000 + later 2000)                        200
+   GL Δ of void (expect cash -5000, AR -5000)              {"1111":-7000,"1120":-3000,"1131":5600,"4110":10000,"5100":-5600}
+D end (expect all 0)                                       DISAGREE {"glAR":2000,"custBal":0,"debtsOpen":0,"ple":0,"apiOutstanding":0,"stmtClosing":"(no PLE rows in range; status 200)"}
+--- E credit note edges, customer                          10
+E CN amount > outstanding (10001)                          400 "EXCEEDS_OUTSTANDING"
+E CN amount 0                                              400 "VALIDATION_ERROR"
+E CN amount 1.5 (fractional agora)                         201 stored=1
+E two drafts 6000+6000 on 10000                            201 201
+E submit both CONCURRENTLY                                 201 201
+E re-submit second sequentially                            400 "INVALID_STATUS"
+E submit first again (double submit)                       400 "INVALID_STATUS"
+E CN rows for sale                                         [{"id":4,"credit_note_number":"CN-000004","amount":1,"docstatus":0},{"id":5,"credit_note_number":"CN-000005","amount":6000,"docstatus":1},{"id":6,"credit_note_number":"CN-000006","amount":6000,"docstatus":1}]
+E after CNs                                                DISAGREE {"glAR":-2000,"custBal":10000,"debtsOpen":10000,"ple":-2000,"apiOutstanding":0,"stmtClosing":-2000}
+E CN on fully-paid cash sale 2000                          400 "EXCEEDS_OUTSTANDING"
+E CN on walk-in sale with 1 agora AR                       400 "EXCEEDS_OUTSTANDING"
+E CN create on VOIDED sale                                 400 "EXCEEDS_OUTSTANDING"
+E submit draft created BEFORE the void                     400 "EXCEEDS_OUTSTANDING"
+E accountant CN 100% of invoice                            201 submit 201
+E end                                                      DISAGREE {"glAR":-2000,"custBal":15000,"debtsOpen":15000,"ple":-2000,"apiOutstanding":0,"stmtClosing":-2000}
+F 3 concurrent voids                                       200 | 200 | 200
+   GL Δ (expect AR -10000, 4110 +10000, COGS/stock once)   {"1120":-30000,"1131":13200,"4110":30000,"5100":-13200}
+   item4 qty Δ (expect +2000)                              6000
+   sale_void JEs                                           {"n":3}
+F end                                                      DISAGREE {"glAR":-20000,"custBal":-20000,"debtsOpen":0,"ple":0,"apiOutstanding":0,"stmtClosing":"(no PLE rows in range; status 200)"}
+G 3 concurrent payments of 6000 on 10000 due               201 | 201 | 201
+   sale amountPaid                                         {"amount_paid":18000,"payment_status":"partial"}
+G end                                                      DISAGREE {"glAR":-8000,"custBal":-8000,"debtsOpen":0,"ple":-8000,"apiOutstanding":0,"stmtClosing":-8000}
+INVARIANT unbalanced JEs                                   []

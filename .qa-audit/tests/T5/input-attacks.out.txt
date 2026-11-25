@@ -1,0 +1,26 @@
+
+==================== PASSWORD POLICY (admin creates users) ====================
+  password "1" (len 1) -> 400 (rejected)
+  password "abc" (len 3) -> 400 (rejected)
+  password "password" (len 8) -> 201 *** ACCEPTED ***
+  password "12345678" (len 8) -> 201 *** ACCEPTED ***
+  password "aaaaaaaa" (len 8) -> 201 *** ACCEPTED ***
+
+==================== BRUTE FORCE / LOCKOUT (10 bad logins for admin) ====================
+  10 consecutive bad logins -> 401,401,401,401,401,401,401,401,401,401
+  correct login after 10 failures -> 200 (NO lockout: account not locked)
+
+==================== MALFORMED JSON / OVERSIZED ====================
+  malformed JSON -> 400 | leaks stack? no | {"success":false,"error":{"code":"VALIDATION_ERROR","message":"Unexpected end of JSON input","messag
+  5MB username payload -> 500 (no body-size limit => accepted/processed)
+
+==================== PROTOTYPE POLLUTION ====================
+  __proto__ in body -> 201 | global polluted? no
+
+==================== SQL INJECTION PROBE (query params) ====================
+  customers search q="' OR 1=1 --" -> 200 | rows: 0
+  users sortBy injection -> 400 (400/200 both fine; 500 w/ SQL error = vuln)
+  sales sortBy UNION -> 400
+
+==================== ACCOUNTANT BACKUP IMPORT (inject arbitrary DB archive, no RolesGuard) ====================
+  [accountant] POST /system/backups/import -> 201 *** GUARD GAP: ACCOUNTANT IMPORTED A DB ARCHIVE *** | {"success":true,"data":{"message":"Backup imported successfully","messageAr":"Backup imported successfully","backupId":2,"filename":"backup_manual_import_179560

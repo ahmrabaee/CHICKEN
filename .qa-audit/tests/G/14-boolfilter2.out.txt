@@ -1,0 +1,9 @@
+customers default       ["Dup:true","Dup2:true","GCustHist:true","GCustHist:true","GPaidOff:true","عميل نقدي:true","فندق ب:true","مطعم أ:true"]
+customers isActive=false ["Dup:true","Dup2:true","GCustHist:true","GCustHist:true","GPaidOff:true","عميل نقدي:true","فندق ب:true","مطعم أ:true"]
+customers isActive=      ["GPaidOff1795624841652:false"]
+items isActive=false    ["BC:true","GInCat:true","أجنحة دجاج:true","أفخاذ دجاج:true","دجاج خام:true","شيش طاووق:true","صدور دجاج:true","فروج كامل:true"]
+items isActive=         ["GScen:false"]
+users default ["gacc:true","admin:true"]
+users isActive=false ["gacc:true","admin:true"]
+suppliers default ["GPaidSup:true","GSupHist:true","GSupHist :true","gsuphist:true","شركة الأعلاف الوطنية:true","مورد الدواجن المتحدة:true"]
+branches includeInactive=false 1 true 1

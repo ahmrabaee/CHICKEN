@@ -1,0 +1,54 @@
+a) credit sale SAL-20261125-0107 id=112 total=5600
+a) void tally {"200":5}
+a) inventory restored 10000 g (expected 2000)
+a) JEs for sale [{"id":117,"entry_number":"JE-000117","source_type":"sale","is_reversed":0},{"id":118,"entry_number":"JE-000118","source_type":"sale_void","is_reversed":0},{"id":119,"entry_number":"JE-000119","source_type":"sale_void","is_reversed":0},{"id":120,"entry_number":"JE-000120","source_type":"sale_void","is_reversed":0},{"id":121,"entry_number":"JE-000121","source_type":"sale_void","is_reversed":0},{"id":122,"entry_number":"JE-000122","source_type":"sale_void","is_reversed":0}]
+a) delta:
+GL delta: Dr 500.00 / Cr 500.00 (balanced)
+  1120      Accounts Receivable        Dr         0.00 Cr       280.00 net      -280.00
+  1131      Fresh Chicken Inventory    Dr       220.00 Cr         0.00 net       220.00
+  4110      Fresh Chicken Sales        Dr       280.00 Cr         0.00 net       280.00
+  5100      Cost of Goods Sold         Dr         0.00 Cr       220.00 net      -220.00
+Metric deltas (money in currency units, qty in grams):
+  gl_ar                    -280.00
+  gl_inventory             220.00
+  gl_total_dr              500.00
+  gl_total_cr              500.00
+  customers_balance        -280.00
+  debts_receivable_open    -56.00
+  ple_customer             -56.00
+  inventory_qty            10000 g
+  inventory_value          220.00
+  lots_qty                 10000 g
+  lots_value               220.00
+  sle_value                220.00
+  sle_qty                  10000 g
+Item deltas:
+  4@1 CHK-THIGH-01 {"code":"CHK-THIGH-01","qty":10000,"value":22000,"lotQty":10000,"lotValue":22000}
+Row count deltas: {"journal_entries":5,"journal_entry_lines":20,"stock_movements":5,"stock_ledger_entries":5,"audit_logs":5}
+b) /payments/sale: sale SAL-20261125-0108 total=5600; 5 x 4000 → tally {"201":5}; accepted 20000 vs total 5600 → OVERPAID 14400
+   sale row {"amount_paid":20000,"payment_status":"partial"} debt {"total_amount":5600,"amount_paid":20000,"status":"partial"} customer bal {"current_balance":-14400}
+   delta:
+GL delta: Dr 200.00 / Cr 200.00 (balanced)
+  1111      Cash in Drawer             Dr       200.00 Cr         0.00 net       200.00
+  1120      Accounts Receivable        Dr         0.00 Cr       200.00 net      -200.00
+Metric deltas (money in currency units, qty in grams):
+  gl_cash                  200.00
+  gl_ar                    -200.00
+  gl_total_dr              200.00
+  gl_total_cr              200.00
+  customers_balance        -200.00
+  debts_receivable_open    -200.00
+  ple_customer             -200.00
+Row count deltas: {"journal_entries":5,"journal_entry_lines":10,"payments":5,"payment_ledger_entries":5}
+c) /sales/:id/payments: sale SAL-20261125-0109 total=5600; 5 x 4000 → tally {"201":5}; accepted 20000 vs total 5600 → OVERPAID 14400
+   sale row {"amount_paid":4000,"payment_status":"partial"} debt {"total_amount":5600,"amount_paid":20000,"status":"partial"} customer bal {"current_balance":-28800}
+   delta:
+GL delta: Dr 0.00 / Cr 0.00 (balanced)
+Metric deltas (money in currency units, qty in grams):
+  customers_balance        -200.00
+  debts_receivable_open    -200.00
+  ple_customer             -200.00
+Row count deltas: {"payments":5,"payment_ledger_entries":5}
+d) parallel double submit: ["201 SAL-20261125-0110","201 SAL-20261125-0111"] | sequential retry: 201 SAL-20261125-0112
+d) sales with that note: {"n":3,"t":8400}
+invariants: ["AR-01: ","AR-02: ","DEBT-01: ","INV-01: ","INV-02: ","INV-03: ","INV-04: ","CASH-03: ","DOC-02: ","DOC-03: "]

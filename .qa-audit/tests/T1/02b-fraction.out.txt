@@ -1,0 +1,5 @@
+[201] 1.6 + 0.4 dr / 2 cr:  stored Σdr=1 Σcr=2 ** UNBALANCED JE PERSISTED & POSTED **
+[201] 0.5+0.5+0.5+0.5 dr / 2 cr:  stored Σdr=0 Σcr=2 ** UNBALANCED JE PERSISTED & POSTED **
+[201] 99.9 dr / 99.9 cr:  stored Σdr=99 Σcr=99 
+ledger totals posted {"dr":101273400,"cr":101273403} diff -3
+TB API Σ endingDr 100648500 Σ endingCr 100648503

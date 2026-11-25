@@ -1,0 +1,21 @@
+=== K4-021 POS >100 items
+  active items in backend: {"page":1,"pageSize":1,"totalItems":106,"totalPages":106,"hasNext":true,"hasPrev":false}
+  product cards rendered: 98; has 'صنف اختبار 105': false; has 'صنف اختبار 006': false
+  items requests: ["/v1/items?isActive=true&page=1&pageSize=100"]
+  search "صنف اختبار 105": cards=0 noMatchMessage=true
+  search "QA-105": cards=0 noMatchMessage=true
+  search "فروج": cards=0 noMatchMessage=true
+
+=== K4-012 payment for old unpaid sale beyond first 500 (saleId=23)
+  target SAL-20261125-0018 total=1100 paid=0; total sales=528
+  sales request: /v1/sales?pageSize=500
+  invoice field shows: "فاتورة البيع * اختر فاتورة أو ابحث... لا توجد فواتير بمبلغ متبقٍ. أنشئ فاتورة من نقطة البيع أو المبيعات أولاً."
+  submit -> toasts=["الفاتورة غير موجودة\nالفاتورة المحددة غير موجودة أو لا تملك مبلغاً متبقياً. حدّث الصفحة واختر فاتورة صالحة."] posts=[]
+
+=== payment: amount > outstanding, decimal comma "1,250.00"
+  new credit sale SAL-20261125-0524 id=529 total=1000
+  amount typed 1,250.00 -> input "1.25000" -> ["/v1/payments/sale 201 req={\"saleId\":529,\"amount\":125,\"paymentMethod\":\"cash\",\"referenceNumber\":\"\",\"notes\":\"\",\"paymentDate\":\"2026-11-25\"} res={\"success\":true,\"data\":{\"id\":527,\"paymentNumber\":\"PAY-000527\",\"paymentDate\":\"2026-11-25T00:00:00.000Z\",\"amount\":125,\"paymentMethod\":\"cash\",\"referenceType\":\"sale\",\"referenceId\":529,\"partyType\":\"custome"] toasts=["تم تسجيل الدفعة بنجاح"]
+  amount typed 25 -> input "25" -> ["/v1/payments/sale 400 req={\"saleId\":529,\"amount\":2500,\"paymentMethod\":\"cash\",\"referenceNumber\":\"\",\"notes\":\"\",\"paymentDate\":\"2026-11-25\"} res={\"success\":false,\"error\":{\"code\":\"OVERPAYMENT\",\"message\":\"Payment amount (25.00 ₪) exceeds amount due (8.75 ₪)\",\"messageAr\":\"مبلغ الدفع (25.00 ₪) يتجاوز المبلغ المستحق (8.75 ₪)\"},\"meta\":{\"timestamp\":\""] toasts=["خطأ في تسجيل الدفعة\nمبلغ الدفع (25.00 ₪) يتجاوز المبلغ المستحق (8.75 ₪)"]
+  sale SAL-20261125-0524 after: total=1000 paid=125 status=partial
+
+pageErrors: []

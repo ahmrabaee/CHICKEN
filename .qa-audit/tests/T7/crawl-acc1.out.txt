@@ -1,0 +1,212 @@
+/ -> / denied=false crashed=false
+  pageErrors: []
+  apiErrors: ["GET /v1/branches -> 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions\",\"messageAr\":\"صلاحيات غير كافية\"},\"meta\":{\"timestamp\":\"2026-11-25T11:26:12.933Z\",\"path\":\"/v1/branches\"}}","GET /v1/debts/payables?page=1&pageSize=500 -> 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions - page access required\",\"messageAr\":\"صلاحيات غير كافية - يلزم صلاحية الوصول للصفحة\"},\"meta\":{\"timestamp\":\"2026-11-25T11","GET /v1/branches -> 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions\",\"messageAr\":\"صلاحيات غير كافية\"},\"meta\":{\"timestamp\":\"2026-11-25T11:26:13.948Z\",\"path\":\"/v1/branches\"}}","GET /v1/debts/payables?page=1&pageSize=500 -> 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions - page access required\",\"messageAr\":\"صلاحيات غير كافية - يلزم صلاحية الوصول للصفحة\"},\"meta\":{\"timestamp\":\"2026-11-25T11"]
+  consoleErrors(8): ["Failed to load resource: the server responded with a status of 403 (Forbidden)","❌ [Error] GET /branches {success: false, error: Object, meta: Object}","Failed to load resource: the server responded with a status of 403 (Forbidden)","❌ [Error] GET /debts/payables {success: false, error: Object, meta: Object}"]
+/inventory -> /inventory denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/inventory?tab=categories -> /inventory?tab=categories denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/inventory?tab=stock-transfer -> /inventory?tab=stock-transfer denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/inventory/new -> /inventory/new denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/inventory/1 -> /inventory/1 denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/sales/new -> /sales/new denied=false crashed=false
+  pageErrors: []
+  apiErrors: ["GET /v1/bank-accounts -> 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions\",\"messageAr\":\"صلاحيات غير كافية\"},\"meta\":{\"timestamp\":\"2026-11-25T11:26:21.071Z\",\"path\":\"/v1/bank-accounts\"}}","GET /v1/bank-accounts -> 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions\",\"messageAr\":\"صلاحيات غير كافية\"},\"meta\":{\"timestamp\":\"2026-11-25T11:26:22.101Z\",\"path\":\"/v1/bank-accounts\"}}"]
+  consoleErrors(4): ["Failed to load resource: the server responded with a status of 403 (Forbidden)","❌ [Error] GET /bank-accounts {success: false, error: Object, meta: Object}","Failed to load resource: the server responded with a status of 403 (Forbidden)","❌ [Error] GET /bank-accounts {success: false, error: Object, meta: Object}"]
+/sales -> /sales denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/sales/1 -> /sales/1 denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/purchasing -> /purchasing denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/purchasing/1 -> /purchasing/1 denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/purchasing/new -> /purchasing/new denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/purchasing/1/edit -> /purchasing/1/edit denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/customers -> /customers denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/customers/new -> /customers/new denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/customers/1 -> /customers/1 denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/traders -> /traders denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/traders/new -> /traders/new denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/traders/1 -> /traders/1 denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/payments -> /payments denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/payments/new -> /payments/new denied=false crashed=false
+  pageErrors: []
+  apiErrors: ["GET /v1/purchases?pageSize=100 -> 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions\",\"messageAr\":\"صلاحيات غير كافية\"},\"meta\":{\"timestamp\":\"2026-11-25T11:26:39.524Z\",\"path\":\"/v1/purchases?pageSize=100\"}}","GET /v1/bank-accounts -> 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions\",\"messageAr\":\"صلاحيات غير كافية\"},\"meta\":{\"timestamp\":\"2026-11-25T11:26:39.529Z\",\"path\":\"/v1/bank-accounts\"}}","GET /v1/suppliers?pageSize=500 -> 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions\",\"messageAr\":\"صلاحيات غير كافية\"},\"meta\":{\"timestamp\":\"2026-11-25T11:26:39.529Z\",\"path\":\"/v1/suppliers?pageSize=500\"}}","GET /v1/purchases?pageSize=100 -> 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions\",\"messageAr\":\"صلاحيات غير كافية\"},\"meta\":{\"timestamp\":\"2026-11-25T11:26:40.551Z\",\"path\":\"/v1/purchases?pageSize=100\"}}","GET /v1/bank-accounts -> 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions\",\"messageAr\":\"صلاحيات غير كافية\"},\"meta\":{\"timestamp\":\"2026-11-25T11:26:40.551Z\",\"path\":\"/v1/bank-accounts\"}}","GET /v1/suppliers?pageSize=500 -> 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions\",\"messageAr\":\"صلاحيات غير كافية\"},\"meta\":{\"timestamp\":\"2026-11-25T11:26:40.553Z\",\"path\":\"/v1/suppliers?pageSize=500\"}}"]
+  consoleErrors(12): ["Failed to load resource: the server responded with a status of 403 (Forbidden)","❌ [Error] GET /purchases {success: false, error: Object, meta: Object}","Failed to load resource: the server responded with a status of 403 (Forbidden)","❌ [Error] GET /bank-accounts {success: false, error: Object, meta: Object}"]
+/payments/1 -> /payments/1 denied=false crashed=false
+  pageErrors: []
+  apiErrors: ["GET /v1/purchases?pageSize=100 -> 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions\",\"messageAr\":\"صلاحيات غير كافية\"},\"meta\":{\"timestamp\":\"2026-11-25T11:26:40.913Z\",\"path\":\"/v1/purchases?pageSize=100\"}}","GET /v1/suppliers?pageSize=500 -> 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions\",\"messageAr\":\"صلاحيات غير كافية\"},\"meta\":{\"timestamp\":\"2026-11-25T11:26:40.913Z\",\"path\":\"/v1/suppliers?pageSize=500\"}}","GET /v1/bank-accounts -> 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions\",\"messageAr\":\"صلاحيات غير كافية\"},\"meta\":{\"timestamp\":\"2026-11-25T11:26:40.921Z\",\"path\":\"/v1/bank-accounts\"}}","GET /v1/suppliers?pageSize=500 -> 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions\",\"messageAr\":\"صلاحيات غير كافية\"},\"meta\":{\"timestamp\":\"2026-11-25T11:26:41.930Z\",\"path\":\"/v1/suppliers?pageSize=500\"}}","GET /v1/purchases?pageSize=100 -> 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions\",\"messageAr\":\"صلاحيات غير كافية\"},\"meta\":{\"timestamp\":\"2026-11-25T11:26:41.931Z\",\"path\":\"/v1/purchases?pageSize=100\"}}","GET /v1/bank-accounts -> 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions\",\"messageAr\":\"صلاحيات غير كافية\"},\"meta\":{\"timestamp\":\"2026-11-25T11:26:41.931Z\",\"path\":\"/v1/bank-accounts\"}}"]
+  consoleErrors(12): ["Failed to load resource: the server responded with a status of 403 (Forbidden)","❌ [Error] GET /purchases {success: false, error: Object, meta: Object}","Failed to load resource: the server responded with a status of 403 (Forbidden)","❌ [Error] GET /suppliers {success: false, error: Object, meta: Object}"]
+/reconciliation -> /reconciliation denied=false crashed=false
+  pageErrors: []
+  apiErrors: ["GET /v1/suppliers?page=1&pageSize=500 -> 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions\",\"messageAr\":\"صلاحيات غير كافية\"},\"meta\":{\"timestamp\":\"2026-11-25T11:26:42.330Z\",\"path\":\"/v1/suppliers?page=1&pageSize=","GET /v1/suppliers?page=1&pageSize=500 -> 403 {\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Insufficient permissions\",\"messageAr\":\"صلاحيات غير كافية\"},\"meta\":{\"timestamp\":\"2026-11-25T11:26:43.341Z\",\"path\":\"/v1/suppliers?page=1&pageSize="]
+  consoleErrors(4): ["Failed to load resource: the server responded with a status of 403 (Forbidden)","❌ [Error] GET /suppliers {success: false, error: Object, meta: Object}","Failed to load resource: the server responded with a status of 403 (Forbidden)","❌ [Error] GET /suppliers {success: false, error: Object, meta: Object}"]
+/credit-notes -> /credit-notes denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/credit-notes/new -> /credit-notes/new denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/expenses -> /expenses denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/expenses/new -> /expenses/new denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/expenses/1 -> /expenses/1 denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/debts -> /debts denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/wastage -> /wastage denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/wastage/new -> /wastage/new denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/stock-transfer/new -> /stock-transfer/new denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/reports -> /reports denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/reports/sales -> /reports/sales denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/reports/purchases -> /reports/purchases denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/reports/inventory -> /reports/inventory denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/reports/expenses -> /reports/expenses denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/reports/profit-loss -> /reports/profit-loss denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/reports/wastage -> /reports/wastage denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/reports/vat -> /reports/vat denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/reports/stock-vs-gl -> /reports/stock-vs-gl denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/accounting -> /accounting denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/accounting/journal/new -> /accounting/journal/new denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/audit -> /audit denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/settings -> /settings denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/users -> /users denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/branches -> /branches denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/branches/new -> /branches/new denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/branches/1 -> /branches/1 denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/categories -> /categories denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/adjustments -> /adjustments denied=true crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/stock-transfer -> /inventory?tab=stock-transfer denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(0): []
+/nonexistent -> /nonexistent denied=false crashed=false
+  pageErrors: []
+  apiErrors: []
+  consoleErrors(1): ["404 Error: User attempted to access non-existent route: /nonexistent"]

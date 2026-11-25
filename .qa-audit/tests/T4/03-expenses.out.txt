@@ -1,0 +1,108 @@
+# T4-03 expenses 2026-11-25T11:19:05.318Z B1 1
+
+## E1. rent expense (category 2 = 5210) 100.00 cash
+  resp: {"status":201} id=4 EXP-000004
+  GLΔ: {"1111":-10000,"5400":10000} supΔ {} debtΔ {} pleΔ {} je 1
+  JE: [{"entry_number":"JE-000040","code":"5400","d":10000,"c":0},{"entry_number":"JE-000040","code":"1111","d":0,"c":10000}]
+
+## E2. electricity (cat 4 = 5221) 200.00 bank_transfer B1
+  resp: {"status":201} id=5 EXP-000005
+  GLΔ: {"1111":-20000,"5400":20000} supΔ {} debtΔ {} pleΔ {} je 1
+  JE: [{"entry_number":"JE-000041","code":"5400","d":20000,"c":0},{"entry_number":"JE-000041","code":"1111","d":0,"c":20000}]  expense.bank_account_id 1
+
+## E2b. card expense 50.00 no bankAccountId
+  resp: {"status":400,"err":"INSUFFICIENT_BALANCE"} 
+  GLΔ: {} supΔ {} debtΔ {} pleΔ {} je 0
+
+## E3. expense 115.00 with taxAmount 15.00 cash
+  resp: {"status":201} id=6 EXP-000006
+  GLΔ: {"1111":-11500,"5400":11500} supΔ {} debtΔ {} pleΔ {} je 1
+  JE: [{"entry_number":"JE-000042","code":"5400","d":11500,"c":0},{"entry_number":"JE-000042","code":"1111","d":0,"c":11500}]
+
+## E4. credit expense supplier 1, 300.00
+  resp: {"status":201} id=7 EXP-000007
+  GLΔ: {"2110":-30000,"5400":30000} supΔ {"1":30000} debtΔ {"1":30000} pleΔ {} je 1
+  debt: [{"id":18,"total_amount":30000,"amount_paid":0,"status":"open","party_id":1}]  PLE rows: 0
+
+## E4b. credit expense with NO supplier 80.00
+  resp: {"status":201} id=8 EXP-000008
+  GLΔ: {"2110":-8000,"5400":8000} supΔ {} debtΔ {"null":8000} pleΔ {} je 1
+  debt: [{"party_type":"supplier","party_id":null,"party_name":"Other Supplier"}]
+
+E4c. POST /payments/expense → {"status":404,"err":"NOT_FOUND"}
+
+## E4d. write-off the payable expense debt
+  resp: {"status":200} 
+  GLΔ: {} supΔ {} debtΔ {"1":-30000} pleΔ {} je 0
+  supplier1 balance: 69000  debt: [{"status":"written_off"}]
+  dashboard payables: "payables":116000  /debts/summary: {"totalReceivables":0,"totalPayables":86000,"netPosition":-86000}
+
+## E5. personal expense (expenseType=personal) 70.00 cash
+  resp: {"status":201} id=9 EXP-000009
+  GLΔ: {"1111":-7000,"5400":7000} supΔ {} debtΔ {} pleΔ {} je 1
+  JE: [{"entry_number":"JE-000045","code":"5400","d":7000,"c":0},{"entry_number":"JE-000045","code":"1111","d":0,"c":7000}]
+
+## E6. NEGATIVE expense -500.00 cash
+  resp: {"status":201} id=10 EXP-000010
+  GLΔ: {"1111":50000,"5400":-50000} supΔ {} debtΔ {} pleΔ {} je 1
+
+## E6b. zero expense
+  resp: {"status":201} id=11 EXP-000011
+  GLΔ: {} supΔ {} debtΔ {} pleΔ {} je 1
+
+## E6c. fractional expense 10.005 (1000.5 minor)
+  resp: {"status":201} id=12 EXP-000012
+  GLΔ: {"1111":-1000,"5400":1000} supΔ {} debtΔ {} pleΔ {} je 1
+
+## E6d. expense with non-existent categoryId 999
+  resp: {"status":400,"err":"FOREIGN_KEY_ERROR"} 
+  GLΔ: {} supΔ {} debtΔ {} pleΔ {} je 0
+
+## E6e. expense with branchId 1
+  resp: {"status":201} id=13 EXP-000013
+  GLΔ: {"1111":-100,"5400":100} supΔ {} debtΔ {} pleΔ {} je 1
+  last JE branch: {"branch_id":1}
+
+## E7. PUT E1 amount 100.00 -> 999.00
+  resp: {"status":200} id=4 EXP-000004
+  GLΔ: {} supΔ {} debtΔ {} pleΔ {} je 0
+  E1 row {"amount":99900,"payment_method":"cash"}  JE [{"entry_number":"JE-000040","code":"5400","d":10000,"c":0},{"entry_number":"JE-000040","code":"1111","d":0,"c":10000}]
+
+## E7b. PUT E1 paymentMethod cash -> credit (supplier 2)
+  resp: {"status":200} id=4 EXP-000004
+  GLΔ: {} supΔ {} debtΔ {} pleΔ {} je 0
+  debts for E1: 0
+
+## E7c. PUT E1 expenseDate change
+  resp: {"status":200} id=4 EXP-000004
+  GLΔ: {} supΔ {} debtΔ {} pleΔ {} je 0
+  E1 date {"expense_date":1795605545333}
+
+## E7d. PUT E4 (credit) amount 300 -> 100
+  resp: {"status":200} id=7 EXP-000007
+  GLΔ: {} supΔ {} debtΔ {} pleΔ {} je 0
+  E4 debt after edit: [{"total_amount":30000,"status":"written_off"}]
+
+## E8. DELETE E2 (bank expense)
+  resp: {"status":200} id=5 EXP-000005
+  GLΔ: {} supΔ {} debtΔ {} pleΔ {} je 0
+  orphan JE for E2: [{"entry_number":"JE-000041","code":"5400","d":20000,"c":0},{"entry_number":"JE-000041","code":"1111","d":0,"c":20000}]
+
+## E8b. DELETE E4 (credit expense with debt)
+  resp: {"status":200} id=7 EXP-000007
+  GLΔ: {} supΔ {} debtΔ {} pleΔ {} je 0
+  debts left for deleted E4: [{"id":18,"status":"written_off","total_amount":30000}]
+
+## Reports vs GL
+  /reports/expenses summary: {"status":200} {"totalAmount":77500,"count":8}  byType [{"type":"operational","amount":70500,"count":7},{"type":"personal","amount":7000,"count":1}]
+  /reports/profit-loss expenses: 77500  Σexpenses table (non-seed): 77500  GL from expense JEs: 0  GL 5400 total: 37600
+  GL 5210/5221/5240/3300: [0,0,0,0]
+
+## E9. create expense after deletes (count-based EXP-)
+  resp: {"status":409,"err":"DUPLICATE_ENTRY"} 
+  GLΔ: {} supΔ {} debtΔ {} pleΔ {} je 0
+
+## E9b. again
+  resp: {"status":409,"err":"DUPLICATE_ENTRY"} 
+  GLΔ: {} supΔ {} debtΔ {} pleΔ {} je 0
+  last numbers before: [{"expense_number":"EXP-000013"},{"expense_number":"EXP-000012"},{"expense_number":"EXP-000011"}]  now: [{"expense_number":"EXP-000013"},{"expense_number":"EXP-000012"},{"expense_number":"EXP-000011"}]

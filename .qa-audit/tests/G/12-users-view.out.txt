@@ -1,0 +1,6 @@
+[["gacc",true,true,"2026-11-25T16:40:42.108Z","2026-11-25T16:38:34.416Z"],["admin",true,true,"2026-11-25T16:41:36.436Z","2026-11-24T20:56:55.242Z"]]
+[{"userId":1,"username":"admin","fullName":"H","lastLoginAt":"2026-11-25T16:41:36.436Z","sessionExpiresAt":"2026-12-02T16:41:36.388Z"},{"userId":2,"username":"gacc","fullName":"G acc","lastLoginAt":"2026-11-25T16:40:42.108Z","sessionExpiresAt":"2026-12-02T16:40:42.051Z"}]
+after logout+login [[true,"2026-11-25T16:41:36.742Z"]]
+users?isActive=false ["gacc","admin"]
+users?roleId=1 ["admin"]
+users?search=gacc ["gacc"]

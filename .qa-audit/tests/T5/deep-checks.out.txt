@@ -1,0 +1,26 @@
+
+==================== A. PRIVILEGE ESCALATION (as accountant t5acc) ====================
+create admin user -> 403 (403 expected)
+edit admin (PUT /users/1) -> 403 (403 expected)
+reset admin password -> 403 (403 expected)
+grant self page access -> 403 (403 expected)
+self PUT with roleId/isActive/username injected -> 400
+  roles before: ["accountant"] -> after: ["accountant"] | username: t5acc
+accountant CREATE tax template -> 500 
+accountant WRITE backup config -> 400 400 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"property schedule_time should not exist; property retenti
+accountant restore (id 99999) -> 404 (404=guard PASSED; could restore a real id)
+
+==================== B. FORBIDDEN FINANCIAL VISIBILITY (as accountant) ====================
+profit-loss -> 200 netProfit=20000 COGS=0 *** EXPOSED ***
+stock-vs-gl -> 200 *** EXPOSED ***
+expenses report -> 200 *** EXPOSED ***
+purchase detail (supplier cost prices) -> 200 supplier=1 total=50000 *** EXPOSED ***
+sale detail -> 200 | cost/profit fields present: ["totalCost","totalProfit","cost"]
+dashboard report -> 200 keys=sales,inventory,receivables,payables
+
+==================== C. TOKEN LIFECYCLE ====================
+C1 logout: 200 | ACCESS token after logout -> 200 (200=NOT revoked) | REFRESH after logout -> 401 (401=revoked)
+C2 refresh reuse: first -> 200 | second (same token) -> 200 (both 200 = NO rotation, replayable)
+C3 change-password: 200 | old ACCESS after change -> 200 (200=still valid until exp) | old REFRESH -> 401 (401=revoked)
+C4 deactivated user REFRESH -> 401 (401 USER_INACTIVE expected)
+   deactivated user old ACCESS token -> 401 (401 expected: strategy re-checks isActive)

@@ -1,0 +1,33 @@
+OK   sales count                                report= 15  raw= 15
+OK   sales gross/net                            report= 59980  raw= 59980
+OK   sales cost                                 report= 39600  raw= 39600
+OK   sales profit                               report= 20380  raw= 20380
+OK   purchases count                            report= 3  raw= 3
+OK   purchases total                            report= 44000  raw= 44000
+OK   expenses count                             report= 2  raw= 2
+OK   expenses total                             report= 12050  raw= 12050
+OK   P&L revenue                                report= 59980  raw= 59980
+OK   P&L cogs                                   report= 39600  raw= 39600
+OK   P&L expenses                               report= 12050  raw= 12050
+GL revenue (4xxx net credit, all entries incl reversals) = 60100
+file:///E:/DEV/Chicken%20FMS/.qa-audit/tests/G/10-reconcile.mjs:5
+const q = (s, ...p) => db.prepare(s).all(...p)[0]; const j=x=>JSON.stringify(x);
+                          ^
+
+Error: no such column: unit_cost_per_kg
+    at q (file:///E:/DEV/Chicken%20FMS/.qa-audit/tests/G/10-reconcile.mjs:5:27)
+    at file:///E:/DEV/Chicken%20FMS/.qa-audit/tests/G/10-reconcile.mjs:23:55
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  code: 'ERR_SQLITE_ERROR',
+  errcode: 1,
+  errstr: 'SQL logic error'
+}
+
+Node.js v24.15.0
+Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), file src\win\async.c, line 76
+OK   P&L expenses                               report= 12050  raw= 12050
+GL revenue (4xxx net credit, all entries incl reversals) = 60100
+inventory report {"totalItems":8,"totalWeight":251000,"totalValue":564400,"activeLots":8} lots {"v":564400,"w":251000} inventory table {"v":564400,"w":251000}
+GL 1131 {"b":4400}
+dashboard receivables 11000 debts/summary 8000 raw open (excl paid/written_off) 8000 raw incl written_off 11000 customers.current_balance {"s":8000}
+dashboard payables 22000 summary 22000 suppliers.current_balance {"s":42000} raw debts payable {"o":22000}

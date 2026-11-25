@@ -1,0 +1,33 @@
+[t8] stopped
+[t8] ready {"name":"t8","port":3113,"baseUrl":"http://localhost:3113/v1","db":"E:/DEV/Chicken FMS/.qa-audit/envs/t8/app.db","log":"E:/DEV/Chicken FMS/.qa-audit/logs/t8.log","pid":11296}
+day 1 2026-10-01 sales=41 cashΔ=-6000.00 bankΔ=6000.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-0.06 NIΔ=-0.06 err=0
+day 2 2026-10-02 sales=36 cashΔ=-6000.00 bankΔ=6000.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=0.19 NIΔ=0.19 err=0
+day 3 2026-10-03 sales=36 cashΔ=-6000.00 bankΔ=6000.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=0.22 NIΔ=0.22 err=0
+day 4 2026-10-04 sales=41 cashΔ=-6000.00 bankΔ=6000.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=0.06 NIΔ=0.06 err=0
+day 5 2026-10-05 sales=42 cashΔ=-6000.00 bankΔ=6000.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=0.35 NIΔ=0.35 err=0
+day 6 2026-10-06 sales=20 cashΔ=-6000.00 bankΔ=6000.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=0.29 NIΔ=0.29 err=0
+day 7 2026-10-07 sales=32 cashΔ=-6000.00 bankΔ=6000.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=0.22 NIΔ=0.22 err=0
+day 8 2026-10-08 sales=27 cashΔ=-6000.00 bankΔ=6000.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=0.48 NIΔ=0.48 err=0
+day 9 2026-10-09 sales=68 cashΔ=-6000.00 bankΔ=6000.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=0.04 NIΔ=0.04 err=1
+day 10 2026-10-10 sales=29 cashΔ=-8350.00 bankΔ=8350.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=0.22 NIΔ=0.22 err=0
+day 11 2026-10-11 sales=34 cashΔ=-8350.00 bankΔ=8350.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-0.06 NIΔ=-0.06 err=0
+day 12 2026-10-12 sales=22 cashΔ=-8350.00 bankΔ=8350.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=0.01 NIΔ=0.01 err=0
+day 13 2026-10-13 sales=30 cashΔ=-8350.00 bankΔ=8350.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-0.04 NIΔ=-0.04 err=0
+day 14 2026-10-14 sales=36 cashΔ=-8350.00 bankΔ=8350.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-0.69 NIΔ=-0.69 err=0
+day 15 2026-10-15 sales=39 cashΔ=-8350.00 bankΔ=8350.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-0.74 NIΔ=-0.74 err=3
+day 16 2026-10-16 sales=33 cashΔ=-8350.00 bankΔ=8350.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-0.12 NIΔ=-0.12 err=1
+day 17 2026-10-17 sales=34 cashΔ=-8350.00 bankΔ=8350.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-0.03 NIΔ=-0.03 err=1
+day 18 2026-10-18 sales=20 cashΔ=-8350.00 bankΔ=8350.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-0.03 NIΔ=-0.03 err=0
+day 19 2026-10-19 sales=37 cashΔ=-8350.00 bankΔ=8350.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-0.76 NIΔ=-0.76 err=0
+day 20 2026-10-20 sales=45 cashΔ=-8350.00 bankΔ=8350.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-1.05 NIΔ=12.86 err=0
+day 21 2026-10-21 sales=37 cashΔ=-8350.00 bankΔ=8350.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-0.45 NIΔ=13.46 err=0
+day 22 2026-10-22 sales=42 cashΔ=-8350.00 bankΔ=8350.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-0.49 NIΔ=13.42 err=3
+day 23 2026-10-23 sales=57 cashΔ=-8350.00 bankΔ=8350.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=0.56 NIΔ=14.47 err=0
+day 24 2026-10-24 sales=54 cashΔ=-8350.00 bankΔ=8350.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=0.20 NIΔ=14.11 err=0
+day 25 2026-10-25 sales=40 cashΔ=-8350.00 bankΔ=8350.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-1.44 NIΔ=12.47 err=0
+day 26 2026-10-26 sales=40 cashΔ=-8350.00 bankΔ=8350.00 ARΔgl=0.00 APΔgl=0.00 invΔgl=-0.29 NIΔ=13.62 err=0
+day 27 2026-10-27 sales=35 cashΔ=-8350.00 bankΔ=8350.00 ARΔgl=48.56 APΔgl=0.00 invΔgl=-0.25 NIΔ=62.22 err=0
+day 28 2026-10-28 sales=20 cashΔ=-8350.00 bankΔ=8350.00 ARΔgl=48.56 APΔgl=0.00 invΔgl=-0.38 NIΔ=62.09 err=0
+day 29 2026-10-29 sales=23 cashΔ=-8350.00 bankΔ=8350.00 ARΔgl=48.56 APΔgl=0.00 invΔgl=-0.42 NIΔ=62.05 err=1
+day 30 2026-10-30 sales=64 cashΔ=-12550.00 bankΔ=12550.00 ARΔgl=48.56 APΔgl=0.00 invΔgl=-0.58 NIΔ=61.89 err=2
+DONE {"sales":1119,"voided":6,"jes":1441,"purchases":40,"payments":1212,"transfers":30,"wastage":44,"expenses":30} errors 12

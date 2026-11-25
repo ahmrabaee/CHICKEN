@@ -1,0 +1,73 @@
+created template VAT 16% QA: 201
+created template VAT 10% QA: 201
+
+=== A baseline cash 1kg no tax
+  panel: {"subtotal":"22.00","tax":null,"total":"22.00","net":null}
+  POST /sales -> 201
+    req: {"saleType":"cash","lines":[{"itemId":2,"weightGrams":1000,"pricePerKg":2200}],"payments":[{"amount":2200,"paymentMethod":"cash"}]}
+    res: {"success":true,"data":{"id":6,"saleNumber":"SAL-20261125-0001","saleDate":"2026-11-25T11:19:34.533Z","saleType":"cash","customerId":null,"customerName":null,"grossTotalAmount":2200,"discountAmount":0,"taxAmount":0,"totalAmount":2200,"totalCost":1800,"totalProfit":400,"paymentStatus":"paid","amountPaid":2200,"amountDue":0,"isVoided":false,"voidReason":null,"notes":null,"createdAt":"2026-11-25T11:19:34.534Z","lines":[{"id":6,"lineNumber":1,"itemId":2,"itemName":"فروج كامل","itemCode":"CHK-WHOLE-01","weightGrams":1000,"pricePerKg":2200,"discountAmount":0,"lineTotalAmount":2200,"costPerKg":1800,"
+    backend sale SAL-20261125-0001: subtotal=undefined discount=0 tax=0 total=2200 paid=2200 status=paid customerId=null
+  toasts: ["تم إنشاء الفاتورة بنجاح"]
+
+=== B 16pct template walk-in pays shown total (K4-001)
+  panel: {"subtotal":"35.00","tax":"35.00","total":"40.25","net":"35.00"}
+  POST /sales -> 400
+    req: {"saleType":"cash","taxTemplateId":3,"lines":[{"itemId":3,"weightGrams":1000,"pricePerKg":3500}],"payments":[{"amount":4025,"paymentMethod":"cash"}]}
+    res: {"success":false,"error":{"code":"CUSTOMER_REQUIRED","message":"Partial or deferred payment requires customer information.","messageAr":"الدفع الآجل أو الجزئي يتطلب تحديد بيانات الزبون."},"meta":{"timestamp":"2026-11-25T11:19:38.347Z","path":"/v1/sales"}}
+  toasts: ["خطأ في إنشاء الفاتورة\nالدفع الآجل أو الجزئي يتطلب تحديد بيانات الزبون."]
+
+=== C 16pct template registered customer pays shown total
+  panel: {"subtotal":"35.00","tax":"35.00","total":"40.25","net":"35.00"}
+  POST /sales -> 201
+    req: {"saleType":"cash","customerName":"زبون اختبار ضريبة","customerPhone":"0599111222","taxTemplateId":3,"lines":[{"itemId":3,"weightGrams":1000,"pricePerKg":3500}],"payments":[{"amount":4025,"paymentMethod":"cash"}]}
+    res: {"success":true,"data":{"id":7,"saleNumber":"SAL-20261125-0002","saleDate":"2026-11-25T11:19:42.163Z","saleType":"cash","customerId":4,"customerName":"زبون اختبار ضريبة","grossTotalAmount":3500,"discountAmount":0,"taxAmount":560,"totalAmount":4060,"totalCost":2800,"totalProfit":1260,"paymentStatus":"partial","amountPaid":4025,"amountDue":35,"isVoided":false,"voidReason":null,"notes":null,"createdAt":"2026-11-25T11:19:42.164Z","lines":[{"id":7,"lineNumber":1,"itemId":3,"itemName":"صدور دجاج","itemCode":"CHK-BREAST-01","weightGrams":1000,"pricePerKg":3500,"discountAmount":0,"lineTotalAmount":350
+    backend sale SAL-20261125-0002: subtotal=undefined discount=0 tax=560 total=4060 paid=4025 status=partial customerId=4
+  toasts: ["تم إنشاء الفاتورة بنجاح"]
+
+=== D 10pct template pays shown total (K4-001 overpay)
+  panel: {"subtotal":"35.00","tax":"35.00","total":"40.25","net":"35.00"}
+  POST /sales -> 400
+    req: {"saleType":"cash","taxTemplateId":4,"lines":[{"itemId":3,"weightGrams":1000,"pricePerKg":3500}],"payments":[{"amount":4025,"paymentMethod":"cash"}]}
+    res: {"success":false,"error":{"code":"OVERPAYMENT","message":"Paid amount exceeds total. المبلغ المدفوع أكبر من الإجمالي","messageAr":"المبلغ المدفوع أكبر من الإجمالي"},"meta":{"timestamp":"2026-11-25T11:19:45.943Z","path":"/v1/sales"}}
+  toasts: ["خطأ في إنشاء الفاتورة\nالمبلغ المدفوع أكبر من الإجمالي"]
+
+=== E 15pct default template sanity
+  panel: {"subtotal":"37.32","tax":"37.32","total":"42.92","net":"37.32"}
+  POST /sales -> 201
+    req: {"saleType":"cash","taxTemplateId":1,"lines":[{"itemId":4,"weightGrams":1333,"pricePerKg":2800}],"payments":[{"amount":4292,"paymentMethod":"cash"}]}
+    res: {"success":true,"data":{"id":8,"saleNumber":"SAL-20261125-0003","saleDate":"2026-11-25T11:19:49.827Z","saleType":"cash","customerId":null,"customerName":null,"grossTotalAmount":3732,"discountAmount":0,"taxAmount":560,"totalAmount":4292,"totalCost":2933,"totalProfit":1359,"paymentStatus":"paid","amountPaid":4292,"amountDue":0,"isVoided":false,"voidReason":null,"notes":null,"createdAt":"2026-11-25T11:19:49.828Z","lines":[{"id":8,"lineNumber":1,"itemId":4,"itemName":"أفخاذ دجاج","itemCode":"CHK-THIGH-01","weightGrams":1333,"pricePerKg":2800,"discountAmount":0,"lineTotalAmount":3732,"costPerKg":22
+    backend sale SAL-20261125-0003: subtotal=undefined discount=0 tax=560 total=4292 paid=4292 status=paid customerId=null
+  toasts: ["تم إنشاء الفاتورة بنجاح"]
+
+=== F credit without customer -> button state
+  complete enabled (no customer): false
+  complete enabled (free name+phone): true
+  POST /sales -> 201
+    req: {"saleType":"credit","customerName":"زبون آجل","customerPhone":"0599333444","lines":[{"itemId":5,"weightGrams":2000,"pricePerKg":2600}]}
+    res: {"success":true,"data":{"id":9,"saleNumber":"SAL-20261125-0004","saleDate":"2026-11-25T11:19:53.126Z","saleType":"credit","customerId":5,"customerName":"زبون آجل","grossTotalAmount":5200,"discountAmount":0,"taxAmount":0,"totalAmount":5200,"totalCost":4000,"totalProfit":1200,"paymentStatus":"unpaid","amountPaid":0,"amountDue":5200,"isVoided":false,"voidReason":null,"notes":null,"createdAt":"2026-11-25T11:19:53.127Z","lines":[{"id":9,"lineNumber":1,"itemId":5,"itemName":"أجنحة دجاج","itemCode":"CHK-WING-01","weightGrams":2000,"pricePerKg":2600,"discountAmount":0,"lineTotalAmount":5200,"costPerKg
+    backend sale SAL-20261125-0004: subtotal=undefined discount=0 tax=0 total=5200 paid=0 status=unpaid customerId=5
+  toasts: ["تم إنشاء الفاتورة بنجاح"]
+
+=== G discount 5 and discount > subtotal
+  SCRIPT ERROR: locator.fill: Timeout 30000ms exceeded.
+  toasts: []
+
+=== H card payment with zero bank accounts (K4-020)
+  bank select visible: false
+  POST /sales -> 201
+    req: {"saleType":"cash","lines":[{"itemId":2,"weightGrams":1000,"pricePerKg":2200}],"payments":[{"amount":2200,"paymentMethod":"card"}]}
+    res: {"success":true,"data":{"id":10,"saleNumber":"SAL-20261125-0005","saleDate":"2026-11-25T11:20:29.776Z","saleType":"cash","customerId":null,"customerName":null,"grossTotalAmount":2200,"discountAmount":0,"taxAmount":0,"totalAmount":2200,"totalCost":1800,"totalProfit":400,"paymentStatus":"paid","amountPaid":2200,"amountDue":0,"isVoided":false,"voidReason":null,"notes":null,"createdAt":"2026-11-25T11:20:29.777Z","lines":[{"id":10,"lineNumber":1,"itemId":2,"itemName":"فروج كامل","itemCode":"CHK-WHOLE-01","weightGrams":1000,"pricePerKg":2200,"discountAmount":0,"lineTotalAmount":2200,"costPerKg":1800
+    backend sale SAL-20261125-0005: subtotal=undefined discount=0 tax=0 total=2200 paid=2200 status=paid customerId=null
+  toasts: ["تم إنشاء الفاتورة بنجاح"]
+
+=== I partial cash walk-in paid 21.99 of 22 (1-agora tolerance)
+  complete enabled: true
+  POST /sales -> 201
+    req: {"saleType":"cash","lines":[{"itemId":2,"weightGrams":1000,"pricePerKg":2200}],"payments":[{"amount":2199,"paymentMethod":"cash"}]}
+    res: {"success":true,"data":{"id":11,"saleNumber":"SAL-20261125-0006","saleDate":"2026-11-25T11:20:33.058Z","saleType":"cash","customerId":null,"customerName":null,"grossTotalAmount":2200,"discountAmount":0,"taxAmount":0,"totalAmount":2200,"totalCost":1800,"totalProfit":400,"paymentStatus":"partial","amountPaid":2199,"amountDue":1,"isVoided":false,"voidReason":null,"notes":null,"createdAt":"2026-11-25T11:20:33.059Z","lines":[{"id":11,"lineNumber":1,"itemId":2,"itemName":"فروج كامل","itemCode":"CHK-WHOLE-01","weightGrams":1000,"pricePerKg":2200,"discountAmount":0,"lineTotalAmount":2200,"costPerKg":1
+    backend sale SAL-20261125-0006: subtotal=undefined discount=0 tax=0 total=2200 paid=2199 status=partial customerId=null
+  toasts: ["تم إنشاء الفاتورة بنجاح"]
+
+=== J partial cash walk-in paid 10 of 22 no customer
+  complete enabled (no customer): false
+  toasts: []

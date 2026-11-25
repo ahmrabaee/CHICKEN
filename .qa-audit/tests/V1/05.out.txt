@@ -1,0 +1,29 @@
+A sale 5kg                                     ["201",10000]
+A adjust -5kg                                  201
+A adj GL delta                                 {"1131":-13333}
+A after adjust                                 {"inv":{"q":10000,"v":26667},"lots":["11:5000@2000","12:10000@3000"],"sumLots":15000,"sumLotVal":40000}
+A sale 10kg                                    ["201",25000]
+A end                                          {"inv":{"q":0,"v":1667},"lots":["11:0@2000","12:5000@3000"],"sumLots":5000,"sumLotVal":15000}
+A GL1131 delta total vs start                  -48333
+D adj -7kg                                     201
+D after zero-out                               {"inv":{"q":0,"v":0},"lots":["13:7000@2000"],"sumLots":7000,"sumLotVal":14000}
+D adj +5kg@25                                  201
+D after increase                               {"inv":{"q":5000,"v":12500},"lots":["13:7000@2000","14:5000@2500"],"sumLots":12000,"sumLotVal":26500}
+D sale 5kg COGS (exp 12500 if new lot cost, 10000 if old lot) ["201",10000]
+D end                                          {"inv":{"q":0,"v":2500},"lots":["13:2000@2000","14:5000@2500"],"sumLots":7000,"sumLotVal":16500}
+D GL1131 for item? (inventory.total_value vs lots) 
+B adj +5kg no cost                             201
+B GL delta                                     {"1131":10000}
+B after                                        {"inv":{"q":15000,"v":30000},"lots":["15:10000@2000"],"sumLots":10000,"sumLotVal":20000}
+B sell 15kg                                    400 "INSUFFICIENT_STOCK"
+E adj -2kg w/ lotId                            201
+E after                                        {"inv":{"q":8000,"v":16000},"lots":["16:10000@2000"],"sumLots":10000,"sumLotVal":20000}
+E lotId of another item accepted?              201
+T2-005 transfer                                ["201","completed"]
+T2-005 src consumed value (9kg@18)             16200
+T2-005 dest values                             [11200,6600,4000]
+T2-005 dest sum - src                          5600
+T2-005 GL delta (exp {})                       {}
+T2-005 JEs with transfer source                [{"c":0}]
+T2-005 same-item revalue @99.99                ["201",["19:1000@2800","22:3000@9999"]]
+T2-005 cost 0 accepted                         201

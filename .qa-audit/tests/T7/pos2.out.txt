@@ -1,0 +1,16 @@
+# pos2.mjs console output (script aborted in its last section at the '⌫' locator before writing this file; transcribed verbatim from the run)
+=== G discount
+  panel with discount 100 on subtotal 15.00: total 0.00 ; discount -5: total 20.00 ; discount 5: total 10.00
+  POST 201 req={"saleType":"cash","discountAmount":500,...,"payments":[{"amount":1000,"paymentMethod":"cash"}]} -> SAL-20261125-0007
+=== K4-006 double submit
+  synchronous triple click -> 3 POST /sales: 201 SAL-20261125-0008 | 201 SAL-20261125-0009 | 201 SAL-20261125-0010
+  dblclick -> 2 POST /sales: 201 SAL-20261125-0011 | 201 SAL-20261125-0012
+  Enter x2 -> 2 POST /sales: 201 SAL-20261125-0013 | 201 SAL-20261125-0014
+  (DB: sales ids 13-19 all 2200, created 23-33 ms apart, 7 JEs)
+=== K4-005 print
+  print calls: printed=true imgs=1 text: "... الزبون: \nالهاتف: 0599000111 ... صدور دجاج 1.00 x 35.00 = 35.00 ... الضريبة: 5.25 الإجمالي: ₪ 40.25 المدفوع: ₪ 40.25"
+  injected script executed: xss=1 tokenPrefixRead="eyJhbGciOiJIUzI1NiIsInR5c"
+  preview dialog: customer name shown literally (escaped)
+  saved: 201 SAL-20261125-0015 totalAmount 4060 amountPaid 4025
+  print button enabled after completion: false
+=== K4-004 weight edit: dialog shows "0.255 كجم / 0.26 كغم" (continued in pos3.mjs)

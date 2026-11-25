@@ -1,0 +1,121 @@
+
+## [OFF] cash sale 100.00 -> 201 
+   JE-000004 sale posted=1 date=2026-11-25T16:12:15.346Z Dr=15000 Cr=15000 roundOff=0 | 1111:10000 4110:-10000 5100:5000 1131:-5000
+   GL Δ balanced=true; metrics Δ {"gl_cash":10000,"gl_inventory":-5000,"gl_total_dr":15000,"gl_total_cr":15000,"inventory_qty":-2500,"inventory_value":-5000,"lots_qty":-2500,"lots_value":-5000,"sle_value":-5000,"sle_qty":-2500}
+
+## [OFF] credit sale 100.00 -> 201 
+   JE-000005 sale posted=1 date=2026-11-25T16:12:15.379Z Dr=15000 Cr=15000 roundOff=0 | 1120:10000 4110:-10000 5100:5000 1131:-5000
+   GL Δ balanced=true; metrics Δ {"gl_ar":10000,"gl_inventory":-5000,"gl_total_dr":15000,"gl_total_cr":15000,"customers_balance":10000,"debts_receivable_open":10000,"ple_customer":10000,"inventory_qty":-2500,"inventory_value":-5000,"lots_qty":-2500,"lots_value":-5000,"sle_value":-5000,"sle_qty":-2500}
+
+## [OFF] /payments/sale 25.00 -> 201 
+   JE-000006 payment posted=1 date=2026-11-25T16:12:15.408Z Dr=2500 Cr=2500 roundOff=0 | 1111:2500 1120:-2500
+   GL Δ balanced=true; metrics Δ {"gl_cash":2500,"gl_ar":-2500,"gl_total_dr":2500,"gl_total_cr":2500,"customers_balance":-2500,"debts_receivable_open":-2500,"ple_customer":-2500}
+
+set gl_engine_enabled 200 tax_engine_enabled 200 [{"key":"gl_engine_enabled","value":"true"},{"key":"tax_engine_enabled","value":"true"}]
+
+## [ON] cash sale 100.00 -> 201 
+   JE-000007 sale posted=1 date=2026-11-25T16:12:15.444Z Dr=15000 Cr=15000 roundOff=0 | 1111:10000 4110:-10000 5100:5000 1131:-5000
+   GL Δ balanced=true; metrics Δ {"gl_cash":10000,"gl_inventory":-5000,"gl_total_dr":15000,"gl_total_cr":15000,"inventory_qty":-2500,"inventory_value":-5000,"lots_qty":-2500,"lots_value":-5000,"sle_value":-5000,"sle_qty":-2500}
+
+## [ON] cash sale 100.00 with 5.00 discount -> 201 
+   JE-000008 sale posted=1 date=2026-11-25T16:12:15.478Z Dr=15000 Cr=15000 roundOff=0 | 1111:9500 4110:-10000 5400:500 5100:5000 1131:-5000
+   GL Δ balanced=true; metrics Δ {"gl_cash":9500,"gl_inventory":-5000,"gl_total_dr":15000,"gl_total_cr":15000,"inventory_qty":-2500,"inventory_value":-5000,"lots_qty":-2500,"lots_value":-5000,"sle_value":-5000,"sle_qty":-2500}
+
+## [ON] cash sale 33.33 + VAT template 1 (15%) -> 201 
+   JE-000009 sale posted=1 date=2026-11-25T16:12:15.512Z Dr=6055 Cr=6055 roundOff=0 | 1111:3833 4110:-3333 2120:-500 5100:2222 1131:-2222
+   GL Δ balanced=true; metrics Δ {"gl_cash":3833,"gl_inventory":-2222,"gl_total_dr":6055,"gl_total_cr":6055,"inventory_qty":-1111,"inventory_value":-2222,"lots_qty":-1111,"lots_value":-2222,"sle_value":-2222,"sle_qty":-1111}
+
+## [ON] VAT sale with 1.00 discount (K3-020) -> 400 {"code":"UNBALANCED_ENTRY","message":"Unbalanced entry: Debit=6585, Credit=6485, diff=100","messageAr":"القيد غير متوازن"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] credit sale 100.00 -> 201 
+   JE-000010 sale posted=1 date=2026-11-25T16:12:15.570Z Dr=15000 Cr=15000 roundOff=0 | 1120:10000[customer2] 4110:-10000[customer2] 5100:5000[customer2] 1131:-5000
+   GL Δ balanced=true; metrics Δ {"gl_ar":10000,"gl_inventory":-5000,"gl_total_dr":15000,"gl_total_cr":15000,"customers_balance":10000,"debts_receivable_open":10000,"ple_customer":10000,"inventory_qty":-2500,"inventory_value":-5000,"lots_qty":-2500,"lots_value":-5000,"sle_value":-5000,"sle_qty":-2500}
+
+## [ON] /payments/sale 25.00 bank -> 201 
+   JE-000011 payment posted=1 date=2026-11-25T16:12:15.606Z Dr=2500 Cr=2500 roundOff=0 | 1112-001:2500 1120:-2500
+   GL Δ balanced=true; metrics Δ {"gl_bank":2500,"gl_ar":-2500,"gl_total_dr":2500,"gl_total_cr":2500,"customers_balance":-2500,"debts_receivable_open":-2500,"ple_customer":-2500}
+
+## [ON] mixed tender 50 cash + 50 card -> 201 
+   JE-000012 sale posted=1 date=2026-11-25T16:12:15.626Z Dr=15000 Cr=15000 roundOff=0 | 1111:10000 4110:-10000 5100:5000 1131:-5000
+   GL Δ balanced=true; metrics Δ {"gl_cash":10000,"gl_inventory":-5000,"gl_total_dr":15000,"gl_total_cr":15000,"inventory_qty":-2500,"inventory_value":-5000,"lots_qty":-2500,"lots_value":-5000,"sle_value":-5000,"sle_qty":-2500}
+
+## [ON] credit purchase 20.00 + tax 3.00 -> 201 
+   JE-000013 purchase posted=1 date=2026-11-25T16:12:15.667Z Dr=2000 Cr=2000 roundOff=0 | 1131:2000[supplier1] 2110:-2000[supplier1]
+   GL Δ balanced=true; metrics Δ {"gl_ap":2000,"gl_inventory":2000,"gl_total_dr":2000,"gl_total_cr":2000,"suppliers_balance":2300,"debts_payable_open":2300,"ple_supplier":-2300,"inventory_qty":1000,"inventory_value":2000,"lots_qty":1000,"lots_value":2000,"sle_value":2000,"sle_qty":1000}
+
+## [ON] purchase 20.00 + tax 3.00 paid 23.00 bank -> 400 {"code":"UNBALANCED_ENTRY","message":"Unbalanced entry: Debit=2000, Credit=2300, diff=-300","messageAr":"القيد غير متوازن"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] expense 10.00 bank_transfer (category rent 5210) -> 201 
+   JE-000014 expense posted=1 date=2026-11-25T16:12:15.720Z Dr=1000 Cr=1000 roundOff=0 | 5400:1000 1112-001:-1000
+   GL Δ balanced=true; metrics Δ {"gl_bank":-1000,"gl_total_dr":1000,"gl_total_cr":1000}
+
+## [ON] expense 10.00 + tax 1.50 cash -> 201 
+   JE-000015 expense posted=1 date=2026-11-25T16:12:15.741Z Dr=1000 Cr=1000 roundOff=0 | 5400:1000 1111:-1000
+   GL Δ balanced=true; metrics Δ {"gl_cash":-1000,"gl_total_dr":1000,"gl_total_cr":1000}
+
+## [ON] wastage 0.333 kg -> 201 
+   JE-000016 wastage posted=1 date=2026-11-25T16:12:15.765Z Dr=666 Cr=666 roundOff=0 | 5300:666 1131:-666
+   GL Δ balanced=true; metrics Δ {"gl_inventory":-666,"gl_total_dr":666,"gl_total_cr":666,"inventory_qty":-333,"inventory_value":-666,"lots_qty":-333,"lots_value":-666}
+
+## [ON] adjustment -0.777 kg -> 201 
+   JE-000017 adjustment posted=1 date=2026-11-25T16:12:15.787Z Dr=1554 Cr=1554 roundOff=0 | 5320:1554 1131:-1554
+   GL Δ balanced=true; metrics Δ {"gl_inventory":-1554,"gl_total_dr":1554,"gl_total_cr":1554,"inventory_qty":-777,"inventory_value":-1554,"sle_value":-1554,"sle_qty":-777}
+
+## [ON] manual JE imbalance 0.03 (within tolerance 5) -> 201 
+   JE-000018 journal_entry posted=1 date=2026-11-25T16:12:15.807Z Dr=1003 Cr=1003 roundOff=1 | 1210:1003 3100:-1000 5400:-3
+   GL Δ balanced=true; metrics Δ {"gl_total_dr":1003,"gl_total_cr":1003}
+
+## [ON] manual JE imbalance 0.40 (> tolerance 5) -> 400 {"code":"UNBALANCED_ENTRY","message":"Unbalanced entry: Debit=1040, Credit=1000, diff=40","messageAr":"القيد غير متوازن"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] manual JE zero lines -> 201 
+   JE-000019 journal_entry posted=1 date=2026-11-25T16:12:15.842Z Dr=null Cr=null roundOff=null | null
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] manual JE fractional 1.6+0.4/2 -> 201 
+   JE-000020 journal_entry posted=1 date=2026-11-25T16:12:15.863Z Dr=2 Cr=2 roundOff=0 | 1210:2 3100:-2
+   GL Δ balanced=true; metrics Δ {"gl_total_dr":2,"gl_total_cr":2}
+
+## [ON] void sale posted under OFF -> 200 
+   JE-000021 sale_void posted=1 date=2026-11-25T16:12:15.892Z Dr=15000 Cr=15000 roundOff=0 | 1111:-10000 4110:10000 5100:-5000 1131:5000
+   GL Δ balanced=true; metrics Δ {"gl_cash":-10000,"gl_inventory":5000,"gl_total_dr":15000,"gl_total_cr":15000,"inventory_qty":2500,"inventory_value":5000,"lots_qty":2500,"lots_value":5000,"sle_value":5000,"sle_qty":2500}
+
+## [ON] cancel payment posted under OFF -> 200 
+   JE-000022 reversal posted=1 date=2026-11-25T16:12:15.914Z Dr=2500 Cr=2500 roundOff=0 | 1111:-2500 1120:2500
+   GL Δ balanced=true; metrics Δ {"gl_cash":-2500,"gl_ar":2500,"gl_total_dr":2500,"gl_total_cr":2500,"customers_balance":2500,"debts_receivable_open":2500,"ple_customer":2500}
+
+## [ON] void sale posted under ON -> 200 
+   JE-000023 sale_void posted=1 date=2026-11-25T16:12:15.947Z Dr=15000 Cr=15000 roundOff=0 | 1111:-10000 4110:10000 5100:-5000 1131:5000
+   GL Δ balanced=true; metrics Δ {"gl_cash":-10000,"gl_inventory":5000,"gl_total_dr":15000,"gl_total_cr":15000,"inventory_qty":2500,"inventory_value":5000,"lots_qty":2500,"lots_value":5000,"sle_value":5000,"sle_qty":2500}
+
+## [ON] purchase X -> 201 
+   JE-000024 purchase posted=1 date=2026-11-25T16:12:15.975Z Dr=1000 Cr=1000 roundOff=0 | 1131:1000[supplier1] 2110:-1000[supplier1]
+   GL Δ balanced=true; metrics Δ {"gl_ap":1000,"gl_inventory":1000,"gl_total_dr":1000,"gl_total_cr":1000,"suppliers_balance":1000,"debts_payable_open":1000,"ple_supplier":-1000,"inventory_qty":500,"inventory_value":1000,"lots_qty":500,"lots_value":1000,"sle_value":1000,"sle_qty":500}
+
+## [ON] purchase Y -> 201 
+   JE-000025 purchase posted=1 date=2026-11-25T16:12:16.006Z Dr=1000 Cr=1000 roundOff=0 | 1131:1000[supplier1] 2110:-1000[supplier1]
+   GL Δ balanced=true; metrics Δ {"gl_ap":1000,"gl_inventory":1000,"gl_total_dr":1000,"gl_total_cr":1000,"suppliers_balance":1000,"debts_payable_open":1000,"ple_supplier":-1000,"inventory_qty":500,"inventory_value":1000,"lots_qty":500,"lots_value":1000,"sle_value":1000,"sle_qty":500}
+
+## [ON] DELETE purchase X (hard-deletes its JE) -> 200 
+   GL Δ balanced=true; metrics Δ {"gl_ap":-1000,"gl_inventory":-1000,"gl_total_dr":-1000,"gl_total_cr":-1000,"suppliers_balance":-1000,"debts_payable_open":-1000,"ple_supplier":1000,"inventory_qty":-500,"inventory_value":-1000,"lots_qty":-500,"lots_value":-1000,"sle_value":-1000,"sle_qty":-500}
+
+## [ON] next posting after JE delete (cash sale) -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+## [ON] and again -> 409 {"code":"DUPLICATE_ENTRY","message":"A record with this entry_number already exists","messageAr":"يوجد سجل بهذا entry_number بالفعل"}
+   GL Δ balanced=true; metrics Δ {}
+
+set gl_engine_enabled=false 200 tax_engine_enabled=false 200
+
+## [OFF] cancel payment posted under ON -> 200 
+   JE-000026 reversal posted=1 date=2026-11-25T16:12:16.124Z Dr=2500 Cr=2500 roundOff=0 | 1112-001:-2500 1120:2500
+   GL Δ balanced=true; metrics Δ {"gl_bank":-2500,"gl_ar":2500,"gl_total_dr":2500,"gl_total_cr":2500,"customers_balance":2500,"debts_receivable_open":2500,"ple_customer":2500}
+
+## [OFF] void credit sale posted under ON (after its payment cancelled) -> 200 
+   JE-000027 sale_void posted=1 date=2026-11-25T16:12:16.157Z Dr=15000 Cr=15000 roundOff=0 | 1120:-10000 4110:10000 5100:-5000 1131:5000
+   GL Δ balanced=true; metrics Δ {"gl_ar":-10000,"gl_inventory":5000,"gl_total_dr":15000,"gl_total_cr":15000,"customers_balance":-10000,"debts_receivable_open":-10000,"ple_customer":-10000,"inventory_qty":2500,"inventory_value":5000,"lots_qty":2500,"lots_value":5000,"sle_value":5000,"sle_qty":2500}
+
+SUMMARY [{"name":"[ON] VAT sale with 1.00 discount (K3-020)","status":400,"jes":0,"unbalanced":0},{"name":"[ON] purchase 20.00 + tax 3.00 paid 23.00 bank","status":400,"jes":0,"unbalanced":0},{"name":"[ON] manual JE imbalance 0.40 (> tolerance 5)","status":400,"jes":0,"unbalanced":0},{"name":"[ON] next posting after JE delete (cash sale)","status":409,"jes":0,"unbalanced":0},{"name":"[ON] and again","status":409,"jes":0,"unbalanced":0}]
+invariants: ["GL-02:1 empty/zero JEs, 0 bad lines","AP-01:{\"gl_ap\":\"3030.00\",\"suppliers_currentBalance\":\"3033.00\",\"open_payable_debts\":\"3033.00\",\"ple_supplier_neg\":\"3033.00\",\"purchases_grand_minus_paid\":\"3033.00\"}","INV-01:{\"gl_inventory\":\"2835.58\",\"inventory_totalValue\":\"2835.58\",\"lots_remaining_x_cost\":\"2851.12\",\"stock_ledger_value\":\"2842.24\"}","INV-02:1 items","INV-03:1 items","CASH-04:"]

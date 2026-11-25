@@ -1,0 +1,45 @@
+GL truth: assets / liabilities / equity(3xxx) / net income {"A":694659,"Lb":455000,"E":200000,"NI":39659,"L+E+NI":694659}
+BS pdf status                                  200
+                           Balance Sheet
+                           As of: 25-11-2026
+Assets                                             Account Name           Amount ( )
+      Account Code                                                          1925.00
+                 1111                                                       1100.00
+           1112-001                                                            80.00
+                 1120                                                       3841.59
+                 1131                                                       6946.59
+Liabilities                                           Total Assets
+                 2110
+                                                                          4550.00
+Equity                                        Total Liabilities           4550.00
+                 3100
+                 3200                                                      2000.00
+                    --                                                          0.00
+                                        Net Income (Loss) for Period
+                                                                             396.59
+                                                            Total Equity  -1603.41
+                                             Total Equity & Liabilities    2946.59
+v1.0.0 � 25-11-2026 18:36  Page 1 of 1
+TB asOfDate=2025-12-31 (past; GL empty then)   200
+[{"accountId":4,"accountCode":"1111","name":"النقد في الصندوق","nameAr":"النقد في الصندوق","accountName":"النقد في الصندوق","accountType":"Cash","rootType":"Asset","openingDebit":0,"openingCredit":0,"periodDebit":291000,"periodCredit":98500,"endingDebit":192500,"endingCredit":0,"debit":291000,"credit":98500,"balance":192500},{"accountId":6,"accountCode":"1112-001","name":"حساب بنكي عام","nameAr":"حساب بنكي عام","accountName":"حساب بنكي عام","accountType":"Other","rootType":"Asset","openingDebit"
+TB endDate=2025-12-31                          200
+[{"accountId":4,"accountCode":"1111","name":"النقد في الصندوق","nameAr":"النقد في الصندوق","accountName":"النقد في الصندوق","accountType":"Cash","rootType":"Asset","openingDebit":0,"openingCredit":0,"periodDebit":291000,"periodCredit":98500,"endingDebit":192500,"endingCredit":0,"debit":291000,"credit":98500,"balance":192500},{"accountId":6,"accountCode":"1112-001","name":"حساب بنكي عام","nameAr":"حساب بنكي عام","accountName":"حساب بنكي عام","accountType":"Other","rootType":"Asset","openingDebit"
+--- BS as of 2025-12-31 ---
+                           Balance Sheet
+                           As of: 31-12-2025
+Assets                                             Account Name      Amount ( )
+      Account Code                                                     1925.00
+                 1111                                                  1100.00
+           1112-001                                                       80.00
+                 1120                                                  3841.59
+                 1131                                                  6946.59
+Liabilities                                           Total Assets
+                 2110
+                                                                     4550.00
+Equity                                        Total Liabilities      4550.00
+                 3100
+                 3200                                                 2000.00
+                                                                           0.00
+                                                       Total Equity  -2000.00
+                                        Total Equity & Liabilities    2550.00
+v1.0.0 � 25-11-2026 18:36  Page 1 of 1

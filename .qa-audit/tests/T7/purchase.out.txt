@@ -1,0 +1,37 @@
+=== K4-013 pay full 3 x 0.333 kg x 10.01
+  buttons: ["البيع","المدفوعات","تسجيل الخروج","إلغاء","2026/11/25","اختر تاريخ الاستحقاق","إضافة فئة","دفع الكل","إلغاء","حفظ أمر الشراء"]
+  UI: {"subtotal":"10.00","grand":"10.00","paid":"9.99999","lineInputs":["0.333","10.01","0.333","10.01","0.333","10.01"]}
+  POST /v1/purchases -> 400
+    req={"supplierId":1,"purchaseDate":"2026-11-25","amountPaid":1000,"paymentMethod":"cash","lines":[{"itemId":1,"weightGrams":333,"pricePerKg":1001,"isLiveBird":false},{"itemId":1,"weightGrams":333,"pricePerKg":1001,"isLiveBird":false},{"itemId":1,"weightGrams":333,"pricePerKg":1001,"isLiveBird":false}]}
+    res={"success":false,"error":{"code":"UNBALANCED_ENTRY","message":"Unbalanced entry: Debit=999, Credit=1000","messageAr":"القيد غير متوازن"},"meta":{"timestamp":"2026-11-25T16:18:14.929Z","path":"/v1/purchases"}}
+  toasts: ["خطأ في إنشاء أمر الشراء\nالقيد غير متوازن"] url=http://localhost:5173/purchasing/new
+
+=== K4-013 pay full 1 line 0.335 kg x 10.01 (float 3.35335)
+  UI: {"subtotal":"3.35","grand":"3.35","paid":"3.3533500000000003","lineInputs":["0.335","10.01"]}
+  POST /v1/purchases -> 201
+    req={"supplierId":1,"purchaseDate":"2026-11-25","amountPaid":335,"paymentMethod":"cash","lines":[{"itemId":1,"weightGrams":335,"pricePerKg":1001,"isLiveBird":false}]}
+    res={"success":true,"data":{"id":4,"purchaseNumber":"PUR-000004","purchaseDate":"2026-11-25T00:00:00.000Z","supplierId":1,"supplierName":"مورد الدواجن المتحدة","supplierInvoiceNumber":null,"totalAmount":335,"taxAmount":0,"paymentStatus":"paid","taxTemplateId":null,"netTotal":335,"totalTaxAmount":0,"grandTotal":335,"amountPaid":335,"paymentMethod":null,
+  toasts: ["تم إنشاء أمر الشراء بنجاح"] url=http://localhost:5173/purchasing
+
+=== decimal comma / Arabic digits: kg "١,٥" price "١٢٫٥٠" paid "10,5"
+  UI: {"subtotal":"18.75","grand":"18.75","paid":"10.5","lineInputs":["1.5","12.50"]}
+  POST /v1/purchases -> 201
+    req={"supplierId":1,"purchaseDate":"2026-11-25","amountPaid":1050,"paymentMethod":"cash","lines":[{"itemId":1,"weightGrams":1500,"pricePerKg":1250,"isLiveBird":false}]}
+    res={"success":true,"data":{"id":5,"purchaseNumber":"PUR-000005","purchaseDate":"2026-11-25T00:00:00.000Z","supplierId":1,"supplierName":"مورد الدواجن المتحدة","supplierInvoiceNumber":null,"totalAmount":1875,"taxAmount":0,"paymentStatus":"partial","taxTemplateId":null,"netTotal":1875,"totalTaxAmount":0,"grandTotal":1875,"amountPaid":1050,"paymentMethod
+  toasts: ["تم إنشاء أمر الشراء بنجاح"] url=http://localhost:5173/purchasing
+
+=== thousands separator paste: price "1,250.00" kg "2"
+  UI: {"subtotal":"2.50","grand":"2.50","paid":"0","lineInputs":["2","1.25000"]}
+  POST /v1/purchases -> 201
+    req={"supplierId":1,"purchaseDate":"2026-11-25","lines":[{"itemId":1,"weightGrams":2000,"pricePerKg":125,"isLiveBird":false}]}
+    res={"success":true,"data":{"id":6,"purchaseNumber":"PUR-000006","purchaseDate":"2026-11-25T00:00:00.000Z","supplierId":1,"supplierName":"مورد الدواجن المتحدة","supplierInvoiceNumber":null,"totalAmount":250,"taxAmount":0,"paymentStatus":"unpaid","taxTemplateId":null,"netTotal":250,"totalTaxAmount":0,"grandTotal":250,"amountPaid":0,"paymentMethod":null,
+  toasts: ["تم إنشاء أمر الشراء بنجاح"] url=http://localhost:5173/purchasing
+
+=== edit a purchase paid at creation (K4-013 edit resets paid)
+  UI: {"subtotal":"20.00","grand":"20.00","paid":"20","lineInputs":["1","20"]}
+  POST /v1/purchases -> 201
+    req={"supplierId":1,"purchaseDate":"2026-11-25","amountPaid":2000,"paymentMethod":"cash","lines":[{"itemId":1,"weightGrams":1000,"pricePerKg":2000,"isLiveBird":false}]}
+    res={"success":true,"data":{"id":7,"purchaseNumber":"PUR-000007","purchaseDate":"2026-11-25T00:00:00.000Z","supplierId":1,"supplierName":"مورد الدواجن المتحدة","supplierInvoiceNumber":null,"totalAmount":2000,"taxAmount":0,"paymentStatus":"paid","taxTemplateId":null,"netTotal":2000,"totalTaxAmount":0,"grandTotal":2000,"amountPaid":2000,"paymentMethod":n
+  toasts: ["تم إنشاء أمر الشراء بنجاح"] url=http://localhost:5173/purchasing
+
+pageErrors: [{"msg":"Request failed with status code 400","url":"http://localhost:5173/purchasing/new"}]

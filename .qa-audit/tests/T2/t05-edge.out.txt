@@ -1,0 +1,38 @@
+=== O1 (K3-008): 10kg in stock, one sale with two lines 6kg + 6kg
+two-line sale 201 ACCEPTED
+  [item 7] inv -2000g/-4000 avg 2000 | lots -2000g/-4000 | SLE -2000g/-4000 | mov -2000g | lots=6:LOT-20261125-006:-2000/10000@2000  OK
+  allocations [{"lot_id":6,"g":6000,"total_cost":12000},{"lot_id":6,"g":6000,"total_cost":12000}]
+=== O2: concurrent sales 2 x 8kg on a 10kg item
+3 concurrent 8kg sales -> 201, 400:INSUFFICIENT_STOCK, 400:INSUFFICIENT_STOCK
+  [item 8] inv 2000g/4000 avg 2000 | lots 2000g/4000 | SLE 2000g/4000 | mov 2000g | lots=7:LOT-20261125-007:2000/10000@2000  OK
+single sale > stock 400 INSUFFICIENT_STOCK
+=== S1: seed item 2 (lot from seed, no GL) sale
+sale 1kg seed item 201
+  GL delta [seed sale (COGS credited to 1131 that never had value)] {"1111":2200,"1131":-1800,"4110":-2200,"5100":1800}
+=== OP: item created with opening stock (initialQuantityGrams)
+  GL delta [item with 20kg opening @20] {}
+  [item 9] inv 20000g/40000 avg 2000 | lots 20000g/40000 | SLE 0g/0 | mov 20000g | lots=8:LOT-OP-9-649898:20000/20000@2000  <<sleQty 0 != invQty 20000; sleVal 0 != invVal 40000
+sell all opening stock 201
+  GL delta [sale of opening stock] {"1111":60000,"1131":-40000,"4110":-60000,"5100":40000}
+  [item 9] inv 0g/0 avg 2000 | lots 0g/0 | SLE -20000g/-40000 | mov 0g | lots=8:LOT-OP-9-649898:0/20000@2000  <<sleQty -20000 != invQty 0; sleVal -40000 != invVal 0
+=== PD: purchase deleted after an adjustment (adjustment without lotId does not block deletion)
+  GL delta [adjust -4kg] {"1131":-8000,"5320":8000}
+  [item 10] inv 6000g/12000 avg 2000 | lots 10000g/20000 | SLE 6000g/12000 | mov 6000g | lots=9:LOT-20261125-009:10000/10000@2000  <<invQty 6000 != lotQty 10000; invVal 12000 != lotVal 20000
+delete purchase 200 
+  GL delta [delete purchase] {"1131":-20000,"2110":20000}
+  [item 10] inv 0g/0 avg 0 | lots 0g/0 | SLE -4000g/-8000 | mov -4000g | lots=  <<sleQty -4000 != invQty 0; sleVal -8000 != invVal 0; movQty -4000 != invQty 0
+edit purchase price 20->30 after +3kg adjustment 200 
+  GL delta [edit purchase] {"1131":10000,"2110":-10000}
+  [item 11] inv 13000g/36000 avg 2769 | lots 10000g/30000 | SLE 13000g/36000 | mov 13000g | lots=11:LOT-20261125-009:10000/10000@3000  <<invQty 13000 != lotQty 10000; invVal 36000 != lotVal 30000
+=== PR: precision — 10kg lot @19.99 sold in 78 pieces (77 x 129g + 67g)
+  GL delta [78 small sales] {"1111":30000,"1131":-20000,"4110":-30000,"5100":20000}
+  [item 12] inv 0g/-10 avg 1851 | lots 0g/0 | SLE 0g/-10 | mov 0g | lots=12:LOT-20261125-010:0/10000@1999  <<invVal -10 != lotVal 0
+  lot value 19990; Σ COGS 20000; residue in inventory at 0 kg: -10; revenue Σ 30000 vs 10kg x 29.99 = 29990
+=== CAT: delete category with items / with stock
+delete category with stocked item 200  | category row {"id":8,"is_active":0} | item {"is_active":1,"category_id":8}
+=== BR: second branch, purchases/lots/inventory per branch
+create branch (stock account 1132) 201 2
+purchase with branchId 400 VALIDATION_ERROR | lot branch [] | inventory rows [{"branch_id":null,"current_quantity_grams":0}]
+GET /inventory?branchId=b2 200 items {"success":true,"data":[{"itemId":14,"itemCode":"T2-mww18scn-8","itemName":"T2 branch item","categoryName":"قطع دجاج طازجة","branchId":0,"branchName":
+GET /inventory?branchId=1 200 items  branchIds []
+  inventory unique key: one row per item -> [{"name":"inventory_item_id_key"},{"name":"inventory_branch_id_idx"}]

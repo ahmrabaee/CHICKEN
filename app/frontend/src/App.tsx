@@ -40,6 +40,7 @@ import Setup from "@/pages/Setup";
 import Branches from "@/pages/Branches";
 import BranchProfile from "@/pages/branches/BranchProfile";
 import NotFound from "@/pages/NotFound";
+import Help from "@/pages/Help";
 
 const queryClient = new QueryClient();
 
@@ -115,6 +116,9 @@ const App = () => (
                 <Route path="/branches" element={<Branches />} />
                 <Route path="/branches/new" element={<BranchProfile />} />
                 <Route path="/branches/:id" element={<BranchProfile />} />
+
+                {/* User guide (available to all roles) */}
+                <Route path="/help" element={<Help />} />
               </Route>
             </Route>
 

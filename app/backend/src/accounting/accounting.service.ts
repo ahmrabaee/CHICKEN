@@ -36,11 +36,16 @@ export const ACCOUNT_CODES = {
   SALES_REVENUE: '4110',      // Fresh Chicken Sales (Postable)
   OTHER_INCOME: '4200',
 
+  // Revenue contra (4xxx)
+  // fix M3: sales discounts post to the dedicated contra-revenue account 4900,
+  // not 5400 — previously DISCOUNTS_GIVEN and OPERATING_EXPENSES shared 5400 so
+  // discounts and operating expenses (and round-off) were indistinguishable.
+  DISCOUNTS_GIVEN: '4900',      // Sales Discounts (contra-revenue, Postable)
+
   // Expenses (5xxx)
   COST_OF_GOODS_SOLD: '5100',
   OPERATING_EXPENSES: '5400', // Other Expenses (Postable)
   WASTAGE_EXPENSE: '5300',
-  DISCOUNTS_GIVEN: '5400',
   INVENTORY_ADJUSTMENT: '5320', // Blueprint 06: stock adjustment expense/income
 };
 
@@ -273,7 +278,11 @@ export class AccountingService {
     const { totalAmount, totalCost, amountPaid, discountAmount } = data;
     const useTax = !!(await this.isTaxEngineEnabled()) && data.taxTemplateId && data.netTotal != null && data.grandTotal != null;
     const receivableTotal = useTax ? data.grandTotal! : totalAmount;
-    const revenueAmount = useTax ? data.netTotal! : totalAmount + (discountAmount ?? 0);
+    // fix H-2: revenue is grossed up by the discount in BOTH modes, since a
+    // separate Discounts line is always posted. In tax mode netTotal is already
+    // net of the discount, so omitting it here left the entry unbalanced by the
+    // discount amount.
+    const revenueAmount = (useTax ? data.netTotal! : totalAmount) + (discountAmount ?? 0);
     const amountDue = receivableTotal - amountPaid;
     const stockCode = data.stockAccountCode ?? ACCOUNT_CODES.INVENTORY;
     const ids = await this.resolveAccountIds([
@@ -308,7 +317,11 @@ export class AccountingService {
     const { totalAmount, totalCost, amountPaid, discountAmount } = data;
     const useTax = !!(await this.isTaxEngineEnabled()) && data.taxTemplateId && data.netTotal != null && data.grandTotal != null;
     const receivableTotal = useTax ? data.grandTotal! : totalAmount;
-    const revenueAmount = useTax ? data.netTotal! : totalAmount + (discountAmount ?? 0);
+    // fix H-2: revenue is grossed up by the discount in BOTH modes, since a
+    // separate Discounts line is always posted. In tax mode netTotal is already
+    // net of the discount, so omitting it here left the entry unbalanced by the
+    // discount amount.
+    const revenueAmount = (useTax ? data.netTotal! : totalAmount) + (discountAmount ?? 0);
     const amountDue = receivableTotal - amountPaid;
     const stockCode = data.stockAccountCode ?? ACCOUNT_CODES.INVENTORY;
     const ids = await this.resolveAccountIds([ACCOUNT_CODES.CASH, ACCOUNT_CODES.ACCOUNTS_RECEIVABLE, ACCOUNT_CODES.SALES_REVENUE, ACCOUNT_CODES.DISCOUNTS_GIVEN, ACCOUNT_CODES.COST_OF_GOODS_SOLD, stockCode]);
@@ -487,12 +500,26 @@ export class AccountingService {
     }
 
     // CR Sales Revenue
-    const netRevenue = totalAmount + (discountAmount ?? 0);
+    // fix H-5: when the sale carries VAT, segregate it to VAT Payable (2120)
+    // instead of folding it into revenue. Revenue is recognised at the gross
+    // selling price (net-of-VAT + discount); the customer-side (cash/AR) already
+    // equals the grand total incl. VAT, so the entry stays balanced.
+    const saleTax = data.totalTaxAmount ?? 0;
+    const netRevenue = (totalAmount - saleTax) + (discountAmount ?? 0);
     lines.push({
       accountCode: ACCOUNT_CODES.SALES_REVENUE,
       creditAmount: netRevenue,
       description: 'Sales revenue',
     });
+
+    // CR VAT Payable (output VAT)
+    if (saleTax > 0) {
+      lines.push({
+        accountCode: ACCOUNT_CODES.VAT_PAYABLE,
+        creditAmount: saleTax,
+        description: 'Output VAT',
+      });
+    }
 
     // DR Discounts Given (if any)
     if (discountAmount && discountAmount > 0) {
@@ -597,13 +624,23 @@ export class AccountingService {
       });
     }
 
-    // DR Sales Revenue (reverse)
-    const netRevenue = totalAmount + (discountAmount ?? 0);
+    // DR Sales Revenue (reverse) — segregate VAT symmetrically with the sale (fix H-5)
+    const saleTax = data.totalTaxAmount ?? 0;
+    const netRevenue = (totalAmount - saleTax) + (discountAmount ?? 0);
     lines.push({
       accountCode: ACCOUNT_CODES.SALES_REVENUE,
       debitAmount: netRevenue,
       description: 'Sales revenue reversal',
     });
+
+    // DR VAT Payable (reverse output VAT)
+    if (saleTax > 0) {
+      lines.push({
+        accountCode: ACCOUNT_CODES.VAT_PAYABLE,
+        debitAmount: saleTax,
+        description: 'Output VAT reversal',
+      });
+    }
 
     // CR Discounts Given (reverse)
     if (discountAmount && discountAmount > 0) {
@@ -660,6 +697,74 @@ export class AccountingService {
   }
 
   /**
+   * Create journal entry for a sales return (fix M1).
+   * Revenue side: DR Revenue (+ DR VAT Payable) / CR Cash or A/R (refund).
+   * Cost side: CR COGS, and DR Inventory for resellable goods (they re-enter
+   * stock) and/or DR Wastage for damaged goods (reclassified as a loss).
+   */
+  async createSaleReturnJournalEntry(
+    tx: any,
+    saleId: number,
+    saleNumber: string,
+    branchId: number | null,
+    userId: number,
+    data: {
+      returnRevenue: number;
+      returnTax?: number;
+      resellableCost?: number;
+      damagedCost?: number;
+      refundMethod?: 'cash' | 'credit';
+      customerId?: number;
+      stockAccountCode?: string;
+    },
+  ) {
+    const lines: JournalLineInput[] = [];
+    const returnTax = data.returnTax ?? 0;
+    const resellableCost = data.resellableCost ?? 0;
+    const damagedCost = data.damagedCost ?? 0;
+    const refundGross = data.returnRevenue + returnTax;
+    const stockAccount = data.stockAccountCode ?? ACCOUNT_CODES.INVENTORY;
+
+    // Reverse revenue
+    if (data.returnRevenue > 0) {
+      lines.push({ accountCode: ACCOUNT_CODES.SALES_REVENUE, debitAmount: data.returnRevenue, description: 'Sales return - revenue reversal' });
+    }
+    // Reverse output VAT
+    if (returnTax > 0) {
+      lines.push({ accountCode: ACCOUNT_CODES.VAT_PAYABLE, debitAmount: returnTax, description: 'Sales return - VAT reversal' });
+    }
+    // Refund: reduce receivable (credit) or pay cash
+    if (refundGross > 0) {
+      if (data.refundMethod === 'credit' && data.customerId) {
+        lines.push({ accountCode: ACCOUNT_CODES.ACCOUNTS_RECEIVABLE, creditAmount: refundGross, description: 'Sales return - reduce receivable' });
+      } else {
+        lines.push({ accountCode: ACCOUNT_CODES.CASH, creditAmount: refundGross, description: 'Sales return - cash refund' });
+      }
+    }
+    // Cost side
+    const totalCost = resellableCost + damagedCost;
+    if (resellableCost > 0) {
+      lines.push({ accountCode: stockAccount, debitAmount: resellableCost, description: 'Sales return - restock inventory' });
+    }
+    if (damagedCost > 0) {
+      lines.push({ accountCode: ACCOUNT_CODES.WASTAGE_EXPENSE, debitAmount: damagedCost, description: 'Sales return - damaged goods written off' });
+    }
+    if (totalCost > 0) {
+      lines.push({ accountCode: ACCOUNT_CODES.COST_OF_GOODS_SOLD, creditAmount: totalCost, description: 'Sales return - COGS reversal' });
+    }
+
+    return this.createJournalEntryInternal(tx, {
+      description: `مرتجع مبيعات: ${saleNumber}`,
+      sourceType: 'sale_return',
+      sourceId: saleId,
+      branchId,
+      lines,
+      userId,
+      autoPost: true,
+    });
+  }
+
+  /**
    * Create journal entry for purchase/inventory receipt
    * stockAccountCode: optional - use branch-specific stock account (Blueprint 06)
    */
@@ -676,11 +781,17 @@ export class AccountingService {
       stockAccountCode?: string;
       paymentMethod?: string;
       bankAccountId?: number | null;
+      taxAmount?: number; // fix H-1: input VAT on the purchase
     },
   ) {
     const lines: JournalLineInput[] = [];
     const { totalAmount, amountPaid } = data;
-    const amountDue = totalAmount - amountPaid;
+    // fix H-1: the payable/paid side is net + input VAT, so the entry must
+    // carry the VAT (DR 1125) and split cash/AP against the gross total — else
+    // a VAT purchase paid in full is unbalanced and the whole purchase is rejected.
+    const taxAmount = data.taxAmount ?? 0;
+    const grossTotal = totalAmount + taxAmount;
+    const amountDue = grossTotal - amountPaid;
 
     // DR Inventory (Blueprint 06: branch-specific account)
     const stockAccount = data.stockAccountCode ?? ACCOUNT_CODES.INVENTORY;
@@ -689,6 +800,15 @@ export class AccountingService {
       debitAmount: totalAmount,
       description: 'Inventory purchase',
     });
+
+    // DR Input VAT (recoverable)
+    if (taxAmount > 0) {
+      lines.push({
+        accountCode: ACCOUNT_CODES.VAT_RECEIVABLE,
+        debitAmount: taxAmount,
+        description: 'Input VAT',
+      });
+    }
 
     // CR Cash or Bank (if paid) - use selected bank when paymentMethod is bank_transfer/card
     if (amountPaid > 0) {
@@ -793,6 +913,35 @@ export class AccountingService {
       branchId,
       lines,
       userId,
+      autoPost: true,
+    });
+  }
+
+  /**
+   * Create journal entry for an item's opening stock (fix C-3).
+   * DR Inventory (branch stock account) / CR Capital — records the value of
+   * stock the business starts with so the GL inventory account is not understated.
+   */
+  async createOpeningStockJournalEntry(
+    tx: any,
+    itemId: number,
+    branchId: number | null,
+    userId: number | undefined,
+    data: { amount: number; stockAccountCode?: string },
+  ) {
+    if (!data.amount || data.amount <= 0) return;
+    const stockAccount = data.stockAccountCode ?? ACCOUNT_CODES.INVENTORY;
+    const lines: JournalLineInput[] = [
+      { accountCode: stockAccount, debitAmount: data.amount, description: 'Opening stock' },
+      { accountCode: ACCOUNT_CODES.CAPITAL, creditAmount: data.amount, description: 'Opening stock equity' },
+    ];
+    return this.createJournalEntryInternal(tx, {
+      description: `رصيد افتتاحي - صنف #${itemId}`,
+      sourceType: 'opening_stock',
+      sourceId: itemId,
+      branchId,
+      lines,
+      userId: userId ?? 0,
       autoPost: true,
     });
   }
@@ -986,7 +1135,9 @@ export class AccountingService {
     branchId: number | null,
     userId: number,
     amount: number,
+    stockAccountCode?: string, // fix H-4: credit the branch stock account, not the default 1131
   ) {
+    const stockAccount = stockAccountCode ?? ACCOUNT_CODES.INVENTORY;
     const lines: JournalLineInput[] = [
       {
         accountCode: ACCOUNT_CODES.WASTAGE_EXPENSE,
@@ -994,14 +1145,14 @@ export class AccountingService {
         description: 'Wastage expense',
       },
       {
-        accountCode: ACCOUNT_CODES.INVENTORY,
+        accountCode: stockAccount,
         creditAmount: amount,
         description: 'Inventory loss',
       },
     ];
 
     if (await this.isGlEngineEnabled()) {
-      const glMap = await this.getWastageGLMap(amount);
+      const glMap = await this.getWastageGLMap(amount, { stockAccountCode: stockAccount });
       return this.glEngineService.post(glMap, {
         voucherType: 'wastage',
         voucherId: wastageId,

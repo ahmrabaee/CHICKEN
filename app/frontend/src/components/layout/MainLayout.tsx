@@ -3,6 +3,7 @@ import { AppSidebar } from "./AppSidebar";
 import { PageAccessGate } from "@/components/PageAccessGate";
 import { cn } from "@/lib/utils";
 import { BackupAutoSyncAgent } from "@/features/backup/components/BackupAutoSyncAgent";
+import { HelpFab } from "@/components/HelpFab";
 
 export function MainLayout() {
   const [sidebarCollapsed] = useState(false);
@@ -10,6 +11,7 @@ export function MainLayout() {
   return (
     <div dir="rtl" className="min-h-screen bg-background">
       <BackupAutoSyncAgent />
+      <HelpFab />
       <AppSidebar />
       <main
         className={cn(

@@ -10,7 +10,7 @@ import { TaxCalculationService } from '../accounting/tax/tax-calculation.service
 import { StockLedgerService } from '../inventory/stock-ledger/stock-ledger.service';
 import { StockAccountMapperService } from '../inventory/stock-ledger/stock-account-mapper.service';
 import {
-  CreateSaleDto, VoidSaleDto, AddPaymentDto, SaleResponseDto, SaleQueryDto,
+  CreateSaleDto, VoidSaleDto, ReturnSaleDto, AddPaymentDto, SaleResponseDto, SaleQueryDto,
 } from './dto';
 import {
   createPaginatedResult,
@@ -256,15 +256,29 @@ export class SalesService {
 
   async create(dto: CreateSaleDto, cashierId: number, userRoles: string[], branchId?: number) {
     const isAdmin = userRoles.includes('admin');
-    const maxDiscountPct = isAdmin ? 10000 : 500; // Admin unlimited, accountant 5%
+    const maxDiscountPct = isAdmin ? 10000 : 500; // Admin unlimited, accountant 5% (basis points)
 
-    // Validate discount
-    if (dto.discountPct && dto.discountPct > maxDiscountPct) {
-      throw new ForbiddenException({
-        code: 'DISCOUNT_LIMIT_EXCEEDED',
-        message: `Discount cannot exceed ${maxDiscountPct / 100}%`,
-        messageAr: `الخصم لا يمكن أن يتجاوز ${maxDiscountPct / 100}%`,
-      });
+    // Validate discount — cap the TOTAL effective discount, not just discountPct
+    // (fix C-6: a non-admin previously bypassed the cap via sale-level or
+    // per-line discountAmount). Compute gross from the lines and compare the
+    // combined discount (lines + sale amount + pct) against the cap.
+    if (!isAdmin) {
+      const grossEstimate = (dto.lines ?? []).reduce(
+        (s, l) => s + Math.round(((l.weightGrams ?? 0) / 1000) * (l.pricePerKg ?? 0)),
+        0,
+      );
+      const lineDiscounts = (dto.lines ?? []).reduce((s, l) => s + (l.discountAmount ?? 0), 0);
+      const saleDiscountAmt = dto.discountAmount ?? 0;
+      const pctDiscount = dto.discountPct ? Math.round((grossEstimate * dto.discountPct) / 10000) : 0;
+      const totalDiscount = lineDiscounts + saleDiscountAmt + pctDiscount;
+      const effectivePct = grossEstimate > 0 ? Math.round((totalDiscount * 10000) / grossEstimate) : 0;
+      if (effectivePct > maxDiscountPct) {
+        throw new ForbiddenException({
+          code: 'DISCOUNT_LIMIT_EXCEEDED',
+          message: `Discount cannot exceed ${maxDiscountPct / 100}%`,
+          messageAr: `الخصم لا يمكن أن يتجاوز ${maxDiscountPct / 100}%`,
+        });
+      }
     }
 
     // Validate customer if provided
@@ -324,8 +338,8 @@ export class SalesService {
           });
         }
 
-        // FIFO allocation
-        const allocations = await this.inventoryService.allocateFIFO(line.itemId, line.weightGrams);
+        // FIFO allocation — read lots inside this transaction (fix C-1 race)
+        const allocations = await this.inventoryService.allocateFIFO(line.itemId, line.weightGrams, tx);
         const lineCost = allocations.reduce((sum, a) => sum + a.totalCost, 0);
         const lineGross = Math.round((line.weightGrams / 1000) * line.pricePerKg);
         const lineDiscount = line.discountAmount ?? 0;
@@ -514,11 +528,24 @@ export class SalesService {
             },
           });
 
-          // Deduct from lot
-          await tx.inventoryLot.update({
-            where: { id: alloc.lotId },
+          // Deduct from lot — guarded so concurrent sales cannot drive it
+          // negative (fix C-1). updateMany only matches while enough remains.
+          const lotDec = await tx.inventoryLot.updateMany({
+            where: {
+              id: alloc.lotId,
+              remainingQuantityGrams: { gte: alloc.quantityGrams },
+            },
             data: { remainingQuantityGrams: { decrement: alloc.quantityGrams } },
           });
+          // allocateFIFO already verified sufficiency inside this tx, so a
+          // failed guarded decrement means a concurrent change slipped in.
+          if (lotDec.count === 0) {
+            throw new BadRequestException({
+              code: 'INSUFFICIENT_STOCK',
+              message: `Insufficient lot stock for item ${line.itemId} (concurrent sale)`,
+              messageAr: `المخزون غير كافٍ (بيع متزامن)`,
+            });
+          }
         }
 
         // Update inventory
@@ -666,11 +693,13 @@ export class SalesService {
       return this.findById(sale.id, tx);
     });
       } catch (err: any) {
-        // P2002 = Prisma unique constraint violation
-        if (err?.code === 'P2002' && JSON.stringify(err?.meta?.target ?? '').includes('sale_number')) {
+        // P2002 = Prisma unique constraint violation. Retry on ANY generated
+        // number collision (sale_number, payment_number, entry_number, lot…):
+        // the whole transaction rolled back, so re-running regenerates them all
+        // (fix H-3). The backoff de-synchronises colliding concurrent requests.
+        if (err?.code === 'P2002') {
           lastTxError = err;
-          // Small random backoff so concurrent requests don't collide again
-          await new Promise(r => setTimeout(r, 10 + Math.random() * 30));
+          await new Promise(r => setTimeout(r, 10 + Math.random() * 40));
           continue;
         }
         throw err;
@@ -855,6 +884,141 @@ export class SalesService {
       );
 
       return this.findById(id);
+    });
+  }
+
+  /**
+   * Sales return (fix M1). Returns specific quantities of a sale, each marked
+   * as 'resellable' (goes back into stock) or 'damaged' (written off as a loss).
+   * Reverses the proportional revenue + VAT (refund cash or reduce the debt),
+   * and the proportional cost (DR Inventory for resellable / DR Wastage for
+   * damaged, CR COGS). Supports partial and repeated returns.
+   */
+  async returnSale(id: number, dto: ReturnSaleDto, userId: number) {
+    if (!dto.lines?.length) {
+      throw new BadRequestException({ code: 'VALIDATION_ERROR', message: 'At least one return line is required', messageAr: 'يجب تحديد صنف مرتجع واحد على الأقل' });
+    }
+
+    const sale = await this.prisma.sale.findUnique({
+      where: { id },
+      include: { saleLines: { include: { costAllocations: true } } },
+    });
+    if (!sale) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Sale not found', messageAr: 'عملية البيع غير موجودة' });
+    }
+    if (sale.isVoided) {
+      throw new BadRequestException({ code: 'SALE_VOIDED', message: 'Cannot return a voided sale', messageAr: 'لا يمكن إرجاع عملية بيع ملغاة' });
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { username: true } });
+
+    // Quantities already returned per item (for over-return prevention)
+    const priorReturns = await this.prisma.stockMovement.findMany({
+      where: { referenceType: 'sale_return', referenceId: id },
+    });
+    const alreadyReturned: Record<number, number> = {};
+    for (const m of priorReturns) {
+      alreadyReturned[m.itemId] = (alreadyReturned[m.itemId] ?? 0) + Math.abs(m.quantityGrams);
+    }
+
+    // Effective VAT rate on this sale (for proportional tax reversal)
+    const taxRate = sale.totalTaxAmount && sale.netTotal ? sale.totalTaxAmount / sale.netTotal : 0;
+
+    return this.prisma.$transaction(async (tx) => {
+      await PeriodLockGuard.check(sale.saleDate, null, tx);
+
+      let totalReturnRevenue = 0;
+      let resellableCost = 0;
+      let damagedCost = 0;
+      const now = new Date();
+
+      for (const rl of dto.lines) {
+        const saleLine = sale.saleLines.find((l) => l.itemId === rl.itemId);
+        if (!saleLine) {
+          throw new BadRequestException({ code: 'ITEM_NOT_IN_SALE', message: `Item ${rl.itemId} was not in this sale`, messageAr: `الصنف ${rl.itemId} غير موجود في هذه الفاتورة` });
+        }
+        const remaining = saleLine.weightGrams - (alreadyReturned[rl.itemId] ?? 0);
+        if (rl.quantityGrams > remaining) {
+          throw new BadRequestException({ code: 'EXCEEDS_SOLD_QTY', message: `Return qty exceeds remaining returnable (${remaining}g) for item ${rl.itemId}`, messageAr: `الكمية المرتجعة تتجاوز المتاح للإرجاع (${remaining} جرام)` });
+        }
+        alreadyReturned[rl.itemId] = (alreadyReturned[rl.itemId] ?? 0) + rl.quantityGrams; // guard within this request too
+
+        const ratio = saleLine.weightGrams > 0 ? rl.quantityGrams / saleLine.weightGrams : 0;
+        const lineReturnRevenue = Math.round(saleLine.lineTotalAmount * ratio);
+        const lineReturnCost = Math.round(saleLine.lineTotalCost * ratio);
+        totalReturnRevenue += lineReturnRevenue;
+        const unitCostPerKg = rl.quantityGrams > 0 ? Math.round((lineReturnCost * 1000) / rl.quantityGrams) : saleLine.costPerKg;
+
+        if (rl.condition === 'resellable') {
+          resellableCost += lineReturnCost;
+          // restock: new lot + inventory increment
+          const lotNumber = `LOT-RET-${rl.itemId}-${Date.now().toString().slice(-6)}`;
+          await tx.inventoryLot.create({
+            data: {
+              itemId: rl.itemId,
+              lotNumber,
+              totalQuantityGrams: rl.quantityGrams,
+              remainingQuantityGrams: rl.quantityGrams,
+              unitPurchasePrice: unitCostPerKg,
+              receivedAt: now,
+              createdById: userId,
+            },
+          });
+          await tx.inventory.update({
+            where: { itemId: rl.itemId },
+            data: { currentQuantityGrams: { increment: rl.quantityGrams }, totalValue: { increment: lineReturnCost }, lastRestockedAt: now },
+          });
+          const invR = await tx.inventory.findUnique({ where: { itemId: rl.itemId } });
+          if (invR && invR.currentQuantityGrams > 0) {
+            await tx.inventory.update({ where: { itemId: rl.itemId }, data: { averageCost: Math.round((invR.totalValue * 1000) / invR.currentQuantityGrams) } });
+          }
+          await tx.stockMovement.create({
+            data: { itemId: rl.itemId, movementType: 'return', quantityGrams: rl.quantityGrams, unitCost: unitCostPerKg, referenceType: 'sale_return', referenceId: id, reason: dto.reason, performedById: userId },
+          });
+          await this.stockLedgerService.createSLE(tx, {
+            itemId: rl.itemId, branchId: sale.branchId, voucherType: 'sale_return', voucherId: id, voucherDetailNo: `return-${rl.itemId}`,
+            qtyChange: rl.quantityGrams, valuationRate: unitCostPerKg, stockValueDifference: lineReturnCost, postingDate: now, remarks: `Return (resellable) sale ${sale.saleNumber}`,
+          });
+        } else {
+          // damaged: no sellable-inventory change; cost reclassified to wastage.
+          damagedCost += lineReturnCost;
+          await tx.stockMovement.create({
+            data: { itemId: rl.itemId, movementType: 'return_damaged', quantityGrams: rl.quantityGrams, unitCost: unitCostPerKg, referenceType: 'sale_return', referenceId: id, reason: dto.reason ?? 'damaged return', performedById: userId },
+          });
+        }
+      }
+
+      const returnTax = taxRate > 0 ? Math.round(totalReturnRevenue * taxRate) : 0;
+      const refundGross = totalReturnRevenue + returnTax;
+
+      // Reduce the customer's debt when refunding to credit
+      if (dto.refundMethod === 'credit' && sale.customerId && refundGross > 0) {
+        const debt = await tx.debt.findFirst({ where: { sourceType: 'sale', sourceId: id, status: { in: ['open', 'partial'] } } });
+        if (debt) {
+          const reduce = Math.min(refundGross, debt.totalAmount - debt.amountPaid);
+          if (reduce > 0) {
+            await tx.debt.update({ where: { id: debt.id }, data: { amountPaid: { increment: reduce } } });
+          }
+        }
+        await tx.customer.update({ where: { id: sale.customerId }, data: { currentBalance: { decrement: refundGross } } });
+      }
+
+      const stockAccountCode = await this.stockAccountMapperService.getStockAccountCode(sale.branchId);
+      await this.accountingService.createSaleReturnJournalEntry(tx, sale.id, sale.saleNumber, sale.branchId ?? null, userId, {
+        returnRevenue: totalReturnRevenue,
+        returnTax,
+        resellableCost,
+        damagedCost,
+        refundMethod: dto.refundMethod,
+        customerId: sale.customerId ?? undefined,
+        stockAccountCode,
+      });
+
+      await tx.auditLog.create({
+        data: { userId, username: user?.username ?? 'unknown', action: 'return', entityType: 'Sale', entityId: id, changes: JSON.stringify({ lines: dto.lines, refundGross, resellableCost, damagedCost, reason: dto.reason }) },
+      });
+
+      return { saleId: id, saleNumber: sale.saleNumber, returnRevenue: totalReturnRevenue, returnTax, refundGross, resellableCost, damagedCost };
     });
   }
 

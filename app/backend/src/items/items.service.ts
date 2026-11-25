@@ -1,12 +1,18 @@
 import { Injectable, NotFoundException, ConflictException, InternalServerErrorException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AccountingService } from '../accounting/accounting.service';
+import { StockAccountMapperService } from '../inventory/stock-ledger/stock-account-mapper.service';
 import { CreateItemDto, UpdateItemDto, ItemResponseDto, ItemListQueryDto } from './dto';
 import { createPaginatedResult, PaginatedResult } from '../common';
 
 @Injectable()
 export class ItemsService {
   private readonly logger = new Logger(ItemsService.name);
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    private prisma: PrismaService,
+    private accountingService: AccountingService,
+    private stockAccountMapperService: StockAccountMapperService,
+  ) { }
 
   async findAll(query: ItemListQueryDto): Promise<PaginatedResult<ItemResponseDto>> {
     const page = query.page ?? 1;
@@ -264,6 +270,22 @@ export class ItemsService {
             },
           });
           this.logger.log(`[إنشاء صنف] تم إنشاء الحركة المخزنية بنجاح`);
+
+          // fix C-3: post the opening-stock value to the GL so the inventory
+          // account is not understated (DR Inventory / CR Capital).
+          const openingValue = Math.round((initialQty / 1000) * initialCost);
+          if (openingValue > 0) {
+            const stockAccountCode = await this.stockAccountMapperService.getStockAccountCode(
+              inventory.branchId ?? null,
+            );
+            await this.accountingService.createOpeningStockJournalEntry(
+              tx,
+              item.id,
+              inventory.branchId ?? null,
+              userId,
+              { amount: openingValue, stockAccountCode },
+            );
+          }
         }
 
         return { ...item, inventory };

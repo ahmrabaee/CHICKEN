@@ -4,7 +4,7 @@ import {
 import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { SalesService } from './sales.service';
-import { CreateSaleDto, VoidSaleDto, AddPaymentDto, SaleQueryDto } from './dto';
+import { CreateSaleDto, VoidSaleDto, ReturnSaleDto, AddPaymentDto, SaleQueryDto } from './dto';
 import { PdfQueryDto } from '../pdf/dto/pdf-query.dto';
 import { getPdfContentDisposition } from '../pdf/pdf.helpers';
 import { Roles, RolesGuard, CurrentUser, CurrentUserData, PaginationQueryDto } from '../common';
@@ -90,6 +90,20 @@ export class SalesController {
     @CurrentUser() user: CurrentUserData,
   ) {
     return this.salesService.voidSale(id, dto, user.id);
+  }
+
+  @Post(':id/return')
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'accountant')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Return items from a sale (resellable restocks, damaged written off)' })
+  @ApiParam({ name: 'id', description: 'Sale ID' })
+  async returnSale(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: ReturnSaleDto,
+    @CurrentUser() user: CurrentUserData,
+  ) {
+    return this.salesService.returnSale(id, dto, user.id);
   }
 
   @Post(':id/payments')

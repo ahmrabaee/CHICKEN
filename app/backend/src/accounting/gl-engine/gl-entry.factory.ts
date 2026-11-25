@@ -72,7 +72,15 @@ export class GlEntryFactory {
   }
 
   private async generateEntryNumber(tx: PrismaTransaction): Promise<string> {
-    const count = await tx.journalEntry.count();
-    return `JE-${(count + 1).toString().padStart(6, '0')}`;
+    // Use max-existing + 1 rather than count + 1: count-based numbering reuses
+    // numbers after a delete/void and collides with existing rows (fix H-3).
+    // The entryNumber is @unique, so a rare concurrent collision throws P2002
+    // and the caller's transaction is retried.
+    const last = await tx.journalEntry.findFirst({
+      orderBy: { entryNumber: 'desc' },
+      select: { entryNumber: true },
+    });
+    const lastNum = last?.entryNumber ? parseInt(last.entryNumber.replace(/\D/g, ''), 10) || 0 : 0;
+    return `JE-${(lastNum + 1).toString().padStart(6, '0')}`;
   }
 }

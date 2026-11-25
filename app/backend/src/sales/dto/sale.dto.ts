@@ -130,6 +130,44 @@ export class VoidSaleDto {
   reason: string;
 }
 
+export class ReturnSaleLineDto {
+  @ApiProperty({ description: 'Item being returned' })
+  @Type(() => Number)
+  @IsInt()
+  @IsPositive()
+  itemId: number;
+
+  @ApiProperty({ description: 'Returned quantity in grams' })
+  @Type(() => Number)
+  @IsInt()
+  @IsPositive()
+  quantityGrams: number;
+
+  @ApiProperty({ description: 'Condition of the returned goods', enum: ['resellable', 'damaged'] })
+  @IsString()
+  @IsIn(['resellable', 'damaged'])
+  condition: 'resellable' | 'damaged';
+}
+
+export class ReturnSaleDto {
+  @ApiProperty({ type: [ReturnSaleLineDto], description: 'Returned lines with per-line condition' })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ReturnSaleLineDto)
+  lines: ReturnSaleLineDto[];
+
+  @ApiPropertyOptional({ description: 'How to refund the customer', enum: ['cash', 'credit'] })
+  @IsString()
+  @IsIn(['cash', 'credit'])
+  @IsOptional()
+  refundMethod?: 'cash' | 'credit';
+
+  @ApiPropertyOptional({ description: 'Reason for the return' })
+  @IsString()
+  @IsOptional()
+  reason?: string;
+}
+
 export class AddPaymentDto {
   @ApiProperty({ description: 'Payment amount in minor units' })
   @Type(() => Number)

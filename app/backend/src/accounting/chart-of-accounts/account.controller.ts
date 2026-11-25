@@ -8,16 +8,18 @@ import {
   Body,
   Query,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ChartOfAccountsService } from './chart-of-accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
-import { Roles, CurrentUser } from '../../common';
+import { Roles, RolesGuard, CurrentUser } from '../../common';
 import { CurrentUserData } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('accounting')
 @ApiBearerAuth('JWT-auth')
+@UseGuards(RolesGuard) // fix C-6: @Roles('admin') on account CRUD was inert without this
 @Controller('accounting')
 export class AccountController {
   constructor(private chartOfAccountsService: ChartOfAccountsService) { }

@@ -6,6 +6,7 @@ import {
     SaleQuery,
     CreateSaleDto,
     VoidSaleDto,
+    ReturnSaleDto,
     AddPaymentDto,
     SaleReceipt,
 } from '@/types/sales';
@@ -58,6 +59,15 @@ export const salesService = {
      */
     async voidSale(id: number, data: VoidSaleDto): Promise<Sale> {
         const response = await axiosInstance.post<ApiResponse<Sale>>(`/sales/${id}/void`, data);
+        return response.data.data;
+    },
+
+    /**
+     * Return items from a sale (resellable restocks, damaged written off)
+     * POST /v1/sales/:id/return
+     */
+    async returnSale(id: number, data: ReturnSaleDto): Promise<any> {
+        const response = await axiosInstance.post<ApiResponse<any>>(`/sales/${id}/return`, data);
         return response.data.data;
     },
 

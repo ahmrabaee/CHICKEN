@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '@/components/ui/status-badge';
 import type { Account } from '@/types/accounting';
 import { ROOT_TYPE_COLORS, REPORT_TYPE_LABELS } from '@/lib/accounting';
+import { formatCurrency } from '@/lib/formatters';
 
 interface AccountWithChildren extends Account {
     _children?: AccountWithChildren[];
@@ -14,6 +15,8 @@ interface AccountTreeRowProps {
     account: AccountWithChildren;
     depth?: number;
     expandedIds: Set<number>;
+    /** net balance (debit − credit) per account id, aggregated up the tree */
+    balanceById?: Map<number, number>;
     onToggle: (id: number) => void;
     onView?: (account: Account) => void;
     onEdit?: (account: Account) => void;
@@ -24,6 +27,7 @@ export function AccountTreeRow({
     account,
     depth = 0,
     expandedIds,
+    balanceById,
     onToggle,
     onView,
     onEdit,
@@ -33,6 +37,7 @@ export function AccountTreeRow({
     const hasChildren = children.length > 0;
     const isExpanded = expandedIds.has(account.id);
     const style = ROOT_TYPE_COLORS[account.rootType] || { bg: '', text: '', label: '—' };
+    const net = balanceById?.get(account.id) ?? 0;
 
     return (
         <>
@@ -98,6 +103,21 @@ export function AccountTreeRow({
                         )}
                     </div>
                 </TableCell>
+                <TableCell className="text-center whitespace-nowrap">
+                    {net === 0 ? (
+                        <span className="text-muted-foreground text-xs">—</span>
+                    ) : net > 0 ? (
+                        <span className="font-mono text-sm font-semibold text-blue-700 dark:text-blue-400">
+                            {formatCurrency(net)}
+                            <span className="text-[10px] font-normal text-muted-foreground mr-1">مدين</span>
+                        </span>
+                    ) : (
+                        <span className="font-mono text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                            {formatCurrency(-net)}
+                            <span className="text-[10px] font-normal text-muted-foreground mr-1">دائن</span>
+                        </span>
+                    )}
+                </TableCell>
                 <TableCell className="text-center">
                     <div className="flex justify-center">
                         {account.isActive ? (
@@ -135,6 +155,7 @@ export function AccountTreeRow({
                         account={c}
                         depth={depth + 1}
                         expandedIds={expandedIds}
+                        balanceById={balanceById}
                         onToggle={onToggle}
                         onView={onView}
                         onEdit={onEdit}

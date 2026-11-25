@@ -6,15 +6,17 @@ import {
   Query,
   Body,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { OutstandingCalculatorService } from '../payment-ledger/outstanding-calculator.service';
 import { ReconciliationService } from './reconciliation.service';
-import { Roles, CurrentUser } from '../../common';
+import { Roles, RolesGuard, CurrentUser } from '../../common';
 import { ApplyAllocationsDto } from './dto/apply-allocations.dto';
 
 @ApiTags('reconciliation')
 @ApiBearerAuth('JWT-auth')
+@UseGuards(RolesGuard) // fix C-6: class @Roles was inert without a guard
 @Roles('admin', 'accountant')
 @Controller('reconciliation')
 export class ReconciliationController {

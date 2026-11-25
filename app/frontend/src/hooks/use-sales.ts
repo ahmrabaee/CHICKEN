@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { salesService } from '@/services/sales.service';
-import { SaleQuery, CreateSaleDto, VoidSaleDto, AddPaymentDto } from '@/types/sales';
+import { SaleQuery, CreateSaleDto, VoidSaleDto, ReturnSaleDto, AddPaymentDto } from '@/types/sales';
 import { toast } from '@/hooks/use-toast';
 import { getPostingErrorToast } from '@/lib/api-errors';
 
@@ -85,6 +85,37 @@ export const useVoidSale = () => {
             toast({
                 variant: 'destructive',
                 title: 'خطأ في إلغاء الفاتورة',
+                description: msgAr ?? 'حدث خطأ غير متوقع',
+            });
+        },
+    });
+};
+
+export const useReturnSale = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }: { id: number; data: ReturnSaleDto }) =>
+            salesService.returnSale(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['sales'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory'] });
+            queryClient.invalidateQueries({ queryKey: ['items'] });
+            queryClient.invalidateQueries({ queryKey: ['debts'] });
+            queryClient.invalidateQueries({ queryKey: ['customers'] });
+            queryClient.invalidateQueries({ queryKey: ['accounting'] });
+            toast({ title: 'تم تسجيل المرتجع بنجاح' });
+        },
+        onError: (error: any) => {
+            const postingToast = getPostingErrorToast(error);
+            if (postingToast) {
+                toast(postingToast);
+                return;
+            }
+            const errData = error.response?.data;
+            const msgAr = errData?.error?.messageAr ?? errData?.messageAr;
+            toast({
+                variant: 'destructive',
+                title: 'خطأ في تسجيل المرتجع',
                 description: msgAr ?? 'حدث خطأ غير متوقع',
             });
         },

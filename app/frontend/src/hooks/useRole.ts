@@ -27,6 +27,9 @@ export function useRole() {
 
   const canAccessPath = (path: string): boolean => {
     if (isAdmin) return true;
+    // Static help content is safe for every authenticated user, regardless of
+    // their page permissions.
+    if (path === '/help' || path.startsWith('/help/') || path.startsWith('/help#')) return true;
     if (allowedPages && allowedPages.length > 0) {
       return pathAllowed(path, allowedPages);
     }

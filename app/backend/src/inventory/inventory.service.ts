@@ -276,14 +276,35 @@ export class InventoryService {
     return this.prisma.$transaction(async (tx) => {
       let newTotalValue: number;
       let lotIdForMovement: number | null = dto.lotId ?? null;
+      // Actual cost removed from FIFO lots on a decrease (fix C-2); reused for
+      // the Stock Ledger Entry and the GL journal entry below.
+      let decreaseValueDeduct = 0;
 
       if (dto.adjustmentType === 'decrease') {
-        // Proportional deduction: valueOut = (currentValue / currentQty) * quantityOut
-        const valueDeduct =
-          currentQty > 0
-            ? Math.round((currentTotalValue * dto.quantityGrams) / currentQty)
-            : 0;
-        newTotalValue = Math.max(0, currentTotalValue - valueDeduct);
+        // Consume from FIFO lots (oldest first) so the lot layer stays
+        // consistent with the inventory totals (fix C-2: previously the lots
+        // were never decremented, so later sales double-counted the stock).
+        const lots = await this.getAvailableLots(dto.itemId, tx);
+        let toRemove = dto.quantityGrams;
+        for (const lot of lots) {
+          if (toRemove <= 0) break;
+          const take = Math.min(lot.remainingQuantityGrams, toRemove);
+          const dec = await tx.inventoryLot.updateMany({
+            where: { id: lot.id, remainingQuantityGrams: { gte: take } },
+            data: { remainingQuantityGrams: { decrement: take } },
+          });
+          if (dec.count === 0) continue; // concurrent change — skip this lot
+          decreaseValueDeduct += Math.round((take / 1000) * lot.unitPurchasePrice);
+          toRemove -= take;
+        }
+        // Remainder beyond available lots (only reachable when negative stock
+        // is allowed): value it at the current average cost.
+        if (toRemove > 0) {
+          const avgPerKg =
+            currentQty > 0 ? Math.round((currentTotalValue * 1000) / currentQty) : 0;
+          decreaseValueDeduct += Math.round((toRemove / 1000) * avgPerKg);
+        }
+        newTotalValue = Math.max(0, currentTotalValue - decreaseValueDeduct);
       } else {
         // Increase
         const costPerKg = dto.unitCost ?? (currentQty > 0 ? Math.round((currentTotalValue * 1000) / currentQty) : 0);
@@ -362,7 +383,8 @@ export class InventoryService {
       const stockAccountCode = await this.stockAccountMapperService.getStockAccountCode(branchId);
       const now = new Date();
       if (dto.adjustmentType === 'decrease') {
-        const valueDeduct = currentQty > 0 ? Math.round((currentTotalValue * dto.quantityGrams) / currentQty) : 0;
+        // Use the actual lot cost consumed above (fix C-2) for SLE + GL.
+        const valueDeduct = decreaseValueDeduct;
         if (valueDeduct > 0) {
           await this.stockLedgerService.createSLE(tx, {
             itemId: dto.itemId,
@@ -371,7 +393,7 @@ export class InventoryService {
             voucherId: movement.id,
             voucherDetailNo: 'decrease',
             qtyChange: -dto.quantityGrams,
-            valuationRate: currentQty > 0 ? Math.round((currentTotalValue * 1000) / currentQty) : 0,
+            valuationRate: dto.quantityGrams > 0 ? Math.round((valueDeduct * 1000) / dto.quantityGrams) : 0,
             stockValueDifference: -valueDeduct,
             postingDate: now,
             remarks: dto.reason,
@@ -419,10 +441,13 @@ export class InventoryService {
   }
 
   /**
-   * FIFO: Get available lots ordered by received date
+   * FIFO: Get available lots ordered by received date.
+   * Accepts an optional transaction client so the read is part of the caller's
+   * transaction snapshot (fix C-1: FIFO race / oversell).
    */
-  async getAvailableLots(itemId: number) {
-    return this.prisma.inventoryLot.findMany({
+  async getAvailableLots(itemId: number, tx?: any) {
+    const client = tx ?? this.prisma;
+    return client.inventoryLot.findMany({
       where: {
         itemId,
         remainingQuantityGrams: { gt: 0 },
@@ -432,10 +457,11 @@ export class InventoryService {
   }
 
   /**
-   * FIFO: Allocate stock from oldest lots first
+   * FIFO: Allocate stock from oldest lots first.
+   * Pass `tx` to read lots inside the caller's transaction (fix C-1).
    */
-  async allocateFIFO(itemId: number, requiredGrams: number) {
-    const lots = await this.getAvailableLots(itemId);
+  async allocateFIFO(itemId: number, requiredGrams: number, tx?: any) {
+    const lots = await this.getAvailableLots(itemId, tx);
     const allocations: Array<{
       lotId: number;
       lotNumber: string;
@@ -476,14 +502,31 @@ export class InventoryService {
   }
 
   /**
-   * FIFO: Deduct from lots after sale confirmation
+   * FIFO: Deduct from lots after sale confirmation.
+   * Guarded, atomic decrement: the conditional updateMany only succeeds while
+   * the lot still has enough remaining, so concurrent issues can never drive a
+   * lot negative (fix C-1). Pass `tx` to run inside the caller's transaction.
    */
-  async deductFromLots(allocations: Array<{ lotId: number; quantityGrams: number }>) {
+  async deductFromLots(
+    allocations: Array<{ lotId: number; quantityGrams: number }>,
+    tx?: any,
+  ) {
+    const client = tx ?? this.prisma;
     for (const alloc of allocations) {
-      await this.prisma.inventoryLot.update({
-        where: { id: alloc.lotId },
+      const res = await client.inventoryLot.updateMany({
+        where: {
+          id: alloc.lotId,
+          remainingQuantityGrams: { gte: alloc.quantityGrams },
+        },
         data: { remainingQuantityGrams: { decrement: alloc.quantityGrams } },
       });
+      if (res.count === 0) {
+        throw new BadRequestException({
+          code: 'INSUFFICIENT_STOCK',
+          message: `Lot ${alloc.lotId} has insufficient remaining stock (concurrent update)`,
+          messageAr: 'المخزون في الدفعة غير كافٍ (تحديث متزامن)',
+        });
+      }
     }
   }
 

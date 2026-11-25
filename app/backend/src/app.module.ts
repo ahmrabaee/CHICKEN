@@ -9,6 +9,7 @@ import { PrismaModule } from './prisma/prisma.module';
 // Common
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 // Feature modules
@@ -89,6 +90,11 @@ import { BankAccountsModule } from './bank-accounts/bank-accounts.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: TransformInterceptor,
+    },
+    // Global audit trail — logs every mutating request (fix C-5)
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AuditInterceptor,
     },
     // Global JWT guard (all routes protected by default)
     {

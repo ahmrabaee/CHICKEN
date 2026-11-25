@@ -6,14 +6,16 @@ import {
   Body,
   Query,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CreditNoteService } from './credit-note.service';
-import { Roles, CurrentUser } from '../../common';
+import { Roles, RolesGuard, CurrentUser } from '../../common';
 import { CreateCreditNoteDto } from './dto/create-credit-note.dto';
 
 @ApiTags('credit-notes')
 @ApiBearerAuth('JWT-auth')
+@UseGuards(RolesGuard) // fix C-6: class @Roles was inert without a guard
 @Roles('admin', 'accountant')
 @Controller('credit-notes')
 export class CreditNoteController {

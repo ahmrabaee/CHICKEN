@@ -167,6 +167,23 @@ export class StockTransferService {
       : sourceLot.expiryDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const branchId = dto.branchId ?? sourceLot.branchId;
 
+    // fix C-4: conserve value. The total value of the output product lots must
+    // equal the cost consumed from the source lot, so a transfer/conversion can
+    // never silently inflate or deflate total inventory value (there is no P&L
+    // on a conversion). We distribute the source cost across the output lines in
+    // proportion to the client-supplied costs (falling back to weight), and push
+    // any rounding remainder onto the last line so the sum matches exactly.
+    const sourceValueReduction = Math.round((totalWeightGrams * sourceLot.unitPurchasePrice) / 1000);
+    const clientLineValues = dto.lines.map((l) => Math.round((l.weightGrams / 1000) * l.unitCost));
+    const clientTotal = clientLineValues.reduce((s, v) => s + v, 0);
+    const basis = clientTotal > 0 ? clientLineValues : dto.lines.map((l) => l.weightGrams);
+    const basisTotal = basis.reduce((s, v) => s + v, 0) || 1;
+    const conservedLineValues = basis.map((v) => Math.round((sourceValueReduction * v) / basisTotal));
+    const drift = sourceValueReduction - conservedLineValues.reduce((s, v) => s + v, 0);
+    if (conservedLineValues.length > 0) {
+      conservedLineValues[conservedLineValues.length - 1] += drift;
+    }
+
     return this.prisma.$transaction(async (tx) => {
       const transfer = await tx.stockTransfer.create({
         data: {
@@ -176,7 +193,7 @@ export class StockTransferService {
           branchId,
           expiryDate,
           totalWeightGrams,
-          totalCostValue: dto.lines.reduce((s, l) => s + Math.round((l.weightGrams / 1000) * l.unitCost), 0),
+          totalCostValue: sourceValueReduction,
           status: 'draft',
           notes: dto.notes,
           createdById: userId,
@@ -186,7 +203,11 @@ export class StockTransferService {
       // Create lines and product lots
       for (let i = 0; i < dto.lines.length; i++) {
         const line = dto.lines[i];
-        const lineCostValue = Math.round((line.weightGrams / 1000) * line.unitCost);
+        const lineCostValue = conservedLineValues[i];
+        // effective unit cost after value-conservation scaling
+        const effectiveUnitCost = line.weightGrams > 0
+          ? Math.round((lineCostValue * 1000) / line.weightGrams)
+          : line.unitCost;
 
         await tx.stockTransferLine.create({
           data: {
@@ -194,7 +215,7 @@ export class StockTransferService {
             itemId: line.itemId,
             lineNumber: i + 1,
             weightGrams: line.weightGrams,
-            unitCost: line.unitCost,
+            unitCost: effectiveUnitCost,
             lineCostValue,
           },
         });
@@ -208,7 +229,7 @@ export class StockTransferService {
             lotNumber,
             totalQuantityGrams: line.weightGrams,
             remainingQuantityGrams: line.weightGrams,
-            unitPurchasePrice: line.unitCost,
+            unitPurchasePrice: effectiveUnitCost,
             receivedAt: new Date(),
             expiryDate,
             createdById: userId,
@@ -251,7 +272,7 @@ export class StockTransferService {
             branchId,
             movementType: 'transfer',
             quantityGrams: line.weightGrams,
-            unitCost: line.unitCost,
+            unitCost: effectiveUnitCost,
             referenceType: 'stock_transfer',
             referenceId: transfer.id,
             performedById: userId,
@@ -266,17 +287,14 @@ export class StockTransferService {
           voucherId: transfer.id,
           voucherDetailNo: `line-${i + 1}`,
           qtyChange: line.weightGrams,
-          valuationRate: line.unitCost,
+          valuationRate: effectiveUnitCost,
           stockValueDifference: lotValue,
           postingDate: new Date(),
           remarks: `Stock transfer ${transfer.transferNumber} - ${targetItem?.name}`,
         });
       }
 
-      // Reduce source lot
-      const sourceCostPerGram = sourceLot.unitPurchasePrice / 1000;
-      const sourceValueReduction = Math.round(totalWeightGrams * sourceCostPerGram);
-
+      // Reduce source lot (sourceValueReduction computed above for conservation)
       await tx.inventoryLot.update({
         where: { id: dto.sourceLotId },
         data: {
